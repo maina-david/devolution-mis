@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as accessControlIndex } from '@/routes/access-control';
 import { index as analyticsIndex } from '@/routes/analytics';
 import { edit as appearanceEdit } from '@/routes/appearance';
 import { index as assessmentConfigurationIndex } from '@/routes/assessment-configuration';
@@ -285,6 +286,7 @@ export function appNavigationGroups(
                     title: 'Access & accountability',
                     itemTitles: [
                         'User access',
+                        'Roles & permissions',
                         'Audit trail',
                         'Audit assurance',
                         'User activity',
@@ -316,6 +318,11 @@ export function appNavigationGroups(
                     href: usersIndex(teamSlug),
                     visible:
                         can('county-users:manage') || can('user-access:manage'),
+                },
+                {
+                    title: 'Roles & permissions',
+                    href: accessControlIndex(teamSlug),
+                    visible: can('user-access:manage'),
                 },
                 {
                     title: 'Audit trail',

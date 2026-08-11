@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\AnalyticsReportingController;
 use App\Http\Controllers\AssessmentAnalyticsController;
 use App\Http\Controllers\AssessmentConfigurationController;
@@ -75,6 +76,9 @@ Route::prefix('{current_team}')
         Route::patch('evidence/bulk-verification', BulkEvidenceVerificationController::class)->name('evidence.bulk-verification');
         Route::patch('citizen-cases/bulk-triage', BulkCitizenCaseTriageController::class)->name('citizen-cases.bulk-triage');
         Route::delete('users/bulk', BulkProgrammeUserController::class)->name('programme-users.bulk-destroy');
+        Route::get('access-control', [AccessControlController::class, 'index'])->name('access-control.index');
+        Route::patch('access-control/roles/{role}', [AccessControlController::class, 'updateRole'])->name('access-control.roles.update');
+        Route::patch('access-control/users/{programmeUser}/permissions', [AccessControlController::class, 'updateUser'])->name('access-control.user-permissions.update');
         Route::patch('notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
         Route::patch('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
         Route::controller(ProgrammeWorkspaceController::class)->group(function () {
