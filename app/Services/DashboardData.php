@@ -6,9 +6,16 @@ use App\Enums\AssessmentStatus;
 use App\Enums\UserRole;
 use App\Models\Assessment;
 use App\Models\AssessmentCycle;
+use App\Models\AssessmentDocument;
+use App\Models\CitizenCase;
 use App\Models\County;
+use App\Models\DevolutionProject;
+use App\Models\EvaluationFinding;
+use App\Models\ExchequerRequest;
+use App\Models\PartnerOperationalAlert;
 use App\Models\User;
 use App\Support\WorkspaceFilters;
+use Illuminate\Database\Eloquent\Builder;
 
 class DashboardData
 {
@@ -32,6 +39,20 @@ class DashboardData
         $assessedCount = $counties->filter(fn (County $county) => $county->assessments->contains(fn ($assessment) => in_array($assessment->status, $completedStatuses, true)))->count();
         $latestScores = $counties->map(fn (County $county) => $county->assessments->first()?->score)->filter();
         $countyIds = $counties->pluck('id');
+        $period = function (Builder $query) use ($filters): Builder {
+            return $query
+                ->when($filters->from, fn (Builder $query, string $from) => $query->whereDate('created_at', '>=', $from))
+                ->when($filters->to, fn (Builder $query, string $to) => $query->whereDate('created_at', '<=', $to));
+        };
+        $operationalSignals = [
+            'activeProjects' => $period(DevolutionProject::query()->whereIn('lead_county_id', $countyIds)->whereNotIn('status', ['completed', 'cancelled', 'closed']))->count(),
+            'overdueCitizenCases' => $period(CitizenCase::query()->whereIn('county_id', $countyIds)->whereNull('resolved_at')->where('resolution_due_at', '<', now()))->count(),
+            'delayedExchequerRequests' => $period(ExchequerRequest::query()->whereIn('county_id', $countyIds)->where('status', 'open')->where('stage_due_at', '<', now()))->count(),
+            'overdueEvaluationFindings' => $period(EvaluationFinding::query()->whereIn('county_id', $countyIds)->where('status', '!=', 'closed')->whereDate('due_at', '<', today()))->count(),
+            'openPartnerAlerts' => $period(PartnerOperationalAlert::query()->whereIn('county_id', $countyIds)->where('status', 'open'))->count(),
+            'evidenceAwaitingReview' => $period(AssessmentDocument::query()->whereIn('county_id', $countyIds)->where('record_status', 'active')->where('verification_status', 'pending'))->count(),
+            'evidenceScanAttention' => $period(AssessmentDocument::query()->whereIn('county_id', $countyIds)->where('record_status', 'active')->whereIn('scan_status', ['pending', 'failed', 'infected']))->count(),
+        ];
         $assessmentsByCycle = Assessment::query()
             ->whereIn('county_id', $countyIds)
             ->whereNotNull('assessment_cycle_id')
@@ -88,6 +109,8 @@ class DashboardData
                 return ['id' => $county->id, 'code' => $county->code, 'name' => $county->name, 'slug' => $county->slug, 'region' => $county->region, 'logoUrl' => $county->logo_path, 'mapX' => $county->map_x, 'mapY' => $county->map_y, 'assessmentStatus' => $latest?->status->value ?? 'not_started', 'latestCycle' => $latest?->cycle, 'latestScore' => $latest?->score !== null ? (float) $latest->score : null, 'documents' => $county->documents_count, 'allocatedGrant' => (float) $county->grants->sum('allocated_amount'), 'disbursedGrant' => (float) $county->grants->sum('disbursed_amount')];
             })->values(),
             'cycleOverview' => $cycleOverview,
+            'operationalSignals' => $operationalSignals,
+            'roleFocus' => $this->roleFocus($role),
         ];
     }
 
@@ -112,6 +135,20 @@ class DashboardData
             UserRole::TopManagement => ['eyebrow' => 'Executive oversight', 'title' => 'County performance overview', 'description' => 'Monitor the counties in your oversight portfolio and focus attention where delivery is behind.'],
             UserRole::DevolutionAdmin => ['eyebrow' => 'National coordination', 'title' => 'All-county delivery command', 'description' => 'Coordinate assessment cycles, evidence readiness, grants, and performance across all 47 counties.'],
             UserRole::PlatformAdmin => ['eyebrow' => 'Platform operations', 'title' => 'National platform control', 'description' => 'Monitor platform coverage and administer governed access across the national service.'],
+        };
+    }
+
+    /** @return list<string> */
+    private function roleFocus(UserRole $role): array
+    {
+        return match ($role) {
+            UserRole::CountyOfficial => ['Complete outstanding evidence', 'Respond to county service cases', 'Track corrective actions'],
+            UserRole::CountyAdmin => ['Remove submission blockers', 'Coordinate county delivery owners', 'Escalate overdue obligations'],
+            UserRole::Assessor => ['Prioritize submitted assessments', 'Clear evidence review queues', 'Record independent findings'],
+            UserRole::DevelopmentPartner => ['Review grant absorption', 'Resolve partner delivery alerts', 'Validate programme results'],
+            UserRole::TopManagement => ['Intervene on overdue commitments', 'Review low-performing counties', 'Authorize pending decisions'],
+            UserRole::DevolutionAdmin => ['Drive national cycle completion', 'Resolve cross-county bottlenecks', 'Protect evidence and reporting integrity'],
+            UserRole::PlatformAdmin => ['Maintain service operability', 'Govern access and integrations', 'Review assurance exceptions'],
         };
     }
 }

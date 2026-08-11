@@ -1,10 +1,15 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
+    AlertTriangle,
+    ArrowRight,
     Banknote,
     ChartNoAxesCombined,
+    CircleCheckBig,
+    ClipboardList,
     FileCheck2,
     Gauge,
     MapPinned,
+    ShieldAlert,
     TrendingUp,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -99,6 +104,16 @@ type Props = {
     };
     counties: CountyMetric[];
     cycleOverview: CycleMetric[];
+    operationalSignals: {
+        activeProjects: number;
+        overdueCitizenCases: number;
+        delayedExchequerRequests: number;
+        overdueEvaluationFindings: number;
+        openPartnerAlerts: number;
+        evidenceAwaitingReview: number;
+        evidenceScanAttention: number;
+    };
+    roleFocus: string[];
     filters: { from?: string; to?: string; search?: string; cycle_id?: string };
 };
 
@@ -128,6 +143,8 @@ export default function Dashboard({
     stats,
     counties,
     cycleOverview,
+    operationalSignals,
+    roleFocus,
     filters,
 }: Props) {
     const page = usePage();
@@ -160,6 +177,81 @@ export default function Dashboard({
         stats.allocatedGrants > 0
             ? Math.round((stats.disbursedGrants / stats.allocatedGrants) * 100)
             : 0;
+    const exceptionCount =
+        operationalSignals.overdueCitizenCases +
+        operationalSignals.delayedExchequerRequests +
+        operationalSignals.overdueEvaluationFindings +
+        operationalSignals.openPartnerAlerts +
+        operationalSignals.evidenceAwaitingReview +
+        operationalSignals.evidenceScanAttention;
+    const countyAttention = useMemo(
+        () =>
+            counties
+                .map((county) => {
+                    const grantGap = Math.max(
+                        0,
+                        county.allocatedGrant - county.disbursedGrant,
+                    );
+                    const reasons = [
+                        !['assessed', 'approved', 'published'].includes(
+                            county.assessmentStatus,
+                        ) && 'Assessment incomplete',
+                        county.documents === 0 && 'No evidence indexed',
+                        county.latestScore !== null &&
+                            county.latestScore < 60 &&
+                            'Score below 60%',
+                        grantGap > 0 && 'Undisbursed allocation',
+                    ].filter((reason): reason is string => Boolean(reason));
+
+                    return { county, grantGap, reasons };
+                })
+                .filter((item) => item.reasons.length > 0)
+                .sort(
+                    (a, b) =>
+                        b.reasons.length - a.reasons.length ||
+                        b.grantGap - a.grantGap,
+                )
+                .slice(0, 12),
+        [counties],
+    );
+    const operationalRows = [
+        {
+            label: 'Evidence awaiting review',
+            value: operationalSignals.evidenceAwaitingReview,
+            detail: 'Active records without a verification decision',
+            tone: 'warning' as const,
+        },
+        {
+            label: 'Evidence scan attention',
+            value: operationalSignals.evidenceScanAttention,
+            detail: 'Pending, failed, or quarantined scan outcomes',
+            tone: 'critical' as const,
+        },
+        {
+            label: 'Overdue citizen cases',
+            value: operationalSignals.overdueCitizenCases,
+            detail: 'Unresolved cases past their resolution deadline',
+            tone: 'critical' as const,
+        },
+        {
+            label: 'Delayed exchequer requests',
+            value: operationalSignals.delayedExchequerRequests,
+            detail: 'Open requests beyond the current-stage SLA',
+            tone: 'critical' as const,
+        },
+        {
+            label: 'Overdue evaluation findings',
+            value: operationalSignals.overdueEvaluationFindings,
+            detail: 'Recommendations past due and not closed',
+            tone: 'warning' as const,
+        },
+        {
+            label: 'Open partner alerts',
+            value: operationalSignals.openPartnerAlerts,
+            detail: 'Unresolved agreement or contribution exceptions',
+            tone: 'warning' as const,
+        },
+    ];
     const cards = [
         {
             label: 'Counties in view',
@@ -233,6 +325,14 @@ export default function Dashboard({
                         <TabsTrigger value="cycles">
                             <ChartNoAxesCombined /> Assessment cycles
                         </TabsTrigger>
+                        <TabsTrigger value="action-queue">
+                            <ClipboardList /> Action queue
+                            {exceptionCount > 0 && (
+                                <Badge variant="destructive">
+                                    {exceptionCount}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
                         <TabsTrigger value="delivery">
                             <Banknote /> Funds & evidence
                         </TabsTrigger>
@@ -269,6 +369,76 @@ export default function Dashboard({
                                     </Card>
                                 ),
                             )}
+                        </section>
+
+                        <section className="grid gap-5 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,0.6fr)]">
+                            <Card className="gap-0 py-0">
+                                <CardHeader className="border-b py-5">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <div>
+                                            <CardTitle>
+                                                Operational control position
+                                            </CardTitle>
+                                            <CardDescription className="mt-1">
+                                                Cross-module exceptions in your
+                                                authorized portfolio.
+                                            </CardDescription>
+                                        </div>
+                                        <Badge
+                                            variant={
+                                                exceptionCount > 0
+                                                    ? 'destructive'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {exceptionCount > 0
+                                                ? `${exceptionCount} require attention`
+                                                : 'No active exceptions'}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="grid gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-3">
+                                    {operationalRows.map((signal) => (
+                                        <OperationalSignal
+                                            key={signal.label}
+                                            {...signal}
+                                        />
+                                    ))}
+                                </CardContent>
+                            </Card>
+
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Role operating brief</CardTitle>
+                                    <CardDescription>
+                                        Priority decisions for{' '}
+                                        {dashboardProfile.roleLabel.toLowerCase()}
+                                        .
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ol className="grid gap-4">
+                                        {roleFocus.map((focus, index) => (
+                                            <li
+                                                key={focus}
+                                                className="flex items-start gap-3"
+                                            >
+                                                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                                    {index + 1}
+                                                </span>
+                                                <span className="pt-1 text-sm font-medium">
+                                                    {focus}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ol>
+                                    <div className="mt-5 border-t pt-4 text-sm text-muted-foreground">
+                                        {operationalSignals.activeProjects.toLocaleString()}{' '}
+                                        active projects are currently visible in
+                                        this scope.
+                                    </div>
+                                </CardContent>
+                            </Card>
                         </section>
 
                         {dashboardProfile.mapScope !== 'none' && (
@@ -404,6 +574,156 @@ export default function Dashboard({
                                 </Card>
                             </section>
                         )}
+                    </TabsContent>
+
+                    <TabsContent
+                        value="action-queue"
+                        className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)]"
+                    >
+                        <Card className="min-w-0 gap-0 py-0">
+                            <CardHeader className="border-b py-5">
+                                <CardTitle>County intervention queue</CardTitle>
+                                <CardDescription>
+                                    Ranked from filtered, authorized records;
+                                    select a county to continue with its full
+                                    evidence and delivery record.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="p-0">
+                                {countyAttention.length > 0 ? (
+                                    <div className="divide-y">
+                                        {countyAttention.map(
+                                            ({ county, grantGap, reasons }) => (
+                                                <div
+                                                    key={county.id}
+                                                    className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center"
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <CountyIdentity
+                                                            county={{
+                                                                kind: 'county',
+                                                                id: county.id,
+                                                                code: county.code,
+                                                                name: county.name,
+                                                                logoUrl:
+                                                                    county.logoUrl,
+                                                            }}
+                                                        />
+                                                        <div className="mt-2 flex flex-wrap gap-2">
+                                                            {reasons.map(
+                                                                (reason) => (
+                                                                    <Badge
+                                                                        key={
+                                                                            reason
+                                                                        }
+                                                                        variant="outline"
+                                                                    >
+                                                                        {reason}
+                                                                    </Badge>
+                                                                ),
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:text-right">
+                                                        <span className="text-muted-foreground">
+                                                            Score
+                                                        </span>
+                                                        <strong>
+                                                            {county.latestScore ===
+                                                            null
+                                                                ? 'Pending'
+                                                                : `${county.latestScore}%`}
+                                                        </strong>
+                                                        <span className="text-muted-foreground">
+                                                            Funding gap
+                                                        </span>
+                                                        <strong>
+                                                            {formatCompactCurrency(
+                                                                grantGap,
+                                                            )}
+                                                        </strong>
+                                                    </div>
+                                                    {currentTeam && (
+                                                        <Button
+                                                            asChild
+                                                            variant="outline"
+                                                            size="icon"
+                                                        >
+                                                            <Link
+                                                                href={preserveDrilldownFilters(
+                                                                    showCounty.url(
+                                                                        {
+                                                                            current_team:
+                                                                                currentTeam.slug,
+                                                                            county: county.id,
+                                                                        },
+                                                                    ),
+                                                                    page.url,
+                                                                )}
+                                                                aria-label={`Open ${county.name} county record`}
+                                                            >
+                                                                <ArrowRight />
+                                                            </Link>
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid min-h-64 place-items-center p-8 text-center">
+                                        <div className="max-w-sm">
+                                            <CircleCheckBig className="mx-auto size-9 text-primary" />
+                                            <h3 className="mt-3 font-semibold">
+                                                No county intervention flags
+                                            </h3>
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                No incomplete assessment,
+                                                missing evidence, low score, or
+                                                grant gap was found in this
+                                                filtered scope.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Exception register</CardTitle>
+                                <CardDescription>
+                                    Cross-module workload requiring accountable
+                                    follow-up.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-3">
+                                {operationalRows.map((signal) => (
+                                    <div
+                                        key={signal.label}
+                                        className="flex items-start justify-between gap-4 border-b pb-3 last:border-0 last:pb-0"
+                                    >
+                                        <div>
+                                            <p className="text-sm font-medium">
+                                                {signal.label}
+                                            </p>
+                                            <p className="mt-0.5 text-xs text-muted-foreground">
+                                                {signal.detail}
+                                            </p>
+                                        </div>
+                                        <Badge
+                                            variant={
+                                                signal.value > 0
+                                                    ? 'destructive'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {signal.value}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
                     <TabsContent
@@ -663,6 +983,44 @@ export default function Dashboard({
                 </Tabs>
             </div>
         </>
+    );
+}
+
+function OperationalSignal({
+    label,
+    value,
+    detail,
+    tone,
+}: {
+    label: string;
+    value: number;
+    detail: string;
+    tone: 'warning' | 'critical';
+}) {
+    const Icon = tone === 'critical' ? ShieldAlert : AlertTriangle;
+
+    return (
+        <div className="flex min-h-28 gap-3 bg-card p-4">
+            <Icon
+                className={
+                    value > 0
+                        ? 'mt-0.5 size-5 shrink-0 text-destructive'
+                        : 'mt-0.5 size-5 shrink-0 text-muted-foreground'
+                }
+                aria-hidden="true"
+            />
+            <div className="min-w-0">
+                <div className="flex items-baseline gap-2">
+                    <strong className="text-2xl tracking-tight">
+                        {value.toLocaleString()}
+                    </strong>
+                    <span className="text-sm font-medium">{label}</span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {detail}
+                </p>
+            </div>
+        </div>
     );
 }
 

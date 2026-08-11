@@ -29,6 +29,33 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('href: group.items[0].href', $sidebar);
     }
 
+    public function test_sidebar_contexts_reference_all_fourteen_tor_modules(): void
+    {
+        $registry = $this->source('resources/js/lib/app-navigation.ts');
+
+        foreach ([
+            'Citizen cases',
+            'E-Learning',
+            'Partners',
+            'Sector working groups',
+            'Projects',
+            'Departmental performance',
+            'Monitoring & evaluation',
+            'Evidence repository',
+            'Analytics',
+            'Reports',
+            'IGR resolutions',
+            'Assessments',
+            'Travel clearance',
+            'Knowledge management',
+        ] as $moduleNavigationTitle) {
+            $this->assertStringContainsString(
+                "title: '{$moduleNavigationTitle}'",
+                $registry,
+            );
+        }
+    }
+
     public function test_authenticated_header_exposes_context_tabs_and_utility_menus(): void
     {
         $header = $this->source('resources/js/components/app-sidebar-header.tsx');

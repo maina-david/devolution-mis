@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\Assessment;
 use App\Models\AssessmentCycle;
 use App\Models\AssessmentDocument;
+use App\Models\CitizenCase;
 use App\Models\County;
 use App\Models\CountyGrant;
 use App\Models\User;
@@ -114,6 +115,41 @@ class RoleDashboardTest extends TestCase
             ->where('cycleOverview.0.countiesTotal', 1)
             ->where('cycleOverview.0.countiesAssessed', 1)
             ->where('cycleOverview.0.averageScore', 70)
+        );
+    }
+
+    public function test_operational_signals_are_limited_to_the_authorized_county_scope(): void
+    {
+        $home = County::factory()->create();
+        $hidden = County::factory()->create();
+        $user = User::factory()->countyAdmin($home)->create();
+
+        CitizenCase::factory()->create([
+            'county_id' => $home->id,
+            'status' => 'in_progress',
+            'resolution_due_at' => now()->subDay(),
+        ]);
+        CitizenCase::factory()->create([
+            'county_id' => $hidden->id,
+            'status' => 'in_progress',
+            'resolution_due_at' => now()->subDay(),
+        ]);
+        CitizenCase::factory()->create([
+            'county_id' => $home->id,
+            'status' => 'resolved',
+            'resolution_due_at' => now()->subDay(),
+            'resolved_at' => now(),
+        ]);
+
+        $this->actingAs($user)->get(route('dashboard'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('operationalSignals.overdueCitizenCases', 1)
+            ->has('operationalSignals.activeProjects')
+            ->has('operationalSignals.delayedExchequerRequests')
+            ->has('operationalSignals.overdueEvaluationFindings')
+            ->has('operationalSignals.openPartnerAlerts')
+            ->has('operationalSignals.evidenceAwaitingReview')
+            ->has('operationalSignals.evidenceScanAttention')
+            ->has('roleFocus', 3)
         );
     }
 
