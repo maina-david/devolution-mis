@@ -51,6 +51,7 @@ class HandleInertiaRequests extends Middleware
                     'role_label' => $user->programmeRole()->label(),
                     'permissions' => $user->programmePermissionValues(),
                     'county_identity' => $this->countyIdentity($user),
+                    'avatar' => $user->profile_photo_path ? route('profile.photo', ['v' => $user->profile_photo_checksum]) : null,
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

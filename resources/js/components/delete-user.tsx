@@ -1,58 +1,73 @@
 import { Form } from '@inertiajs/react';
 import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    Field,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
+} from '@/components/ui/field';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
-            />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
-                </div>
+        <Card>
+            <CardHeader>
+                <CardTitle>Account lifecycle</CardTitle>
+                <CardDescription>
+                    Permanently end access and remove your personal profile
+                    photo.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Alert variant="destructive">
+                    <AlertTitle>Delete account</AlertTitle>
+                    <AlertDescription>
+                        This signs you out and removes access. This action
+                        cannot be undone without an authorized administrator.
+                    </AlertDescription>
+                </Alert>
 
-                <Dialog>
-                    <DialogTrigger asChild>
+                <Sheet>
+                    <SheetTrigger asChild>
                         <Button
                             variant="destructive"
+                            className="mt-4"
                             data-test="delete-user-button"
                         >
                             Delete account
                         </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
-                        <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
-                        </DialogDescription>
+                    </SheetTrigger>
+                    <SheetContent className="sm:max-w-lg">
+                        <SheetHeader>
+                            <SheetTitle>Confirm account deletion</SheetTitle>
+                            <SheetDescription>
+                                Once your account is deleted, all of its
+                                resources and access will be unavailable. Enter
+                                your password to confirm.
+                            </SheetDescription>
+                        </SheetHeader>
 
                         <Form
                             {...ProfileController.destroy.form()}
@@ -61,60 +76,69 @@ export default function DeleteUser() {
                             }}
                             onError={() => passwordInput.current?.focus()}
                             resetOnSuccess
-                            className="space-y-6"
+                            className="flex min-h-0 flex-1 flex-col"
                         >
                             {({ resetAndClearErrors, processing, errors }) => (
                                 <>
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
+                                    <FieldGroup className="px-4">
+                                        <Field
+                                            data-invalid={Boolean(
+                                                errors.password,
+                                            )}
                                         >
-                                            Password
-                                        </Label>
+                                            <FieldLabel htmlFor="delete-password">
+                                                Current password
+                                            </FieldLabel>
+                                            <PasswordInput
+                                                id="delete-password"
+                                                name="password"
+                                                ref={passwordInput}
+                                                placeholder="Current password"
+                                                autoComplete="current-password"
+                                                aria-invalid={Boolean(
+                                                    errors.password,
+                                                )}
+                                                aria-describedby={
+                                                    errors.password
+                                                        ? 'delete-password-error'
+                                                        : undefined
+                                                }
+                                            />
+                                            <FieldError id="delete-password-error">
+                                                {errors.password}
+                                            </FieldError>
+                                        </Field>
+                                    </FieldGroup>
 
-                                        <PasswordInput
-                                            id="password"
-                                            name="password"
-                                            ref={passwordInput}
-                                            placeholder="Password"
-                                            autoComplete="current-password"
-                                        />
-
-                                        <InputError message={errors.password} />
-                                    </div>
-
-                                    <DialogFooter className="gap-2">
-                                        <DialogClose asChild>
+                                    <SheetFooter>
+                                        <SheetClose asChild>
                                             <Button
                                                 variant="secondary"
+                                                type="button"
                                                 onClick={() =>
                                                     resetAndClearErrors()
                                                 }
                                             >
                                                 Cancel
                                             </Button>
-                                        </DialogClose>
+                                        </SheetClose>
 
                                         <Button
                                             variant="destructive"
                                             disabled={processing}
-                                            asChild
+                                            type="submit"
+                                            aria-busy={processing}
+                                            data-test="confirm-delete-user-button"
                                         >
-                                            <button
-                                                type="submit"
-                                                data-test="confirm-delete-user-button"
-                                            >
-                                                Delete account
-                                            </button>
+                                            Delete account
                                         </Button>
-                                    </DialogFooter>
+                                    </SheetFooter>
                                 </>
                             )}
                         </Form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+                    </SheetContent>
+                </Sheet>
+            </CardContent>
+        </Card>
     );
 }

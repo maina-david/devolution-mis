@@ -43,6 +43,12 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string|null $access_revoked_by
  * @property string|null $access_revocation_reason
  * @property string|null $current_team_id
+ * @property string|null $profile_photo_disk
+ * @property string|null $profile_photo_path
+ * @property string|null $profile_photo_mime_type
+ * @property int|null $profile_photo_size_bytes
+ * @property string|null $profile_photo_checksum
+ * @property Carbon|null $profile_photo_updated_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team|null $currentTeam
@@ -50,8 +56,8 @@ use Spatie\Permission\Traits\HasRoles;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'county_id', 'current_team_id'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'county_id', 'current_team_id', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum', 'profile_photo_updated_at'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum'])]
 class User extends Authenticatable implements OAuthenticatable, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -132,6 +138,8 @@ class User extends Authenticatable implements OAuthenticatable, PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'access_revoked_at' => 'datetime',
+            'profile_photo_size_bytes' => 'integer',
+            'profile_photo_updated_at' => 'datetime',
         ];
     }
 }
