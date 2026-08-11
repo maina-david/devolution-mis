@@ -377,6 +377,7 @@ Route::prefix('{current_team}')
         Route::post('evidence/{document}/dispositions/{disposition}/execute', [EvidenceController::class, 'executeDisposition'])->name('evidence.dispositions.execute');
         Route::patch('grants/{grant}', [GrantController::class, 'update'])->name('grants.update');
         Route::post('users', [ProgrammeUserController::class, 'store'])->name('programme-users.store');
+        Route::get('users/{programmeUser}', [ProgrammeUserController::class, 'show'])->name('programme-users.show');
         Route::delete('users/{programmeUser}', [ProgrammeUserController::class, 'destroy'])->name('programme-users.destroy');
         Route::patch('platform/settings/{setting}', [PlatformSettingController::class, 'update'])->name('platform-settings.update');
     });

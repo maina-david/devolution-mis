@@ -52,6 +52,7 @@ import { show as showAssessment } from '@/routes/assessments';
 import { index as assessmentAnalytics } from '@/routes/assessments/analytics';
 import { show as showCounty } from '@/routes/counties';
 import { index as dataImportsIndex } from '@/routes/data-migrations';
+import { show as showProgrammeUser } from '@/routes/programme-users';
 import { exportMethod } from '@/routes/workspace';
 
 type Props = {
@@ -475,6 +476,17 @@ export default function ProgrammeWorkspace({
                                                       current_team:
                                                           currentTeam.slug,
                                                       county: row.meta.countyId,
+                                                  }),
+                                                  page.url,
+                                              );
+                                          }
+
+                                          if (workspaceType === 'users') {
+                                              return preserveDrilldownFilters(
+                                                  showProgrammeUser.url({
+                                                      current_team:
+                                                          currentTeam.slug,
+                                                      programmeUser: row.id,
                                                   }),
                                                   page.url,
                                               );
