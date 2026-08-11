@@ -245,6 +245,8 @@ function ContextualGroupMenu({
 }) {
     const [open, setOpen] = useState(false);
     const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const triggerHovered = useRef(false);
+    const contentHovered = useRef(false);
     const active = subgroup.items.some((item) =>
         navigationItemIsActive(item, currentUrl),
     );
@@ -254,21 +256,59 @@ function ContextualGroupMenu({
             closeTimeout.current = null;
         }
     };
-    const openOnPointerHover = (event: React.PointerEvent) => {
+    const openOnTriggerHover = (event: React.PointerEvent) => {
         if (event.pointerType !== 'mouse') {
             return;
         }
 
+        triggerHovered.current = true;
         cancelClose();
         setOpen(true);
     };
-    const closeAfterPointerLeave = (event: React.PointerEvent) => {
+    const openOnContentHover = (event: React.PointerEvent) => {
         if (event.pointerType !== 'mouse') {
             return;
         }
 
+        contentHovered.current = true;
         cancelClose();
-        closeTimeout.current = setTimeout(() => setOpen(false), 150);
+    };
+    const closeAfterTriggerLeave = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        triggerHovered.current = false;
+        scheduleClose();
+    };
+    const closeAfterContentLeave = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        contentHovered.current = false;
+        scheduleClose();
+    };
+    const scheduleClose = () => {
+        cancelClose();
+        closeTimeout.current = setTimeout(() => {
+            if (!triggerHovered.current && !contentHovered.current) {
+                setOpen(false);
+            }
+        }, 250);
+    };
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen && (triggerHovered.current || contentHovered.current)) {
+            return;
+        }
+
+        setOpen(nextOpen);
+    };
+    const dismissMenu = () => {
+        triggerHovered.current = false;
+        contentHovered.current = false;
+        cancelClose();
+        setOpen(false);
     };
 
     useEffect(
@@ -281,13 +321,13 @@ function ContextualGroupMenu({
     );
 
     return (
-        <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
+        <DropdownMenu modal={false} open={open} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
                     aria-current={active ? 'page' : undefined}
-                    onPointerEnter={openOnPointerHover}
-                    onPointerLeave={closeAfterPointerLeave}
+                    onPointerEnter={openOnTriggerHover}
+                    onPointerLeave={closeAfterTriggerLeave}
                     className={cn(
                         'relative h-auto rounded-none px-3 py-3 text-sm font-medium text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-primary-foreground',
                         active &&
@@ -300,8 +340,11 @@ function ContextualGroupMenu({
             </DropdownMenuTrigger>
             <DropdownMenuContent
                 align="start"
-                onPointerEnter={openOnPointerHover}
-                onPointerLeave={closeAfterPointerLeave}
+                sideOffset={0}
+                onPointerEnter={openOnContentHover}
+                onPointerLeave={closeAfterContentLeave}
+                onEscapeKeyDown={dismissMenu}
+                onPointerDownOutside={dismissMenu}
             >
                 <DropdownMenuLabel>{subgroup.title}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -313,7 +356,11 @@ function ContextualGroupMenu({
                         );
 
                         return (
-                            <DropdownMenuItem key={item.title} asChild>
+                            <DropdownMenuItem
+                                key={item.title}
+                                asChild
+                                onSelect={dismissMenu}
+                            >
                                 <Link
                                     href={item.href}
                                     prefetch
