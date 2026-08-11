@@ -56,6 +56,16 @@ class AuthenticatedNavigationContractTest extends TestCase
         }
     }
 
+    public function test_dashboard_does_not_duplicate_the_persistent_header_role_badge(): void
+    {
+        $dashboard = $this->source('resources/js/pages/dashboard.tsx');
+
+        $this->assertStringNotContainsString(
+            'w-fit border-white/20 bg-white/10 px-3 py-1.5 text-white',
+            $dashboard,
+        );
+    }
+
     public function test_authenticated_header_exposes_context_tabs_and_utility_menus(): void
     {
         $header = $this->source('resources/js/components/app-sidebar-header.tsx');

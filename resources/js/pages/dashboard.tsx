@@ -289,21 +289,16 @@ export default function Dashboard({
             />
             <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
-                    <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
-                        <div className="max-w-3xl">
-                            <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                {dashboardProfile.eyebrow}
-                            </p>
-                            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                {dashboardProfile.title}
-                            </h1>
-                            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                                {dashboardProfile.description}
-                            </p>
-                        </div>
-                        <Badge className="w-fit border-white/20 bg-white/10 px-3 py-1.5 text-white">
-                            {dashboardProfile.roleLabel}
-                        </Badge>
+                    <div className="max-w-3xl">
+                        <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
+                            {dashboardProfile.eyebrow}
+                        </p>
+                        <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                            {dashboardProfile.title}
+                        </h1>
+                        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
+                            {dashboardProfile.description}
+                        </p>
                     </div>
                 </section>
 
