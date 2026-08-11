@@ -48,6 +48,7 @@ import type {
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { apply, download, review, store } from '@/routes/data-migrations';
+import { download as downloadExceptions } from '@/routes/data-migrations/exceptions';
 import { store as storeReferenceData } from '@/routes/data-migrations/reference-data';
 import { show as showTemplate } from '@/routes/data-migrations/templates';
 
@@ -284,6 +285,26 @@ export default function HistoricalDataMigrations({
                                                             Download source
                                                         </a>
                                                     </DropdownMenuItem>
+                                                    {batch.invalidRows > 0 && (
+                                                        <DropdownMenuItem
+                                                            asChild
+                                                        >
+                                                            <a
+                                                                href={downloadExceptions.url(
+                                                                    {
+                                                                        current_team:
+                                                                            currentTeam.slug,
+                                                                        dataMigrationBatch:
+                                                                            batch.id,
+                                                                    },
+                                                                )}
+                                                            >
+                                                                <Download />
+                                                                Download row
+                                                                exceptions
+                                                            </a>
+                                                        </DropdownMenuItem>
+                                                    )}
                                                     {capabilities.review &&
                                                         [
                                                             'validated',
@@ -572,6 +593,19 @@ function BatchSheet({
                                         .join(' · ')}
                                 </AlertDescription>
                             </Alert>
+                        )}
+                        {batch.invalidRows > 0 && (
+                            <Button variant="outline" asChild>
+                                <a
+                                    href={downloadExceptions.url({
+                                        current_team: team,
+                                        dataMigrationBatch: batch.id,
+                                    })}
+                                >
+                                    <Download data-icon="inline-start" />
+                                    Download row-level exception report
+                                </a>
+                            </Button>
                         )}
                         {action === 'review' && (
                             <Form

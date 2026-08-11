@@ -76,6 +76,56 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $this->assertContains('duplicate_code_in_file', $batch->rows->last()->validation_errors);
     }
 
+    public function test_authorized_reviewer_can_download_formula_safe_row_level_exception_evidence(): void
+    {
+        Storage::fake('local');
+        County::factory()->create(['code' => 1]);
+        $submitter = User::factory()->platformAdmin()->create();
+
+        $batch = app(StageReferenceDataImport::class)->handle(
+            $submitter,
+            $this->csv('organizations', [
+                ['INVALID', '=HYPERLINK("https://example.test")', 'unknown', '999', 'not-an-email', 'wrong'],
+            ]),
+            'organizations',
+            'Registry validation exercise',
+            'SDD-REGISTRY-EXCEPTIONS',
+        );
+
+        $response = $this->actingAs($submitter)->get(route('data-migrations.exceptions.download', [
+            $submitter->currentTeam->slug,
+            $batch,
+        ]));
+
+        $response->assertOk()->assertDownload("{$batch->reference}-row-exceptions.csv");
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('batch_reference,dataset_type,source_file_checksum,row_number,code,name,type,county_code,email,status,validation_errors,source_row_checksum', $content);
+        $this->assertStringContainsString($batch->file_checksum, $content);
+        $this->assertStringContainsString('invalid_organization_type|unknown_county_code|invalid_email|invalid_status', $content);
+        $this->assertStringContainsString("'=HYPERLINK", $content);
+        $this->assertStringNotContainsString("\n=HYPERLINK", $content);
+    }
+
+    public function test_exception_report_requires_authorization_and_at_least_one_invalid_row(): void
+    {
+        Storage::fake('local');
+        $submitter = User::factory()->platformAdmin()->create();
+        $countyUser = User::factory()->countyOfficial()->create();
+        $batch = app(StageReferenceDataImport::class)->handle(
+            $submitter,
+            $this->csv('organizations', [
+                ['VALID', 'Valid organization', 'national', '', 'valid@example.test', 'active'],
+            ]),
+            'organizations',
+            'Approved institutional registry',
+            'SDD-REGISTRY-2026-01',
+        );
+
+        $route = route('data-migrations.exceptions.download', [$submitter->currentTeam->slug, $batch]);
+        $this->actingAs($countyUser)->get($route)->assertForbidden();
+        $this->actingAs($submitter)->get($route)->assertNotFound();
+    }
+
     public function test_three_person_control_atomically_applies_each_supported_registry(): void
     {
         Storage::fake('local');

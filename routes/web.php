@@ -282,6 +282,7 @@ Route::prefix('{current_team}')
         Route::get('data-migrations/templates/{datasetType}', [HistoricalDataMigrationController::class, 'template'])->name('data-migrations.templates.show');
         Route::patch('data-migrations/{dataMigrationBatch}/review', [HistoricalDataMigrationController::class, 'review'])->name('data-migrations.review');
         Route::post('data-migrations/{dataMigrationBatch}/apply', [HistoricalDataMigrationController::class, 'apply'])->name('data-migrations.apply');
+        Route::get('data-migrations/{dataMigrationBatch}/exceptions', [HistoricalDataMigrationController::class, 'downloadExceptions'])->name('data-migrations.exceptions.download');
         Route::get('data-migrations/{dataMigrationBatch}/download', [HistoricalDataMigrationController::class, 'download'])->name('data-migrations.download');
         Route::post('reference-data/organizations', [ReferenceDataController::class, 'storeOrganization'])->name('reference-data.organizations.store');
         Route::patch('reference-data/organizations/{organization}', [ReferenceDataController::class, 'updateOrganization'])->name('reference-data.organizations.update');

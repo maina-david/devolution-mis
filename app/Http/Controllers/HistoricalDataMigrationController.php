@@ -146,6 +146,52 @@ class HistoricalDataMigrationController extends Controller
         return Storage::disk('local')->download($dataMigrationBatch->path, $dataMigrationBatch->original_name, ['Content-Type' => $dataMigrationBatch->mime_type]);
     }
 
+    public function downloadExceptions(string $currentTeam, DataMigrationBatch $dataMigrationBatch): StreamedResponse
+    {
+        $this->authorizeView();
+        abort_if($dataMigrationBatch->invalid_rows === 0, 404, 'This migration batch has no validation exceptions.');
+
+        $firstException = $dataMigrationBatch->rows()
+            ->where('validation_status', 'invalid')
+            ->orderBy('row_number')
+            ->firstOrFail();
+        $payloadHeaders = array_keys($firstException->source_payload ?? []);
+        $filename = "{$dataMigrationBatch->reference}-row-exceptions.csv";
+
+        return response()->streamDownload(function () use ($dataMigrationBatch, $payloadHeaders): void {
+            $stream = fopen('php://output', 'w');
+            if ($stream === false) {
+                return;
+            }
+
+            fwrite($stream, "\xEF\xBB\xBF");
+            fputcsv($stream, [
+                'batch_reference',
+                'dataset_type',
+                'source_file_checksum',
+                'row_number',
+                ...$payloadHeaders,
+                'validation_errors',
+                'source_row_checksum',
+            ]);
+
+            foreach ($dataMigrationBatch->rows()->where('validation_status', 'invalid')->orderBy('row_number')->cursor() as $row) {
+                $payload = $row->source_payload ?? [];
+                fputcsv($stream, [
+                    $dataMigrationBatch->reference,
+                    $dataMigrationBatch->dataset_type,
+                    $dataMigrationBatch->file_checksum,
+                    $row->row_number,
+                    ...array_map(fn (string $header): string => $this->csvCell($payload[$header] ?? ''), $payloadHeaders),
+                    implode('|', $row->validation_errors ?? []),
+                    $row->source_checksum,
+                ]);
+            }
+
+            fclose($stream);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
     private function authorizeView(): void
     {
         abort_unless(Gate::any([
@@ -160,5 +206,12 @@ class HistoricalDataMigrationController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => $message]);
 
         return back();
+    }
+
+    private function csvCell(mixed $value): string
+    {
+        $cell = (string) $value;
+
+        return preg_match('/^[=+\-@]/', ltrim($cell)) === 1 ? "'{$cell}" : $cell;
     }
 }
