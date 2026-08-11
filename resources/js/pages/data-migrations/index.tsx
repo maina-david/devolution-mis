@@ -183,10 +183,9 @@ export default function HistoricalDataMigrations({
                     <DatabaseBackup />
                     <AlertTitle>Three-person control</AlertTitle>
                     <AlertDescription>
-                        Upload, independent review and final application
-                        must be performed by different authorized users. Applied
-                        records and their checksum-bound provenance are
-                        immutable.
+                        Upload, independent review and final application must be
+                        performed by different authorized users. Applied records
+                        and their checksum-bound provenance are immutable.
                     </AlertDescription>
                 </Alert>
 

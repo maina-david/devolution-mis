@@ -145,7 +145,7 @@ type Props = {
         users: Option[];
         publishedDashboards: Option[];
     };
-    catalogue: ({ available: false } | ({ available: true } & ReferenceData));
+    catalogue: { available: false } | ({ available: true } & ReferenceData);
     capabilities: {
         manage: boolean;
         approveDashboard: boolean;
@@ -552,7 +552,11 @@ function DashboardForm({
             icon={Plus}
             size="xl"
             triggerDisabled={!catalogue.available}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before creating dashboards.' : undefined}
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before creating dashboards.'
+                    : undefined
+            }
         >
             <Form action={storeDashboard(team)} className="grid gap-5 pt-4">
                 {({ processing, errors }) => (
@@ -730,8 +734,16 @@ function ScheduleForm({
             triggerLabel="New schedule"
             icon={CalendarClock}
             size="xl"
-            triggerDisabled={!catalogue.available || options.publishedDashboards.length === 0}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before scheduling reports.' : options.publishedDashboards.length === 0 ? 'Publish a governed dashboard before scheduling reports.' : undefined}
+            triggerDisabled={
+                !catalogue.available || options.publishedDashboards.length === 0
+            }
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before scheduling reports.'
+                    : options.publishedDashboards.length === 0
+                      ? 'Publish a governed dashboard before scheduling reports.'
+                      : undefined
+            }
         >
             <Form action={storeSchedule(team)} className="grid gap-5 pt-4">
                 {({ processing, errors }) => (

@@ -30,7 +30,11 @@ export default function IndicatorDefinitionForm({
             size="xl"
             description="Create a versioned results-chain definition for independent approval before data entry."
             triggerDisabled={!catalogue.available}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before defining indicators.' : undefined}
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before defining indicators.'
+                    : undefined
+            }
         >
             <Form
                 {...store.form({ current_team: teamSlug })}

@@ -55,7 +55,11 @@ import { store as storeDocument } from '@/routes/knowledge/innovation-replicatio
 type Replication = {
     id: string;
     reference: string;
-    referenceData: { version: number; effectiveFrom: string | null; checksum: string } | null;
+    referenceData: {
+        version: number;
+        effectiveFrom: string | null;
+        checksum: string;
+    } | null;
     innovation: { id: string; reference: string; title: string };
     sourceCounty: CountyIdentityValue;
     targetCounty: CountyIdentityValue;
@@ -113,7 +117,12 @@ type Props = {
         adopters: Array<{ id: string; name: string; county_id: string | null }>;
     };
     capabilities: { manage: boolean; contribute: boolean; verify: boolean };
-    catalogue: { available: boolean; version?: number; effectiveFrom?: string | null; checksum?: string };
+    catalogue: {
+        available: boolean;
+        version?: number;
+        effectiveFrom?: string | null;
+        checksum?: string;
+    };
 };
 
 export default function InnovationReplications(props: Props) {
@@ -127,7 +136,9 @@ export default function InnovationReplications(props: Props) {
             `${replication.innovation.reference} · ${replication.innovation.title}`,
             replication.sourceCounty,
             replication.targetCounty,
-            replication.referenceData ? `v${replication.referenceData.version}` : 'Legacy unpinned',
+            replication.referenceData
+                ? `v${replication.referenceData.version}`
+                : 'Legacy unpinned',
             replication.referenceData?.checksum ?? 'Legacy unpinned',
             replication.accountableAdopter,
             replication.successMeasure,
@@ -311,8 +322,16 @@ function CreateReplicationSheet({
             triggerLabel="Create replication"
             icon={Plus}
             size="xl"
-            triggerDisabled={!catalogue.available || options.innovations.length === 0}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before creating replications.' : options.innovations.length === 0 ? 'No lineage-bearing innovation is approved for scale-up.' : undefined}
+            triggerDisabled={
+                !catalogue.available || options.innovations.length === 0
+            }
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before creating replications.'
+                    : options.innovations.length === 0
+                      ? 'No lineage-bearing innovation is approved for scale-up.'
+                      : undefined
+            }
         >
             <Form
                 {...store.form(teamSlug)}
@@ -470,7 +489,10 @@ function ReplicationActions({
                         <SheetDescription>
                             {replication.innovation.title} ·{' '}
                             {replication.targetCounty.name}
-                            {' · '}{replication.referenceData ? `Catalogue v${replication.referenceData.version}` : 'Legacy lineage unpinned'}
+                            {' · '}
+                            {replication.referenceData
+                                ? `Catalogue v${replication.referenceData.version}`
+                                : 'Legacy lineage unpinned'}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-5 px-4 pb-8">

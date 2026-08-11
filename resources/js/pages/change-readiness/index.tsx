@@ -56,7 +56,11 @@ import { exportMethod } from '@/routes/workspace';
 
 type Option = { id: string; name: string };
 type County = Option & { code: number; logoUrl: string | null };
-type ReferenceData = { version: number; effectiveFrom: string | null; checksum: string };
+type ReferenceData = {
+    version: number;
+    effectiveFrom: string | null;
+    checksum: string;
+};
 type Assessment = {
     type: string;
     score: string;
@@ -133,7 +137,7 @@ type Props = {
     waves: Wave[];
     cohorts: PageSet<Cohort>;
     filters: Record<string, string | undefined>;
-    catalogue: ({ available: false } | ({ available: true } & ReferenceData));
+    catalogue: { available: false } | ({ available: true } & ReferenceData);
     options: {
         counties: County[];
         users: Option[];
@@ -380,7 +384,9 @@ function WaveCard({
                                 {formatDate(wave.endsOn)}
                             </p>
                             <p className="mt-1 text-xs text-muted-foreground">
-                                {wave.referenceData ? `Catalogue ${wave.referenceData.version} · ${wave.referenceData.checksum.slice(0, 12)}…` : 'Legacy record · lineage not pinned'}
+                                {wave.referenceData
+                                    ? `Catalogue ${wave.referenceData.version} · ${wave.referenceData.checksum.slice(0, 12)}…`
+                                    : 'Legacy record · lineage not pinned'}
                             </p>
                         </div>
                         <Badge
@@ -579,7 +585,10 @@ function CohortAction({
                         </SheetTitle>
                         <SheetDescription>
                             {cohort.code} · {cohort.wave.name}
-                            {' · '}{cohort.referenceData ? `Catalogue ${cohort.referenceData.version}` : 'Legacy lineage unpinned'}
+                            {' · '}
+                            {cohort.referenceData
+                                ? `Catalogue ${cohort.referenceData.version}`
+                                : 'Legacy lineage unpinned'}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -728,7 +737,15 @@ function CohortAction({
     );
 }
 
-function WaveForm({ team, counties, catalogue }: { team: string; counties: County[]; catalogue: Props['catalogue'] }) {
+function WaveForm({
+    team,
+    counties,
+    catalogue,
+}: {
+    team: string;
+    counties: County[];
+    catalogue: Props['catalogue'];
+}) {
     return (
         <FormSheet
             title="Plan rollout wave"
@@ -737,7 +754,11 @@ function WaveForm({ team, counties, catalogue }: { team: string; counties: Count
             icon={Plus}
             size="xl"
             triggerDisabled={!catalogue.available}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before planning rollout.' : undefined}
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before planning rollout.'
+                    : undefined
+            }
         >
             <Form action={storeWave(team)} className="grid gap-4 pt-4">
                 {({ errors, processing }) => (
@@ -819,18 +840,27 @@ function CohortForm({
             triggerLabel="Plan cohort"
             icon={GraduationCap}
             size="xl"
-            triggerDisabled={!catalogue.available || waves.filter((wave) => wave.referenceData !== null).length === 0}
-            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before planning cohorts.' : undefined}
+            triggerDisabled={
+                !catalogue.available ||
+                waves.filter((wave) => wave.referenceData !== null).length === 0
+            }
+            triggerTitle={
+                !catalogue.available
+                    ? 'Publish an approved reference-data catalogue before planning cohorts.'
+                    : undefined
+            }
         >
             <Form action={storeCohort(team)} className="grid gap-4 pt-4">
                 <SearchableSelect
                     id="cohort-wave"
                     name="rollout_wave_id"
                     label="Rollout wave"
-                    options={waves.filter((wave) => wave.referenceData !== null).map((wave) => ({
-                        id: wave.id,
-                        name: `${wave.code} · ${wave.name}`,
-                    }))}
+                    options={waves
+                        .filter((wave) => wave.referenceData !== null)
+                        .map((wave) => ({
+                            id: wave.id,
+                            name: `${wave.code} · ${wave.name}`,
+                        }))}
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
                     <Field name="code" label="Cohort code" />

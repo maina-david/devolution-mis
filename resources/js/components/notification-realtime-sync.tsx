@@ -15,7 +15,9 @@ export default function NotificationRealtimeSync() {
     const page = usePage();
     const userId = page.props.auth.user?.id;
 
-    return userId ? <AuthenticatedNotificationRealtimeSync userId={userId} /> : null;
+    return userId ? (
+        <AuthenticatedNotificationRealtimeSync userId={userId} />
+    ) : null;
 }
 
 function AuthenticatedNotificationRealtimeSync({ userId }: { userId: string }) {

@@ -246,7 +246,11 @@ export default function ProgrammeWorkspace({
                             />
                             {capabilities.bulkImport && (
                                 <Button variant="outline" asChild>
-                                    <Link href={dataImportsIndex(currentTeam.slug)}>
+                                    <Link
+                                        href={dataImportsIndex(
+                                            currentTeam.slug,
+                                        )}
+                                    >
                                         <FileUp data-icon="inline-start" />
                                         Bulk upload users
                                     </Link>

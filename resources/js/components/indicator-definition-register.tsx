@@ -42,7 +42,11 @@ export type IndicatorDefinitionItem = {
     frequency: string;
     dataSource: string;
     verificationMethod: string;
-    referenceData: { version: number; effectiveFrom: string | null; checksum: string } | null;
+    referenceData: {
+        version: number;
+        effectiveFrom: string | null;
+        checksum: string;
+    } | null;
 };
 
 export default function IndicatorDefinitionRegister({
@@ -98,7 +102,9 @@ export default function IndicatorDefinitionRegister({
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
-                                {item.referenceData ? `v${item.referenceData.version} · ${item.referenceData.checksum.slice(0, 10)}…` : 'Legacy unpinned'}
+                                {item.referenceData
+                                    ? `v${item.referenceData.version} · ${item.referenceData.checksum.slice(0, 10)}…`
+                                    : 'Legacy unpinned'}
                             </TableCell>
                             <TableCell className="text-right">
                                 {(item.status === 'draft' &&

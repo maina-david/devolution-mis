@@ -985,10 +985,7 @@ function TravelDetails({
                     ['Cost centre', request.costCentre ?? '—'],
                     ['HRIS reference', request.hrisReference ?? 'Not linked'],
                     ['Reference release', request.referenceRelease],
-                    [
-                        'Reference checksum',
-                        request.referenceChecksum ?? '—',
-                    ],
+                    ['Reference checksum', request.referenceChecksum ?? '—'],
                     [
                         'Finance reference',
                         request.financeReference ?? 'Pending',

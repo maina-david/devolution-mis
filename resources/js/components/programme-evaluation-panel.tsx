@@ -88,7 +88,9 @@ export default function ProgrammeEvaluationPanel({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Evaluation register</DropdownMenuLabel>
+                        <DropdownMenuLabel>
+                            Evaluation register
+                        </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             {['csv', 'xlsx', 'pdf', 'json'].map((format) => (
                                 <DropdownMenuItem key={format} asChild>

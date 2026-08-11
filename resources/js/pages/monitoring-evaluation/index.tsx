@@ -61,7 +61,12 @@ type Props = {
         status?: string;
     };
     results: MonitoringResults;
-    catalogue: { available: boolean; version?: number; effectiveFrom?: string | null; checksum?: string };
+    catalogue: {
+        available: boolean;
+        version?: number;
+        effectiveFrom?: string | null;
+        checksum?: string;
+    };
     options: {
         indicators: Indicator[];
         definitions: IndicatorDefinitionItem[];

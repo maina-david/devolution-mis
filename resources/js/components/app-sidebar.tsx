@@ -45,8 +45,7 @@ export function AppSidebar() {
                                 <Link href={dashboardUrl} prefetch>
                                     <AppLogo
                                         county={
-                                            page.props.auth.user
-                                                .county_identity
+                                            page.props.auth.user.county_identity
                                         }
                                     />
                                 </Link>

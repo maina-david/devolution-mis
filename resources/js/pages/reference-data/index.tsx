@@ -233,8 +233,8 @@ export default function ReferenceDataIndex({
                                 Reference data registry
                             </h1>
                             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                                Govern the canonical organizations, sectors,
-                                and programmes reused across all fourteen IDMIS
+                                Govern the canonical organizations, sectors, and
+                                programmes reused across all fourteen IDMIS
                                 modules.
                             </p>
                         </div>
