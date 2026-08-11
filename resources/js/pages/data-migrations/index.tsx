@@ -107,6 +107,10 @@ const referenceDatasetOptions = [
     { id: 'organizations', name: 'Organizations' },
     { id: 'sectors', name: 'Sectors' },
     { id: 'programmes', name: 'Programmes' },
+    {
+        id: 'programme_county_coverages',
+        name: 'Programme county coverages',
+    },
     { id: 'users', name: 'Users and role assignments' },
 ];
 
@@ -207,7 +211,10 @@ export default function HistoricalDataMigrations({
                         {
                             key: 'type',
                             label: 'Dataset type',
-                            options: datasetOptions,
+                            options: [
+                                ...datasetOptions,
+                                ...referenceDatasetOptions,
+                            ],
                             value: filters.type,
                         },
                         {
@@ -497,8 +504,9 @@ function ReferenceImportForm({ team }: { team: string }) {
                             />
                             <p className="text-xs text-muted-foreground">
                                 Maximum 5,000 rows and 20 MB. Existing or
-                                duplicate codes are rejected; imports never
-                                overwrite current records.
+                                duplicate identifiers and overlapping coverage
+                                periods are rejected; imports never overwrite
+                                current records.
                             </p>
                             {errors.file && (
                                 <ErrorText>{errors.file}</ErrorText>

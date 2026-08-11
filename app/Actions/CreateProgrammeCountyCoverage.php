@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Models\Programme;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -16,6 +17,11 @@ class CreateProgrammeCountyCoverage
     public function handle(User $actor, array $attributes): ProgrammeCountyCoverage
     {
         return DB::transaction(function () use ($actor, $attributes): ProgrammeCountyCoverage {
+            $programme = Programme::query()->lockForUpdate()->find($attributes['programme_id']);
+            abort_unless($programme !== null, 409, 'The selected programme is no longer available.');
+            abort_if($programme->starts_on !== null && $programme->starts_on->isAfter($attributes['starts_on']), 409, 'County coverage cannot begin before the programme starts.');
+            abort_if($programme->ends_on !== null && (blank($attributes['ends_on'] ?? null) || $programme->ends_on->isBefore($attributes['ends_on'])), 409, 'County coverage must end on or before the programme end date.');
+
             if (DB::getDriverName() === 'pgsql') {
                 DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', ["programme-coverage:{$attributes['programme_id']}:{$attributes['county_id']}"]);
             }

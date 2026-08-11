@@ -8,6 +8,7 @@ use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\Organization;
 use App\Models\Programme;
+use App\Models\ProgrammeCountyCoverage;
 use App\Models\Sector;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -19,6 +20,14 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
+/**
+ * @phpstan-type ProgrammeCoverageContext array{
+ *     programmes: array<string, array{id: string, starts_on: string|null, ends_on: string|null}>,
+ *     counties: array<int, string>,
+ *     implementation_leads: array<int, string>,
+ *     existing_coverages: array<string, array<int, array{starts_on: string, ends_on: string|null}>>
+ * }
+ */
 class StageReferenceDataImport
 {
     /** @var array<string, list<string>> */
@@ -26,6 +35,7 @@ class StageReferenceDataImport
         'organizations' => ['code', 'name', 'type', 'county_code', 'email', 'status'],
         'sectors' => ['code', 'name', 'parent_sector_code', 'description', 'is_active'],
         'programmes' => ['code', 'name', 'description', 'lead_organization_code', 'sector_code', 'starts_on', 'ends_on', 'status', 'budget_amount', 'currency'],
+        'programme_county_coverages' => ['programme_code', 'county_code', 'implementation_lead_code', 'starts_on', 'ends_on', 'status', 'funding_allocation', 'currency', 'source_reference', 'notes'],
         'users' => ['name', 'email', 'role', 'home_county_code', 'assigned_county_codes'],
     ];
 
@@ -37,7 +47,11 @@ class StageReferenceDataImport
     public function handle(User $actor, UploadedFile $file, string $datasetType, string $sourceName, string $sourceReference): DataMigrationBatch
     {
         abort_unless(array_key_exists($datasetType, self::HEADERS), 422, 'The selected bulk-import dataset is not supported.');
-        abort_if($datasetType === 'users' && ! $actor->can(ProgrammePermission::ManageUserAccess->value), 403, 'Only platform access administrators may stage user imports.');
+        if ($datasetType === 'users') {
+            abort_unless($actor->can(ProgrammePermission::ManageUserAccess->value), 403, 'Only platform access administrators may stage user imports.');
+        } else {
+            abort_unless($actor->can(ProgrammePermission::ManageReferenceData->value), 403, 'Only reference-data managers may stage governed registry imports.');
+        }
         $rows = $this->parse($file, $datasetType);
         $realPath = $file->getRealPath();
 
@@ -115,11 +129,13 @@ class StageReferenceDataImport
             'organizations' => Organization::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'sectors' => Sector::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'programmes' => Programme::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
+            'programme_county_coverages' => [],
             'users' => User::query()->withTrashed()->pluck('email')->map(fn (string $email): string => Str::lower($email))->all(),
             default => throw ValidationException::withMessages(['dataset_type' => 'The selected bulk-import dataset is not supported.']),
         };
+        $coverageContext = $datasetType === 'programme_county_coverages' ? $this->programmeCoverageContext() : null;
         $rows = [];
-        $seenCodes = [];
+        $seenIdentities = [];
         foreach ($sourceRows as $sourceRow) {
             $values = $sourceRow['values'];
             if (count($rows) >= 5000) {
@@ -129,21 +145,34 @@ class StageReferenceDataImport
             $values = array_pad(array_slice($values, 0, count($expected)), count($expected), null);
             /** @var array<string, string> $payload */
             $payload = array_combine($expected, array_map(fn (mixed $value): string => trim((string) $value), $values));
-            $identity = $datasetType === 'users' ? Str::lower($payload['email']) : Str::upper($payload['code']);
-            if ($datasetType === 'users') {
+            if ($datasetType === 'programme_county_coverages') {
+                $payload['programme_code'] = Str::upper($payload['programme_code']);
+                $payload['implementation_lead_code'] = Str::upper($payload['implementation_lead_code']);
+                $payload['currency'] = Str::upper($payload['currency']);
+                if (ctype_digit($payload['county_code'])) {
+                    $payload['county_code'] = str_pad((string) ((int) $payload['county_code']), 3, '0', STR_PAD_LEFT);
+                }
+                $identity = $this->coverageIdentity($payload);
+            } elseif ($datasetType === 'users') {
+                $identity = Str::lower($payload['email']);
                 $payload['email'] = $identity;
             } else {
+                $identity = Str::upper($payload['code']);
                 $payload['code'] = $identity;
             }
-            $errors = $this->validatePayload($datasetType, $payload);
+            $errors = $this->validatePayload($datasetType, $payload, $coverageContext);
 
-            if (in_array($identity, $existingCodes, true)) {
+            if ($datasetType !== 'programme_county_coverages' && in_array($identity, $existingCodes, true)) {
                 $errors[] = $datasetType === 'users' ? 'email_already_exists' : 'code_already_exists';
             }
-            if (in_array($identity, $seenCodes, true)) {
-                $errors[] = $datasetType === 'users' ? 'duplicate_email_in_file' : 'duplicate_code_in_file';
+            if (in_array($identity, $seenIdentities, true)) {
+                $errors[] = match ($datasetType) {
+                    'users' => 'duplicate_email_in_file',
+                    'programme_county_coverages' => 'duplicate_coverage_in_file',
+                    default => 'duplicate_code_in_file',
+                };
             }
-            $seenCodes[] = $identity;
+            $seenIdentities[] = $identity;
             $canonicalPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $rows[] = [
                 'row_number' => $sourceRow['row_number'],
@@ -158,31 +187,50 @@ class StageReferenceDataImport
             throw ValidationException::withMessages(['file' => 'The source file contains no data rows.']);
         }
 
-        $identityKey = $datasetType === 'users' ? 'email' : 'code';
-        $duplicateCodes = collect($rows)
-            ->pluck("source_payload.{$identityKey}")
+        $identities = collect($rows)->map(fn (array $row): string => $datasetType === 'programme_county_coverages'
+            ? $this->coverageIdentity($row['source_payload'])
+            : (string) data_get($row, 'source_payload.'.($datasetType === 'users' ? 'email' : 'code')));
+        $duplicateIdentities = $identities
             ->countBy()
             ->filter(fn (int $count): bool => $count > 1)
             ->keys();
 
         foreach ($rows as $index => $row) {
-            if (! $duplicateCodes->contains($row['source_payload'][$identityKey])) {
+            if (! $duplicateIdentities->contains($identities[$index])) {
                 continue;
             }
 
-            $duplicateError = $datasetType === 'users' ? 'duplicate_email_in_file' : 'duplicate_code_in_file';
+            $duplicateError = match ($datasetType) {
+                'users' => 'duplicate_email_in_file',
+                'programme_county_coverages' => 'duplicate_coverage_in_file',
+                default => 'duplicate_code_in_file',
+            };
             $rows[$index]['validation_errors'] = array_values(array_unique([...$row['validation_errors'], $duplicateError]));
             $rows[$index]['validation_status'] = 'invalid';
+        }
+
+        if ($datasetType === 'programme_county_coverages') {
+            $rows = $this->markOverlappingCoverageRows($rows);
         }
 
         return $rows;
     }
 
-    /** @param array<string, string> $payload
+    /**
+     * @param  array<string, string>  $payload
+     * @param  ProgrammeCoverageContext|null  $coverageContext
      * @return list<string>
      */
-    private function validatePayload(string $datasetType, array $payload): array
+    private function validatePayload(string $datasetType, array $payload, ?array $coverageContext = null): array
     {
+        if ($datasetType === 'programme_county_coverages') {
+            if ($coverageContext === null) {
+                throw new \LogicException('Programme coverage validation context is required.');
+            }
+
+            return $this->validateProgrammeCoveragePayload($payload, $coverageContext);
+        }
+
         $errors = [];
         if ($datasetType !== 'users' && $payload['code'] === '') {
             $errors[] = 'missing_code';
@@ -271,6 +319,156 @@ class StageReferenceDataImport
         }
 
         return $errors;
+    }
+
+    /** @return ProgrammeCoverageContext */
+    private function programmeCoverageContext(): array
+    {
+        $programmes = Programme::query()->get(['id', 'code', 'starts_on', 'ends_on'])->mapWithKeys(fn (Programme $programme): array => [
+            Str::upper($programme->code) => [
+                'id' => $programme->id,
+                'starts_on' => $programme->starts_on?->toDateString(),
+                'ends_on' => $programme->ends_on?->toDateString(),
+            ],
+        ])->all();
+        $counties = County::query()->pluck('id', 'code')->mapWithKeys(fn (string $id, int|string $code): array => [(int) $code => $id])->all();
+        $implementationLeads = Organization::query()->where('status', 'active')->pluck('code')->map(fn (string $code): string => Str::upper($code))->values()->all();
+        $existingCoverages = ProgrammeCountyCoverage::query()->get(['programme_id', 'county_id', 'starts_on', 'ends_on'])
+            ->groupBy(fn (ProgrammeCountyCoverage $coverage): string => "{$coverage->programme_id}|{$coverage->county_id}")
+            ->map(fn ($coverages): array => $coverages->map(fn (ProgrammeCountyCoverage $coverage): array => [
+                'starts_on' => $coverage->starts_on->toDateString(),
+                'ends_on' => $coverage->ends_on?->toDateString(),
+            ])->values()->all())
+            ->all();
+
+        return [
+            'programmes' => $programmes,
+            'counties' => $counties,
+            'implementation_leads' => $implementationLeads,
+            'existing_coverages' => $existingCoverages,
+        ];
+    }
+
+    /**
+     * @param  array<string, string>  $payload
+     * @param  ProgrammeCoverageContext  $context
+     * @return list<string>
+     */
+    private function validateProgrammeCoveragePayload(array $payload, array $context): array
+    {
+        $errors = [];
+        $programme = $context['programmes'][$payload['programme_code']] ?? null;
+        $countyCode = ctype_digit($payload['county_code']) ? (int) $payload['county_code'] : null;
+        $countyId = $countyCode !== null ? ($context['counties'][$countyCode] ?? null) : null;
+
+        if ($payload['programme_code'] === '' || ! is_array($programme)) {
+            $errors[] = 'unknown_programme_code';
+        }
+        if ($countyId === null) {
+            $errors[] = 'unknown_county_code';
+        }
+        if ($payload['implementation_lead_code'] !== '' && ! in_array($payload['implementation_lead_code'], $context['implementation_leads'], true)) {
+            $errors[] = 'unknown_active_implementation_lead_code';
+        }
+
+        $validStart = $this->isIsoDate($payload['starts_on']);
+        $validEnd = $payload['ends_on'] === '' || $this->isIsoDate($payload['ends_on']);
+        if (! $validStart) {
+            $errors[] = 'invalid_start_date';
+        }
+        if (! $validEnd) {
+            $errors[] = 'invalid_end_date';
+        }
+        if ($validStart && $validEnd && $payload['ends_on'] !== '' && $payload['ends_on'] < $payload['starts_on']) {
+            $errors[] = 'end_date_before_start_date';
+        }
+        if (is_array($programme) && $validStart && is_string($programme['starts_on']) && $payload['starts_on'] < $programme['starts_on']) {
+            $errors[] = 'coverage_before_programme_start';
+        }
+        if (is_array($programme) && is_string($programme['ends_on']) && ($payload['ends_on'] === '' || ($validEnd && $payload['ends_on'] > $programme['ends_on']))) {
+            $errors[] = 'coverage_after_programme_end';
+        }
+        if (! in_array($payload['status'], ['planned', 'active', 'paused', 'closed'], true)) {
+            $errors[] = 'invalid_status';
+        }
+        if ($payload['funding_allocation'] !== '' && (! is_numeric($payload['funding_allocation']) || (float) $payload['funding_allocation'] < 0)) {
+            $errors[] = 'invalid_funding_allocation';
+        }
+        if (preg_match('/^[A-Z]{3}$/', $payload['currency']) !== 1) {
+            $errors[] = 'invalid_currency';
+        }
+        if ($payload['source_reference'] === '' || Str::length($payload['source_reference']) > 255) {
+            $errors[] = 'invalid_source_reference';
+        }
+        if (Str::length($payload['notes']) > 5000) {
+            $errors[] = 'notes_too_long';
+        }
+
+        if (is_array($programme) && is_string($countyId) && $validStart && $validEnd) {
+            $existing = $context['existing_coverages'][$programme['id'].'|'.$countyId] ?? [];
+            foreach ($existing as $coverage) {
+                if ($this->rangesOverlap($payload['starts_on'], $payload['ends_on'] ?: null, $coverage['starts_on'], $coverage['ends_on'])) {
+                    $errors[] = 'overlapping_existing_coverage';
+                    break;
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /** @param array<string, string> $payload */
+    private function coverageIdentity(array $payload): string
+    {
+        return implode('|', [$payload['programme_code'], $payload['county_code'], $payload['starts_on'], $payload['ends_on'] ?: 'open']);
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function markOverlappingCoverageRows(array $rows): array
+    {
+        $groups = collect($rows)->keys()->groupBy(fn (int $index): string => implode('|', [
+            data_get($rows[$index], 'source_payload.programme_code'),
+            data_get($rows[$index], 'source_payload.county_code'),
+        ]));
+
+        foreach ($groups as $indices) {
+            $sorted = $indices->filter(fn (int $index): bool => $this->isIsoDate((string) data_get($rows[$index], 'source_payload.starts_on')))
+                ->sortBy(fn (int $index): string => (string) data_get($rows[$index], 'source_payload.starts_on'));
+            $furthestEnd = null;
+            $furthestIndex = null;
+            foreach ($sorted as $index) {
+                $start = (string) data_get($rows[$index], 'source_payload.starts_on');
+                $end = (string) data_get($rows[$index], 'source_payload.ends_on') ?: '9999-12-31';
+                if ($furthestEnd !== null && $start <= $furthestEnd) {
+                    foreach ([$furthestIndex, $index] as $overlapIndex) {
+                        $rows[$overlapIndex]['validation_errors'] = array_values(array_unique([...$rows[$overlapIndex]['validation_errors'], 'overlapping_coverage_in_file']));
+                        $rows[$overlapIndex]['validation_status'] = 'invalid';
+                    }
+                }
+                if ($furthestEnd === null || $end > $furthestEnd) {
+                    $furthestEnd = $end;
+                    $furthestIndex = $index;
+                }
+            }
+        }
+
+        return $rows;
+    }
+
+    private function isIsoDate(string $value): bool
+    {
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts) !== 1) {
+            return false;
+        }
+
+        return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
+    }
+
+    private function rangesOverlap(string $leftStart, ?string $leftEnd, string $rightStart, ?string $rightEnd): bool
+    {
+        return $leftStart <= ($rightEnd ?? '9999-12-31') && ($leftEnd ?? '9999-12-31') >= $rightStart;
     }
 
     /** @return list<int> */

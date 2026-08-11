@@ -8,6 +8,7 @@ use App\Models\DataMigrationRow;
 use App\Models\HistoricalMetric;
 use App\Models\Organization;
 use App\Models\Programme;
+use App\Models\ProgrammeCountyCoverage;
 use App\Models\Sector;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -21,6 +22,7 @@ class ApplyHistoricalDataMigration
         private AuditLogger $auditLogger,
         private GrantProgrammeAccess $grantProgrammeAccess,
         private CreateReferenceDataRelease $createReferenceDataRelease,
+        private CreateProgrammeCountyCoverage $createProgrammeCountyCoverage,
     ) {}
 
     public function handle(DataMigrationBatch $batch, User $actor): DataMigrationBatch
@@ -30,7 +32,7 @@ class ApplyHistoricalDataMigration
             abort_unless($locked->status === 'approved', 409, 'Only an approved migration batch can be applied.');
             abort_if(in_array($actor->id, [$locked->submitted_by, $locked->reviewed_by], true), 403, 'A third independent operator must apply the approved migration.');
 
-            if (in_array($locked->dataset_type, ['organizations', 'sectors', 'programmes', 'users'], true)) {
+            if (in_array($locked->dataset_type, ['organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users'], true)) {
                 return $this->applyReferenceData($locked, $actor);
             }
 
@@ -109,10 +111,25 @@ class ApplyHistoricalDataMigration
             'organizations' => Organization::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'sectors' => Sector::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'programmes' => Programme::query()->withTrashed()->whereIn('code', $codes)->exists(),
+            'programme_county_coverages' => false,
             'users' => User::query()->withTrashed()->whereIn('email', $emails)->exists(),
             default => true,
         };
         abort_if($hasConflict, 409, 'One or more codes now exist. Restage the file against current reference data.');
+
+        if ($batch->dataset_type === 'programme_county_coverages') {
+            $lockKeys = $rows->map(function (DataMigrationRow $row): string {
+                $payload = $row->source_payload ?? [];
+                $programmeId = Programme::query()->whereRaw('upper(code) = ?', [Str::upper((string) ($payload['programme_code'] ?? ''))])->value('id');
+                $countyId = County::query()->where('code', (int) ($payload['county_code'] ?? 0))->value('id');
+                abort_unless(is_string($programmeId) && is_string($countyId), 409, 'A programme or county reference changed after review. Restage the source.');
+
+                return "programme-coverage:{$programmeId}:{$countyId}";
+            })->unique()->sort()->values();
+            foreach ($lockKeys as $lockKey) {
+                DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$lockKey]);
+            }
+        }
 
         $importedAt = now();
         foreach ($rows as $row) {
@@ -146,6 +163,7 @@ class ApplyHistoricalDataMigration
                     'budget_amount' => $payload['budget_amount'] ?: null,
                     'currency' => Str::upper($payload['currency']),
                 ]),
+                'programme_county_coverages' => $this->createImportedProgrammeCountyCoverage($payload, $actor),
                 'users' => $this->createImportedUser($payload, $actor),
                 default => abort(409, 'The approved bulk-import dataset is not supported.'),
             };
@@ -153,7 +171,7 @@ class ApplyHistoricalDataMigration
         }
 
         $release = null;
-        if (in_array($batch->dataset_type, ['organizations', 'sectors', 'programmes'], true)) {
+        if (in_array($batch->dataset_type, ['organizations', 'sectors', 'programmes', 'programme_county_coverages'], true)) {
             $release = $this->createReferenceDataRelease->handle(
                 $actor,
                 "Automated candidate from governed {$batch->dataset_type} import {$batch->reference}; source {$batch->source_reference}; file SHA-256 {$batch->file_checksum}; {$rows->count()} records. Independent publication required.",
@@ -191,6 +209,31 @@ class ApplyHistoricalDataMigration
         ]);
 
         return $batch->refresh();
+    }
+
+    /** @param array<string, string> $payload */
+    private function createImportedProgrammeCountyCoverage(array $payload, User $actor): ProgrammeCountyCoverage
+    {
+        $programme = Programme::query()->whereRaw('upper(code) = ?', [Str::upper($payload['programme_code'])])->first();
+        $county = County::query()->where('code', (int) $payload['county_code'])->first();
+        $implementationLeadId = $payload['implementation_lead_code'] !== ''
+            ? Organization::query()->where('status', 'active')->whereRaw('upper(code) = ?', [Str::upper($payload['implementation_lead_code'])])->value('id')
+            : null;
+        abort_unless($programme !== null && $county !== null, 409, 'A programme or county reference changed after review. Restage the source.');
+        abort_if($payload['implementation_lead_code'] !== '' && ! is_string($implementationLeadId), 409, 'An implementation-lead reference changed after review. Restage the source.');
+
+        return $this->createProgrammeCountyCoverage->handle($actor, [
+            'programme_id' => $programme->id,
+            'county_id' => $county->id,
+            'implementation_lead_id' => $implementationLeadId,
+            'starts_on' => $payload['starts_on'],
+            'ends_on' => $payload['ends_on'] ?: null,
+            'status' => $payload['status'],
+            'funding_allocation' => $payload['funding_allocation'] !== '' ? $payload['funding_allocation'] : null,
+            'currency' => Str::upper($payload['currency']),
+            'source_reference' => $payload['source_reference'],
+            'notes' => $payload['notes'] ?: null,
+        ]);
     }
 
     /** @param array<string, string> $payload */

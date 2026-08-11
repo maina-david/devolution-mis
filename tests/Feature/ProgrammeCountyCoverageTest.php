@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateProgrammeCountyCoverage;
 use App\Models\County;
 use App\Models\Organization;
 use App\Models\Programme;
@@ -13,6 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ProgrammeCountyCoverageTest extends TestCase
@@ -117,6 +119,33 @@ class ProgrammeCountyCoverageTest extends TestCase
             'starts_on' => '2026-06-01',
             'ends_on' => '2027-05-31',
         ]);
+    }
+
+    public function test_action_boundary_independently_enforces_programme_dates(): void
+    {
+        $manager = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create(['starts_on' => '2025-01-01', 'ends_on' => '2027-12-31']);
+        $county = County::factory()->create();
+
+        try {
+            app(CreateProgrammeCountyCoverage::class)->handle($manager, [
+                'programme_id' => $programme->id,
+                'county_id' => $county->id,
+                'implementation_lead_id' => null,
+                'starts_on' => '2024-12-31',
+                'ends_on' => '2028-01-01',
+                'status' => 'planned',
+                'funding_allocation' => null,
+                'currency' => 'KES',
+                'source_reference' => 'SDD/KDSP/INVALID-DATES',
+                'notes' => null,
+            ]);
+            $this->fail('The action must reject coverage outside the programme period.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+
+        $this->assertDatabaseCount('programme_county_coverages', 0);
     }
 
     public function test_coverage_is_permission_protected_archivable_and_included_in_immutable_release_snapshot(): void

@@ -9,6 +9,7 @@ use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\Organization;
 use App\Models\Programme;
+use App\Models\ProgrammeCountyCoverage;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
 use App\Models\User;
@@ -21,6 +22,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 use ZipArchive;
 
@@ -200,8 +202,152 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             ->assertDownload('programmes-bulk-import-template.csv');
 
         $this->actingAs($administrator)
+            ->get(route('data-migrations.templates.show', [$administrator->currentTeam->slug, 'programme_county_coverages']))
+            ->assertOk()
+            ->assertDownload('programme_county_coverages-bulk-import-template.csv');
+
+        $this->actingAs($administrator)
             ->get(route('data-migrations.templates.show', [$administrator->currentTeam->slug, 'unsupported']))
             ->assertNotFound();
+    }
+
+    public function test_programme_county_coverage_import_applies_governed_rows_and_creates_release_lineage(): void
+    {
+        Storage::fake('local');
+        $submitter = User::factory()->platformAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $applier = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create([
+            'code' => 'KDSP-II',
+            'starts_on' => '2024-07-01',
+            'ends_on' => '2028-06-30',
+        ]);
+        $counties = County::factory()->count(2)->sequence(['code' => 1], ['code' => 2])->create();
+        $lead = Organization::factory()->create(['code' => 'SDD', 'status' => 'active']);
+
+        $batch = $this->approvedBatch($submitter, $reviewer, 'programme_county_coverages', [
+            ['KDSP-II', '001', 'SDD', '2025-01-01', '2026-12-31', 'active', '25000000', 'KES', 'SDD/KDSP-II/001', 'Approved first implementation phase.'],
+            ['KDSP-II', '002', '', '2025-07-01', '2028-06-30', 'planned', '', 'KES', 'SDD/KDSP-II/002', 'Allocation and lead remain unasserted.'],
+        ]);
+        app(ApplyHistoricalDataMigration::class)->handle($batch, $applier);
+
+        $coverages = ProgrammeCountyCoverage::query()->orderBy('county_id')->get();
+        $this->assertCount(2, $coverages);
+        $this->assertEqualsCanonicalizing($counties->pluck('id')->all(), $coverages->pluck('county_id')->all());
+        $this->assertSame($programme->id, $coverages->first()->programme_id);
+        $this->assertSame($lead->id, $coverages->firstWhere('county_id', $counties[0]->id)?->implementation_lead_id);
+        $this->assertNull($coverages->firstWhere('county_id', $counties[1]->id)?->funding_allocation);
+        $this->assertSame($applier->id, $coverages->first()->created_by);
+
+        $release = ReferenceDataRelease::query()->sole();
+        $this->assertSame('submitted', $release->status);
+        $this->assertCount(2, $release->snapshot['programme_county_coverages']);
+        $this->assertSame($release->id, data_get($batch->refresh()->validation_report, 'reference_data_release.id'));
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $release->id, 'action' => 'reference.release.submitted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $batch->id, 'action' => 'data_import.applied']);
+        $this->assertSame(2, DB::table('audit_events')->where('action', 'reference.programme-coverage.created')->count());
+    }
+
+    public function test_programme_county_coverage_import_retains_reference_date_and_overlap_exceptions(): void
+    {
+        Storage::fake('local');
+        $submitter = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create([
+            'code' => 'KDSP-II',
+            'starts_on' => '2025-01-01',
+            'ends_on' => '2027-12-31',
+        ]);
+        $county = County::factory()->create(['code' => 1]);
+        Organization::factory()->create(['code' => 'LEAD', 'status' => 'inactive']);
+        ProgrammeCountyCoverage::factory()->create([
+            'programme_id' => $programme->id,
+            'county_id' => $county->id,
+            'starts_on' => '2025-01-01',
+            'ends_on' => '2025-12-31',
+        ]);
+
+        $batch = app(StageReferenceDataImport::class)->handle(
+            $submitter,
+            $this->csv('programme_county_coverages', [
+                ['UNKNOWN', '999', 'LEAD', '2024-01-01', '2028-01-01', 'wrong', '-1', 'KE', '', ''],
+                ['KDSP-II', '001', '', '2026-01-01', '2026-12-31', 'active', '100', 'KES', 'SDD/KDSP/OVERLAP-A', ''],
+                ['KDSP-II', '001', '', '2026-06-01', '2027-06-30', 'planned', '', 'KES', 'SDD/KDSP/OVERLAP-B', ''],
+                ['KDSP-II', '001', '', '2025-06-01', '2025-08-31', 'active', '', 'KES', 'SDD/KDSP/EXISTING', ''],
+            ]),
+            'programme_county_coverages',
+            'Approved programme implementation coverage register',
+            'SDD-KDSP-COVERAGE-2026',
+        );
+
+        $this->assertSame('validation_failed', $batch->status);
+        $this->assertSame(4, $batch->invalid_rows);
+        $this->assertEqualsCanonicalizing([
+            'unknown_programme_code',
+            'unknown_county_code',
+            'unknown_active_implementation_lead_code',
+            'invalid_status',
+            'invalid_funding_allocation',
+            'invalid_currency',
+            'invalid_source_reference',
+        ], $batch->rows[0]->validation_errors);
+        $this->assertContains('overlapping_coverage_in_file', $batch->rows[1]->validation_errors);
+        $this->assertContains('overlapping_coverage_in_file', $batch->rows[2]->validation_errors);
+        $this->assertContains('overlapping_existing_coverage', $batch->rows[3]->validation_errors);
+    }
+
+    public function test_programme_county_coverage_application_rechecks_conflicts_and_rolls_back(): void
+    {
+        Storage::fake('local');
+        $submitter = User::factory()->platformAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $applier = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create([
+            'code' => 'KDSP-II',
+            'starts_on' => '2025-01-01',
+            'ends_on' => '2027-12-31',
+        ]);
+        $county = County::factory()->create(['code' => 1]);
+        $batch = $this->approvedBatch($submitter, $reviewer, 'programme_county_coverages', [
+            ['KDSP-II', '001', '', '2026-01-01', '2026-12-31', 'active', '', 'KES', 'SDD/KDSP/RACE', ''],
+        ]);
+        ProgrammeCountyCoverage::factory()->create([
+            'programme_id' => $programme->id,
+            'county_id' => $county->id,
+            'starts_on' => '2026-06-01',
+            'ends_on' => '2027-05-31',
+        ]);
+
+        try {
+            app(ApplyHistoricalDataMigration::class)->handle($batch, $applier);
+            $this->fail('The application-time overlap should reject the stale approved batch.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+
+        $this->assertSame('approved', $batch->refresh()->status);
+        $this->assertSame(1, ProgrammeCountyCoverage::query()->count());
+        $this->assertDatabaseCount('reference_data_releases', 0);
+    }
+
+    public function test_county_role_cannot_stage_programme_county_coverage_import_through_the_action_boundary(): void
+    {
+        Storage::fake('local');
+        $official = User::factory()->countyOfficial()->create();
+
+        try {
+            app(StageReferenceDataImport::class)->handle(
+                $official,
+                $this->csv('programme_county_coverages', [
+                    ['KDSP-II', '001', '', '2026-01-01', '2026-12-31', 'active', '', 'KES', 'SDD/KDSP/DENIED', ''],
+                ]),
+                'programme_county_coverages',
+                'Unauthorized coverage register',
+                'SDD-KDSP-DENIED',
+            );
+            $this->fail('A county role must not cross the reference-data import action boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
     }
 
     public function test_authorized_user_can_download_and_stage_an_exact_xlsx_template(): void
