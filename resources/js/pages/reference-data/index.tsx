@@ -19,6 +19,7 @@ import FormSheet from '@/components/form-sheet';
 import ReferenceCatalogSelect from '@/components/reference-catalog-select';
 import SearchableSelect from '@/components/searchable-select';
 import StaticSearchableSelect from '@/components/static-searchable-select';
+import TableEmptyState from '@/components/table-empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -1008,11 +1009,11 @@ function ReleaseRegister({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell
-                                    colSpan={7}
-                                    className="h-24 text-center text-muted-foreground"
-                                >
-                                    No catalogue releases have been submitted.
+                                <TableCell colSpan={7}>
+                                    <TableEmptyState
+                                        title="No catalogue releases"
+                                        description="No governed reference-data releases have been submitted."
+                                    />
                                 </TableCell>
                             </TableRow>
                         )}
@@ -1136,11 +1137,8 @@ function RegistryTable({
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell
-                                    colSpan={headers.length}
-                                    className="h-24 text-center text-muted-foreground"
-                                >
-                                    No matching records.
+                                <TableCell colSpan={headers.length}>
+                                    <TableEmptyState />
                                 </TableCell>
                             </TableRow>
                         )}

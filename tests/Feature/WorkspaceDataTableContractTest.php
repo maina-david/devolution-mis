@@ -43,14 +43,25 @@ class WorkspaceDataTableContractTest extends TestCase
     public function test_shared_table_uses_the_shadcn_empty_state_for_zero_rows(): void
     {
         $source = $this->source('resources/js/components/workspace-data-table.tsx');
+        $emptyState = $this->source('resources/js/components/table-empty-state.tsx');
 
-        $this->assertStringContainsString("from '@/components/ui/empty'", $source);
         $this->assertStringContainsString('table.getRowModel().rows.length === 0', $source);
-        $this->assertStringContainsString('<Empty className="border-0 py-10" role="status">', $source);
-        $this->assertStringContainsString('<EmptyTitle>', $source);
-        $this->assertStringContainsString('No records found', $source);
-        $this->assertStringContainsString('No records match the current', $source);
-        $this->assertStringContainsString('filters.', $source);
+        $this->assertStringContainsString('<TableEmptyState />', $source);
+        $this->assertStringContainsString("from '@/components/ui/empty'", $emptyState);
+        $this->assertStringContainsString('<Empty className="border-0 py-10" role="status">', $emptyState);
+        $this->assertStringContainsString('<EmptyTitle>{title}</EmptyTitle>', $emptyState);
+        $this->assertStringContainsString("title = 'No records found'", $emptyState);
+        $this->assertStringContainsString("description = 'No records match the current filters.'", $emptyState);
+    }
+
+    public function test_custom_management_tables_use_the_shared_shadcn_empty_state(): void
+    {
+        foreach (['resources/js/pages/access-control/index.tsx', 'resources/js/pages/reference-data/index.tsx'] as $path) {
+            $source = $this->source($path);
+
+            $this->assertStringContainsString("import TableEmptyState from '@/components/table-empty-state';", $source);
+            $this->assertStringContainsString('<TableEmptyState', $source);
+        }
     }
 
     public function test_settings_use_the_shared_contextual_tab_surface(): void

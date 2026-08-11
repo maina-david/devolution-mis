@@ -1,6 +1,7 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { Ellipsis, KeyRound, Pencil, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
+import TableEmptyState from '@/components/table-empty-state';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -263,12 +264,11 @@ export default function AccessControl({
                                     ))}
                                     {users.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell
-                                                colSpan={7}
-                                                className="h-32 text-center text-muted-foreground"
-                                            >
-                                                No users match the active
-                                                search.
+                                            <TableCell colSpan={7}>
+                                                <TableEmptyState
+                                                    title="No users found"
+                                                    description="No authorized users match the active search."
+                                                />
                                             </TableCell>
                                         </TableRow>
                                     ) : null}
