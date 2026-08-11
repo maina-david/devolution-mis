@@ -93,16 +93,16 @@ export default function AccessControl({
     return (
         <>
             <Head title="Roles and permissions" />
-            <div className="flex flex-col gap-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-foreground">
-                        Roles & permissions
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
+            <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+                <section className="authenticated-page-header">
+                    <p>Identity and access governance</p>
+                    <h1>Roles & permissions</h1>
+                    <p>
                         Govern role inheritance and exceptional direct user
-                        permissions separately.
+                        permissions from one audited, least-privilege control
+                        plane.
                     </p>
-                </div>
+                </section>
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <Metric
@@ -308,7 +308,7 @@ export default function AccessControl({
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </main>
 
             <PermissionSheet
                 open={selectedRole !== null}
@@ -475,16 +475,18 @@ function Metric({
 }) {
     return (
         <Card>
-            <CardContent className="flex items-center gap-4 pt-6">
-                <div className="rounded-lg bg-muted p-3">
-                    <Icon aria-hidden="true" />
-                </div>
+            <CardContent className="flex items-start justify-between p-5">
                 <div>
-                    <p className="text-2xl font-semibold text-foreground">
-                        {value}
+                    <p className="text-sm font-medium text-muted-foreground">
+                        {label}
                     </p>
-                    <p className="text-sm text-muted-foreground">{label}</p>
+                    <p className="mt-2 text-3xl font-bold text-foreground">
+                        {value.toLocaleString()}
+                    </p>
                 </div>
+                <span className="rounded-lg bg-primary/10 p-2 text-primary">
+                    <Icon aria-hidden="true" />
+                </span>
             </CardContent>
         </Card>
     );
@@ -496,6 +498,11 @@ function humanize(value: string): string {
         .replace(/\b\w/gu, (letter) => letter.toUpperCase());
 }
 
-AccessControl.layout = {
-    breadcrumbs: [{ title: 'Roles & permissions', href: '#' }],
-};
+AccessControl.layout = (props: { currentTeam?: { slug: string } | null }) => ({
+    breadcrumbs: [
+        {
+            title: 'Roles & permissions',
+            href: props.currentTeam ? index(props.currentTeam.slug) : '/',
+        },
+    ],
+});

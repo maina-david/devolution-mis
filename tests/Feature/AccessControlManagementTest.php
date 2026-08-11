@@ -91,4 +91,16 @@ class AccessControlManagementTest extends TestCase
             ->get(route('access-control.index', $countyAdmin->currentTeam->slug))
             ->assertForbidden();
     }
+
+    public function test_access_control_page_uses_the_authenticated_platform_governance_layout_contract(): void
+    {
+        $source = file_get_contents(resource_path('js/pages/access-control/index.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8', $source);
+        $this->assertStringContainsString('authenticated-page-header', $source);
+        $this->assertStringContainsString('Identity and access governance', $source);
+        $this->assertStringContainsString('index(props.currentTeam.slug)', $source);
+        $this->assertStringNotContainsString("href: '#'", $source);
+    }
 }
