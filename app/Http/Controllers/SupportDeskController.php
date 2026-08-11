@@ -38,10 +38,12 @@ class SupportDeskController extends Controller
             $access->assertCounty($user, $filters->countyId);
         }
         $workspace = $workspaceData->supportTickets($user, $filters);
-        $rowIds = collect($workspace['rows'])
-            ->pluck('id')
-            ->filter(fn (mixed $id): bool => is_string($id))
-            ->values();
+        /** @var list<array{id: string}> $workspaceRows */
+        $workspaceRows = $workspace['rows'];
+        $rowIds = array_map(
+            fn (array $row): string => $row['id'],
+            $workspaceRows,
+        );
         $details = $access->query($user)
             ->whereIn('id', $rowIds)
             ->with([

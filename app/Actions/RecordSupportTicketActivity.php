@@ -21,7 +21,7 @@ class RecordSupportTicketActivity
             'id' => $id,
             'support_ticket_id' => $ticket->id,
             'actor_id' => $actor?->id,
-            'actor_name' => $actor?->name ?? 'system:support-sla-monitor',
+            'actor_name' => $actor === null ? 'system:support-sla-monitor' : $actor->name,
             'activity_type' => $activityType,
             'from_status' => $fromStatus,
             'to_status' => $toStatus,
