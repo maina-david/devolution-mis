@@ -11,6 +11,8 @@ use Throwable;
 
 class OperationalReadinessCheck
 {
+    public function __construct(private DocumentSecurityScanner $documentSecurityScanner) {}
+
     /** @return array{ready:bool,checked_at:string,checks:array<string,array{status:string,latency_ms:float|null,detail:string}>} */
     public function run(): array
     {
@@ -42,6 +44,7 @@ class OperationalReadinessCheck
 
                 return "Queue persistence is available; {$failed} failed jobs recorded.";
             }),
+            'document_malware_scanner' => $this->timed(fn (): string => $this->documentSecurityScanner->readinessDetail()),
         ];
 
         return ['ready' => collect($checks)->every(fn (array $check): bool => $check['status'] === 'pass'), 'checked_at' => now()->toIso8601String(), 'checks' => $checks];

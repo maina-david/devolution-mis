@@ -3,6 +3,11 @@
 use App\Support\ReferenceCatalogue;
 
 return [
+    'security' => [
+        'malware_scanner' => env('DOCUMENT_MALWARE_SCANNER', 'signature'),
+        'clamav_binary' => env('DOCUMENT_CLAMAV_BINARY', 'clamscan'),
+        'timeout_seconds' => (int) env('DOCUMENT_MALWARE_SCAN_TIMEOUT', 120),
+    ],
     'extraction' => [
         'pdftotext_binary' => env('DOCUMENT_PDFTOTEXT_BINARY', 'pdftotext'),
         'pdftoppm_binary' => env('DOCUMENT_PDFTOPPM_BINARY', 'pdftoppm'),

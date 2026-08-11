@@ -25,8 +25,20 @@ class OperationalReadinessTest extends TestCase
 
     public function test_public_readiness_probe_checks_dependencies_without_disclosing_details(): void
     {
-        $this->getJson(route('health.ready'))->assertOk()->assertJsonPath('status', 'ready')->assertJsonCount(4, 'checks')->assertJsonStructure(['status', 'checkedAt', 'checks' => [['name', 'status', 'latencyMs']]]);
+        $this->getJson(route('health.ready'))->assertOk()->assertJsonPath('status', 'ready')->assertJsonCount(5, 'checks')->assertJsonFragment(['name' => 'document_malware_scanner', 'status' => 'pass'])->assertJsonStructure(['status', 'checkedAt', 'checks' => [['name', 'status', 'latencyMs']]]);
         $this->assertSame([], Storage::disk('local')->allFiles('operations/readiness'));
+    }
+
+    public function test_production_readiness_fails_closed_on_the_development_signature_gate(): void
+    {
+        $this->app->detectEnvironment(fn (): string => 'production');
+        config()->set('repository.security.malware_scanner', 'signature');
+
+        $this->getJson(route('health.ready'))
+            ->assertServiceUnavailable()
+            ->assertJsonPath('status', 'not_ready')
+            ->assertJsonFragment(['name' => 'document_malware_scanner', 'status' => 'fail'])
+            ->assertJsonMissing(['detail' => 'Production document scanning requires the approved ClamAV scanner.']);
     }
 
     public function test_release_evidence_requires_independent_validation_and_supports_controlled_rollback(): void
@@ -58,8 +70,8 @@ class OperationalReadinessTest extends TestCase
         $viewer = User::factory()->topManagement()->create();
         $performanceRun = PerformanceTestRun::factory()->create();
         $this->assertSame(0, Artisan::call('operations:measure'));
-        $this->assertSame(8, ServiceLevelMeasurement::query()->count());
-        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 8)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $this->assertSame(9, ServiceLevelMeasurement::query()->count());
+        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
         $this->actingAs($viewer)->post(route('operations.backups.store', $viewer->currentTeam->slug))->assertForbidden();
         $this->actingAs($operator)->post(route('operations.backups.store', $operator->currentTeam->slug))->assertRedirect();
         Queue::assertPushed(CreateOperationalBackupJob::class, fn ($job) => $job->userId === $operator->id);

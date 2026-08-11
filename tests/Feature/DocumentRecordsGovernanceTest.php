@@ -9,11 +9,13 @@ use App\Models\County;
 use App\Models\DocumentLegalHold;
 use App\Models\DocumentVersion;
 use App\Models\User;
+use App\Services\DocumentSecurityScanner;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -21,6 +23,69 @@ use Tests\TestCase;
 class DocumentRecordsGovernanceTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_clamav_scan_contract_normalizes_clean_and_infected_results(): void
+    {
+        config()->set('repository.security.malware_scanner', 'clamav');
+        Process::preventStrayProcesses();
+        Process::fake(function ($process) {
+            $command = $process->command;
+            if (! is_array($command)) {
+                throw new \RuntimeException('Unexpected string malware scanner command.');
+            }
+
+            $path = (string) end($command);
+
+            return str_contains((string) file_get_contents($path), 'EICAR-STANDARD-ANTIVIRUS-TEST-FILE')
+                ? Process::result(output: "{$path}: Win.Test.EICAR_HDB-1 FOUND\n", exitCode: 1)
+                : Process::result(output: '', exitCode: 0);
+        });
+
+        $scanner = app(DocumentSecurityScanner::class);
+        $clean = $scanner->inspect(UploadedFile::fake()->createWithContent('clean.txt', 'approved county record'));
+        $infected = $scanner->inspect(UploadedFile::fake()->createWithContent('eicar.txt', str_repeat('x', 9000).'EICAR-STANDARD-ANTIVIRUS-TEST-FILE'));
+
+        $this->assertSame('clean', $clean['status']);
+        $this->assertSame('clamav-clamscan', $clean['details']['engine']);
+        $this->assertSame('infected', $infected['status']);
+        $this->assertSame('Win.Test.EICAR_HDB-1', $infected['details']['signature']);
+        $this->assertArrayNotHasKey('path', $infected['details']);
+        Process::assertRanTimes(fn ($process): bool => is_array($process->command) && $process->command[0] === 'clamscan', times: 2);
+    }
+
+    public function test_development_signature_gate_scans_the_complete_file(): void
+    {
+        config()->set('repository.security.malware_scanner', 'signature');
+
+        $inspection = app(DocumentSecurityScanner::class)->inspect(
+            UploadedFile::fake()->createWithContent('late-signature.txt', str_repeat('x', 70_000).'EICAR-STANDARD-ANTIVIRUS-TEST-FILE'),
+        );
+
+        $this->assertSame('infected', $inspection['status']);
+        $this->assertSame('idmis-development-signature-gate', $inspection['details']['engine']);
+    }
+
+    public function test_clamav_failure_rejects_an_unscanned_upload_without_persisting_it(): void
+    {
+        Storage::fake('local');
+        Notification::fake();
+        config()->set('repository.security.malware_scanner', 'clamav');
+        Process::preventStrayProcesses();
+        Process::fake(['*' => Process::result(errorOutput: 'scanner unavailable', exitCode: 2)]);
+        $county = County::factory()->create();
+        $official = User::factory()->countyOfficial($county)->create();
+        $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
+
+        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+            'title' => 'Unscanned evidence',
+            'category' => 'Other',
+            'source_type' => 'digital',
+            'document' => UploadedFile::fake()->createWithContent('evidence.txt', 'unscanned'),
+        ])->assertServerError();
+
+        $this->assertDatabaseCount('assessment_documents', 0);
+        $this->assertSame([], Storage::disk('local')->allFiles('assessment-evidence'));
+    }
 
     public function test_upload_creates_checksum_bound_immutable_version_and_ocr_work_item(): void
     {

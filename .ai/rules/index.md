@@ -30,6 +30,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Actions/RunSupplyChainScan.php,app/Models/SupplyChainScan.php,database/migrations/*supply_chain_scans*,app/Http/Controllers/SecurityGovernanceController.php,resources/js/pages/security-governance/** | .ai/rules/security-governance.md |
 | app/Models/User.php,app/Services/ProgrammeAuthorization.php,database/migrations/**,database/seeders/** | .ai/rules/seeders.md |
 | app/Services/LocalDocumentTextExtractor.php,config/repository.php,tests/Feature/DocumentTextExtractionTest.php | .ai/rules/services-feature.md |
+| app/Services/DocumentSecurityScanner.php,app/Services/OperationalReadinessCheck.php,config/repository.php,tests/Feature/{DocumentRecordsGovernanceTest,OperationalReadinessTest}.php | .ai/rules/services-services-feature.md |
 | app/Http/{Controllers/AccessControlController.php,Requests/Update*PermissionsRequest.php}|resources/js/pages/access-control/**|app/Services/ProgrammeAuthorization.php | .ai/rules/services.md |
 | app/{Actions,Services,Http/Controllers/Settings,Http/Requests/Settings}/**|database/migrations/*create_users_table.php|resources/js/{pages/settings,components}/** | .ai/rules/settingscomponents.md |
 | app/Services/WorkflowSimulator.php,app/Http/Controllers/WorkflowDefinitionController.php,resources/js/pages/workflows/** | .ai/rules/workflows.md |
