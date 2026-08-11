@@ -7,6 +7,7 @@ import {
     TriangleAlert,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import {
     storeDependency,
     storeForum,
@@ -40,6 +41,12 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -160,9 +167,25 @@ type Props = {
             awaitingAcceptance: number;
             overdue: number;
             critical: number;
+            affectedResolutions: number;
+            activeAffectedResolutions: number;
+            averageResolutionDays: number | null;
         };
         categories: Array<{ name: string; total: number }>;
         severities: Array<{ name: string; total: number }>;
+        aging: Array<{ name: string; total: number }>;
+        trend: Array<{
+            period: string;
+            label: string;
+            reported: number;
+            accepted: number;
+        }>;
+        counties: Array<{
+            county: CountyIdentityValue | null;
+            total: number;
+            active: number;
+            overdue: number;
+        }>;
     };
     capabilities: { manage: boolean; update: boolean; close: boolean };
     resolutions: Resolution[];
@@ -176,6 +199,11 @@ type Props = {
         gapCategories: Option[];
     };
 };
+
+const gapTrendConfig = {
+    reported: { label: 'Reported', color: 'var(--chart-3)' },
+    accepted: { label: 'Accepted', color: 'var(--chart-1)' },
+} satisfies ChartConfig;
 
 export default function IgrResolutionsIndex({
     workspace,
@@ -254,30 +282,193 @@ export default function IgrResolutionsIndex({
                         },
                     ]}
                 />
-                <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                    {[
-                        ['Total gaps', gapAnalytics.summary.total],
-                        ['Open', gapAnalytics.summary.open],
-                        ['Mitigating', gapAnalytics.summary.mitigating],
-                        [
-                            'Awaiting acceptance',
-                            gapAnalytics.summary.awaitingAcceptance,
-                        ],
-                        ['Overdue', gapAnalytics.summary.overdue],
-                        ['Critical active', gapAnalytics.summary.critical],
-                    ].map(([label, value]) => (
-                        <Card key={String(label)}>
-                            <CardContent className="pt-5">
-                                <p className="text-xs font-medium text-muted-foreground">
-                                    {label}
-                                </p>
-                                <p className="mt-1 text-2xl font-bold">
-                                    {value}
-                                </p>
-                            </CardContent>
-                        </Card>
-                    ))}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Implementation-gap risk profile</CardTitle>
+                        <CardDescription>
+                            Filter-aware exposure across the resolutions and
+                            counties this role is authorized to see.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <dl className="grid overflow-hidden rounded-lg border sm:grid-cols-2 lg:grid-cols-4">
+                            {[
+                                ['Total gaps', gapAnalytics.summary.total],
+                                [
+                                    'Active resolutions affected',
+                                    gapAnalytics.summary
+                                        .activeAffectedResolutions,
+                                ],
+                                ['Overdue', gapAnalytics.summary.overdue],
+                                [
+                                    'Critical active',
+                                    gapAnalytics.summary.critical,
+                                ],
+                                ['Open', gapAnalytics.summary.open],
+                                ['Mitigating', gapAnalytics.summary.mitigating],
+                                [
+                                    'Awaiting acceptance',
+                                    gapAnalytics.summary.awaitingAcceptance,
+                                ],
+                                [
+                                    'Average resolution time',
+                                    gapAnalytics.summary
+                                        .averageResolutionDays === null
+                                        ? 'Not available'
+                                        : `${gapAnalytics.summary.averageResolutionDays} days`,
+                                ],
+                            ].map(([label, value]) => (
+                                <div
+                                    key={String(label)}
+                                    className="border-b p-4 last:border-b-0 sm:border-r sm:nth-[2n]:border-r-0 lg:nth-[2n]:border-r lg:nth-[4n]:border-r-0 lg:nth-[n+5]:border-b-0"
+                                >
+                                    <dt className="text-xs font-medium text-muted-foreground">
+                                        {label}
+                                    </dt>
+                                    <dd className="mt-1 text-xl font-semibold">
+                                        {value}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </CardContent>
+                </Card>
+                <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,1fr)]">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Gap lifecycle trend</CardTitle>
+                            <CardDescription>
+                                New gaps versus independently accepted
+                                resolutions over the latest six calendar months.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ChartContainer
+                                config={gapTrendConfig}
+                                className="h-72 w-full"
+                            >
+                                <BarChart
+                                    data={gapAnalytics.trend}
+                                    accessibilityLayer
+                                >
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="label"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        tickMargin={8}
+                                    />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent />}
+                                    />
+                                    <Bar
+                                        dataKey="reported"
+                                        fill="var(--color-reported)"
+                                        radius={4}
+                                    />
+                                    <Bar
+                                        dataKey="accepted"
+                                        fill="var(--color-accepted)"
+                                        radius={4}
+                                    />
+                                </BarChart>
+                            </ChartContainer>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Active-gap aging</CardTitle>
+                            <CardDescription>
+                                Time since reporting for gaps that still need
+                                independent acceptance.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex flex-col gap-4">
+                            {gapAnalytics.aging.map((band) => {
+                                const activeTotal = Math.max(
+                                    1,
+                                    gapAnalytics.aging.reduce(
+                                        (total, item) => total + item.total,
+                                        0,
+                                    ),
+                                );
+
+                                return (
+                                    <div
+                                        key={band.name}
+                                        className="flex flex-col gap-2"
+                                    >
+                                        <div className="flex items-center justify-between gap-4 text-sm">
+                                            <span>{band.name}</span>
+                                            <span className="font-medium tabular-nums">
+                                                {band.total.toLocaleString()}
+                                            </span>
+                                        </div>
+                                        <Progress
+                                            value={
+                                                (band.total / activeTotal) * 100
+                                            }
+                                            aria-label={`${band.name}: ${band.total} active gaps`}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </CardContent>
+                    </Card>
                 </section>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Risk concentration</CardTitle>
+                        <CardDescription>
+                            Ranked categories, severities and affected counties
+                            for targeted intergovernmental intervention.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 lg:grid-cols-3">
+                        <AnalyticsRanking
+                            title="Categories"
+                            rows={gapAnalytics.categories}
+                        />
+                        <AnalyticsRanking
+                            title="Severities"
+                            rows={gapAnalytics.severities}
+                        />
+                        <div className="flex flex-col gap-3">
+                            <h3 className="text-sm font-medium">
+                                County bottlenecks
+                            </h3>
+                            {gapAnalytics.counties.length ? (
+                                gapAnalytics.counties.map((row) => (
+                                    <div
+                                        key={row.county?.id ?? 'national'}
+                                        className="flex items-center justify-between gap-3 border-b pb-3 last:border-b-0 last:pb-0"
+                                    >
+                                        {row.county ? (
+                                            <CountyIdentity
+                                                county={row.county}
+                                                compact
+                                            />
+                                        ) : (
+                                            <span>National / multi-county</span>
+                                        )}
+                                        <div className="text-right text-xs text-muted-foreground">
+                                            <p className="font-medium text-foreground">
+                                                {row.active} active
+                                            </p>
+                                            <p>{row.overdue} overdue</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    No county-specific gaps match the selected
+                                    filters.
+                                </p>
+                            )}
+                        </div>
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <div className="flex gap-3">
@@ -445,6 +636,42 @@ export default function IgrResolutionsIndex({
                 </Card>
             </div>
         </>
+    );
+}
+
+function AnalyticsRanking({
+    title,
+    rows,
+}: {
+    title: string;
+    rows: Array<{ name: string; total: number }>;
+}) {
+    const maximum = Math.max(1, ...rows.map((row) => row.total));
+
+    return (
+        <div className="flex flex-col gap-3">
+            <h3 className="text-sm font-medium">{title}</h3>
+            {rows.length ? (
+                rows.map((row) => (
+                    <div key={row.name} className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between gap-4 text-sm">
+                            <span className="truncate">{row.name}</span>
+                            <span className="font-medium tabular-nums">
+                                {row.total.toLocaleString()}
+                            </span>
+                        </div>
+                        <Progress
+                            value={(row.total / maximum) * 100}
+                            aria-label={`${row.name}: ${row.total} gaps`}
+                        />
+                    </div>
+                ))
+            ) : (
+                <p className="text-sm text-muted-foreground">
+                    No data matches the selected filters.
+                </p>
+            )}
+        </div>
     );
 }
 

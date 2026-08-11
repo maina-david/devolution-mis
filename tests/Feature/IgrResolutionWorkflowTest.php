@@ -191,6 +191,14 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->actingAs($responsible)->get(route('igr-resolutions.index', $responsible->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('gapAnalytics.summary.total', 1)
             ->where('gapAnalytics.summary.critical', 1)
+            ->where('gapAnalytics.summary.activeAffectedResolutions', 1)
+            ->where('gapAnalytics.summary.averageResolutionDays', null)
+            ->where('gapAnalytics.aging.0.name', 'Up to 7 days')
+            ->where('gapAnalytics.aging.0.total', 1)
+            ->where('gapAnalytics.trend.5.reported', 1)
+            ->where('gapAnalytics.trend.5.accepted', 0)
+            ->where('gapAnalytics.counties.0.county.id', $county->id)
+            ->where('gapAnalytics.counties.0.active', 1)
             ->where('resolutions.0.gaps.0.category', 'DATA-QUALITY · Data quality and interoperability')
             ->where('gapWorkspace.rows.0.cells.3.kind', 'county')
             ->where('gapWorkspace.rows.0.cells.3.id', $county->id));
@@ -216,6 +224,11 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->assertSame('accepted', $gap->refresh()->status);
         $this->assertSame($reviewer->id, $gap->accepted_by);
         $this->assertNull($resolution->refresh()->implementation_gap);
+        $this->actingAs($reviewer)->get(route('igr-resolutions.index', $reviewer->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('gapAnalytics.summary.activeAffectedResolutions', 0)
+            ->where('gapAnalytics.summary.averageResolutionDays', fn (mixed $days): bool => is_float($days) || is_int($days))
+            ->where('gapAnalytics.trend.5.accepted', 1)
+            ->where('gapAnalytics.counties.0.active', 0));
     }
 
     public function test_responsible_party_reports_gaps_and_evidence_before_independent_closure(): void

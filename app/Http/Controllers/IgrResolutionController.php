@@ -35,6 +35,7 @@ use App\Models\User;
 use App\Models\WorkflowInstance;
 use App\Notifications\ProgrammeAlert;
 use App\Services\AuditLogger;
+use App\Services\IgrGapAnalytics;
 use App\Services\ProgrammeCountyScope;
 use App\Services\ProgrammeWorkspaceData;
 use App\Support\WorkspaceFilters;
@@ -47,7 +48,7 @@ use Inertia\Response;
 
 class IgrResolutionController extends Controller
 {
-    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope): Response
+    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, IgrGapAnalytics $gapAnalytics): Response
     {
         Gate::authorize(ProgrammePermission::ViewIgrResolutions->value);
         $user = $this->user($request);
@@ -55,15 +56,12 @@ class IgrResolutionController extends Controller
             ->with(['forum:id,code,name', 'referenceDataRelease:id,version,effective_from,checksum', 'meeting:id,igr_forum_id,reference,title,held_on,venue,chair_user_id,quorum_confirmed,minutes_reference', 'meeting.chair:id,name', 'dependencies.prerequisiteResolution:id,resolution_number,title,status', 'dependents.dependentResolution:id,resolution_number,title,status', 'gaps.category:id,code,name', 'gaps.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'gaps.owner:id,name', 'gaps.resolver:id,name', 'gaps.accepter:id,name', 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'updates' => fn ($query) => $query->latest('reported_at')->limit(5), 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
             ->latest('resolved_on')->limit(50)->get();
         $gapQuery = $this->filteredGaps($this->visibleGaps($user, $countyScope), $request);
-        $gapSummary = (clone $gapQuery)->toBase()->selectRaw("count(*) as total, count(*) filter (where status = 'open') as open, count(*) filter (where status = 'mitigating') as mitigating, count(*) filter (where status = 'resolved') as awaiting_acceptance, count(*) filter (where status != 'accepted' and due_on < current_date) as overdue, count(*) filter (where severity = 'critical' and status != 'accepted') as critical")->first();
-        $gapCategories = (clone $gapQuery)->with('category:id,name')->selectRaw('igr_gap_category_id, count(*) as total')->groupBy('igr_gap_category_id')->orderByDesc('total')->get();
-        $gapSeverities = (clone $gapQuery)->toBase()->selectRaw('severity, count(*) as total')->groupBy('severity')->orderByDesc('total')->get();
 
         return Inertia::render('igr-resolutions/index', [
             'workspace' => $workspaceData->igrResolutions($user, WorkspaceFilters::fromRequest($request)),
             'gapWorkspace' => $workspaceData->igrResolutionGaps($user, WorkspaceFilters::fromRequest($request)),
             'filters' => WorkspaceFilters::fromRequest($request),
-            'gapAnalytics' => ['summary' => ['total' => (int) $gapSummary->total, 'open' => (int) $gapSummary->open, 'mitigating' => (int) $gapSummary->mitigating, 'awaitingAcceptance' => (int) $gapSummary->awaiting_acceptance, 'overdue' => (int) $gapSummary->overdue, 'critical' => (int) $gapSummary->critical], 'categories' => $gapCategories->map(fn (IgrResolutionGap $gap): array => ['name' => $gap->category->name, 'total' => (int) $gap->getAttribute('total')])->values(), 'severities' => $gapSeverities->map(fn ($row): array => ['name' => $row->severity, 'total' => (int) $row->total])->values()],
+            'gapAnalytics' => $gapAnalytics->report($gapQuery),
             'capabilities' => ['manage' => $user->can(ProgrammePermission::ManageIgrResolutions->value), 'update' => $user->can(ProgrammePermission::UpdateIgrResolutions->value), 'close' => $user->can(ProgrammePermission::CloseIgrResolutions->value)],
             'resolutions' => $resolutions->map(fn (IgrResolution $resolution): array => [
                 'id' => $resolution->id, 'number' => $resolution->resolution_number, 'title' => $resolution->title, 'text' => $resolution->resolution_text,
