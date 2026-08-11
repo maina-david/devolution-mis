@@ -12,6 +12,10 @@
 /resources/js/wayfinder
 /vendor
 /tmp
+/.agents
+/.claude
+/.codex
+/.grok
 .DS_Store
 .env
 .env.backup
