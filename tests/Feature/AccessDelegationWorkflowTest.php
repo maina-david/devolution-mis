@@ -115,6 +115,7 @@ class AccessDelegationWorkflowTest extends TestCase
 
     public function test_delegation_fails_closed_without_a_complete_effective_county_catalogue(): void
     {
+        $this->freezeTime();
         $requester = User::factory()->devolutionAdmin()->withTwoFactor()->create();
         $beneficiary = User::factory()->countyOfficial()->withTwoFactor()->create();
         $county = County::factory()->create();

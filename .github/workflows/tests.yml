@@ -38,7 +38,7 @@ jobs:
       DB_PASSWORD: postgres
       CACHE_STORE: array
       SESSION_DRIVER: array
-      QUEUE_CONNECTION: database
+      QUEUE_CONNECTION: sync
 
     steps:
       - name: Checkout code
