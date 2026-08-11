@@ -85,6 +85,10 @@ enum ProgrammePermission: string
     case ApproveReportSchedules = 'report-schedules:approve';
     case ViewAuditTrail = 'audit-trail:view';
     case ViewUserActivity = 'user-activity:view';
+    case ViewSupportDesk = 'support-desk:view';
+    case SubmitSupportTickets = 'support-desk:submit';
+    case ManageSupportTickets = 'support-desk:manage';
+    case ResolveSupportTickets = 'support-desk:resolve';
 
     public function label(): string
     {
@@ -170,6 +174,10 @@ enum ProgrammePermission: string
             self::ApproveReportSchedules => 'Independently approve scheduled reports',
             self::ViewAuditTrail => 'View audit trail',
             self::ViewUserActivity => 'View user sessions and live activity',
+            self::ViewSupportDesk => 'View authorized service-desk tickets',
+            self::SubmitSupportTickets => 'Submit service-desk tickets',
+            self::ManageSupportTickets => 'Triage and assign service-desk tickets',
+            self::ResolveSupportTickets => 'Investigate and resolve assigned support tickets',
         };
     }
 }

@@ -8,6 +8,7 @@ use App\Console\Commands\EscalateSecurityIncidents;
 use App\Console\Commands\ExpireInactiveUserActivitySessions;
 use App\Console\Commands\GenerateDswgRecurringMeetingsCommand;
 use App\Console\Commands\MonitorPartnerOperationalAlerts;
+use App\Console\Commands\MonitorSupportTicketSlas;
 use App\Console\Commands\ReconcileAccessDelegations;
 use App\Console\Commands\ReconcilePartnerContributionExchangesCommand;
 use App\Console\Commands\RecordOperationalMeasurement;
@@ -116,6 +117,12 @@ Schedule::command(MonitorPartnerOperationalAlerts::class)
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Detect idempotent partner agreement and contribution operational alerts');
+
+Schedule::command(MonitorSupportTicketSlas::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Send idempotent service-desk response and resolution SLA reminders');
 
 Schedule::command(SendPartnerCollaborationActionReminders::class)
     ->hourly()

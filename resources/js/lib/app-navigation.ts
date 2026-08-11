@@ -45,6 +45,7 @@ import { index as referenceDataIndex } from '@/routes/reference-data';
 import { index as reportsIndex } from '@/routes/reports';
 import { edit as securityEdit } from '@/routes/security';
 import { index as securityGovernanceIndex } from '@/routes/security-governance';
+import { index as supportDeskIndex } from '@/routes/support-desk';
 import { index as teamsIndex } from '@/routes/teams';
 import { index as travelClearanceIndex } from '@/routes/travel-clearance';
 import { index as userActivityIndex } from '@/routes/user-activity';
@@ -234,6 +235,7 @@ export function appNavigationGroups(
                         'E-Learning',
                         'Learning analytics',
                         'Rollout & training',
+                        'Service desk',
                     ],
                 },
                 {
@@ -275,6 +277,11 @@ export function appNavigationGroups(
                     title: 'Rollout & training',
                     href: changeReadinessIndex(teamSlug),
                     visible: can('change-readiness:view'),
+                },
+                {
+                    title: 'Service desk',
+                    href: supportDeskIndex(teamSlug),
+                    visible: can('support-desk:view'),
                 },
             ]),
         },

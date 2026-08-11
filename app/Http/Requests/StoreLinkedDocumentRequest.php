@@ -70,6 +70,14 @@ class StoreLinkedDocumentRequest extends FormRequest
             return $this->user()?->can(ProgrammePermission::ManageSecurityGovernance->value) === true;
         }
 
+        if ($this->routeIs('support-desk.documents.store')) {
+            return $this->user()?->canAny([
+                ProgrammePermission::SubmitSupportTickets->value,
+                ProgrammePermission::ManageSupportTickets->value,
+                ProgrammePermission::ResolveSupportTickets->value,
+            ]) === true;
+        }
+
         if ($this->routeIs('knowledge.innovation-replications.documents.store')) {
             return $this->user()?->canAny([ProgrammePermission::ContributeKnowledge->value, ProgrammePermission::ManageKnowledge->value]) === true;
         }
@@ -88,7 +96,7 @@ class StoreLinkedDocumentRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'string', 'max:100'],
             'source_type' => ['required', 'in:scanned,digital'],
-            'record_purpose' => [Rule::requiredIf($this->routeIs('dswg.meetings.documents.store') || $this->routeIs('igr-resolutions.documents.store') || $this->routeIs('monitoring-evaluation.evaluations.documents.store') || $this->routeIs('departmental-performance.plans.documents.store') || $this->routeIs('data-governance.privacy-incidents.documents.store') || $this->routeIs('security-governance.incidents.documents.store')), 'nullable', Rule::in(['agenda', 'minutes', 'supporting', 'resolution', 'implementation_evidence', 'terms_of_reference', 'evaluation_report', 'goal_plan', 'self_review_evidence', 'final_appraisal', 'lifecycle_record', 'closure_report', 'investigation', 'notification', 'containment', 'recovery', 'closure'])],
+            'record_purpose' => [Rule::requiredIf($this->routeIs('dswg.meetings.documents.store') || $this->routeIs('igr-resolutions.documents.store') || $this->routeIs('monitoring-evaluation.evaluations.documents.store') || $this->routeIs('departmental-performance.plans.documents.store') || $this->routeIs('data-governance.privacy-incidents.documents.store') || $this->routeIs('security-governance.incidents.documents.store') || $this->routeIs('support-desk.documents.store')), 'nullable', Rule::in(['agenda', 'minutes', 'supporting', 'resolution', 'implementation_evidence', 'terms_of_reference', 'evaluation_report', 'goal_plan', 'self_review_evidence', 'final_appraisal', 'lifecycle_record', 'closure_report', 'investigation', 'notification', 'containment', 'recovery', 'closure', 'request'])],
             'document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp,tif,tiff,doc,docx,xls,xlsx,csv,txt', 'mimetypes:application/pdf,image/jpeg,image/png,image/webp,image/tiff,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain', 'max:20480'],
         ];
     }

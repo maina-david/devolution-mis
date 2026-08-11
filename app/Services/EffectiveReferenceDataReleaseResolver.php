@@ -135,6 +135,16 @@ class EffectiveReferenceDataReleaseResolver
         return $release;
     }
 
+    public function forSupportTicket(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
+    {
+        $release = $this->effectiveRelease($effectiveAt, 'submitting a service-desk ticket');
+        if ($countyId !== null) {
+            $this->assertContains($release, 'counties', [$countyId], 'county_id');
+        }
+
+        return $release;
+    }
+
     public function forIndicatorDefinition(?string $sectorId, ?string $programmeId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
         $release = $this->effectiveRelease($effectiveAt, 'defining an M&E indicator');

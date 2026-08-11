@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RecordSupportTicketActivity;
 use App\Actions\StoreLinkedDocument;
 use App\Enums\ProgrammePermission;
 use App\Http\Requests\StoreLinkedDocumentRequest;
@@ -20,6 +21,7 @@ use App\Models\PerformancePlan;
 use App\Models\PrivacyIncident;
 use App\Models\ProgrammeEvaluation;
 use App\Models\SecurityIncident;
+use App\Models\SupportTicket;
 use App\Models\TravelRequest;
 use App\Models\User;
 use App\Services\DocumentAccess;
@@ -28,6 +30,43 @@ use Inertia\Inertia;
 
 class LinkedDocumentController extends Controller
 {
+    public function storeSupportTicket(
+        StoreLinkedDocumentRequest $request,
+        string $currentTeam,
+        SupportTicket $supportTicket,
+        StoreLinkedDocument $storeDocument,
+        DocumentAccess $documentAccess,
+        RecordSupportTicketActivity $recordActivity,
+    ): RedirectResponse {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+        abort_unless($documentAccess->allowsSubject($user, $supportTicket), 403);
+        abort_if($supportTicket->status === 'closed', 409, 'Support records are locked after requester acceptance and closure.');
+        abort_unless($user->id === $supportTicket->requester_id || $user->id === $supportTicket->assigned_to || $user->can(ProgrammePermission::ManageSupportTickets->value), 403);
+        $recordPurpose = $request->string('record_purpose')->toString();
+        abort_unless(in_array($recordPurpose, ['request', 'investigation', 'resolution'], true), 422, 'Unsupported support record purpose.');
+        abort_if($recordPurpose === 'resolution' && ! in_array($supportTicket->status, ['in_progress', 'resolved'], true), 409, 'Resolution evidence is accepted only during investigation or resolution review.');
+        $document = $storeDocument->handle($supportTicket, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => "support-ticket-{$recordPurpose}-evidence", 'county_id' => $supportTicket->county_id]);
+        $supportTicket->update(['last_activity_at' => now(), 'reminder_sent_at' => null]);
+        $recordActivity->handle(
+            $supportTicket,
+            $user,
+            'document_uploaded',
+            $supportTicket->status,
+            $supportTicket->status,
+            'A governed support record was uploaded.',
+            [
+                'document_id' => $document->id,
+                'document_checksum' => $document->content_checksum,
+                'record_purpose' => $recordPurpose,
+                'scan_status' => $document->scan_status,
+            ],
+        );
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Support record uploaded securely.']);
+
+        return back();
+    }
+
     public function storeInnovationReplication(StoreLinkedDocumentRequest $request, string $currentTeam, InnovationReplication $replication, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();

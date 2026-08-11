@@ -101,6 +101,7 @@ class GlobalSearch
             ['category' => 'Data governance', 'method' => 'dataGovernance', 'permission' => ProgrammePermission::ViewDataGovernance->value, 'route' => 'data-governance.index'],
             ['category' => 'Security governance', 'method' => 'securityIncidents', 'permission' => ProgrammePermission::ViewSecurityGovernance->value, 'route' => 'security-governance.index'],
             ['category' => 'Rollout & training', 'method' => 'changeReadiness', 'permission' => ProgrammePermission::ViewChangeReadiness->value, 'route' => 'change-readiness.index'],
+            ['category' => 'Service desk', 'method' => 'supportTickets', 'permission' => ProgrammePermission::ViewSupportDesk->value, 'route' => 'support-desk.index'],
             ['category' => 'Users', 'method' => 'users', 'permission' => ProgrammePermission::ManageCountyUsers->value, 'route' => 'programme-users.index'],
         ];
     }

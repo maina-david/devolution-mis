@@ -46,6 +46,7 @@ use App\Models\ProcessingActivity;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\ProgrammeEvaluation;
 use App\Models\SecurityIncident;
+use App\Models\SupportTicket;
 use App\Models\TrainingParticipant;
 use App\Models\TravelRequest;
 use App\Models\User;
@@ -60,7 +61,7 @@ use Illuminate\Support\Str;
 
 class ProgrammeWorkspaceData
 {
-    public function __construct(private ProgrammeCountyScope $countyScope, private VirtualClassroomAccess $classroomAccess, private ProjectScheduleAnalyzer $projectScheduleAnalyzer, private ProjectEarnedValueAnalyzer $projectEarnedValueAnalyzer) {}
+    public function __construct(private ProgrammeCountyScope $countyScope, private VirtualClassroomAccess $classroomAccess, private ProjectScheduleAnalyzer $projectScheduleAnalyzer, private ProjectEarnedValueAnalyzer $projectEarnedValueAnalyzer, private SupportTicketAccess $supportTicketAccess) {}
 
     /** @return array<string, mixed> */
     public function counties(User $user, WorkspaceFilters $filters): array
@@ -1091,6 +1092,49 @@ class ProgrammeWorkspaceData
         $incidents = $this->applyFilters(SecurityIncident::query()->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))->with(['reporter:id,name', 'incidentLead:id,name', 'closer:id,name'])->withCount('events'), $filters, ['reference', 'title', 'record_type', 'playbook', 'severity', 'status', 'external_reference'])->latest('detected_at')->paginate($filters->perPage)->withQueryString();
 
         return $this->workspace('Security incident and exercise evidence', 'Live incidents and explicitly labelled exercises with response targets, separation of duties and immutable event evidence.', ['Reference', 'Record type', 'Playbook', 'Title', 'Affected services', 'Data exposure', 'Severity', 'Detected', 'Acknowledgement due', 'Acknowledged', 'Containment due', 'Contained', 'Eradicated', 'Recovered', 'Closed', 'Exercise outcome', 'Next exercise', 'Reporter', 'Incident lead', 'Closer', 'Events', 'External reference', 'Status'], $incidents->through(fn (SecurityIncident $incident): array => ['id' => $incident->id, 'status' => $incident->status, 'cells' => [$incident->reference, $incident->record_type, $incident->playbook, $incident->title, implode(', ', $incident->affected_services), $incident->data_exposure, $incident->severity, $incident->detected_at->toIso8601String(), $incident->acknowledgement_due_at->toIso8601String(), $incident->acknowledged_at?->toIso8601String() ?? 'Pending', $incident->containment_due_at->toIso8601String(), $incident->contained_at?->toIso8601String() ?? 'Pending', $incident->eradicated_at?->toIso8601String() ?? 'Pending', $incident->recovered_at?->toIso8601String() ?? 'Pending', $incident->closed_at?->toIso8601String() ?? 'Open', $incident->exercise_outcome, $incident->next_exercise_due_at?->toIso8601String() ?? 'Not scheduled', $incident->reporter->name, $incident->incidentLead->name, $incident->closed_by ? $incident->closer->name : 'Pending', $incident->events_count, $incident->external_reference ?? '—', $incident->status]]));
+    }
+
+    /** @return array<string, mixed> */
+    public function supportTickets(User $user, WorkspaceFilters $filters): array
+    {
+        $tickets = $this->applyFilters(
+            $this->supportTicketAccess->query($user)
+                ->when($filters->countyId, fn (Builder $query, string $countyId) => $query->where('county_id', $countyId))
+                ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
+                ->with(['referenceDataRelease:id,version,checksum', 'county', 'requester:id,name', 'assignee:id,name', 'resolver:id,name', 'closer:id,name'])
+                ->withCount(['activities', 'documentLinks']),
+            $filters,
+            ['reference', 'subject', 'category', 'priority', 'channel', 'status'],
+        )->latest('requested_at')->paginate($filters->perPage)->withQueryString();
+
+        return $this->workspace('Service-desk support register', 'County-scoped requests, SLA response evidence, assignment, independent resolution acceptance and retained support history.', ['Reference', 'Subject', 'County', 'Requester', 'Assignee', 'Category', 'Priority', 'Channel', 'Requested', 'First response due', 'First response', 'Resolution due', 'Resolved', 'Resolver', 'Closed', 'Closer', 'Catalogue', 'Catalogue checksum', 'Activities', 'Documents', 'Status'], $tickets->through(fn (SupportTicket $ticket): array => [
+            'id' => $ticket->id,
+            'status' => $ticket->status,
+            'meta' => ['countyId' => $ticket->county_id],
+            'cells' => [
+                $ticket->reference,
+                $ticket->subject,
+                $ticket->county_id ? $ticket->county->identityCell() : 'National',
+                $ticket->requester->name,
+                $ticket->assigned_to ? $ticket->assignee->name : 'Unassigned',
+                str($ticket->category)->headline()->toString(),
+                str($ticket->priority)->headline()->toString(),
+                str($ticket->channel)->headline()->toString(),
+                $ticket->requested_at->toIso8601String(),
+                $ticket->first_response_due_at->toIso8601String(),
+                $ticket->first_responded_at?->toIso8601String() ?? 'Pending',
+                $ticket->resolution_due_at->toIso8601String(),
+                $ticket->resolved_at?->toIso8601String() ?? 'Pending',
+                $ticket->resolved_by ? $ticket->resolver->name : 'Pending',
+                $ticket->closed_at?->toIso8601String() ?? 'Open',
+                $ticket->closed_by ? $ticket->closer->name : 'Pending',
+                "v{$ticket->referenceDataRelease->version}",
+                $ticket->referenceDataRelease->checksum,
+                $ticket->activities_count,
+                $ticket->document_links_count,
+                $ticket->status,
+            ],
+        ]));
     }
 
     /** @return array<string, mixed> */

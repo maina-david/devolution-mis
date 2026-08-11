@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
         $this->call(SecurityThreatSeeder::class);
         $this->call(ChangeReadinessSeeder::class);
         $this->call(AnalyticsReportingSeeder::class);
+        $this->call(SupportDeskSeeder::class);
         $this->call(EnterpriseScenarioSeeder::class);
     }
 }

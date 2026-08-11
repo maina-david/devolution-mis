@@ -14,6 +14,8 @@ class AuthenticatedNavigationContractTest extends TestCase
             $this->assertStringContainsString("title: '{$group}'", $registry);
         }
         $this->assertStringContainsString('permissions.includes(permission)', $registry);
+        $this->assertStringContainsString("title: 'Service desk'", $registry);
+        $this->assertStringContainsString("can('support-desk:view')", $registry);
 
         $sidebar = $this->source('resources/js/components/app-sidebar.tsx');
         $this->assertStringContainsString('appNavigationGroups(', $sidebar);
@@ -64,6 +66,28 @@ class AuthenticatedNavigationContractTest extends TestCase
             'w-fit border-white/20 bg-white/10 px-3 py-1.5 text-white',
             $dashboard,
         );
+    }
+
+    public function test_service_desk_uses_the_shared_authenticated_workspace_contract(): void
+    {
+        $page = $this->source('resources/js/pages/support-desk/index.tsx');
+
+        foreach ([
+            '<FormSheet',
+            '<Sheet',
+            '<DateRangeFilter',
+            '<WorkspaceDataTable',
+            'bulkExport={{',
+            '<DropdownMenuGroup>',
+            'preview.url({',
+            'download.url({',
+            'cycles={[]}',
+        ] as $contract) {
+            $this->assertStringContainsString($contract, $page);
+        }
+
+        $this->assertStringNotContainsString('type="date"', $page);
+        $this->assertStringNotContainsString('<Dialog', $page);
     }
 
     public function test_authenticated_header_exposes_context_tabs_and_utility_menus(): void

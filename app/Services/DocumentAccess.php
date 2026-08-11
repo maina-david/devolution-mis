@@ -20,11 +20,14 @@ use App\Models\PerformancePlan;
 use App\Models\PrivacyIncident;
 use App\Models\ProgrammeEvaluation;
 use App\Models\SecurityIncident;
+use App\Models\SupportTicket;
 use App\Models\TravelRequest;
 use App\Models\User;
 
 class DocumentAccess
 {
+    public function __construct(private SupportTicketAccess $supportTicketAccess) {}
+
     public function allows(User $user, AssessmentDocument $document): bool
     {
         if ($document->assessment_id !== null) {
@@ -36,12 +39,12 @@ class DocumentAccess
         return $document->links()->with('subject')->get()->contains(function ($link) use ($user): bool {
             $subject = $link->subject;
 
-            return ($subject instanceof TravelRequest || $subject instanceof DevolutionProject || $subject instanceof PartnerAgreement || $subject instanceof PartnerAgreementChangeRequest || $subject instanceof PartnerContribution || $subject instanceof PartnerCollaborationAction || $subject instanceof DswgMeeting || $subject instanceof DswgAction || $subject instanceof IgrResolution || $subject instanceof InnovationReplication || $subject instanceof LearningLesson || $subject instanceof ProgrammeEvaluation || $subject instanceof EvaluationFinding || $subject instanceof EvaluationFindingAction || $subject instanceof PerformancePlan || $subject instanceof PrivacyIncident || $subject instanceof SecurityIncident)
+            return ($subject instanceof TravelRequest || $subject instanceof DevolutionProject || $subject instanceof PartnerAgreement || $subject instanceof PartnerAgreementChangeRequest || $subject instanceof PartnerContribution || $subject instanceof PartnerCollaborationAction || $subject instanceof DswgMeeting || $subject instanceof DswgAction || $subject instanceof IgrResolution || $subject instanceof InnovationReplication || $subject instanceof LearningLesson || $subject instanceof ProgrammeEvaluation || $subject instanceof EvaluationFinding || $subject instanceof EvaluationFindingAction || $subject instanceof PerformancePlan || $subject instanceof PrivacyIncident || $subject instanceof SecurityIncident || $subject instanceof SupportTicket)
                 && $this->allowsSubject($user, $subject);
         });
     }
 
-    public function allowsSubject(User $user, TravelRequest|DevolutionProject|PartnerAgreement|PartnerAgreementChangeRequest|PartnerContribution|PartnerCollaborationAction|DswgMeeting|DswgAction|IgrResolution|InnovationReplication|LearningLesson|ProgrammeEvaluation|EvaluationFinding|EvaluationFindingAction|PerformancePlan|PrivacyIncident|SecurityIncident $subject): bool
+    public function allowsSubject(User $user, TravelRequest|DevolutionProject|PartnerAgreement|PartnerAgreementChangeRequest|PartnerContribution|PartnerCollaborationAction|DswgMeeting|DswgAction|IgrResolution|InnovationReplication|LearningLesson|ProgrammeEvaluation|EvaluationFinding|EvaluationFindingAction|PerformancePlan|PrivacyIncident|SecurityIncident|SupportTicket $subject): bool
     {
         if ($subject instanceof TravelRequest) {
             if (! $user->can(ProgrammePermission::ViewTravelClearance->value)) {
@@ -131,6 +134,10 @@ class DocumentAccess
 
         if ($subject instanceof SecurityIncident) {
             return $user->can(ProgrammePermission::ViewSecurityGovernance->value);
+        }
+
+        if ($subject instanceof SupportTicket) {
+            return $this->supportTicketAccess->allows($user, $subject);
         }
 
         $meeting = $subject instanceof DswgAction ? $subject->meeting : $subject;
