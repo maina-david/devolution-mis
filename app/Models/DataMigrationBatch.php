@@ -15,7 +15,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property CarbonImmutable $period_from
  * @property CarbonImmutable $period_to
- * @property array{error_counts?: array<string, int>} $validation_report
+ * @property array{
+ *     error_counts?: array<string, int>,
+ *     reference_data_release?: array{id: string, version: int, status: string, checksum: string}
+ * } $validation_report
  * @property CarbonImmutable|null $reviewed_at
  * @property CarbonImmutable|null $applied_at
  */

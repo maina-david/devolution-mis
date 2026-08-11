@@ -68,6 +68,12 @@ type Batch = {
     validRows: number;
     invalidRows: number;
     errorCounts: Record<string, number>;
+    referenceDataRelease: {
+        id: string;
+        version: number;
+        status: string;
+        checksum: string;
+    } | null;
     submittedBy: string;
     reviewedBy: string | null;
     reviewNotes: string | null;
@@ -626,6 +632,32 @@ function BatchSheet({
                                 {batch.fileChecksum}
                             </p>
                         </div>
+                        {batch.referenceDataRelease && (
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    <Detail
+                                        label="Catalogue release candidate"
+                                        value={`v${batch.referenceDataRelease.version}`}
+                                    />
+                                    <Detail
+                                        label="Release status"
+                                        value={humanize(
+                                            batch.referenceDataRelease.status,
+                                        )}
+                                    />
+                                </div>
+                                <p className="mt-4 text-xs font-medium text-muted-foreground">
+                                    Release SHA-256 checksum
+                                </p>
+                                <p className="mt-1 font-mono text-xs break-all">
+                                    {batch.referenceDataRelease.checksum}
+                                </p>
+                                <p className="mt-3 text-xs text-muted-foreground">
+                                    This candidate requires independent
+                                    publication before it becomes effective.
+                                </p>
+                            </div>
+                        )}
                         {Object.keys(batch.errorCounts).length > 0 && (
                             <Alert variant="destructive">
                                 <XCircle />

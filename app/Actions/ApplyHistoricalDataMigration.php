@@ -17,7 +17,11 @@ use Illuminate\Support\Str;
 
 class ApplyHistoricalDataMigration
 {
-    public function __construct(private AuditLogger $auditLogger, private GrantProgrammeAccess $grantProgrammeAccess) {}
+    public function __construct(
+        private AuditLogger $auditLogger,
+        private GrantProgrammeAccess $grantProgrammeAccess,
+        private CreateReferenceDataRelease $createReferenceDataRelease,
+    ) {}
 
     public function handle(DataMigrationBatch $batch, User $actor): DataMigrationBatch
     {
@@ -148,10 +152,42 @@ class ApplyHistoricalDataMigration
             $row->update(['validation_status' => 'applied', 'applied_at' => $importedAt]);
         }
 
-        $batch->update(['status' => 'applied', 'applied_by' => $actor->id, 'applied_at' => $importedAt]);
+        $release = null;
+        if (in_array($batch->dataset_type, ['organizations', 'sectors', 'programmes'], true)) {
+            $release = $this->createReferenceDataRelease->handle(
+                $actor,
+                "Automated candidate from governed {$batch->dataset_type} import {$batch->reference}; source {$batch->source_reference}; file SHA-256 {$batch->file_checksum}; {$rows->count()} records. Independent publication required.",
+                [
+                    'data_migration_batch_id' => $batch->id,
+                    'data_migration_batch_reference' => $batch->reference,
+                    'source_reference' => $batch->source_reference,
+                    'source_file_checksum' => $batch->file_checksum,
+                    'records' => $rows->count(),
+                ],
+            );
+        }
+
+        $validationReport = $batch->validation_report ?? [];
+        if ($release !== null) {
+            $validationReport['reference_data_release'] = [
+                'id' => $release->id,
+                'version' => $release->version,
+                'status' => $release->status,
+                'checksum' => $release->checksum,
+            ];
+        }
+        $batch->update([
+            'status' => 'applied',
+            'applied_by' => $actor->id,
+            'applied_at' => $importedAt,
+            'validation_report' => $validationReport,
+        ]);
         $this->auditLogger->record($actor, $batch, 'data_import.applied', "Bulk {$batch->dataset_type} import atomically applied with {$rows->count()} records.", metadata: [
             'file_checksum' => $batch->file_checksum,
             'records' => $rows->count(),
+            'reference_data_release_id' => $release?->id,
+            'reference_data_release_version' => $release?->version,
+            'reference_data_release_checksum' => $release?->checksum,
         ]);
 
         return $batch->refresh();

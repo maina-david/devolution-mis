@@ -63,6 +63,7 @@ class HistoricalDataMigrationController extends Controller
                 'validRows' => $batch->valid_rows,
                 'invalidRows' => $batch->invalid_rows,
                 'errorCounts' => $batch->validation_report['error_counts'] ?? [],
+                'referenceDataRelease' => $batch->validation_report['reference_data_release'] ?? null,
                 'submittedBy' => $batch->submitter->name,
                 'reviewedBy' => $batch->reviewer?->name,
                 'reviewNotes' => $batch->review_notes,

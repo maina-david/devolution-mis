@@ -9,6 +9,7 @@ use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\Organization;
 use App\Models\Programme;
+use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Inertia\Testing\AssertableInertia as Assert;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
@@ -158,6 +160,34 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $this->assertSame(Organization::query()->where('code', 'SDD')->value('id'), $programme->lead_organization_id);
         $this->assertSame(Sector::query()->where('code', 'DEV-GOV')->value('id'), $programme->sector_id);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $programmeBatch->id, 'action' => 'data_import.applied']);
+
+        $releases = ReferenceDataRelease::query()->orderBy('version')->get();
+        $this->assertCount(3, $releases);
+        $this->assertSame([1, 2, 3], $releases->pluck('version')->all());
+        $this->assertTrue($releases->every(fn (ReferenceDataRelease $release): bool => $release->status === 'submitted' && $release->submitted_by === $applier->id));
+        $this->assertSame('SDD', data_get($releases->last()->snapshot, 'organizations.0.code'));
+        $this->assertSame('DEV-GOV', data_get($releases->last()->snapshot, 'sectors.0.code'));
+        $this->assertSame('KDSP-II', data_get($releases->last()->snapshot, 'programmes.0.code'));
+
+        $appliedProgrammeBatch = $programmeBatch->refresh();
+        $this->assertSame($releases->last()->id, data_get($appliedProgrammeBatch->validation_report, 'reference_data_release.id'));
+        $this->assertSame(3, data_get($appliedProgrammeBatch->validation_report, 'reference_data_release.version'));
+        $this->assertSame($releases->last()->checksum, data_get($appliedProgrammeBatch->validation_report, 'reference_data_release.checksum'));
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $releases->last()->id,
+            'action' => 'reference.release.submitted',
+        ]);
+        $this->actingAs($applier)
+            ->get(route('data-migrations.index', $applier->currentTeam->slug))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('data-migrations/index')
+                ->where('batches.data', function ($batches) use ($programmeBatch, $releases): bool {
+                    $programmeImport = collect($batches)->firstWhere('id', $programmeBatch->id);
+
+                    return data_get($programmeImport, 'referenceDataRelease.version') === 3
+                        && data_get($programmeImport, 'referenceDataRelease.status') === 'submitted'
+                        && data_get($programmeImport, 'referenceDataRelease.checksum') === $releases->last()->checksum;
+                }));
     }
 
     public function test_authorized_user_can_download_exact_csv_templates(): void
@@ -282,6 +312,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $this->assertNotSame('', $official->password);
         $this->assertNotNull($official->currentTeam);
         $this->assertSame('applied', $batch->fresh()->status);
+        $this->assertDatabaseCount('reference_data_releases', 0);
     }
 
     public function test_user_import_rejects_existing_email_invalid_roles_and_invalid_scope_shapes(): void

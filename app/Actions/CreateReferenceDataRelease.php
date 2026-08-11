@@ -18,10 +18,11 @@ class CreateReferenceDataRelease
 {
     public function __construct(private AuditLogger $auditLogger, private CanonicalJson $canonicalJson) {}
 
-    public function handle(User $actor, string $changeSummary): ReferenceDataRelease
+    /** @param array<string, mixed> $auditMetadata */
+    public function handle(User $actor, string $changeSummary, array $auditMetadata = []): ReferenceDataRelease
     {
-        return Cache::lock('reference-data-release-version', 10)->block(5, function () use ($actor, $changeSummary): ReferenceDataRelease {
-            return DB::transaction(function () use ($actor, $changeSummary): ReferenceDataRelease {
+        return Cache::lock('reference-data-release-version', 10)->block(5, function () use ($actor, $auditMetadata, $changeSummary): ReferenceDataRelease {
+            return DB::transaction(function () use ($actor, $auditMetadata, $changeSummary): ReferenceDataRelease {
                 $snapshot = $this->snapshot();
                 $release = ReferenceDataRelease::create([
                     'version' => ((int) ReferenceDataRelease::query()->withTrashed()->max('version')) + 1,
@@ -32,7 +33,10 @@ class CreateReferenceDataRelease
                     'checksum' => $this->canonicalJson->checksum($snapshot),
                     'submitted_at' => now(),
                 ]);
-                $this->auditLogger->record($actor, $release, 'reference.release.submitted', "Reference-data release v{$release->version} submitted for independent publication.", metadata: ['checksum' => $release->checksum]);
+                $this->auditLogger->record($actor, $release, 'reference.release.submitted', "Reference-data release v{$release->version} submitted for independent publication.", metadata: [
+                    'checksum' => $release->checksum,
+                    ...$auditMetadata,
+                ]);
 
                 return $release;
             });
