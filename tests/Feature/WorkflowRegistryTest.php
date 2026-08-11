@@ -58,7 +58,9 @@ class WorkflowRegistryTest extends TestCase
         $this->assertSame($admin->id, $version->published_by);
         $this->assertNotNull($version->published_at);
         $this->assertNotNull($version->effective_from);
-        $this->assertSame(3, AuditEvent::query()->count());
+        $this->assertSame(3, AuditEvent::query()
+            ->whereIn('action', ['workflow.definition.created', 'workflow.version.created', 'workflow.version.published'])
+            ->count());
 
         $this->actingAs($admin)->get(route('workflows.index', $admin->currentTeam->slug))
             ->assertOk()

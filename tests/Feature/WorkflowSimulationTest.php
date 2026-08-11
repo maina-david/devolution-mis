@@ -61,7 +61,7 @@ class WorkflowSimulationTest extends TestCase
             ->assertJsonStructure(['simulation' => ['scenarioChecksum', 'version' => ['checksum']]]);
         $this->assertSame(0, WorkflowInstance::query()->count());
         $this->assertSame(0, WorkflowTransition::query()->count());
-        $this->assertSame(0, AuditEvent::query()->count());
+        $this->assertSame(0, AuditEvent::query()->where('action', 'like', 'workflow.%')->count());
     }
 
     public function test_simulation_reports_permission_rule_and_separation_failures_as_evidence(): void

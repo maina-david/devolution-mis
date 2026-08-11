@@ -14,6 +14,7 @@ import { useState } from 'react';
 import DatePickerField from '@/components/date-picker-field';
 import DateRangeFilter from '@/components/date-range-filter';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import SearchableSelect from '@/components/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { acknowledge as acknowledgeAlert } from '@/routes/operations/alerts';
 import { store as requestBackup } from '@/routes/operations/backups';
 import { verify as verifyBackup } from '@/routes/operations/backups';
 import { retry as retryFailedJob } from '@/routes/operations/failed-jobs';
@@ -96,6 +98,35 @@ type Measurement = {
     target: string | null;
     status: string;
     observedAt: string;
+};
+type OperationalAlertEvent = {
+    id: string;
+    type: string;
+    status: string;
+    narrative: string;
+    occurredAt: string;
+    actor: string | null;
+    evidenceChecksum: string;
+};
+type OperationalAlert = {
+    id: string;
+    service: string;
+    metric: string;
+    severity: string;
+    status: string;
+    latestValue: string;
+    threshold: string | null;
+    unit: string;
+    occurrenceCount: number;
+    eventCount: number;
+    firstDetectedAt: string;
+    lastDetectedAt: string;
+    acknowledgedAt: string | null;
+    acknowledgedBy: string | null;
+    acknowledgementNote: string | null;
+    recoveredAt: string | null;
+    evidenceChecksum: string;
+    events: OperationalAlertEvent[];
 };
 type ScheduleItem = {
     command: string;
@@ -171,6 +202,7 @@ type Props = {
     failedJobs: PageSet<FailedJob>;
     queueRecoveries: QueueRecovery[];
     performanceRuns: PageSet<PerformanceRun>;
+    operationalAlerts: PageSet<OperationalAlert>;
     releases: Release[];
     measurements: Measurement[];
     schedule: ScheduleItem[];
@@ -190,6 +222,7 @@ export default function Operations({
     failedJobs,
     queueRecoveries,
     performanceRuns,
+    operationalAlerts,
     releases,
     measurements,
     schedule,
@@ -281,6 +314,27 @@ export default function Operations({
         perPage: performanceRuns.per_page,
         total: performanceRuns.total,
         pageName: 'performance_page',
+    };
+    const alertRows: WorkspaceRow[] = operationalAlerts.data.map((alert) => ({
+        id: alert.id,
+        status: alert.status,
+        cells: [
+            humanize(alert.service),
+            humanize(alert.metric),
+            humanize(alert.severity),
+            `${alert.latestValue} ${alert.unit}`,
+            alert.threshold ? `${alert.threshold} ${alert.unit}` : '—',
+            alert.occurrenceCount.toLocaleString(),
+            formatDate(alert.lastDetectedAt),
+            humanize(alert.status),
+        ],
+    }));
+    const alertPagination: WorkspacePagination = {
+        currentPage: operationalAlerts.current_page,
+        lastPage: operationalAlerts.last_page,
+        perPage: operationalAlerts.per_page,
+        total: operationalAlerts.total,
+        pageName: 'alert_page',
     };
 
     return (
@@ -381,6 +435,58 @@ export default function Operations({
                         },
                     ]}
                 />
+                <section className="overflow-hidden rounded-xl border bg-card">
+                    <div className="border-b px-5 py-4 sm:px-6">
+                        <h2 className="font-bold">Operational alerts</h2>
+                        <p className="text-sm text-muted-foreground">
+                            {operationalAlerts.total.toLocaleString()} governed
+                            threshold alerts with deduplicated recurrence,
+                            acknowledgement and automatic recovery evidence.
+                            Thresholds remain provisional until service-owner
+                            approval.
+                        </p>
+                    </div>
+                    {alertRows.length ? (
+                        <WorkspaceDataTable
+                            columns={[
+                                'Service',
+                                'Metric',
+                                'Severity',
+                                'Latest value',
+                                'Threshold',
+                                'Occurrences',
+                                'Last detected',
+                                'Status',
+                            ]}
+                            rows={alertRows}
+                            pagination={alertPagination}
+                            bulkExport={{
+                                teamSlug: currentTeam.slug,
+                                workspace: 'operational-alerts',
+                                filters,
+                            }}
+                            renderActionControl={(row) => {
+                                const alert = operationalAlerts.data.find(
+                                    (entry) => entry.id === row.id,
+                                );
+
+                                return alert ? (
+                                    <OperationalAlertAction
+                                        alert={alert}
+                                        teamSlug={currentTeam.slug}
+                                        canManage={capabilities.manage}
+                                    />
+                                ) : null;
+                            }}
+                        />
+                    ) : (
+                        <WorkspaceEmptyState
+                            title="No operational alerts"
+                            description="Warning and failure measurements will open a deduplicated alert here; passing measurements automatically retain recovery evidence."
+                            className="min-h-64 border-0"
+                        />
+                    )}
+                </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
                         teamSlug={currentTeam.slug}
@@ -647,6 +753,169 @@ export default function Operations({
                     </div>
                 </section>
             </div>
+        </>
+    );
+}
+
+function OperationalAlertAction({
+    alert,
+    teamSlug,
+    canManage,
+}: {
+    alert: OperationalAlert;
+    teamSlug: string;
+    canManage: boolean;
+}) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Actions for ${humanize(alert.metric)} alert`}
+                    >
+                        <MoreHorizontal />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setOpen(true)}>
+                        <Eye /> View alert evidence
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <Sheet open={open} onOpenChange={setOpen}>
+                <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+                    <SheetHeader>
+                        <SheetTitle>{humanize(alert.metric)}</SheetTitle>
+                        <SheetDescription>
+                            {humanize(alert.service)} ·{' '}
+                            {humanize(alert.severity)}
+                            {' · '}
+                            {humanize(alert.status)}
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="flex flex-col gap-5 px-4 pb-6">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <EvidenceField
+                                label="Latest value"
+                                value={`${alert.latestValue} ${alert.unit}`}
+                            />
+                            <EvidenceField
+                                label="Provisional threshold"
+                                value={
+                                    alert.threshold
+                                        ? `${alert.threshold} ${alert.unit}`
+                                        : 'Not configured'
+                                }
+                            />
+                            <EvidenceField
+                                label="Occurrences"
+                                value={alert.occurrenceCount.toLocaleString()}
+                            />
+                            <EvidenceField
+                                label="Last detected"
+                                value={formatDate(alert.lastDetectedAt)}
+                            />
+                            <EvidenceField
+                                label="Acknowledged by"
+                                value={alert.acknowledgedBy ?? 'Pending'}
+                            />
+                            <EvidenceField
+                                label="Recovered"
+                                value={formatDate(alert.recoveredAt)}
+                            />
+                        </div>
+                        {alert.acknowledgementNote && (
+                            <EvidenceField
+                                label="Acknowledgement note"
+                                value={alert.acknowledgementNote}
+                            />
+                        )}
+                        <EvidenceField
+                            label="Alert evidence checksum"
+                            value={alert.evidenceChecksum}
+                            mono
+                        />
+                        <div className="flex flex-col gap-3">
+                            <div>
+                                <h3 className="font-medium">
+                                    Immutable timeline
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    Showing the latest {alert.events.length} of{' '}
+                                    {alert.eventCount.toLocaleString()} retained
+                                    events.
+                                </p>
+                            </div>
+                            {alert.events.map((event) => (
+                                <div
+                                    key={event.id}
+                                    className="rounded-lg border p-3"
+                                >
+                                    <div className="flex items-center justify-between gap-3">
+                                        <Badge variant="outline">
+                                            {humanize(event.type)}
+                                        </Badge>
+                                        <span className="text-xs text-muted-foreground">
+                                            {formatDate(event.occurredAt)}
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-sm">
+                                        {event.narrative}
+                                    </p>
+                                    <p className="mt-2 font-mono text-xs text-muted-foreground">
+                                        {event.evidenceChecksum}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                        {canManage && alert.status === 'open' && (
+                            <Form
+                                {...acknowledgeAlert.form({
+                                    current_team: teamSlug,
+                                    operationalAlert: alert.id,
+                                })}
+                                resetOnSuccess
+                                onSuccess={() => setOpen(false)}
+                                className="flex flex-col gap-4 rounded-lg border p-4"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="flex flex-col gap-2">
+                                            <Label
+                                                htmlFor={`alert-note-${alert.id}`}
+                                            >
+                                                Accountable response note
+                                            </Label>
+                                            <Textarea
+                                                id={`alert-note-${alert.id}`}
+                                                name="note"
+                                                required
+                                                minLength={20}
+                                                maxLength={2000}
+                                                aria-invalid={Boolean(
+                                                    errors.note,
+                                                )}
+                                                placeholder="Record the immediate response, owner and next control action."
+                                            />
+                                            <InputError message={errors.note} />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            Acknowledge alert
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
         </>
     );
 }

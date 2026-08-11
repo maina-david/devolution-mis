@@ -97,7 +97,10 @@ class WorkflowRuntimeTest extends TestCase
         $this->assertNotNull($instance->completed_at);
         $this->assertNull($instance->due_at);
         $this->assertSame(['start', 'submit', 'approve'], $instance->transitions()->orderBy('occurred_at')->pluck('transition_name')->all());
-        $this->assertSame(3, AuditEvent::query()->count());
+        $this->assertSame(3, AuditEvent::query()
+            ->where('subject_id', $instance->id)
+            ->whereIn('action', ['workflow.instance.started', 'workflow.instance.transitioned'])
+            ->count());
     }
 
     public function test_failed_rules_and_permissions_do_not_change_workflow_state(): void

@@ -4,16 +4,20 @@ namespace Tests\Feature;
 
 use App\Jobs\CreateOperationalBackupJob;
 use App\Jobs\VerifyOperationalBackupJob;
+use App\Models\OperationalAlert;
+use App\Models\OperationalAlertEvent;
 use App\Models\OperationalBackup;
 use App\Models\PerformanceTestRun;
 use App\Models\QueueRecoveryAttempt;
 use App\Models\ReleaseRecord;
 use App\Models\ServiceLevelMeasurement;
 use App\Models\User;
+use App\Notifications\ProgrammeAlert;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -66,22 +70,68 @@ class OperationalReadinessTest extends TestCase
     public function test_operations_workspace_measurements_backup_jobs_and_exports_are_governed(): void
     {
         Queue::fake();
+        Notification::fake();
         $operator = User::factory()->platformAdmin()->create();
         $viewer = User::factory()->topManagement()->create();
         $performanceRun = PerformanceTestRun::factory()->create();
         $this->assertSame(0, Artisan::call('operations:measure'));
         $this->assertSame(9, ServiceLevelMeasurement::query()->count());
-        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $alert = OperationalAlert::query()->sole();
+        $this->assertSame('database', $alert->service);
+        $this->assertSame('backup_age', $alert->metric);
+        $this->assertSame('critical', $alert->severity);
+        $this->assertSame('open', $alert->status);
+        $this->assertSame(1, $alert->occurrence_count);
+        $this->assertSame(64, mb_strlen($alert->evidence_checksum));
+        $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'opened']);
+        Notification::assertSentToTimes($operator, ProgrammeAlert::class, 1);
+
+        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('operationalAlerts.total', 1)->where('operationalAlerts.data.0.id', $alert->id)->where('operationalAlerts.data.0.status', 'open')->where('operationalAlerts.data.0.eventCount', 1)->has('operationalAlerts.data.0.events', 1)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $acknowledgement = ['note' => 'Database backup freshness breach assigned to the operations lead for immediate remediation.'];
+        $this->actingAs($viewer)->patch(route('operations.alerts.acknowledge', [$viewer->currentTeam->slug, $alert]), $acknowledgement)->assertForbidden();
+        $this->actingAs($operator)->patch(route('operations.alerts.acknowledge', [$operator->currentTeam->slug, $alert]), $acknowledgement)->assertRedirect();
+        $this->assertSame('acknowledged', $alert->refresh()->status);
+        $this->assertSame($operator->id, $alert->acknowledged_by);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $alert->id, 'action' => 'operations.alert.acknowledged']);
+
+        $this->assertSame(0, Artisan::call('operations:measure'));
+        $this->assertSame('acknowledged', $alert->refresh()->status);
+        $this->assertSame(2, $alert->occurrence_count);
+        $this->assertDatabaseCount('operational_alerts', 1);
+        $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'repeated']);
+        Notification::assertSentToTimes($operator, ProgrammeAlert::class, 1);
         $this->actingAs($viewer)->post(route('operations.backups.store', $viewer->currentTeam->slug))->assertForbidden();
         $this->actingAs($operator)->post(route('operations.backups.store', $operator->currentTeam->slug))->assertRedirect();
         Queue::assertPushed(CreateOperationalBackupJob::class, fn ($job) => $job->userId === $operator->id);
 
         $backup = OperationalBackup::create(['initiated_by' => $operator->id, 'reference' => 'BKP-TEST-001', 'disk' => 'local', 'path' => 'operations/backups/test.dump', 'database_name' => 'devolution_mis_test', 'format' => 'postgres_custom', 'sha256' => str_repeat('c', 64), 'size_bytes' => 1024, 'status' => 'completed', 'started_at' => now()->subMinute(), 'completed_at' => now()]);
+        $this->assertSame(0, Artisan::call('operations:measure'));
+        $this->assertSame('recovered', $alert->refresh()->status);
+        $this->assertNotNull($alert->recovered_at);
+        $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'recovered']);
+        Notification::assertSentToTimes($operator, ProgrammeAlert::class, 2);
         $this->actingAs($operator)->post(route('operations.backups.verify', [$operator->currentTeam->slug, $backup]))->assertRedirect();
         Queue::assertPushed(VerifyOperationalBackupJob::class, fn ($job) => $job->backupId === $backup->id && $job->restoreProbe);
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'operations', $format]))->assertOk()->assertDownload();
+            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'operational-alerts', $format]))->assertOk()->assertDownload();
         }
+    }
+
+    public function test_operational_alert_event_history_and_alert_deletion_are_database_immutable(): void
+    {
+        $alert = OperationalAlert::factory()->create();
+        $event = OperationalAlertEvent::factory()->create(['operational_alert_id' => $alert->id, 'measurement_id' => $alert->latest_measurement_id]);
+
+        try {
+            $event->update(['narrative' => 'Attempted rewrite.']);
+            $this->fail('Operational alert events must reject updates.');
+        } catch (QueryException) {
+            $this->assertTrue(true);
+        }
+
+        $this->expectException(QueryException::class);
+        $alert->delete();
     }
 
     public function test_failed_queue_jobs_are_minimized_requeued_and_retain_immutable_recovery_evidence(): void

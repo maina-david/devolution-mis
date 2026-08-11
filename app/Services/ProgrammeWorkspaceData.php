@@ -34,6 +34,7 @@ use App\Models\LearningCohort;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
 use App\Models\LearningOfflineSync;
+use App\Models\OperationalAlert;
 use App\Models\OperationalBackup;
 use App\Models\PartnerAgreement;
 use App\Models\PartnerCollaborationAction;
@@ -1053,6 +1054,22 @@ class ProgrammeWorkspaceData
         $backups = $this->applyFilters(OperationalBackup::query()->with(['initiator:id,name', 'restoreVerifier:id,name']), $filters, ['reference', 'database_name', 'status'])->latest('started_at')->paginate($filters->perPage)->withQueryString();
 
         return $this->workspace('Backup and recovery evidence', 'Checksummed PostgreSQL backup artifacts and isolated restore-verification outcomes.', ['Reference', 'Database', 'Format', 'Size (bytes)', 'SHA-256', 'Started', 'Completed', 'Restore verified', 'Restore duration (ms)', 'Tables', 'Initiator', 'Verifier', 'Status'], $backups->through(fn (OperationalBackup $backup): array => ['id' => $backup->id, 'status' => $backup->status, 'cells' => [$backup->reference, $backup->database_name, $backup->format, $backup->size_bytes ?? '—', $backup->sha256 ?? '—', $backup->started_at->toIso8601String(), $backup->completed_at?->toIso8601String() ?? '—', $backup->restore_verified_at?->toIso8601String() ?? 'Not verified', $backup->restore_duration_ms ?? '—', $backup->verified_table_count ?? '—', $backup->initiated_by ? $backup->initiator->name : 'Scheduler', $backup->restore_verified_by ? $backup->restoreVerifier->name : 'Scheduler', $backup->status]]));
+    }
+
+    /** @return array<string, mixed> */
+    public function operationalAlerts(User $user, WorkspaceFilters $filters): array
+    {
+        $alerts = $this->applyFilters(
+            OperationalAlert::query()->with(['acknowledger:id,name']),
+            $filters,
+            ['service', 'metric', 'severity', 'status'],
+        )->latest('last_detected_at')->paginate($filters->perPage)->withQueryString();
+
+        return $this->workspace('Operational alert evidence', 'Deduplicated provisional-threshold breaches, accountable acknowledgement and automatically retained recovery state.', ['Service', 'Metric', 'Severity', 'Latest value', 'Threshold', 'Unit', 'Occurrences', 'First detected', 'Last detected', 'Acknowledged by', 'Acknowledged', 'Acknowledgement note', 'Recovered', 'Evidence checksum', 'Status'], $alerts->through(fn (OperationalAlert $alert): array => [
+            'id' => $alert->id,
+            'status' => $alert->status,
+            'cells' => [$alert->service, $alert->metric, $alert->severity, (float) $alert->latest_value, $alert->threshold === null ? 'Not configured' : (float) $alert->threshold, $alert->unit, $alert->occurrence_count, $alert->first_detected_at->toIso8601String(), $alert->last_detected_at->toIso8601String(), $alert->acknowledged_by ? $alert->acknowledger->name : 'Pending', $alert->acknowledged_at?->toIso8601String() ?? 'Pending', $alert->acknowledgement_note ?? 'Pending', $alert->recovered_at?->toIso8601String() ?? 'Open', $alert->evidence_checksum, $alert->status],
+        ]));
     }
 
     /** @return array<string, mixed> */

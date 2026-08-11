@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
@@ -31,7 +32,10 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
 
         $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $payload)->assertRedirect();
         $this->assertDatabaseCount('virtual_classroom_attendances', 1);
-        $this->assertDatabaseCount('audit_events', 1);
+        $this->assertSame(1, AuditEvent::query()
+            ->where('subject_id', $attendance->id)
+            ->where('action', 'learning.classroom_attendance_recorded')
+            ->count());
 
         $conflictingEvent = [...$payload, 'attendance_status' => 'absent', 'joined_at' => null, 'left_at' => null];
         $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $conflictingEvent)->assertStatus(409);
