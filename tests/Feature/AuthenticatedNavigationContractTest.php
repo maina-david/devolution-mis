@@ -110,12 +110,15 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('modal={false} open={open} onOpenChange={handleOpenChange}', $header);
         $this->assertStringContainsString("triggerRef.current?.matches(':hover')", $header);
         $this->assertStringContainsString("contentRef.current?.matches(':hover')", $header);
-        $this->assertStringContainsString('if (!nextOpen && pointerIsOverMenu())', $header);
+        $this->assertStringContainsString('if (!nextOpen && mouseHoverSession.current)', $header);
         $this->assertStringContainsString('const pointerWithinMenu = useRef(false)', $header);
+        $this->assertStringContainsString('const mouseHoverSession = useRef(false)', $header);
         $this->assertStringContainsString('pointerWithinMenu.current = true', $header);
         $this->assertStringContainsString('pointerWithinMenu.current = false', $header);
+        $this->assertStringContainsString('mouseHoverSession.current = true', $header);
+        $this->assertStringContainsString('mouseHoverSession.current = false', $header);
         $this->assertStringContainsString('onFocusOutside={(event) => {', $header);
-        $this->assertStringContainsString('sideOffset={4}', $header);
+        $this->assertStringContainsString('sideOffset={0}', $header);
         $this->assertStringContainsString('onCloseAutoFocus={(event) => event.preventDefault()}', $header);
         $this->assertStringContainsString('onEscapeKeyDown={dismissMenu}', $header);
         $this->assertStringContainsString('onPointerDownOutside={dismissMenu}', $header);

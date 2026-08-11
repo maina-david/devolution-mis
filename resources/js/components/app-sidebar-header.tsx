@@ -248,6 +248,7 @@ function ContextualGroupMenu({
     const triggerRef = useRef<HTMLButtonElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const pointerWithinMenu = useRef(false);
+    const mouseHoverSession = useRef(false);
     const active = subgroup.items.some((item) =>
         navigationItemIsActive(item, currentUrl),
     );
@@ -264,6 +265,7 @@ function ContextualGroupMenu({
 
         cancelClose();
         pointerWithinMenu.current = true;
+        mouseHoverSession.current = true;
         setOpen(true);
     };
     const openOnContentHover = (event: React.PointerEvent) => {
@@ -273,6 +275,7 @@ function ContextualGroupMenu({
 
         cancelClose();
         pointerWithinMenu.current = true;
+        mouseHoverSession.current = true;
     };
     const closeAfterTriggerLeave = (event: React.PointerEvent) => {
         if (event.pointerType !== 'mouse') {
@@ -298,12 +301,13 @@ function ContextualGroupMenu({
         cancelClose();
         closeTimeout.current = setTimeout(() => {
             if (!pointerIsOverMenu()) {
+                mouseHoverSession.current = false;
                 setOpen(false);
             }
         }, 200);
     };
     const handleOpenChange = (nextOpen: boolean) => {
-        if (!nextOpen && pointerIsOverMenu()) {
+        if (!nextOpen && mouseHoverSession.current) {
             return;
         }
 
@@ -312,6 +316,7 @@ function ContextualGroupMenu({
     const dismissMenu = () => {
         cancelClose();
         pointerWithinMenu.current = false;
+        mouseHoverSession.current = false;
         setOpen(false);
     };
 
@@ -346,7 +351,7 @@ function ContextualGroupMenu({
             <DropdownMenuContent
                 ref={contentRef}
                 align="start"
-                sideOffset={4}
+                sideOffset={0}
                 onPointerEnter={openOnContentHover}
                 onPointerLeave={closeAfterContentLeave}
                 onFocusOutside={(event) => {
