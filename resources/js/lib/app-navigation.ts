@@ -46,6 +46,7 @@ import { edit as securityEdit } from '@/routes/security';
 import { index as securityGovernanceIndex } from '@/routes/security-governance';
 import { index as teamsIndex } from '@/routes/teams';
 import { index as travelClearanceIndex } from '@/routes/travel-clearance';
+import { index as userActivityIndex } from '@/routes/user-activity';
 import { index as workflowsIndex } from '@/routes/workflows';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
@@ -286,6 +287,7 @@ export function appNavigationGroups(
                         'User access',
                         'Audit trail',
                         'Audit assurance',
+                        'User activity',
                     ],
                 },
                 {
@@ -327,6 +329,11 @@ export function appNavigationGroups(
                         can('audit-trail:view') &&
                         (can('security-governance:manage') ||
                             can('platform:configure')),
+                },
+                {
+                    title: 'User activity',
+                    href: userActivityIndex(teamSlug),
+                    visible: can('user-activity:view'),
                 },
                 {
                     title: 'Reference data',

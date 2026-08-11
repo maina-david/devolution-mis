@@ -47,6 +47,7 @@ use App\Http\Controllers\SecurityGovernanceController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\TravelClearanceController;
 use App\Http\Controllers\UniqueValueController;
+use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\WorkflowDefinitionController;
 use App\Http\Controllers\WorkspaceExportController;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -221,6 +222,7 @@ Route::prefix('{current_team}')
         Route::patch('integrations/exceptions/{exception}/resolve', [IntegrationManagementController::class, 'resolve'])->name('integrations.exceptions.resolve');
         Route::get('operations', [OperationsController::class, 'index'])->name('operations.index');
         Route::get('audit-assurance', [AuditAssuranceController::class, 'index'])->name('audit-assurance.index');
+        Route::get('user-activity', UserActivityController::class)->name('user-activity.index');
         Route::post('audit-assurance', [AuditAssuranceController::class, 'store'])->name('audit-assurance.store');
         Route::get('audit-assurance/{auditAssuranceRun}/download', [AuditAssuranceController::class, 'download'])->name('audit-assurance.download');
         Route::post('operations/backups', [OperationsController::class, 'createBackup'])->name('operations.backups.store');

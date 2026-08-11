@@ -84,6 +84,7 @@ enum ProgrammePermission: string
     case ApproveAnalytics = 'analytics:approve';
     case ApproveReportSchedules = 'report-schedules:approve';
     case ViewAuditTrail = 'audit-trail:view';
+    case ViewUserActivity = 'user-activity:view';
 
     public function label(): string
     {
@@ -168,6 +169,7 @@ enum ProgrammePermission: string
             self::ApproveAnalytics => 'Independently publish analytics dashboards',
             self::ApproveReportSchedules => 'Independently approve scheduled reports',
             self::ViewAuditTrail => 'View audit trail',
+            self::ViewUserActivity => 'View user sessions and live activity',
         };
     }
 }

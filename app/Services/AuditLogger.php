@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AuditEvent;
 use App\Models\User;
+use App\Models\UserActivitySession;
 use App\Support\CanonicalJson;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -16,7 +17,9 @@ class AuditLogger
     /** @param array<string, mixed> $metadata */
     public function record(?User $actor, Model $subject, string $action, string $description, ?string $countyId = null, array $metadata = []): AuditEvent
     {
-        return DB::transaction(function () use ($actor, $subject, $action, $description, $countyId, $metadata): AuditEvent {
+        $metadata = $this->requestMetadata($metadata);
+
+        $event = DB::transaction(function () use ($actor, $subject, $action, $description, $countyId, $metadata): AuditEvent {
             DB::select('SELECT pg_advisory_xact_lock(?)', [730947]);
 
             $occurredAt = now()->startOfSecond();
@@ -41,5 +44,24 @@ class AuditLogger
                 'event_hash' => $this->canonicalJson->checksum($hashPayload),
             ]);
         });
+
+        $activitySessionId = $metadata['activity_session_id'] ?? null;
+        if ($actor !== null && is_string($activitySessionId)) {
+            UserActivitySession::query()->whereKey($activitySessionId)->where('user_id', $actor->id)->update(['last_action' => $action, 'last_seen_at' => now(), 'current_route' => $metadata['route_name'] ?? null, 'last_method' => $metadata['request_method'] ?? null]);
+        }
+
+        return $event;
+    }
+
+    /** @param array<string, mixed> $metadata
+     * @return array<string, mixed>
+     */
+    private function requestMetadata(array $metadata): array
+    {
+        if (! $this->request->hasSession()) {
+            return $metadata;
+        }
+
+        return [...$metadata, 'activity_session_id' => $this->request->session()->get('activity_session_id'), 'route_name' => $this->request->route()?->getName(), 'request_method' => $this->request->method()];
     }
 }

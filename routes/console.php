@@ -5,6 +5,7 @@ use App\Console\Commands\CreateDatabaseBackup;
 use App\Console\Commands\EscalateOverduePrivacyIncidents;
 use App\Console\Commands\EscalateOverdueWorkflows;
 use App\Console\Commands\EscalateSecurityIncidents;
+use App\Console\Commands\ExpireInactiveUserActivitySessions;
 use App\Console\Commands\GenerateDswgRecurringMeetingsCommand;
 use App\Console\Commands\MonitorPartnerOperationalAlerts;
 use App\Console\Commands\ReconcileAccessDelegations;
@@ -55,6 +56,12 @@ Schedule::command(ReconcileAccessDelegations::class)
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Activate and expire governed delegated and emergency access');
+
+Schedule::command(ExpireInactiveUserActivitySessions::class)
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Close inactive authenticated activity sessions at the configured session lifetime');
 
 Schedule::command(ApplyDueIdentityLifecycleRequests::class)
     ->everyMinute()

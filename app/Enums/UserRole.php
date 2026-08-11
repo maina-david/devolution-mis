@@ -52,7 +52,7 @@ enum UserRole: string
 
         return match ($this) {
             self::DevolutionAdmin => [...$permissions, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ManageAnalytics],
-            self::PlatformAdmin => [...$permissions, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
+            self::PlatformAdmin => [...$permissions, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules, ProgrammePermission::ViewUserActivity],
             self::TopManagement => [...$permissions, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
             default => $permissions,
         };
