@@ -111,6 +111,10 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString("triggerRef.current?.matches(':hover')", $header);
         $this->assertStringContainsString("contentRef.current?.matches(':hover')", $header);
         $this->assertStringContainsString('if (!nextOpen && pointerIsOverMenu())', $header);
+        $this->assertStringContainsString('const pointerWithinMenu = useRef(false)', $header);
+        $this->assertStringContainsString('pointerWithinMenu.current = true', $header);
+        $this->assertStringContainsString('pointerWithinMenu.current = false', $header);
+        $this->assertStringContainsString('onFocusOutside={(event) => {', $header);
         $this->assertStringContainsString('sideOffset={4}', $header);
         $this->assertStringContainsString('onCloseAutoFocus={(event) => event.preventDefault()}', $header);
         $this->assertStringContainsString('onEscapeKeyDown={dismissMenu}', $header);

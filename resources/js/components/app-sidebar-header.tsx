@@ -247,6 +247,7 @@ function ContextualGroupMenu({
     const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const triggerRef = useRef<HTMLButtonElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
+    const pointerWithinMenu = useRef(false);
     const active = subgroup.items.some((item) =>
         navigationItemIsActive(item, currentUrl),
     );
@@ -262,6 +263,7 @@ function ContextualGroupMenu({
         }
 
         cancelClose();
+        pointerWithinMenu.current = true;
         setOpen(true);
     };
     const openOnContentHover = (event: React.PointerEvent) => {
@@ -270,12 +272,14 @@ function ContextualGroupMenu({
         }
 
         cancelClose();
+        pointerWithinMenu.current = true;
     };
     const closeAfterTriggerLeave = (event: React.PointerEvent) => {
         if (event.pointerType !== 'mouse') {
             return;
         }
 
+        pointerWithinMenu.current = false;
         scheduleClose();
     };
     const closeAfterContentLeave = (event: React.PointerEvent) => {
@@ -283,9 +287,11 @@ function ContextualGroupMenu({
             return;
         }
 
+        pointerWithinMenu.current = false;
         scheduleClose();
     };
     const pointerIsOverMenu = () =>
+        pointerWithinMenu.current ||
         triggerRef.current?.matches(':hover') === true ||
         contentRef.current?.matches(':hover') === true;
     const scheduleClose = () => {
@@ -305,6 +311,7 @@ function ContextualGroupMenu({
     };
     const dismissMenu = () => {
         cancelClose();
+        pointerWithinMenu.current = false;
         setOpen(false);
     };
 
@@ -342,6 +349,11 @@ function ContextualGroupMenu({
                 sideOffset={4}
                 onPointerEnter={openOnContentHover}
                 onPointerLeave={closeAfterContentLeave}
+                onFocusOutside={(event) => {
+                    if (pointerIsOverMenu()) {
+                        event.preventDefault();
+                    }
+                }}
                 onCloseAutoFocus={(event) => event.preventDefault()}
                 onEscapeKeyDown={dismissMenu}
                 onPointerDownOutside={dismissMenu}
