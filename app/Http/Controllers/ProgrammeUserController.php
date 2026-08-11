@@ -95,7 +95,7 @@ class ProgrammeUserController extends Controller
             ],
             'sessions' => $sessions ? $this->table($sessions, fn (UserActivitySession $session): array => ['id' => $session->id, 'cells' => [$session->current_page_title ?? $session->current_path ?? '—', $session->ip_address ?? '—', $session->logged_in_at->toIso8601String(), $session->last_seen_at->toIso8601String(), $session->logged_out_at?->toIso8601String() ?? 'Online'], 'meta' => ['userAgent' => $session->user_agent]]) : null,
             'pageViews' => $pageViews ? $this->table($pageViews, fn (UserPageView $view): array => ['id' => $view->id, 'cells' => [$view->page_title, $view->route_name, $view->path, $view->ip_address ?? '—', $view->viewed_at->toIso8601String()]]) : null,
-            'auditEvents' => $auditEvents ? $this->table($auditEvents, fn (AuditEvent $event): array => ['id' => $event->id, 'cells' => [$event->action, $event->description, $event->actor?->name ?? 'System', $event->metadata['request_method'] ?? '—', $event->ip_address ?? '—', $event->occurred_at?->toIso8601String() ?? '—']]) : null,
+            'auditEvents' => $auditEvents ? $this->table($auditEvents, fn (AuditEvent $event): array => ['id' => $event->id, 'cells' => [$event->action, $event->description, $event->actor_id === null ? 'System' : $event->actor->name, $event->metadata['request_method'] ?? '—', $event->ip_address ?? '—', $event->occurred_at?->toIso8601String() ?? '—']]) : null,
             'accessGovernance' => $canViewAccessGovernance ? [
                 'lifecycleRequests' => IdentityLifecycleRequest::query()->where('user_id', $programmeUser->id)->latest()->limit(50)->get()->map(fn (IdentityLifecycleRequest $item): array => ['id' => $item->id, 'reference' => $item->source_evidence_reference, 'eventType' => $item->event_type, 'status' => $item->status, 'effectiveAt' => $item->effective_at->toIso8601String(), 'businessReason' => $item->business_reason]),
                 'accessReviews' => AccessReviewItem::query()->with('campaign:id,reference,name')->where('user_id', $programmeUser->id)->latest()->limit(50)->get()->map(fn (AccessReviewItem $item): array => ['id' => $item->id, 'campaign' => $item->campaign->name, 'reference' => $item->campaign->reference, 'decision' => $item->decision, 'role' => $item->role_name, 'reviewedAt' => $item->reviewed_at?->toIso8601String(), 'rationale' => $item->rationale]),
@@ -151,14 +151,14 @@ class ProgrammeUserController extends Controller
     /**
      * @template TModel of \Illuminate\Database\Eloquent\Model
      *
-     * @param  LengthAwarePaginator<TModel>  $paginator
+     * @param  LengthAwarePaginator<int, TModel>  $paginator
      * @param  callable(TModel): array<string, mixed>  $transform
      * @return array{rows: list<array<string, mixed>>, pagination: array{currentPage: int, lastPage: int, perPage: int, total: int, pageName: string}}
      */
     private function table(LengthAwarePaginator $paginator, callable $transform): array
     {
         return [
-            'rows' => $paginator->getCollection()->map($transform)->values()->all(),
+            'rows' => array_values($paginator->getCollection()->map($transform)->all()),
             'pagination' => ['currentPage' => $paginator->currentPage(), 'lastPage' => $paginator->lastPage(), 'perPage' => $paginator->perPage(), 'total' => $paginator->total(), 'pageName' => $paginator->getPageName()],
         ];
     }
