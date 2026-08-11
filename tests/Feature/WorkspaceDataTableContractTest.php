@@ -40,6 +40,19 @@ class WorkspaceDataTableContractTest extends TestCase
         $this->assertStringContainsString("cell.column.id === 'row-number'", $source);
     }
 
+    public function test_shared_table_uses_the_shadcn_empty_state_for_zero_rows(): void
+    {
+        $source = $this->source('resources/js/components/workspace-data-table.tsx');
+
+        $this->assertStringContainsString("from '@/components/ui/empty'", $source);
+        $this->assertStringContainsString('table.getRowModel().rows.length === 0', $source);
+        $this->assertStringContainsString('<Empty className="border-0 py-10" role="status">', $source);
+        $this->assertStringContainsString('<EmptyTitle>', $source);
+        $this->assertStringContainsString('No records found', $source);
+        $this->assertStringContainsString('No records match the current', $source);
+        $this->assertStringContainsString('filters.', $source);
+    }
+
     public function test_settings_use_the_shared_contextual_tab_surface(): void
     {
         $navigation = $this->source('resources/js/lib/app-navigation.ts');

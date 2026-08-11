@@ -9,7 +9,7 @@ import {
     Moon,
     Sun,
 } from 'lucide-react';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { GlobalSearchDialog } from '@/components/global-search-dialog';
 import { Button } from '@/components/ui/button';
@@ -243,16 +243,51 @@ function ContextualGroupMenu({
     subgroup: ContextualNavigationSection & { title: string };
     currentUrl: string;
 }) {
+    const [open, setOpen] = useState(false);
+    const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const active = subgroup.items.some((item) =>
         navigationItemIsActive(item, currentUrl),
     );
+    const cancelClose = () => {
+        if (closeTimeout.current !== null) {
+            clearTimeout(closeTimeout.current);
+            closeTimeout.current = null;
+        }
+    };
+    const openOnPointerHover = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        cancelClose();
+        setOpen(true);
+    };
+    const closeAfterPointerLeave = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        cancelClose();
+        closeTimeout.current = setTimeout(() => setOpen(false), 150);
+    };
+
+    useEffect(
+        () => () => {
+            if (closeTimeout.current !== null) {
+                clearTimeout(closeTimeout.current);
+            }
+        },
+        [],
+    );
 
     return (
-        <DropdownMenu>
+        <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
                     aria-current={active ? 'page' : undefined}
+                    onPointerEnter={openOnPointerHover}
+                    onPointerLeave={closeAfterPointerLeave}
                     className={cn(
                         'relative h-auto rounded-none px-3 py-3 text-sm font-medium text-primary-foreground/75 hover:bg-primary-foreground/10 hover:text-primary-foreground',
                         active &&
@@ -263,7 +298,11 @@ function ContextualGroupMenu({
                     <ChevronDown data-icon="inline-end" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent
+                align="start"
+                onPointerEnter={openOnPointerHover}
+                onPointerLeave={closeAfterPointerLeave}
+            >
                 <DropdownMenuLabel>{subgroup.title}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

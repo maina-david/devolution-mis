@@ -78,6 +78,10 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('requiredWidth > availableWidth', $header);
         $this->assertStringContainsString('<ContextualTab', $header);
         $this->assertStringContainsString('<ContextualGroupMenu', $header);
+        $this->assertStringContainsString('onPointerEnter={openOnPointerHover}', $header);
+        $this->assertStringContainsString('onPointerLeave={closeAfterPointerLeave}', $header);
+        $this->assertStringContainsString("event.pointerType !== 'mouse'", $header);
+        $this->assertStringContainsString('open={open} onOpenChange={setOpen}', $header);
         $this->assertStringContainsString('<DropdownMenuGroup>', $header);
         $this->assertStringContainsString('aria-label="Open account menu"', $header);
         $this->assertStringContainsString('<UserInfo user={auth.user} showRole', $header);

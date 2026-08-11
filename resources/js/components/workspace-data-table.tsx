@@ -13,7 +13,13 @@ import type {
     SortingFn,
     SortingState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    Database,
+    MoreHorizontal,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import CountyIdentity, {
@@ -31,6 +37,13 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Empty,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from '@/components/ui/empty';
 import {
     Pagination,
     PaginationContent,
@@ -424,6 +437,26 @@ export default function WorkspaceDataTable({
                     ))}
                 </TableHeader>
                 <TableBody>
+                    {table.getRowModel().rows.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={definitions.length}>
+                                <Empty className="border-0 py-10" role="status">
+                                    <EmptyHeader>
+                                        <EmptyMedia variant="icon">
+                                            <Database aria-hidden="true" />
+                                        </EmptyMedia>
+                                        <EmptyTitle>
+                                            No records found
+                                        </EmptyTitle>
+                                        <EmptyDescription>
+                                            No records match the current
+                                            filters.
+                                        </EmptyDescription>
+                                    </EmptyHeader>
+                                </Empty>
+                            </TableCell>
+                        </TableRow>
+                    )}
                     {table.getRowModel().rows.map((row, visibleRowIndex) => {
                         const href = getRowHref?.(row.original);
 
