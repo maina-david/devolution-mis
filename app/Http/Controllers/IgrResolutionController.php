@@ -36,10 +36,12 @@ use App\Models\WorkflowInstance;
 use App\Notifications\ProgrammeAlert;
 use App\Services\AuditLogger;
 use App\Services\IgrGapAnalytics;
+use App\Services\IgrGapScope;
 use App\Services\ProgrammeCountyScope;
 use App\Services\ProgrammeWorkspaceData;
 use App\Support\WorkspaceFilters;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -48,14 +50,19 @@ use Inertia\Response;
 
 class IgrResolutionController extends Controller
 {
-    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, IgrGapAnalytics $gapAnalytics): Response
+    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, IgrGapAnalytics $gapAnalytics, IgrGapScope $gapScope): Response
     {
         Gate::authorize(ProgrammePermission::ViewIgrResolutions->value);
         $user = $this->user($request);
+        $visibleGapIds = $gapScope->visibleTo($user)->select('id');
         $resolutions = $this->visibleResolutions($user, $countyScope)
-            ->with(['forum:id,code,name', 'referenceDataRelease:id,version,effective_from,checksum', 'meeting:id,igr_forum_id,reference,title,held_on,venue,chair_user_id,quorum_confirmed,minutes_reference', 'meeting.chair:id,name', 'dependencies.prerequisiteResolution:id,resolution_number,title,status', 'dependents.dependentResolution:id,resolution_number,title,status', 'gaps.category:id,code,name', 'gaps.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'gaps.owner:id,name', 'gaps.resolver:id,name', 'gaps.accepter:id,name', 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'updates' => fn ($query) => $query->latest('reported_at')->limit(5), 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
+            ->with(['forum:id,code,name', 'referenceDataRelease:id,version,effective_from,checksum', 'meeting:id,igr_forum_id,reference,title,held_on,venue,chair_user_id,quorum_confirmed,minutes_reference', 'meeting.chair:id,name', 'dependencies.prerequisiteResolution:id,resolution_number,title,status', 'dependents.dependentResolution:id,resolution_number,title,status', 'gaps' => function (Relation $relation) use ($visibleGapIds): void {
+                $relation->getQuery()
+                    ->whereIn('igr_resolution_gaps.id', clone $visibleGapIds)
+                    ->with(['category:id,code,name', 'county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'owner:id,name', 'resolver:id,name', 'accepter:id,name']);
+            }, 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'updates' => fn ($query) => $query->latest('reported_at')->limit(5), 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
             ->latest('resolved_on')->limit(50)->get();
-        $gapQuery = $this->filteredGaps($this->visibleGaps($user, $countyScope), $request);
+        $gapQuery = $this->filteredGaps($gapScope->visibleTo($user), $request);
 
         return Inertia::render('igr-resolutions/index', [
             'workspace' => $workspaceData->igrResolutions($user, WorkspaceFilters::fromRequest($request)),
@@ -67,7 +74,7 @@ class IgrResolutionController extends Controller
                 'id' => $resolution->id, 'number' => $resolution->resolution_number, 'title' => $resolution->title, 'text' => $resolution->resolution_text,
                 'forum' => $resolution->forum->name, 'resolvedOn' => $resolution->resolved_on->toDateString(), 'dueOn' => $resolution->due_on->toDateString(), 'priority' => $resolution->priority,
                 'meeting' => $resolution->meeting ? ['id' => $resolution->meeting->id, 'reference' => $resolution->meeting->reference, 'title' => $resolution->meeting->title, 'heldOn' => $resolution->meeting->held_on->toDateString(), 'venue' => $resolution->meeting->venue, 'chair' => $resolution->meeting->chair?->name, 'quorumConfirmed' => $resolution->meeting->quorum_confirmed, 'minutesReference' => $resolution->meeting->minutes_reference] : null,
-                'status' => $resolution->status, 'progress' => $resolution->progress_percentage, 'gap' => $resolution->implementation_gap, 'closureEvidence' => $resolution->closure_evidence,
+                'status' => $resolution->status, 'progress' => $resolution->progress_percentage, 'gap' => $gapScope->activeHeadline($resolution), 'closureEvidence' => $resolution->closure_evidence,
                 'referenceRelease' => $resolution->referenceDataRelease ? "v{$resolution->referenceDataRelease->version} · {$resolution->referenceDataRelease->effective_from?->toDateString()}" : 'Legacy unpinned',
                 'referenceChecksum' => $resolution->referenceDataRelease?->checksum,
                 'dependencies' => $resolution->dependencies->map(fn (IgrResolutionDependency $dependency): array => ['id' => $dependency->id, 'type' => $dependency->dependency_type, 'rationale' => $dependency->rationale, 'resolutionId' => $dependency->prerequisiteResolution->id, 'number' => $dependency->prerequisiteResolution->resolution_number, 'title' => $dependency->prerequisiteResolution->title, 'status' => $dependency->prerequisiteResolution->status])->values()->all(),
@@ -140,11 +147,12 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Implementation gap recorded and assigned.');
     }
 
-    public function transitionGap(TransitionIgrResolutionGapRequest $request, string $currentTeam, IgrResolution $resolution, IgrResolutionGap $gap, TransitionIgrResolutionGap $transitionGap, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function transitionGap(TransitionIgrResolutionGapRequest $request, string $currentTeam, IgrResolution $resolution, IgrResolutionGap $gap, TransitionIgrResolutionGap $transitionGap, ProgrammeCountyScope $countyScope, IgrGapScope $gapScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeResolution($user, $resolution, $countyScope);
         abort_unless($gap->igr_resolution_id === $resolution->id, 404);
+        abort_unless($gapScope->visibleTo($user)->whereKey($gap)->exists(), 403);
         $transitionGap->handle($gap, $user, $request->validated('transition'), $request->validated('rationale'));
 
         return back()->with('success', 'Implementation gap lifecycle updated.');
@@ -176,12 +184,6 @@ class IgrResolutionController extends Controller
     private function visibleResolutions(User $user, ProgrammeCountyScope $countyScope): Builder
     {
         return IgrResolution::query()->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereHas('assignments', fn (Builder $assignments) => $assignments->where('user_id', $user->id)->orWhereIn('county_id', $countyScope->query($user)->select('id'))));
-    }
-
-    /** @return Builder<IgrResolutionGap> */
-    private function visibleGaps(User $user, ProgrammeCountyScope $countyScope): Builder
-    {
-        return IgrResolutionGap::query()->whereHas('resolution', fn (Builder $query) => $query->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereHas('assignments', fn (Builder $assignments) => $assignments->where('user_id', $user->id)->orWhereIn('county_id', $countyScope->query($user)->select('id')))));
     }
 
     /**

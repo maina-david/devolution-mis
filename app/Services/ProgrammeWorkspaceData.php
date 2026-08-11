@@ -57,13 +57,14 @@ use App\Models\VirtualClassroomAttendance;
 use App\Support\WorkspaceFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProgrammeWorkspaceData
 {
-    public function __construct(private ProgrammeCountyScope $countyScope, private VirtualClassroomAccess $classroomAccess, private ProjectScheduleAnalyzer $projectScheduleAnalyzer, private ProjectEarnedValueAnalyzer $projectEarnedValueAnalyzer, private SupportTicketAccess $supportTicketAccess) {}
+    public function __construct(private ProgrammeCountyScope $countyScope, private VirtualClassroomAccess $classroomAccess, private ProjectScheduleAnalyzer $projectScheduleAnalyzer, private ProjectEarnedValueAnalyzer $projectEarnedValueAnalyzer, private SupportTicketAccess $supportTicketAccess, private IgrGapScope $igrGapScope) {}
 
     /** @return array<string, mixed> */
     public function counties(User $user, WorkspaceFilters $filters): array
@@ -778,9 +779,14 @@ class ProgrammeWorkspaceData
     /** @return array<string, mixed> */
     public function igrResolutions(User $user, WorkspaceFilters $filters): array
     {
+        $visibleGapIds = $this->igrGapScope->visibleTo($user)->select('id');
         $resolutions = IgrResolution::query()
             ->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereHas('assignments', fn (Builder $assignments) => $assignments->where('user_id', $user->id)->orWhereIn('county_id', $this->countyScope->query($user)->select('id'))))
-            ->with(['forum:id,name', 'referenceDataRelease:id,version,effective_from,checksum', 'meeting:id,reference,held_on,minutes_reference', 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name', 'dependencies.prerequisiteResolution:id,resolution_number,status', 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
+            ->with(['forum:id,name', 'referenceDataRelease:id,version,effective_from,checksum', 'meeting:id,reference,held_on,minutes_reference', 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name', 'dependencies.prerequisiteResolution:id,resolution_number,status', 'gaps' => function (Relation $relation) use ($visibleGapIds): void {
+                $relation->getQuery()
+                    ->whereIn('igr_resolution_gaps.id', clone $visibleGapIds)
+                    ->select(['id', 'igr_resolution_id', 'title', 'severity', 'status']);
+            }, 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
             ->when($filters->from, fn (Builder $query, string $from) => $query->whereDate('due_on', '>=', $from))
             ->when($filters->to, fn (Builder $query, string $to) => $query->whereDate('due_on', '<=', $to))
             ->when($filters->search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('resolution_number', 'ilike', '%'.$filters->search.'%')->orWhere('title', 'ilike', '%'.$filters->search.'%')->orWhere('status', 'ilike', '%'.$filters->search.'%')->orWhere('implementation_gap', 'ilike', '%'.$filters->search.'%')))
@@ -790,15 +796,14 @@ class ProgrammeWorkspaceData
         return $this->workspace('IGR resolutions', 'Forum meeting decisions, accountable parties, dependency chains, deadlines, implementation gaps, reference-data lineage and independently governed closure.', ['Resolution', 'Forum', 'Reference release', 'Reference checksum', 'Formal meeting', 'Responsible parties', 'Counties', 'Blocking prerequisites', 'Due date', 'Progress', 'Implementation gap', 'Priority', 'Status'], $resolutions->through(fn (IgrResolution $resolution) => [
             'id' => $resolution->id, 'status' => $resolution->status, 'meta' => ['countyId' => $resolution->assignments->firstWhere('county_id', '!=', null)?->county_id],
             'documents' => $resolution->documentLinks->map(fn (DocumentLink $link): array => ['id' => $link->document->id, 'purpose' => $link->purpose, 'title' => $link->document->title, 'category' => $link->document->category, 'sourceType' => $link->document->source_type, 'originalName' => $link->document->original_name, 'mimeType' => $link->document->mime_type, 'scanStatus' => $link->document->scan_status, 'ocrStatus' => $link->document->ocr_status])->values()->all(),
-            'cells' => ["{$resolution->resolution_number} · {$resolution->title}", $resolution->forum->name, $resolution->referenceDataRelease ? "v{$resolution->referenceDataRelease->version} · {$resolution->referenceDataRelease->effective_from?->toDateString()}" : 'Legacy unpinned', $resolution->referenceDataRelease ? $resolution->referenceDataRelease->checksum : '—', $resolution->meeting ? "{$resolution->meeting->reference} · {$resolution->meeting->held_on->toDateString()} · {$resolution->meeting->minutes_reference}" : 'Historical record — meeting not linked', $resolution->assignments->map(fn ($assignment) => $assignment->user_id ? $assignment->user?->name : $assignment->organization?->name)->filter()->implode(', '), $resolution->assignments->pluck('county.name')->filter()->unique()->implode(', ') ?: 'National / multi-county', $resolution->dependencies->where('dependency_type', 'blocks')->map(fn (IgrResolutionDependency $dependency): string => "{$dependency->prerequisiteResolution->resolution_number} ({$dependency->prerequisiteResolution->status})")->implode(', ') ?: 'None', $resolution->due_on->toDateString(), "{$resolution->progress_percentage}%", $resolution->implementation_gap ?: 'No gap reported', $resolution->priority, $resolution->status],
+            'cells' => ["{$resolution->resolution_number} · {$resolution->title}", $resolution->forum->name, $resolution->referenceDataRelease ? "v{$resolution->referenceDataRelease->version} · {$resolution->referenceDataRelease->effective_from?->toDateString()}" : 'Legacy unpinned', $resolution->referenceDataRelease ? $resolution->referenceDataRelease->checksum : '—', $resolution->meeting ? "{$resolution->meeting->reference} · {$resolution->meeting->held_on->toDateString()} · {$resolution->meeting->minutes_reference}" : 'Historical record — meeting not linked', $resolution->assignments->map(fn ($assignment) => $assignment->user_id ? $assignment->user?->name : $assignment->organization?->name)->filter()->implode(', '), $resolution->assignments->pluck('county.name')->filter()->unique()->implode(', ') ?: 'National / multi-county', $resolution->dependencies->where('dependency_type', 'blocks')->map(fn (IgrResolutionDependency $dependency): string => "{$dependency->prerequisiteResolution->resolution_number} ({$dependency->prerequisiteResolution->status})")->implode(', ') ?: 'None', $resolution->due_on->toDateString(), "{$resolution->progress_percentage}%", $this->igrGapScope->activeHeadline($resolution) ?? 'No gap reported', $resolution->priority, $resolution->status],
         ]));
     }
 
     /** @return array<string, mixed> */
     public function igrResolutionGaps(User $user, WorkspaceFilters $filters): array
     {
-        $gaps = IgrResolutionGap::query()
-            ->whereHas('resolution', fn (Builder $query) => $query->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereHas('assignments', fn (Builder $assignments) => $assignments->where('user_id', $user->id)->orWhereIn('county_id', $this->countyScope->query($user)->select('id')))))
+        $gaps = $this->igrGapScope->visibleTo($user)
             ->with(['resolution:id,resolution_number,title', 'category:id,code,name', 'county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'owner:id,name', 'reporter:id,name', 'resolver:id,name', 'accepter:id,name'])
             ->when($filters->from, fn (Builder $query, string $from) => $query->whereDate('due_on', '>=', $from))
             ->when($filters->to, fn (Builder $query, string $to) => $query->whereDate('due_on', '<=', $to))

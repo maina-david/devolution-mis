@@ -231,6 +231,91 @@ class IgrResolutionWorkflowTest extends TestCase
             ->where('gapAnalytics.counties.0.active', 0));
     }
 
+    public function test_multi_county_resolution_gaps_remain_isolated_by_their_affected_county(): void
+    {
+        $firstCounty = County::factory()->create();
+        $secondCounty = County::factory()->create();
+        $firstCountyOfficer = User::factory()->countyOfficial($firstCounty)->create();
+        $secondCountyOfficer = User::factory()->countyOfficial($secondCounty)->create();
+        $administrator = User::factory()->devolutionAdmin()->create();
+        $resolution = IgrResolution::factory()->create();
+        $category = IgrGapCategory::factory()->create(['created_by' => $administrator->id]);
+        IgrResolutionAssignment::factory()->for($resolution, 'resolution')->create([
+            'user_id' => $firstCountyOfficer->id,
+            'county_id' => $firstCounty->id,
+            'is_lead' => true,
+        ]);
+        IgrResolutionAssignment::factory()->for($resolution, 'resolution')->create([
+            'user_id' => $secondCountyOfficer->id,
+            'county_id' => $secondCounty->id,
+            'responsibility_role' => 'support',
+            'is_lead' => false,
+        ]);
+        $firstGap = IgrResolutionGap::factory()->for($resolution, 'resolution')->for($category, 'category')->create([
+            'county_id' => $firstCounty->id,
+            'owner_user_id' => $firstCountyOfficer->id,
+            'reported_by' => $administrator->id,
+            'title' => 'First county implementation constraint',
+        ]);
+        $secondGap = IgrResolutionGap::factory()->for($resolution, 'resolution')->for($category, 'category')->create([
+            'county_id' => $secondCounty->id,
+            'owner_user_id' => $secondCountyOfficer->id,
+            'reported_by' => $administrator->id,
+            'title' => 'Second county confidential implementation constraint',
+        ]);
+        $nationalGap = IgrResolutionGap::factory()->for($resolution, 'resolution')->for($category, 'category')->create([
+            'county_id' => null,
+            'owner_user_id' => $firstCountyOfficer->id,
+            'reported_by' => $administrator->id,
+            'title' => 'Shared national implementation constraint',
+        ]);
+        $resolution->update(['implementation_gap' => $secondGap->title]);
+
+        $this->actingAs($firstCountyOfficer)
+            ->get(route('igr-resolutions.index', $firstCountyOfficer->currentTeam->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gapAnalytics.summary.total', 2)
+                ->where('gapWorkspace.pagination.total', 2)
+                ->where('resolutions.0.gap', fn (?string $headline): bool => $headline !== $secondGap->title)
+                ->where('resolutions.0.gaps', fn ($gaps): bool => collect($gaps)->pluck('id')->sort()->values()->all() === collect([$firstGap->id, $nationalGap->id])->sort()->values()->all()));
+        $this->actingAs($firstCountyOfficer)
+            ->get(route('igr-resolutions.index', [$firstCountyOfficer->currentTeam->slug, 'county_id' => $secondCounty->id]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gapAnalytics.summary.total', 0)
+                ->where('gapWorkspace.pagination.total', 0));
+        $firstCountyExport = $this->actingAs($firstCountyOfficer)
+            ->get(route('workspace.export', [$firstCountyOfficer->currentTeam->slug, 'igr-gaps', 'json']))
+            ->assertOk()
+            ->streamedContent();
+        $this->assertStringContainsString($firstGap->title, $firstCountyExport);
+        $this->assertStringContainsString($nationalGap->title, $firstCountyExport);
+        $this->assertStringNotContainsString($secondGap->title, $firstCountyExport);
+        $this->actingAs($firstCountyOfficer)
+            ->patch(route('igr-resolutions.gaps.transition', [$firstCountyOfficer->currentTeam->slug, $resolution, $secondGap]), [
+                'transition' => 'start_mitigation',
+                'rationale' => 'The first county officer must not mutate another county-specific implementation gap.',
+            ])
+            ->assertForbidden();
+        $this->assertSame('open', $secondGap->refresh()->status);
+
+        $this->actingAs($secondCountyOfficer)
+            ->get(route('igr-resolutions.index', $secondCountyOfficer->currentTeam->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gapAnalytics.summary.total', 2)
+                ->where('gapWorkspace.pagination.total', 2)
+                ->where('resolutions.0.gaps', fn ($gaps): bool => collect($gaps)->pluck('id')->sort()->values()->all() === collect([$secondGap->id, $nationalGap->id])->sort()->values()->all()));
+        $this->actingAs($administrator)
+            ->get(route('igr-resolutions.index', $administrator->currentTeam->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('gapAnalytics.summary.total', 3)
+                ->where('gapWorkspace.pagination.total', 3)
+                ->has('resolutions.0.gaps', 3));
+    }
+
     public function test_responsible_party_reports_gaps_and_evidence_before_independent_closure(): void
     {
         Storage::fake('local');
