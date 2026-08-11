@@ -204,6 +204,7 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('maxZoom: showFullCountry ? 7 : 12', $map);
         $this->assertStringContainsString('layer.bindTooltip', $map);
         $this->assertStringContainsString("layer.on('click', () => onSelect(county))", $map);
+        $this->assertStringContainsString('relative isolate z-0 min-h-80', $map);
         $this->assertStringContainsString('County boundaries are indicative, not cadastral.', $map);
         $this->assertStringNotContainsString('<svg', $map);
         $this->assertStringNotContainsString('aspect-4/5', $partnerMap);

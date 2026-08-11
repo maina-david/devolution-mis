@@ -210,7 +210,7 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
     return (
         <div
             className={cn(
-                'relative min-h-80 w-full overflow-hidden rounded-xl border bg-muted/40',
+                'relative isolate z-0 min-h-80 w-full overflow-hidden rounded-xl border bg-muted/40',
                 className,
             )}
         >
