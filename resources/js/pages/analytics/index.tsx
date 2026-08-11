@@ -1,0 +1,1109 @@
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    BarChart3,
+    CalendarClock,
+    Download,
+    Eye,
+    FileCheck2,
+    MoreHorizontal,
+    Play,
+    Plus,
+    Send,
+} from 'lucide-react';
+import { useState } from 'react';
+import CountyIdentity from '@/components/county-identity';
+import type { CountyIdentityValue } from '@/components/county-identity';
+import DatePickerField from '@/components/date-picker-field';
+import DateRangeFilter from '@/components/date-range-filter';
+import FormSheet from '@/components/form-sheet';
+import SearchableMultiSelect from '@/components/searchable-multi-select';
+import SearchableSelect from '@/components/searchable-select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { Textarea } from '@/components/ui/textarea';
+import WorkspaceDataTable from '@/components/workspace-data-table';
+import type {
+    WorkspacePagination,
+    WorkspaceRow,
+} from '@/components/workspace-data-table';
+import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import {
+    publish,
+    store as storeDashboard,
+} from '@/routes/analytics/dashboards';
+import { download } from '@/routes/analytics/runs';
+import {
+    activate,
+    run,
+    store as storeSchedule,
+} from '@/routes/analytics/schedules';
+import { store as storeWidget } from '@/routes/analytics/widgets';
+import { show as countyShow } from '@/routes/counties';
+
+type Option = { id: string; name: string };
+type Measurement = {
+    value: number | null;
+    unit: string;
+    provenance: string;
+    measured_at: string;
+    series: Array<{ county: CountyIdentityValue; value: number | null }>;
+};
+type Widget = {
+    id: string;
+    title: string;
+    description: string | null;
+    metricKey: string;
+    visualization: string;
+    disaggregation: string | null;
+    position: number;
+    width: number;
+    measurement: Measurement;
+};
+type Dashboard = {
+    id: string;
+    code: string;
+    name: string;
+    description: string;
+    county: CountyIdentityValue | null;
+    audienceRoles: string[];
+    status: string;
+    checksum: string | null;
+    referenceData: ReferenceData | null;
+    publishedAt: string | null;
+    creator: string;
+    publisher: string | null;
+    widgets: Widget[];
+};
+type ReportSchedule = {
+    id: string;
+    code: string;
+    name: string;
+    county: CountyIdentityValue | null;
+    referenceData: ReferenceData | null;
+    format: string;
+    frequency: string;
+    filters: Record<string, string | null>;
+    recipientCount: number;
+    status: string;
+    nextRunAt: string;
+    approvedAt: string | null;
+    creator: string;
+    approver: string | null;
+};
+type ReferenceData = {
+    version: string;
+    effectiveFrom: string | null;
+    checksum: string;
+};
+type ReportRun = {
+    id: string;
+    schedule: { code: string; name: string; format: string };
+    status: string;
+    periodFrom: string | null;
+    periodTo: string | null;
+    sizeBytes: number | null;
+    sha256: string | null;
+    recordCount: number | null;
+    errorDetail: string | null;
+    startedAt: string | null;
+    completedAt: string | null;
+};
+type PageSet<T> = {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+};
+type Props = {
+    dashboards: Dashboard[];
+    schedules: ReportSchedule[];
+    runs: PageSet<ReportRun> | null;
+    filters: Record<string, string | undefined>;
+    options: {
+        counties: CountyIdentityValue[];
+        metrics: Option[];
+        roles: Option[];
+        users: Option[];
+        publishedDashboards: Option[];
+    };
+    catalogue: ({ available: false } | ({ available: true } & ReferenceData));
+    capabilities: {
+        manage: boolean;
+        approveDashboard: boolean;
+        approveSchedule: boolean;
+    };
+};
+
+export default function AnalyticsReporting({
+    dashboards,
+    schedules,
+    runs,
+    filters,
+    options,
+    catalogue,
+    capabilities,
+}: Props) {
+    const { currentTeam } = usePage().props;
+
+    if (!currentTeam) {
+        return null;
+    }
+
+    const runRows: WorkspaceRow[] =
+        runs?.data.map((report) => ({
+            id: report.id,
+            status: report.status,
+            cells: [
+                `${report.schedule.code} · ${report.schedule.name}`,
+                report.schedule.format.toUpperCase(),
+                report.periodFrom && report.periodTo
+                    ? `${report.periodFrom} – ${report.periodTo}`
+                    : 'Configured period',
+                report.recordCount ?? '—',
+                formatBytes(report.sizeBytes),
+                report.sha256?.slice(0, 16) ?? 'Pending',
+                report.completedAt ? formatDate(report.completedAt) : 'Pending',
+                humanize(report.status),
+            ],
+        })) ?? [];
+    const pagination: WorkspacePagination | null = runs
+        ? {
+              currentPage: runs.current_page,
+              lastPage: runs.last_page,
+              perPage: runs.per_page,
+              total: runs.total,
+              pageName: 'runs_page',
+          }
+        : null;
+
+    return (
+        <>
+            <Head title="Analytics and scheduled reporting" />
+            <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+                <section className="authenticated-page-header">
+                    <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
+                        <div className="max-w-3xl">
+                            <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-75">
+                                Governed evidence and decision support
+                            </p>
+                            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                                Analytics and reporting centre
+                            </h1>
+                            <p className="mt-3 max-w-2xl opacity-80">
+                                Configure county-safe dashboards, preserve
+                                metric provenance, independently approve
+                                publication and generate private checksummed
+                                report artifacts.
+                            </p>
+                        </div>
+                        {capabilities.manage && (
+                            <div className="flex flex-wrap gap-2">
+                                <DashboardForm
+                                    team={currentTeam.slug}
+                                    options={options}
+                                    catalogue={catalogue}
+                                />
+                                <ScheduleForm
+                                    team={currentTeam.slug}
+                                    options={options}
+                                    catalogue={catalogue}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <MetricCard
+                        title="Dashboards in scope"
+                        value={dashboards.length}
+                        detail={`${dashboards.filter((item) => item.status === 'published').length} independently published`}
+                    />
+                    <MetricCard
+                        title="Governed widgets"
+                        value={dashboards.reduce(
+                            (sum, item) => sum + item.widgets.length,
+                            0,
+                        )}
+                        detail="Allowlisted metrics with provenance"
+                    />
+                    <MetricCard
+                        title="Active schedules"
+                        value={
+                            schedules.filter((item) => item.status === 'active')
+                                .length
+                        }
+                        detail="Maker-checker delivery controls"
+                    />
+                    <MetricCard
+                        title="Generated artifacts"
+                        value={runs?.total ?? 0}
+                        detail="Private and SHA-256 verified"
+                    />
+                </section>
+
+                <DateRangeFilter
+                    initialFrom={filters.from}
+                    initialTo={filters.to}
+                    initialSearch={filters.search}
+                    selectFilters={[
+                        {
+                            key: 'status',
+                            label: 'Publication status',
+                            options: ['draft', 'published'].map(option),
+                            value: filters.status,
+                        },
+                        {
+                            key: 'county_id',
+                            label: 'County scope',
+                            options: options.counties,
+                            value: filters.county_id,
+                        },
+                    ]}
+                />
+
+                <section className="grid gap-5">
+                    {dashboards.map((dashboard) => (
+                        <DashboardPanel
+                            key={dashboard.id}
+                            dashboard={dashboard}
+                            team={currentTeam.slug}
+                            options={options}
+                            capabilities={capabilities}
+                        />
+                    ))}
+                    {dashboards.length === 0 && (
+                        <WorkspaceEmptyState
+                            title="No analytics dashboards in scope"
+                            description="An authorized configurator can create a draft dashboard with governed metrics for independent publication."
+                        />
+                    )}
+                </section>
+
+                {(capabilities.manage || capabilities.approveSchedule) && (
+                    <section className="grid gap-4">
+                        <div>
+                            <h2 className="font-bold">
+                                Scheduled delivery controls
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Draft schedules require a different authorized
+                                actor before background generation begins.
+                            </p>
+                        </div>
+                        <div className="grid gap-4 lg:grid-cols-2">
+                            {schedules.map((schedule) => (
+                                <ScheduleCard
+                                    key={schedule.id}
+                                    schedule={schedule}
+                                    team={currentTeam.slug}
+                                    capabilities={capabilities}
+                                />
+                            ))}
+                            {schedules.length === 0 && (
+                                <WorkspaceEmptyState
+                                    title="No report schedules"
+                                    description="Create a delivery schedule against an independently published dashboard."
+                                />
+                            )}
+                        </div>
+                    </section>
+                )}
+
+                {runs && pagination && (
+                    <section className="overflow-hidden rounded-xl border bg-card">
+                        <div className="border-b px-5 py-4 sm:px-6">
+                            <h2 className="font-bold">
+                                Generated report register
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                {runs.total.toLocaleString()} immutable
+                                execution records
+                            </p>
+                        </div>
+                        {runRows.length ? (
+                            <WorkspaceDataTable
+                                columns={[
+                                    'Schedule',
+                                    'Format',
+                                    'Period',
+                                    'Metrics',
+                                    'Size',
+                                    'Checksum',
+                                    'Completed',
+                                    'Status',
+                                ]}
+                                rows={runRows}
+                                pagination={pagination}
+                                renderActionControl={(row) => {
+                                    const report = runs.data.find(
+                                        (item) => item.id === row.id,
+                                    );
+
+                                    return report ? (
+                                        <RunAction
+                                            report={report}
+                                            team={currentTeam.slug}
+                                        />
+                                    ) : null;
+                                }}
+                            />
+                        ) : (
+                            <WorkspaceEmptyState
+                                title="No generated artifacts"
+                                description="Approved schedules will create private checksummed report files when due or manually queued."
+                                className="min-h-64 border-0"
+                            />
+                        )}
+                    </section>
+                )}
+            </main>
+        </>
+    );
+}
+
+function DashboardPanel({
+    dashboard,
+    team,
+    options,
+    capabilities,
+}: {
+    dashboard: Dashboard;
+    team: string;
+    options: Props['options'];
+    capabilities: Props['capabilities'];
+}) {
+    return (
+        <section className="overflow-hidden rounded-xl border bg-card">
+            <div className="flex flex-col justify-between gap-4 border-b p-5 sm:flex-row sm:items-start">
+                <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Badge>{dashboard.code}</Badge>
+                        <Badge variant="outline">
+                            {humanize(dashboard.status)}
+                        </Badge>
+                        {dashboard.county && (
+                            <Link
+                                href={countyShow({
+                                    current_team: team,
+                                    county: dashboard.county.id,
+                                })}
+                            >
+                                <CountyIdentity
+                                    county={dashboard.county}
+                                    compact
+                                />
+                            </Link>
+                        )}
+                    </div>
+                    <h2 className="mt-3 text-xl font-bold">{dashboard.name}</h2>
+                    <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
+                        {dashboard.description}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                        Configured by {dashboard.creator}
+                        {dashboard.publisher
+                            ? ` · published by ${dashboard.publisher}`
+                            : ''}
+                        {dashboard.checksum
+                            ? ` · SHA-256 ${dashboard.checksum.slice(0, 16)}…`
+                            : ''}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {dashboard.referenceData
+                            ? `Catalogue ${dashboard.referenceData.version} · ${dashboard.referenceData.checksum.slice(0, 16)}…`
+                            : 'Legacy record · reference-data lineage not pinned'}
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    {capabilities.manage && dashboard.status === 'draft' && (
+                        <WidgetForm
+                            team={team}
+                            dashboard={dashboard}
+                            metrics={options.metrics}
+                        />
+                    )}
+                    {capabilities.approveDashboard &&
+                        dashboard.status === 'draft' && (
+                            <Button
+                                variant="outline"
+                                onClick={() =>
+                                    router.patch(
+                                        publish.url({
+                                            current_team: team,
+                                            dashboard: dashboard.id,
+                                        }),
+                                    )
+                                }
+                            >
+                                <FileCheck2 /> Publish independently
+                            </Button>
+                        )}
+                </div>
+            </div>
+            <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+                {dashboard.widgets.map((widget) => (
+                    <WidgetCard key={widget.id} widget={widget} team={team} />
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function WidgetCard({ widget, team }: { widget: Widget; team: string }) {
+    return (
+        <Card
+            className={
+                widget.width === 3
+                    ? 'md:col-span-2 xl:col-span-3'
+                    : widget.width === 2
+                      ? 'md:col-span-2'
+                      : ''
+            }
+        >
+            <CardHeader>
+                <CardTitle className="flex items-center justify-between gap-3 text-base">
+                    <span>{widget.title}</span>
+                    <Badge variant="outline">
+                        {humanize(widget.visualization)}
+                    </Badge>
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div>
+                    <p className="text-4xl font-bold tracking-tight">
+                        {widget.measurement.value === null
+                            ? 'No data'
+                            : `${widget.measurement.value.toLocaleString()}${widget.measurement.unit === 'percent' ? '%' : ''}`}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                        {widget.measurement.provenance}
+                    </p>
+                </div>
+                {widget.visualization === 'progress' &&
+                    widget.measurement.value !== null && (
+                        <Progress
+                            value={Math.min(100, widget.measurement.value)}
+                            aria-label={`${widget.title}: ${widget.measurement.value}${widget.measurement.unit === 'percent' ? '%' : ''}`}
+                        />
+                    )}
+                {widget.measurement.series.length > 0 && (
+                    <div className="grid gap-2">
+                        {widget.measurement.series.map((entry) => (
+                            <Link
+                                key={entry.county.id}
+                                href={countyShow({
+                                    current_team: team,
+                                    county: entry.county.id,
+                                })}
+                                className="flex items-center justify-between rounded-lg border p-2 hover:bg-muted/50"
+                            >
+                                <CountyIdentity county={entry.county} compact />
+                                <strong>
+                                    {entry.value === null
+                                        ? 'No data'
+                                        : `${entry.value.toLocaleString()}${widget.measurement.unit === 'percent' ? '%' : ''}`}
+                                </strong>
+                            </Link>
+                        ))}
+                    </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                    Measured {formatDate(widget.measurement.measured_at)}
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
+
+function DashboardForm({
+    team,
+    options,
+    catalogue,
+}: {
+    team: string;
+    options: Props['options'];
+    catalogue: Props['catalogue'];
+}) {
+    return (
+        <FormSheet
+            title="Create analytics dashboard"
+            description="Start a governed draft with an allowlisted metric. A different actor must publish it."
+            triggerLabel="New dashboard"
+            icon={Plus}
+            size="xl"
+            triggerDisabled={!catalogue.available}
+            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before creating dashboards.' : undefined}
+        >
+            <Form action={storeDashboard(team)} className="grid gap-5 pt-4">
+                {({ processing, errors }) => (
+                    <>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <Field
+                                name="code"
+                                label="Dashboard code"
+                                error={errors.code}
+                            />
+                            <Field
+                                name="name"
+                                label="Dashboard name"
+                                error={errors.name}
+                            />
+                            <SearchableSelect
+                                id="dashboard-county"
+                                name="county_id"
+                                label="County scope"
+                                options={options.counties}
+                                optional
+                                error={errors.county_id}
+                            />
+                            <SearchableMultiSelect
+                                name="audience_roles[]"
+                                label="Authorized audience roles"
+                                options={options.roles}
+                                error={errors.audience_roles}
+                            />
+                        </div>
+                        <TextField
+                            name="description"
+                            label="Purpose and decision supported"
+                            error={errors.description}
+                        />
+                        <div className="grid gap-4 rounded-xl border p-4">
+                            <h3 className="font-semibold">
+                                First governed widget
+                            </h3>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <Field
+                                    name="widgets[0][title]"
+                                    label="Widget title"
+                                />
+                                <SearchableSelect
+                                    id="dashboard-metric"
+                                    name="widgets[0][metric_key]"
+                                    label="Metric"
+                                    options={options.metrics}
+                                />
+                                <SearchableSelect
+                                    id="dashboard-visualization"
+                                    name="widgets[0][visualization]"
+                                    label="Visualization"
+                                    options={[
+                                        'metric',
+                                        'bar',
+                                        'progress',
+                                        'table',
+                                    ].map(option)}
+                                    defaultValue="metric"
+                                />
+                                <SearchableSelect
+                                    id="dashboard-disaggregation"
+                                    name="widgets[0][disaggregation]"
+                                    label="Disaggregation"
+                                    options={[{ id: 'county', name: 'County' }]}
+                                    optional
+                                />
+                                <input
+                                    type="hidden"
+                                    name="widgets[0][position]"
+                                    value="1"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="widgets[0][width]"
+                                    value="1"
+                                />
+                            </div>
+                        </div>
+                        <Button type="submit" disabled={processing}>
+                            <Plus /> Save governed draft
+                        </Button>
+                    </>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function WidgetForm({
+    team,
+    dashboard,
+    metrics,
+}: {
+    team: string;
+    dashboard: Dashboard;
+    metrics: Option[];
+}) {
+    const nextPosition =
+        Math.max(0, ...dashboard.widgets.map((item) => item.position)) + 1;
+
+    return (
+        <FormSheet
+            title={`Add widget to ${dashboard.code}`}
+            description="Add an allowlisted, provenance-backed metric while the dashboard remains a draft."
+            triggerLabel="Add widget"
+            icon={BarChart3}
+        >
+            <Form
+                action={storeWidget({
+                    current_team: team,
+                    dashboard: dashboard.id,
+                })}
+                className="grid gap-4 pt-4"
+            >
+                <Field name="title" label="Widget title" />
+                <TextField
+                    name="description"
+                    label="Interpretation guidance"
+                    optional
+                />
+                <SearchableSelect
+                    id={`metric-${dashboard.id}`}
+                    name="metric_key"
+                    label="Metric"
+                    options={metrics}
+                />
+                <SearchableSelect
+                    id={`visual-${dashboard.id}`}
+                    name="visualization"
+                    label="Visualization"
+                    options={['metric', 'bar', 'progress', 'table'].map(option)}
+                    defaultValue="metric"
+                />
+                <SearchableSelect
+                    id={`disaggregation-${dashboard.id}`}
+                    name="disaggregation"
+                    label="Disaggregation"
+                    options={[{ id: 'county', name: 'County' }]}
+                    optional
+                />
+                <SearchableSelect
+                    id={`width-${dashboard.id}`}
+                    name="width"
+                    label="Grid width"
+                    options={[
+                        { id: '1', name: 'One column' },
+                        { id: '2', name: 'Two columns' },
+                        { id: '3', name: 'Full row' },
+                    ]}
+                    defaultValue="1"
+                />
+                <input type="hidden" name="position" value={nextPosition} />
+                <Button type="submit">Add governed widget</Button>
+            </Form>
+        </FormSheet>
+    );
+}
+
+function ScheduleForm({
+    team,
+    options,
+    catalogue,
+}: {
+    team: string;
+    options: Props['options'];
+    catalogue: Props['catalogue'];
+}) {
+    return (
+        <FormSheet
+            title="Create report schedule"
+            description="Configure delivery from a published dashboard. Activation requires an independent approver."
+            triggerLabel="New schedule"
+            icon={CalendarClock}
+            size="xl"
+            triggerDisabled={!catalogue.available || options.publishedDashboards.length === 0}
+            triggerTitle={!catalogue.available ? 'Publish an approved reference-data catalogue before scheduling reports.' : options.publishedDashboards.length === 0 ? 'Publish a governed dashboard before scheduling reports.' : undefined}
+        >
+            <Form action={storeSchedule(team)} className="grid gap-5 pt-4">
+                {({ processing, errors }) => (
+                    <>
+                        <input
+                            type="hidden"
+                            name="workspace"
+                            value="analytics-dashboard"
+                        />
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <Field
+                                name="code"
+                                label="Schedule code"
+                                error={errors.code}
+                            />
+                            <Field
+                                name="name"
+                                label="Schedule name"
+                                error={errors.name}
+                            />
+                            <SearchableSelect
+                                id="schedule-dashboard"
+                                name="filters[dashboard_id]"
+                                label="Published dashboard"
+                                options={options.publishedDashboards}
+                            />
+                            <SearchableSelect
+                                id="schedule-county"
+                                name="county_id"
+                                label="County scope"
+                                options={options.counties}
+                                optional
+                            />
+                            <SearchableSelect
+                                id="schedule-format"
+                                name="format"
+                                label="Artifact format"
+                                options={['csv', 'xlsx', 'json', 'pdf'].map(
+                                    option,
+                                )}
+                                defaultValue="pdf"
+                            />
+                            <SearchableSelect
+                                id="schedule-frequency"
+                                name="frequency"
+                                label="Frequency"
+                                options={['daily', 'weekly', 'monthly'].map(
+                                    option,
+                                )}
+                                defaultValue="monthly"
+                            />
+                            <DatePickerField
+                                name="filters[from]"
+                                label="Reporting period from"
+                            />
+                            <DatePickerField
+                                name="filters[to]"
+                                label="Reporting period to"
+                            />
+                            <DatePickerField
+                                name="next_run_at"
+                                label="First execution"
+                                includeTime
+                                required
+                            />
+                            <SearchableMultiSelect
+                                name="recipient_user_ids[]"
+                                label="Authorized recipients"
+                                options={options.users}
+                            />
+                        </div>
+                        <Button type="submit" disabled={processing}>
+                            <Send /> Save for independent activation
+                        </Button>
+                    </>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function ScheduleCard({
+    schedule,
+    team,
+    capabilities,
+}: {
+    schedule: ReportSchedule;
+    team: string;
+    capabilities: Props['capabilities'];
+}) {
+    return (
+        <Card>
+            <CardHeader className="flex-row items-start justify-between">
+                <div>
+                    <CardTitle className="text-base">
+                        {schedule.code} · {schedule.name}
+                    </CardTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Next run {formatDate(schedule.nextRunAt)}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {schedule.referenceData
+                            ? `Catalogue ${schedule.referenceData.version} · ${schedule.referenceData.checksum.slice(0, 12)}…`
+                            : 'Legacy record · lineage not pinned'}
+                    </p>
+                </div>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`Actions for ${schedule.code}`}
+                        >
+                            <MoreHorizontal />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem asChild>
+                            <span>
+                                <Eye /> {schedule.format.toUpperCase()} ·{' '}
+                                {humanize(schedule.frequency)}
+                            </span>
+                        </DropdownMenuItem>
+                        {capabilities.approveSchedule &&
+                            schedule.status === 'draft' && (
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        router.patch(
+                                            activate.url({
+                                                current_team: team,
+                                                schedule: schedule.id,
+                                            }),
+                                        )
+                                    }
+                                >
+                                    <FileCheck2 /> Independently activate
+                                </DropdownMenuItem>
+                            )}
+                        {capabilities.manage &&
+                            schedule.status === 'active' && (
+                                <DropdownMenuItem
+                                    onSelect={() =>
+                                        router.post(
+                                            run.url({
+                                                current_team: team,
+                                                schedule: schedule.id,
+                                            }),
+                                        )
+                                    }
+                                >
+                                    <Play /> Queue now
+                                </DropdownMenuItem>
+                            )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+                <div className="flex flex-wrap gap-2">
+                    <Badge>{humanize(schedule.status)}</Badge>
+                    <Badge variant="outline">
+                        {schedule.format.toUpperCase()}
+                    </Badge>
+                    <Badge variant="outline">
+                        {schedule.recipientCount} recipient(s)
+                    </Badge>
+                </div>
+                {schedule.county ? (
+                    <Link
+                        href={countyShow({
+                            current_team: team,
+                            county: schedule.county.id,
+                        })}
+                    >
+                        <CountyIdentity county={schedule.county} compact />
+                    </Link>
+                ) : (
+                    <p className="text-sm text-muted-foreground">
+                        National scope · national recipients only
+                    </p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                    Created by {schedule.creator}
+                    {schedule.approver
+                        ? ` · approved by ${schedule.approver}`
+                        : ''}
+                </p>
+            </CardContent>
+        </Card>
+    );
+}
+
+function RunAction({ report, team }: { report: ReportRun; team: string }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Actions for report ${report.schedule.code}`}
+                    >
+                        <MoreHorizontal />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setOpen(true)}>
+                        <Eye /> View execution evidence
+                    </DropdownMenuItem>
+                    {report.status === 'completed' && (
+                        <DropdownMenuItem asChild>
+                            <a
+                                href={download.url({
+                                    current_team: team,
+                                    run: report.id,
+                                })}
+                            >
+                                <Download /> Download verified artifact
+                            </a>
+                        </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <Sheet open={open} onOpenChange={setOpen}>
+                <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
+                    <SheetHeader>
+                        <SheetTitle>
+                            {report.schedule.code} report run
+                        </SheetTitle>
+                        <SheetDescription>
+                            {report.schedule.name} · {humanize(report.status)}
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="grid gap-4 px-4 pt-4 pb-8">
+                        <Detail
+                            label="Artifact checksum"
+                            value={report.sha256 ?? 'Pending'}
+                        />
+                        <Detail
+                            label="Record count"
+                            value={
+                                report.recordCount?.toLocaleString() ??
+                                'Pending'
+                            }
+                        />
+                        <Detail
+                            label="Artifact size"
+                            value={formatBytes(report.sizeBytes)}
+                        />
+                        <Detail
+                            label="Started"
+                            value={formatDate(report.startedAt)}
+                        />
+                        <Detail
+                            label="Completed"
+                            value={formatDate(report.completedAt)}
+                        />
+                        {report.errorDetail && (
+                            <Detail
+                                label="Failure detail"
+                                value={report.errorDetail}
+                            />
+                        )}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </>
+    );
+}
+
+function MetricCard({
+    title,
+    value,
+    detail,
+}: {
+    title: string;
+    value: number;
+    detail: string;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-sm text-muted-foreground">
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-3xl font-bold">{value.toLocaleString()}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+            </CardContent>
+        </Card>
+    );
+}
+function Field({
+    name,
+    label,
+    error,
+    optional = false,
+}: {
+    name: string;
+    label: string;
+    error?: string;
+    optional?: boolean;
+}) {
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor={name}>
+                {label}
+                {optional && (
+                    <span className="text-muted-foreground"> (optional)</span>
+                )}
+            </Label>
+            <Input id={name} name={name} aria-invalid={Boolean(error)} />
+            {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+    );
+}
+function TextField({
+    name,
+    label,
+    error,
+    optional = false,
+}: {
+    name: string;
+    label: string;
+    error?: string;
+    optional?: boolean;
+}) {
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor={name}>
+                {label}
+                {optional && (
+                    <span className="text-muted-foreground"> (optional)</span>
+                )}
+            </Label>
+            <Textarea
+                id={name}
+                name={name}
+                rows={4}
+                aria-invalid={Boolean(error)}
+            />
+            {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+    );
+}
+function Detail({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="rounded-lg border p-4">
+            <p className="text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="mt-1 text-sm break-all">{value}</p>
+        </div>
+    );
+}
+function humanize(value: string) {
+    return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+function option(value: string): Option {
+    return { id: value, name: humanize(value) };
+}
+function formatDate(value: string | null) {
+    return value ? new Date(value).toLocaleString(DEFAULT_LOCALE) : '—';
+}
+function formatBytes(value: number | null) {
+    if (value === null) {
+        return '—';
+    }
+
+    if (value < 1024) {
+        return `${value} B`;
+    }
+
+    return `${(value / 1024).toFixed(1)} KB`;
+}

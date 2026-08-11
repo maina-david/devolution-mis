@@ -1,0 +1,701 @@
+import { Link, usePage } from '@inertiajs/react';
+import {
+    Activity,
+    ChartNoAxesCombined,
+    FolderKanban,
+    ShieldCheck,
+} from 'lucide-react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import CountyIdentity from '@/components/county-identity';
+import type { CountyIdentityValue } from '@/components/county-identity';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import {
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
+import {
+    Empty,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from '@/components/ui/empty';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
+import { show as showCounty } from '@/routes/counties';
+import { show as showProject } from '@/routes/projects';
+
+export type MonitoringResults = {
+    summary: {
+        total: number;
+        submitted: number;
+        verified: number;
+        rejected: number;
+        projectSourced: number;
+    };
+    indicators: Array<{
+        id: string;
+        code: string;
+        name: string;
+        resultsLevel: string;
+        unit: string;
+        observations: number;
+        average: number;
+        minimum: number;
+        maximum: number;
+        latestPeriodEnd: string;
+    }>;
+    disaggregations: Array<{
+        indicatorId: string;
+        code: string;
+        name: string;
+        dimension: string;
+        observations: number;
+        average: number;
+        latestPeriodEnd: string;
+    }>;
+    performance: {
+        summary: {
+            series: number;
+            withTarget: number;
+            met: number;
+            offTrack: number;
+            averageAttainment: number | null;
+        };
+        methodology: string;
+        rows: Array<{
+            id: string;
+            indicator: {
+                id: string;
+                code: string;
+                name: string;
+                unit: string;
+                direction: string;
+            };
+            county: CountyIdentityValue;
+            programme: string | null;
+            dimension: string;
+            periodEnd: string;
+            actual: number;
+            target: number | null;
+            variance: number | null;
+            variancePercentage: number | null;
+            attainment: number | null;
+            status: 'met' | 'off_track' | 'target_missing';
+        }>;
+        trends: Array<{
+            key: string;
+            indicator: {
+                id: string;
+                code: string;
+                name: string;
+                unit: string;
+            };
+            county: CountyIdentityValue;
+            dimension: string;
+            points: Array<{
+                period: string;
+                actual: number;
+                target: number | null;
+            }>;
+        }>;
+    };
+    projectContributions: Array<{
+        id: string;
+        indicator: { code: string; name: string; unit: string };
+        county: CountyIdentityValue;
+        project: { id: string; code: string; title: string };
+        periodEnd: string;
+        dimension: string;
+        value: string | number;
+        verificationStatus: string;
+        qualityStatus: string;
+    }>;
+};
+
+export default function MonitoringResultsDashboard({
+    teamSlug,
+    results,
+}: {
+    teamSlug: string;
+    results: MonitoringResults;
+}) {
+    const page = usePage();
+    const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
+    const summaryCards = [
+        {
+            label: 'Scoped observations',
+            value: results.summary.total,
+            icon: Activity,
+        },
+        {
+            label: 'Verified results',
+            value: results.summary.verified,
+            icon: ShieldCheck,
+        },
+        {
+            label: 'Awaiting M&E review',
+            value: results.summary.submitted,
+            icon: ChartNoAxesCombined,
+        },
+        {
+            label: 'Project sourced',
+            value: results.summary.projectSourced,
+            icon: FolderKanban,
+        },
+    ];
+
+    return (
+        <section
+            aria-labelledby="results-dashboard-title"
+            className="flex flex-col gap-5"
+        >
+            <div>
+                <h2 id="results-dashboard-title" className="text-xl font-bold">
+                    Results dashboard
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                    Filter-aware verified results, disaggregation and project
+                    contributions within your authorized county scope.
+                </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {summaryCards.map(({ label, value, icon: Icon }) => (
+                    <Card key={label}>
+                        <CardHeader className="flex-row items-center justify-between gap-3">
+                            <CardDescription>{label}</CardDescription>
+                            <Icon aria-hidden="true" />
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-3xl font-bold tabular-nums">
+                                {value.toLocaleString()}
+                            </p>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Verified indicator ranges</CardTitle>
+                        <CardDescription>
+                            Average and observed range by released indicator
+                            version.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto p-0">
+                        {results.indicators.length ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Indicator</TableHead>
+                                        <TableHead>Level</TableHead>
+                                        <TableHead className="text-right">
+                                            Average
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Range
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Records
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {results.indicators.map((indicator) => (
+                                        <TableRow key={indicator.id}>
+                                            <TableCell>
+                                                <span className="font-medium">
+                                                    {indicator.code}
+                                                </span>
+                                                <span className="block text-xs text-muted-foreground">
+                                                    {indicator.name}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">
+                                                    {indicator.resultsLevel}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {indicator.average.toLocaleString()}{' '}
+                                                {indicator.unit}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {indicator.minimum.toLocaleString()}
+                                                –
+                                                {indicator.maximum.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {indicator.observations}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <ResultsEmpty
+                                title="No verified numeric results"
+                                description="Results appear after independent M&E verification."
+                            />
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Disaggregation</CardTitle>
+                        <CardDescription>
+                            Verified result averages by declared dimension
+                            category.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto p-0">
+                        {results.disaggregations.length ? (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Indicator</TableHead>
+                                        <TableHead>Dimension</TableHead>
+                                        <TableHead className="text-right">
+                                            Average
+                                        </TableHead>
+                                        <TableHead className="text-right">
+                                            Records
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {results.disaggregations.map((item) => (
+                                        <TableRow
+                                            key={`${item.indicatorId}-${item.dimension}`}
+                                        >
+                                            <TableCell>
+                                                <span className="font-medium">
+                                                    {item.code}
+                                                </span>
+                                                <span className="block text-xs text-muted-foreground">
+                                                    {item.name}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                {item.dimension}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {item.average.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right tabular-nums">
+                                                {item.observations}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        ) : (
+                            <ResultsEmpty
+                                title="No disaggregated results"
+                                description="Add dimensions to project or county observations to populate this view."
+                            />
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+
+            <TargetPerformance
+                teamSlug={teamSlug}
+                performance={results.performance}
+            />
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Project result contributions</CardTitle>
+                    <CardDescription>
+                        Verified project submissions awaiting or completing
+                        separate M&E quality review.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto p-0">
+                    {results.projectContributions.length ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Project</TableHead>
+                                    <TableHead>County</TableHead>
+                                    <TableHead>Indicator</TableHead>
+                                    <TableHead>Dimension</TableHead>
+                                    <TableHead className="text-right">
+                                        Value
+                                    </TableHead>
+                                    <TableHead>Quality state</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {results.projectContributions.map((item) => (
+                                    <TableRow key={item.id}>
+                                        <TableCell>
+                                            <Link
+                                                className="font-medium hover:underline"
+                                                href={drilldown(
+                                                    showProject.url({
+                                                        current_team: teamSlug,
+                                                        project:
+                                                            item.project.id,
+                                                    }),
+                                                )}
+                                            >
+                                                {item.project.code}
+                                            </Link>
+                                            <span className="block text-xs text-muted-foreground">
+                                                {item.project.title}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Link
+                                                href={drilldown(
+                                                    showCounty.url({
+                                                        current_team: teamSlug,
+                                                        county: item.county.id,
+                                                    }),
+                                                )}
+                                            >
+                                                <CountyIdentity
+                                                    county={item.county}
+                                                    compact
+                                                />
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>
+                                            {item.indicator.code} ·{' '}
+                                            {item.indicator.name}
+                                        </TableCell>
+                                        <TableCell>{item.dimension}</TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {item.value} {item.indicator.unit}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline">
+                                                {item.verificationStatus} ·{' '}
+                                                {item.qualityStatus}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <ResultsEmpty
+                            title="No project contributions"
+                            description="Verified project result lines appear here automatically."
+                        />
+                    )}
+                </CardContent>
+            </Card>
+        </section>
+    );
+}
+
+const performanceChartConfig = {
+    actual: { label: 'Verified actual', color: 'var(--chart-1)' },
+    target: { label: 'Verified target', color: 'var(--chart-2)' },
+} satisfies ChartConfig;
+
+function TargetPerformance({
+    teamSlug,
+    performance,
+}: {
+    teamSlug: string;
+    performance: MonitoringResults['performance'];
+}) {
+    const page = usePage();
+    const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
+
+    return (
+        <section
+            aria-labelledby="target-performance-title"
+            className="flex flex-col gap-5"
+        >
+            <div>
+                <h3 id="target-performance-title" className="text-lg font-bold">
+                    Target performance and trends
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    Latest verified actuals compared with applicable
+                    independently verified targets.
+                </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <PerformanceMetric
+                    label="Series with targets"
+                    value={`${performance.summary.withTarget}/${performance.summary.series}`}
+                />
+                <PerformanceMetric
+                    label="Targets met"
+                    value={performance.summary.met.toLocaleString()}
+                />
+                <PerformanceMetric
+                    label="Off track"
+                    value={performance.summary.offTrack.toLocaleString()}
+                />
+                <PerformanceMetric
+                    label="Average attainment"
+                    value={
+                        performance.summary.averageAttainment === null
+                            ? '—'
+                            : `${performance.summary.averageAttainment}%`
+                    }
+                />
+            </div>
+            <Alert>
+                <ChartNoAxesCombined aria-hidden="true" />
+                <AlertTitle>Calculation method</AlertTitle>
+                <AlertDescription>{performance.methodology}</AlertDescription>
+            </Alert>
+            {performance.trends.length > 0 && (
+                <div className="grid gap-5 xl:grid-cols-2">
+                    {performance.trends.slice(0, 4).map((trend) => (
+                        <Card key={trend.key}>
+                            <CardHeader>
+                                <CardTitle>
+                                    {trend.indicator.code} ·{' '}
+                                    {trend.indicator.name}
+                                </CardTitle>
+                                <CardDescription className="flex flex-wrap items-center gap-2">
+                                    <Link
+                                        href={drilldown(
+                                            showCounty.url({
+                                                current_team: teamSlug,
+                                                county: trend.county.id,
+                                            }),
+                                        )}
+                                        className="hover:underline"
+                                    >
+                                        <CountyIdentity
+                                            county={trend.county}
+                                            compact
+                                        />
+                                    </Link>
+                                    <span>
+                                        {trend.dimension} ·{' '}
+                                        {trend.indicator.unit}
+                                    </span>
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <ChartContainer
+                                    config={performanceChartConfig}
+                                    className="h-64 w-full"
+                                    role="img"
+                                    aria-label={`${trend.indicator.code} actual and target trend for ${trend.county.name}`}
+                                >
+                                    <LineChart
+                                        accessibilityLayer
+                                        data={trend.points}
+                                        margin={{ left: 4, right: 12 }}
+                                    >
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="period"
+                                            tickLine={false}
+                                            axisLine={false}
+                                            tickMargin={8}
+                                            tickFormatter={(value: string) =>
+                                                value.slice(0, 7)
+                                            }
+                                        />
+                                        <YAxis
+                                            tickLine={false}
+                                            axisLine={false}
+                                            width={44}
+                                        />
+                                        <ChartTooltip
+                                            content={<ChartTooltipContent />}
+                                        />
+                                        <ChartLegend
+                                            content={<ChartLegendContent />}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="actual"
+                                            stroke="var(--color-actual)"
+                                            strokeWidth={2}
+                                            dot={{ r: 3 }}
+                                        />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="target"
+                                            stroke="var(--color-target)"
+                                            strokeWidth={2}
+                                            strokeDasharray="5 4"
+                                            dot={{ r: 3 }}
+                                            connectNulls={false}
+                                        />
+                                    </LineChart>
+                                </ChartContainer>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Latest target variance</CardTitle>
+                    <CardDescription>
+                        Direction-aware attainment for each scoped indicator,
+                        county, programme and dimension series.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="overflow-x-auto p-0">
+                    {performance.rows.length ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Indicator</TableHead>
+                                    <TableHead>County</TableHead>
+                                    <TableHead>Period</TableHead>
+                                    <TableHead className="text-right">
+                                        Actual
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Target
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Variance
+                                    </TableHead>
+                                    <TableHead className="text-right">
+                                        Attainment
+                                    </TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {performance.rows.map((row) => (
+                                    <TableRow key={row.id}>
+                                        <TableCell>
+                                            <span className="font-medium">
+                                                {row.indicator.code}
+                                            </span>
+                                            <span className="block max-w-64 text-xs text-muted-foreground">
+                                                {row.indicator.name} ·{' '}
+                                                {row.dimension}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Link
+                                                href={drilldown(
+                                                    showCounty.url({
+                                                        current_team: teamSlug,
+                                                        county: row.county.id,
+                                                    }),
+                                                )}
+                                            >
+                                                <CountyIdentity
+                                                    county={row.county}
+                                                    compact
+                                                />
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{row.periodEnd}</TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.actual.toLocaleString()}{' '}
+                                            {row.indicator.unit}
+                                        </TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.target === null
+                                                ? '—'
+                                                : row.target.toLocaleString()}
+                                        </TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.variance === null
+                                                ? '—'
+                                                : `${row.variance > 0 ? '+' : ''}${row.variance.toLocaleString()} (${row.variancePercentage ?? '—'}%)`}
+                                        </TableCell>
+                                        <TableCell className="text-right tabular-nums">
+                                            {row.attainment === null
+                                                ? '—'
+                                                : `${row.attainment}%`}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge
+                                                variant={
+                                                    row.status === 'met'
+                                                        ? 'default'
+                                                        : row.status ===
+                                                            'off_track'
+                                                          ? 'destructive'
+                                                          : 'outline'
+                                                }
+                                            >
+                                                {row.status.replaceAll(
+                                                    '_',
+                                                    ' ',
+                                                )}
+                                            </Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
+                        <ResultsEmpty
+                            title="No verified actuals"
+                            description="Submit and independently verify numeric actuals to calculate target performance."
+                        />
+                    )}
+                </CardContent>
+            </Card>
+        </section>
+    );
+}
+
+function PerformanceMetric({ label, value }: { label: string; value: string }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardDescription>{label}</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <p className="text-2xl font-bold tabular-nums">{value}</p>
+            </CardContent>
+        </Card>
+    );
+}
+
+function ResultsEmpty({
+    title,
+    description,
+}: {
+    title: string;
+    description: string;
+}) {
+    return (
+        <Empty className="min-h-52 border-0">
+            <EmptyHeader>
+                <EmptyMedia variant="icon">
+                    <ChartNoAxesCombined aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>{title}</EmptyTitle>
+                <EmptyDescription>{description}</EmptyDescription>
+            </EmptyHeader>
+        </Empty>
+    );
+}

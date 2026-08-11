@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'service_name' => env('SERVICE_NAME', 'idmis-web'),
+    'backup_disk' => env('BACKUP_DISK', 'local'),
+    'backup_path' => env('BACKUP_PATH', 'operations/backups'),
+    'backup_retention_days' => (int) env('BACKUP_RETENTION_DAYS', 35),
+    'rpo_minutes' => (int) env('RPO_MINUTES', 60),
+    'rto_minutes' => (int) env('RTO_MINUTES', 240),
+    'availability_target_percent' => (float) env('AVAILABILITY_TARGET_PERCENT', 99.5),
+    'readiness_latency_target_ms' => (float) env('READINESS_LATENCY_TARGET_MS', 1000),
+    'queue_depth_warning' => (int) env('QUEUE_DEPTH_WARNING', 1000),
+    'queue_oldest_age_warning_seconds' => (int) env('QUEUE_OLDEST_AGE_WARNING_SECONDS', 300),
+    'failed_jobs_warning' => (int) env('FAILED_JOBS_WARNING', 0),
+    'backup_max_age_minutes' => (int) env('BACKUP_MAX_AGE_MINUTES', 1440),
+    'pg_dump_binary' => env('PG_DUMP_BINARY', 'pg_dump'),
+    'pg_restore_binary' => env('PG_RESTORE_BINARY', 'pg_restore'),
+    'createdb_binary' => env('CREATEDB_BINARY', 'createdb'),
+    'dropdb_binary' => env('DROPDB_BINARY', 'dropdb'),
+    'psql_binary' => env('PSQL_BINARY', 'psql'),
+    'performance' => [
+        'binary' => env('OPERATIONS_PERFORMANCE_BINARY', '/usr/sbin/ab'),
+        'base_url' => env('OPERATIONS_PERFORMANCE_BASE_URL', 'https://devolution-mis.test'),
+        'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('OPERATIONS_PERFORMANCE_ALLOWED_HOSTS', 'devolution-mis.test'))))),
+        'allowed_paths' => ['/up', '/health/ready'],
+        'maximum_requests' => (int) env('OPERATIONS_PERFORMANCE_MAX_REQUESTS', 10000),
+        'maximum_concurrency' => (int) env('OPERATIONS_PERFORMANCE_MAX_CONCURRENCY', 100),
+        'process_timeout_seconds' => (int) env('OPERATIONS_PERFORMANCE_TIMEOUT_SECONDS', 120),
+        'minimum_requests_per_second' => (float) env('OPERATIONS_PERFORMANCE_MIN_RPS', 10),
+        'maximum_p95_latency_ms' => (float) env('OPERATIONS_PERFORMANCE_MAX_P95_MS', 1000),
+        'maximum_failed_requests' => (int) env('OPERATIONS_PERFORMANCE_MAX_FAILURES', 0),
+    ],
+];

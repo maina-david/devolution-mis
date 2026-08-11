@@ -1,0 +1,30 @@
+# Partner contribution reconciliation
+
+- Treat a contribution as reporter-owned input, not verified finance truth.
+- Reconciliation requires at least one active, malware-clean DMS link with purpose `partner-contribution-reconciliation-evidence`.
+- Enforce reporter/reviewer separation even when the reporter also has `partners:manage`.
+- Corrections create a later checksum-linked version. Never update or delete retained reconciliation decisions; PostgreSQL enforces this invariant.
+- Keep money normalization decimal-safe and include reviewer, review time, evidence checksum and predecessor checksum in the canonical decision snapshot.
+- County surfaces must use `County::identityCell()` and `CountyIdentity` so the official logo and its provenance remain consistent.
+- Never rewrite approved agreement history. Post-approval amendment, renewal, suspension and termination use immutable request and decision records.
+- A post-approval agreement change needs a clean active `partner-agreement-change-evidence` DMS link and requester/decider separation before application.
+- Keep change-request and change-decision checksums distinct; corrections create another request version rather than mutating retained evidence.
+- Partner operational monitoring must be safe to run repeatedly: fingerprint the exact subject, condition and due/version boundary, and notify only when a new alert is retained.
+- Operational notifications combine authorized partner representatives with county-scoped partner managers; never broadcast a county alert to an unrelated county role.
+- Resolve stale pending/exception alerts when later verified evidence supersedes the condition, while preserving the alert and its disposition history.
+- Preserve the dashboard role contract for partner maps: assessor, development-partner and devolution-admin roles use the full Kenya frame; county roles receive their zoomed county; only authorized county payloads are interactive.
+- Collaboration plans require submitter/approver separation before actions can be assigned. Action due dates stay within the plan period and owners must have county access.
+- Collaboration progress is append-only evidence. A separate immutable decision applies verified progress to the mutable action aggregate; 100% requires a clean active DMS record and self-verification is forbidden.
+- Collaboration-action reminders persist separate upcoming and overdue markers so repeat schedules remain idempotent. Notify the accountable owner, and add only county-authorized partner managers for overdue escalation; audit the scoped recipient count.
+- Keep the dedicated action export on the shared county scope and filter contract. It must expose deadline, progress, reminder/escalation, clean-evidence and latest independent-decision state in CSV, XLSX, JSON and county-logo-aware PDF.
+- Automated contribution source matching may consume only successful inbound exchanges under the current effective, independently published `partner_contribution_statement` contract.
+- Retain exactly one immutable, checksummed source/local snapshot per exchange. Matching must be replay-safe and must classify invalid payload, missing target, control conflict, county scope, currency and value exceptions without rewriting either source.
+- A successful automated match is operational evidence, not a verified contribution decision: never create a human reconciliation or mutate reporter-owned amounts through the matcher. Clean DMS evidence and an independent reviewer remain mandatory.
+- The scheduled matcher uses an explicitly configured service identity holding `integrations:manage`; missing or unauthorized identities fail safely. Production activation still requires an approved authenticated adapter, source-owner agreement, secrets and operational certification.
+- Inbound exchanges use Passport client credentials with the narrow `integrations:ingest` scope. Bind one active OAuth client to one registered integration system and reject cross-system clients, inactive or outbound-only systems, ineffective contracts and missing contract headers before persistence.
+- Keep inbound payloads encrypted and checksummed, retain client/correlation/source-time provenance without storing bearer credentials, and serialize idempotency handling with a PostgreSQL advisory lock. A replay is valid only for the same client, contract and payload checksum; any collision is a conflict.
+- A production inbound system stays closed until system activation, source-owner contract and data-sharing approvals are all recorded. A passing sandbox or mocked OAuth test is never evidence of a live government interface.
+- Retain one immutable UUID attempt for every actual outbound send and every accepted or replayed inbound request. Attempt evidence may retain safe status, timing, actor/client snapshot, HTTP metadata and response checksum, but never bearer secrets or unvalidated raw payloads.
+- Do not hide transport retries inside the HTTP client. One network send equals one attempt-ledger record; retry scheduling is driven by the independently published contract's maximum attempts and backoff sequence.
+- Retry only connection failures and explicitly transient HTTP outcomes (408, 425, 429 and 5xx). Exhausted, configuration and non-retryable failures move to `dead_lettered`; a successful retry clears the next-attempt time.
+- The scheduled retry runner requires an explicitly configured active identity holding `integrations:manage`, runs without overlap on one server and fails closed for an unauthorized identity. Manual recovery must enforce the same permission and county/portfolio scope as the exchange register.

@@ -1,0 +1,95 @@
+<?php
+
+namespace Tests\Feature;
+
+use Tests\TestCase;
+
+class AccessibilityContractTest extends TestCase
+{
+    public function test_public_and_authentication_journeys_have_keyboard_bypass_targets(): void
+    {
+        $authLayout = $this->source('resources/js/layouts/auth/auth-simple-layout.tsx');
+        $this->assertStringContainsString('href="#main-content"', $authLayout);
+        $this->assertStringContainsString('Skip to main content', $authLayout);
+        $this->assertStringContainsString('id="main-content"', $authLayout);
+        $this->assertStringContainsString('tabIndex={-1}', $authLayout);
+
+        foreach (['welcome.tsx', 'help.tsx', 'faqs.tsx'] as $page) {
+            $source = $this->source("resources/js/pages/{$page}");
+            $this->assertStringContainsString('<main id="main-content" tabIndex={-1}>', $source, "{$page} must expose a focusable skip-link target.");
+        }
+    }
+
+    public function test_authenticated_workspaces_have_a_keyboard_bypass_target(): void
+    {
+        $appShell = $this->source('resources/js/components/app-shell.tsx');
+        $this->assertStringContainsString('href="#main-content"', $appShell);
+        $this->assertStringContainsString('Skip to main content', $appShell);
+
+        $appContent = $this->source('resources/js/components/app-content.tsx');
+        $this->assertSame(2, substr_count($appContent, 'id="main-content"'));
+        $this->assertSame(2, substr_count($appContent, 'tabIndex={-1}'));
+    }
+
+    public function test_citizen_journey_has_focusable_bypass_and_announced_async_feedback(): void
+    {
+        $shell = $this->source('resources/js/components/citizen-engagement-shell.tsx');
+        $this->assertStringContainsString('href="#main-content"', $shell);
+        $this->assertStringContainsString('<main id="main-content" tabIndex={-1}>', $shell);
+
+        $intake = $this->source('resources/js/pages/citizen-engagement/index.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.consent_given)}', $intake);
+        $this->assertStringContainsString("'consent-description consent-error'", $intake);
+        $this->assertStringContainsString('id="consent-error"', $intake);
+
+        $receipt = $this->source('resources/js/pages/citizen-engagement/receipt.tsx');
+        $this->assertStringContainsString('role="status"', $receipt);
+        $this->assertStringContainsString('aria-live="polite"', $receipt);
+        $this->assertStringContainsString('The receipt could not be copied.', $receipt);
+    }
+
+    public function test_global_theme_respects_reduced_motion_and_destructive_contrast(): void
+    {
+        $styles = $this->source('resources/css/app.css');
+        $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $styles);
+        $this->assertStringContainsString('--destructive-foreground: oklch(1 0 0);', $styles);
+        $this->assertStringContainsString('animation-duration: 0.01ms !important;', $styles);
+    }
+
+    public function test_shared_form_errors_and_authentication_statuses_are_announced(): void
+    {
+        $inputError = $this->source('resources/js/components/input-error.tsx');
+        $this->assertStringContainsString("role = 'alert'", $inputError);
+        $this->assertStringContainsString('role={role}', $inputError);
+
+        foreach (['login.tsx', 'forgot-password.tsx'] as $page) {
+            $source = $this->source("resources/js/pages/auth/{$page}");
+            $this->assertStringContainsString('role="status"', $source);
+            $this->assertStringContainsString('aria-live="polite"', $source);
+        }
+    }
+
+    public function test_critical_authentication_fields_expose_labels_and_error_relationships(): void
+    {
+        $login = $this->source('resources/js/pages/auth/login.tsx');
+        $this->assertStringContainsString("errors.email ? 'email-error' : undefined", $login);
+        $this->assertStringContainsString("? 'password-error'", $login);
+
+        $forgotPassword = $this->source('resources/js/pages/auth/forgot-password.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.email)}', $forgotPassword);
+        $this->assertStringContainsString('id="email-error"', $forgotPassword);
+
+        $twoFactor = $this->source('resources/js/pages/auth/two-factor-challenge.tsx');
+        $this->assertStringContainsString('htmlFor="recovery_code"', $twoFactor);
+        $this->assertStringContainsString('id="recovery_code"', $twoFactor);
+        $this->assertStringContainsString("? 'authentication-code-error'", $twoFactor);
+    }
+
+    private function source(string $path): string
+    {
+        $source = file_get_contents(base_path($path));
+        $this->assertIsString($source, "Unable to read {$path}.");
+
+        return $source;
+    }
+}

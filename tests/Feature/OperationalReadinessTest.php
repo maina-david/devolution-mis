@@ -1,0 +1,126 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Jobs\CreateOperationalBackupJob;
+use App\Jobs\VerifyOperationalBackupJob;
+use App\Models\OperationalBackup;
+use App\Models\PerformanceTestRun;
+use App\Models\QueueRecoveryAttempt;
+use App\Models\ReleaseRecord;
+use App\Models\ServiceLevelMeasurement;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class OperationalReadinessTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_public_readiness_probe_checks_dependencies_without_disclosing_details(): void
+    {
+        $this->getJson(route('health.ready'))->assertOk()->assertJsonPath('status', 'ready')->assertJsonCount(4, 'checks')->assertJsonStructure(['status', 'checkedAt', 'checks' => [['name', 'status', 'latencyMs']]]);
+        $this->assertSame([], Storage::disk('local')->allFiles('operations/readiness'));
+    }
+
+    public function test_release_evidence_requires_independent_validation_and_supports_controlled_rollback(): void
+    {
+        $deployer = User::factory()->platformAdmin()->create();
+        $validator = User::factory()->platformAdmin()->create();
+        $versionOne = $this->releasePayload('2026.8.1', str_repeat('1', 40), str_repeat('a', 64));
+        $this->actingAs($deployer)->post(route('operations.releases.store', $deployer->currentTeam->slug), $versionOne)->assertRedirect();
+        $releaseOne = ReleaseRecord::query()->sole();
+        $this->assertTrue(Str::isUuid($releaseOne->id));
+        $this->actingAs($deployer)->patch(route('operations.releases.validate', [$deployer->currentTeam->slug, $releaseOne]), ['evidence' => 'Attempted self-validation.'])->assertForbidden();
+        $this->actingAs($validator)->patch(route('operations.releases.validate', [$validator->currentTeam->slug, $releaseOne]), ['evidence' => 'Smoke, migration, authorization and rollback-readiness checks passed.'])->assertRedirect();
+        $this->assertSame('validated', $releaseOne->refresh()->status);
+
+        $this->actingAs($deployer)->post(route('operations.releases.store', $deployer->currentTeam->slug), $this->releasePayload('2026.8.2', str_repeat('2', 40), str_repeat('b', 64)))->assertRedirect();
+        $releaseTwo = ReleaseRecord::query()->where('version', '2026.8.2')->sole();
+        $this->actingAs($validator)->patch(route('operations.releases.validate', [$validator->currentTeam->slug, $releaseTwo]), ['evidence' => 'Independent post-deployment checks passed.'])->assertRedirect();
+        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$validator->currentTeam->slug, $releaseTwo]), ['rollback_to_version' => 'missing-version', 'reason' => 'Invalid target test.'])->assertStatus(409);
+        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$validator->currentTeam->slug, $releaseTwo]), ['rollback_to_version' => '2026.8.1', 'reason' => 'Controlled rollback rehearsal after simulated release-health regression.'])->assertRedirect();
+        $this->assertSame('rolled_back', $releaseTwo->refresh()->status);
+        $this->assertSame('2026.8.1', $releaseTwo->rollback_to_version);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $releaseTwo->id, 'action' => 'operations.release.rolled_back']);
+    }
+
+    public function test_operations_workspace_measurements_backup_jobs_and_exports_are_governed(): void
+    {
+        Queue::fake();
+        $operator = User::factory()->platformAdmin()->create();
+        $viewer = User::factory()->topManagement()->create();
+        $performanceRun = PerformanceTestRun::factory()->create();
+        $this->assertSame(0, Artisan::call('operations:measure'));
+        $this->assertSame(8, ServiceLevelMeasurement::query()->count());
+        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 8)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $this->actingAs($viewer)->post(route('operations.backups.store', $viewer->currentTeam->slug))->assertForbidden();
+        $this->actingAs($operator)->post(route('operations.backups.store', $operator->currentTeam->slug))->assertRedirect();
+        Queue::assertPushed(CreateOperationalBackupJob::class, fn ($job) => $job->userId === $operator->id);
+
+        $backup = OperationalBackup::create(['initiated_by' => $operator->id, 'reference' => 'BKP-TEST-001', 'disk' => 'local', 'path' => 'operations/backups/test.dump', 'database_name' => 'devolution_mis_test', 'format' => 'postgres_custom', 'sha256' => str_repeat('c', 64), 'size_bytes' => 1024, 'status' => 'completed', 'started_at' => now()->subMinute(), 'completed_at' => now()]);
+        $this->actingAs($operator)->post(route('operations.backups.verify', [$operator->currentTeam->slug, $backup]))->assertRedirect();
+        Queue::assertPushed(VerifyOperationalBackupJob::class, fn ($job) => $job->backupId === $backup->id && $job->restoreProbe);
+        foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
+            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'operations', $format]))->assertOk()->assertDownload();
+        }
+    }
+
+    public function test_failed_queue_jobs_are_minimized_requeued_and_retain_immutable_recovery_evidence(): void
+    {
+        $operator = User::factory()->platformAdmin()->create();
+        $viewer = User::factory()->topManagement()->create();
+        $failedJobUuid = (string) Str::uuid();
+        $payload = json_encode(['uuid' => $failedJobUuid, 'displayName' => 'App\\Jobs\\GenerateScheduledReport', 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call', 'attempts' => 3, 'data' => ['commandName' => 'App\\Jobs\\GenerateScheduledReport', 'command' => 'protected-serialized-command']], JSON_THROW_ON_ERROR);
+        DB::table('failed_jobs')->insert(['uuid' => $failedJobUuid, 'connection' => 'database', 'queue' => 'reports', 'payload' => $payload, 'exception' => 'RuntimeException: Simulated protected report failure at /private/path.php:10', 'failed_at' => now()->subMinutes(10)]);
+
+        $this->actingAs($viewer)->post(route('operations.failed-jobs.retry', [$viewer->currentTeam->slug, $failedJobUuid]))->assertForbidden();
+        $this->assertDatabaseHas('failed_jobs', ['uuid' => $failedJobUuid]);
+        $this->actingAs($operator)->get(route('operations.index', $operator->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+            ->where('failedJobs.total', 1)
+            ->where('failedJobs.data.0.jobName', 'App\\Jobs\\GenerateScheduledReport')
+            ->where('failedJobs.data.0.exceptionCategory', 'RuntimeException')
+            ->missing('failedJobs.data.0.payload')
+            ->missing('failedJobs.data.0.exception'));
+
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, $failedJobUuid]))->assertRedirect();
+        $this->assertDatabaseMissing('failed_jobs', ['uuid' => $failedJobUuid]);
+        $this->assertDatabaseHas('jobs', ['queue' => 'reports', 'attempts' => 0]);
+        $attempt = QueueRecoveryAttempt::query()->sole();
+        $this->assertSame('requeued', $attempt->outcome);
+        $this->assertSame($operator->id, $attempt->initiated_by);
+        $this->assertSame(64, strlen($attempt->payload_checksum));
+        $this->assertSame(64, strlen($attempt->exception_checksum));
+        $this->assertSame(64, strlen($attempt->evidence_checksum));
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $attempt->id, 'action' => 'operations.queue.recovery_attempted']);
+
+        $this->expectException(QueryException::class);
+        $attempt->update(['outcome' => 'retry_failed']);
+    }
+
+    public function test_queue_recovery_fails_closed_for_missing_or_non_transactional_provider_jobs(): void
+    {
+        $operator = User::factory()->platformAdmin()->create();
+        $failedJobUuid = (string) Str::uuid();
+        $payload = json_encode(['uuid' => $failedJobUuid, 'displayName' => 'App\\Jobs\\ExternalProviderJob', 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call', 'data' => []], JSON_THROW_ON_ERROR);
+        DB::table('failed_jobs')->insert(['uuid' => $failedJobUuid, 'connection' => 'sync', 'queue' => 'external', 'payload' => $payload, 'exception' => 'RuntimeException: External provider failure', 'failed_at' => now()->subMinute()]);
+
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, (string) Str::uuid()]))->assertNotFound();
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, $failedJobUuid]))->assertStatus(409);
+        $this->assertDatabaseHas('failed_jobs', ['uuid' => $failedJobUuid]);
+        $this->assertDatabaseCount('queue_recovery_attempts', 0);
+        $this->assertDatabaseCount('jobs', 0);
+    }
+
+    /** @return array<string, mixed> */
+    private function releasePayload(string $version, string $gitSha, string $artifactChecksum): array
+    {
+        return ['version' => $version, 'git_sha' => $gitSha, 'environment' => 'pilot', 'artifact_checksum' => $artifactChecksum, 'change_reference' => 'CHG-IDMIS-2026-001', 'migration_batch' => 1, 'deployed_at' => now()->subMinute()->toIso8601String(), 'notes' => 'Reproducible pilot artifact deployment.'];
+    }
+}

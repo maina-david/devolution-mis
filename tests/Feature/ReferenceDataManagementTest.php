@@ -1,0 +1,246 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\County;
+use App\Models\Organization;
+use App\Models\Programme;
+use App\Models\ReferenceDataRelease;
+use App\Models\Sector;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
+
+class ReferenceDataManagementTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_authorized_administrator_can_manage_canonical_reference_data(): void
+    {
+        $admin = User::factory()->devolutionAdmin()->create();
+        $county = County::factory()->create(['name' => 'Mombasa', 'logo_path' => '/images/counties/mombasa.webp']);
+
+        $this->actingAs($admin)->post(route('reference-data.organizations.store', $admin->currentTeam->slug), [
+            'code' => 'SDD',
+            'name' => 'State Department for Devolution',
+            'type' => 'county',
+            'county_id' => $county->id,
+            'status' => 'active',
+        ])->assertRedirect();
+        $organization = Organization::query()->sole();
+
+        $this->actingAs($admin)->post(route('reference-data.sectors.store', $admin->currentTeam->slug), [
+            'code' => 'GOV',
+            'name' => 'Governance',
+            'description' => 'Devolution governance and coordination.',
+            'is_active' => true,
+        ])->assertRedirect();
+        $sector = Sector::query()->sole();
+
+        $this->actingAs($admin)->post(route('reference-data.programmes.store', $admin->currentTeam->slug), [
+            'code' => 'KDSP-II',
+            'name' => 'Second Kenya Devolution Support Program',
+            'lead_organization_id' => $organization->id,
+            'sector_id' => $sector->id,
+            'status' => 'active',
+            'currency' => 'KES',
+        ])->assertRedirect();
+
+        $programme = Programme::query()->sole();
+        $this->assertTrue(Str::isUuid($organization->id));
+        $this->assertTrue(Str::isUuid($sector->id));
+        $this->assertTrue(Str::isUuid($programme->id));
+        $this->assertSame($organization->id, $programme->lead_organization_id);
+        $this->assertSame($sector->id, $programme->sector_id);
+
+        $this->actingAs($admin)->get(route('reference-data.index', $admin->currentTeam->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('reference-data/index')
+                ->where('organizations.data.0.code', 'SDD')
+                ->where('organizations.data.0.county.kind', 'county')
+                ->where('organizations.data.0.county.logoUrl', '/images/counties/mombasa.webp')
+                ->where('sectors.data.0.code', 'GOV')
+                ->where('programmes.data.0.code', 'KDSP-II'));
+    }
+
+    public function test_reference_data_is_restricted_and_linked_records_cannot_be_archived(): void
+    {
+        $official = User::factory()->countyOfficial()->create();
+        $admin = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create();
+
+        $this->actingAs($official)->get(route('reference-data.index', $official->currentTeam->slug))->assertForbidden();
+        $this->actingAs($official)->post(route('reference-data.sectors.store', $official->currentTeam->slug), [])->assertForbidden();
+
+        $this->actingAs($admin)
+            ->delete(route('reference-data.organizations.destroy', [$admin->currentTeam->slug, $programme->leadOrganization]))
+            ->assertStatus(409);
+        $this->actingAs($admin)
+            ->delete(route('reference-data.sectors.destroy', [$admin->currentTeam->slug, $programme->sector]))
+            ->assertStatus(409);
+
+        $this->assertNotSoftDeleted($programme->leadOrganization);
+        $this->assertNotSoftDeleted($programme->sector);
+
+        $this->actingAs($admin)
+            ->delete(route('reference-data.programmes.destroy', [$admin->currentTeam->slug, $programme]))
+            ->assertRedirect();
+
+        $this->assertSoftDeleted($programme);
+    }
+
+    public function test_sector_hierarchy_rejects_cycles_and_is_reproducible_in_catalogue_releases(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+        $root = Sector::factory()->create(['code' => 'SOC', 'name' => 'Social services']);
+
+        $this->actingAs($admin)->post(route('reference-data.sectors.store', $admin->currentTeam->slug), [
+            'parent_sector_id' => $root->id,
+            'code' => 'HLT',
+            'name' => 'Health services',
+            'description' => 'County and national health-service delivery classification.',
+            'is_active' => true,
+        ])->assertRedirect();
+
+        $child = Sector::query()->where('code', 'HLT')->sole();
+        $this->assertSame($root->id, $child->parent_sector_id);
+
+        $this->actingAs($admin)->patch(route('reference-data.sectors.update', [$admin->currentTeam->slug, $root]), [
+            'parent_sector_id' => $child->id,
+            'code' => $root->code,
+            'name' => $root->name,
+            'description' => $root->description,
+            'is_active' => true,
+        ])->assertSessionHasErrors('parent_sector_id');
+
+        $this->actingAs($admin)
+            ->delete(route('reference-data.sectors.destroy', [$admin->currentTeam->slug, $root]))
+            ->assertStatus(409);
+
+        if ($this->getConnection()->getDriverName() === 'pgsql') {
+            $this->expectException(QueryException::class);
+            $child->update(['parent_sector_id' => $child->id]);
+        }
+    }
+
+    public function test_sector_parent_is_exposed_and_retained_in_release_history(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+        $root = Sector::factory()->create(['code' => 'ECON', 'name' => 'Economic services']);
+        $child = Sector::factory()->create(['parent_sector_id' => $root->id, 'code' => 'AGR', 'name' => 'Agriculture']);
+
+        $this->actingAs($admin)->get(route('reference-data.index', $admin->currentTeam->slug))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sectors.data', fn ($sectors): bool => collect($sectors)->contains(
+                    fn (array $sector): bool => $sector['id'] === $child->id
+                        && $sector['parent']['id'] === $root->id
+                        && $sector['parent']['code'] === 'ECON',
+                )));
+
+        $this->actingAs($admin)->post(route('reference-data.releases.store', $admin->currentTeam->slug), [
+            'change_summary' => 'Publish governed sector hierarchy lineage.',
+        ])->assertRedirect();
+
+        $release = ReferenceDataRelease::query()->sole();
+        $snapshot = collect($release->snapshot['sectors'])->firstWhere('id', $child->id);
+
+        $this->assertIsArray($snapshot);
+        $this->assertSame($root->id, $snapshot['parent_sector_id']);
+    }
+
+    public function test_governed_identifiers_can_be_checked_for_uniqueness_on_blur(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+        $official = User::factory()->countyOfficial()->create();
+        Sector::factory()->create(['code' => 'GOV', 'name' => 'Governance']);
+
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+            'resource' => 'sectors',
+            'field' => 'code',
+            'value' => 'GOV',
+        ])->assertOk()->assertExactJson([
+            'available' => false,
+            'message' => 'Code is already in use.',
+        ]);
+
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+            'resource' => 'sectors',
+            'field' => 'code',
+            'value' => 'PFM',
+        ])->assertOk()->assertExactJson([
+            'available' => true,
+            'message' => 'Code is available.',
+        ]);
+
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+            'resource' => 'users',
+            'field' => 'email',
+            'value' => 'hidden@example.test',
+        ])->assertUnprocessable();
+
+        $this->actingAs($official)->postJson(route('reference-data.unique-value', $official->currentTeam->slug), [
+            'resource' => 'sectors',
+            'field' => 'code',
+            'value' => 'GOV',
+        ])->assertForbidden();
+
+        $component = file_get_contents(resource_path('js/components/unique-value-input.tsx'));
+        $this->assertIsString($component);
+        $this->assertStringContainsString('onBlur={() => void checkAvailability()}', $component);
+        $this->assertStringContainsString('request.submit()', $component);
+        $this->assertStringContainsString('serverError ?? result?.message', $component);
+    }
+
+    public function test_reference_catalogue_release_is_checksummed_effective_dated_and_independently_published(): void
+    {
+        County::factory()->count(2)->create();
+        Organization::factory()->create();
+        Sector::factory()->create();
+        Programme::factory()->create();
+        $submitter = User::factory()->platformAdmin()->create();
+        $publisher = User::factory()->platformAdmin()->create();
+
+        $this->actingAs($submitter)->post(route('reference-data.releases.store', $submitter->currentTeam->slug), [
+            'change_summary' => 'Initial governed catalogue snapshot for controlled downstream exchange.',
+        ])->assertRedirect();
+
+        $release = ReferenceDataRelease::query()->sole();
+        $this->assertTrue(Str::isUuid($release->id));
+        $this->assertSame('submitted', $release->status);
+        $this->assertCount(2, $release->snapshot['counties']);
+        $this->assertCount(2, $release->snapshot['organizations']);
+        $this->assertCount(2, $release->snapshot['sectors']);
+        $this->assertCount(1, $release->snapshot['programmes']);
+        $this->assertSame(64, Str::length($release->checksum));
+
+        $publishPayload = ['approval_reference' => 'SDD-MDM-APPROVAL-001', 'effective_from' => '2026-08-15'];
+        $this->actingAs($submitter)->patch(route('reference-data.releases.publish', [$submitter->currentTeam->slug, $release]), $publishPayload)->assertForbidden();
+        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$publisher->currentTeam->slug, $release]), $publishPayload)->assertRedirect();
+
+        $release->refresh();
+        $this->assertSame('published', $release->status);
+        $this->assertSame($publisher->id, $release->approved_by);
+        $this->assertSame('2026-08-15', $release->effective_from?->toDateString());
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $release->id, 'action' => 'reference.release.submitted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $release->id, 'action' => 'reference.release.published']);
+        $this->actingAs($publisher)->get(route('reference-data.index', $publisher->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('releases.0.version', 1)
+            ->where('releases.0.status', 'published')
+            ->where('releases.0.counts.counties', 2)
+            ->where('capabilities.approve', true));
+        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$publisher->currentTeam->slug, $release]), $publishPayload)->assertStatus(409);
+    }
+
+    public function test_published_reference_catalogue_snapshot_is_database_immutable(): void
+    {
+        $release = ReferenceDataRelease::factory()->create(['status' => 'published', 'effective_from' => now(), 'published_at' => now()]);
+
+        $this->expectException(QueryException::class);
+        $release->update(['change_summary' => 'A published snapshot must never be rewritten.']);
+    }
+}
