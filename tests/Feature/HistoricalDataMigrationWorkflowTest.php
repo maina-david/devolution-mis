@@ -14,6 +14,9 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -77,6 +80,32 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
 
         $this->expectException(HttpException::class);
         app(ReviewHistoricalDataMigration::class)->handle($batch, $reviewer, 'approve', 'Approval attempted before exception resolution.');
+    }
+
+    public function test_xlsx_historical_source_preserves_typed_dates_and_is_privately_retained(): void
+    {
+        Storage::fake('local');
+        $county = County::factory()->create(['code' => 1]);
+        $submitter = User::factory()->platformAdmin()->create();
+
+        $this->actingAs($submitter)->post(route('data-migrations.store', $submitter->currentTeam->slug), [
+            'file' => $this->xlsx([
+                [1, new \DateTimeImmutable('2019-12-31'), 'PFM-KRA', 'Public financial management KRA score', 72.25, '', 'percent', 'ACPA-2019-FINAL'],
+            ]),
+            'dataset_type' => 'acpa_scores',
+            'source_name' => 'Independent ACPA verification workbook',
+            'source_reference' => 'ACPA-HISTORICAL-XLSX-2019',
+            'period_from' => '2019-01-01',
+            'period_to' => '2019-12-31',
+        ])->assertRedirect();
+        $batch = DataMigrationBatch::query()->sole();
+
+        $this->assertSame('validated', $batch->status);
+        $this->assertSame($county->id, $batch->rows->sole()->county_id);
+        $this->assertSame('2019-12-31', $batch->rows->sole()->period->toDateString());
+        $this->assertSame('72.2500', $batch->rows->sole()->numeric_value);
+        $this->assertStringEndsWith('.xlsx', $batch->path);
+        Storage::disk('local')->assertExists($batch->path);
     }
 
     public function test_three_person_approval_applies_immutable_historical_metrics_with_provenance(): void
@@ -319,5 +348,29 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         }
 
         return UploadedFile::fake()->createWithContent('historical-metrics.csv', implode("\n", $lines));
+    }
+
+    /** @param list<list<mixed>> $rows */
+    private function xlsx(array $rows): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'idmis-historical-test-');
+        $this->assertIsString($path);
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $writer->addRow(Row::fromValues(StageHistoricalDataMigration::REQUIRED_HEADERS));
+        foreach ($rows as $row) {
+            $writer->addRow(Row::fromValuesWithStyles($row, [
+                1 => new Style(format: 'yyyy-mm-dd'),
+            ]));
+        }
+        $writer->close();
+
+        return new UploadedFile(
+            $path,
+            'historical-metrics.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
     }
 }

@@ -11,12 +11,12 @@ use App\Models\Programme;
 use App\Models\Sector;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\TabularImportReader;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use SplFileObject;
 use Throwable;
 
 class StageReferenceDataImport
@@ -29,7 +29,10 @@ class StageReferenceDataImport
         'users' => ['name', 'email', 'role', 'home_county_code', 'assigned_county_codes'],
     ];
 
-    public function __construct(private AuditLogger $auditLogger) {}
+    public function __construct(
+        private AuditLogger $auditLogger,
+        private TabularImportReader $tabularImportReader,
+    ) {}
 
     public function handle(User $actor, UploadedFile $file, string $datasetType, string $sourceName, string $sourceReference): DataMigrationBatch
     {
@@ -42,7 +45,7 @@ class StageReferenceDataImport
             throw ValidationException::withMessages(['file' => 'The uploaded source checksum could not be calculated.']);
         }
 
-        $storedPath = $file->storeAs('data-migrations', Str::uuid().'.csv', 'local');
+        $storedPath = $file->storeAs('data-migrations', Str::uuid().'.'.$this->tabularImportReader->extension($file), 'local');
         if (! is_string($storedPath)) {
             throw ValidationException::withMessages(['file' => 'The source file could not be stored privately.']);
         }
@@ -97,16 +100,15 @@ class StageReferenceDataImport
             throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
         }
 
-        $csv = new SplFileObject($realPath);
-        $csv->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE);
-        $header = $csv->fgetcsv();
+        $sourceRows = $this->tabularImportReader->read($file);
+        $header = array_shift($sourceRows)['values'] ?? null;
         $expected = self::HEADERS[$datasetType];
         $normalized = is_array($header)
             ? array_map(fn (mixed $value): string => str((string) $value)->trim()->lower()->replace([' ', '-'], '_')->ltrim("\xEF\xBB\xBF")->toString(), $header)
             : [];
 
         if ($normalized !== $expected) {
-            throw ValidationException::withMessages(['file' => 'Use the required CSV columns in this exact order: '.implode(', ', $expected).'.']);
+            throw ValidationException::withMessages(['file' => 'Use the required columns in this exact order: '.implode(', ', $expected).'.']);
         }
 
         $existingCodes = match ($datasetType) {
@@ -118,14 +120,8 @@ class StageReferenceDataImport
         };
         $rows = [];
         $seenCodes = [];
-        $rowNumber = 1;
-
-        while (! $csv->eof()) {
-            $values = $csv->fgetcsv();
-            if (! is_array($values) || $values === [null]) {
-                continue;
-            }
-            $rowNumber++;
+        foreach ($sourceRows as $sourceRow) {
+            $values = $sourceRow['values'];
             if (count($rows) >= 5000) {
                 throw ValidationException::withMessages(['file' => 'A bulk-import batch may contain at most 5,000 data rows.']);
             }
@@ -150,7 +146,7 @@ class StageReferenceDataImport
             $seenCodes[] = $identity;
             $canonicalPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $rows[] = [
-                'row_number' => $rowNumber,
+                'row_number' => $sourceRow['row_number'],
                 'source_payload' => $payload,
                 'source_checksum' => hash('sha256', $canonicalPayload),
                 'validation_status' => $errors === [] ? 'valid' : 'invalid',

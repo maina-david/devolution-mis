@@ -16,7 +16,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
 use Tests\TestCase;
+use ZipArchive;
 
 class BulkReferenceDataImportWorkflowTest extends TestCase
 {
@@ -170,6 +174,86 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_authorized_user_can_download_and_stage_an_exact_xlsx_template(): void
+    {
+        Storage::fake('local');
+        $administrator = User::factory()->platformAdmin()->create();
+
+        $this->actingAs($administrator)
+            ->get(route('data-migrations.templates.show', [
+                $administrator->currentTeam->slug,
+                'organizations',
+                'format' => 'xlsx',
+            ]))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            ->assertDownload('organizations-bulk-import-template.xlsx');
+
+        $this->actingAs($administrator)->post(route('data-migrations.reference-data.store', $administrator->currentTeam->slug), [
+            'file' => $this->xlsx('organizations', [
+                ['COG', 'Council of Governors', 'national', '', 'info@cog.go.ke', 'active'],
+            ]),
+            'dataset_type' => 'organizations',
+            'source_name' => 'Approved institutional registry',
+            'source_reference' => 'SDD-REGISTRY-XLSX-2026-01',
+        ])->assertRedirect();
+        $batch = DataMigrationBatch::query()->sole();
+
+        $this->assertSame('validated', $batch->status);
+        $this->assertSame('COG', $batch->rows->sole()->source_payload['code']);
+        $this->assertStringEndsWith('.xlsx', $batch->path);
+        Storage::disk('local')->assertExists($batch->path);
+    }
+
+    public function test_xlsx_import_rejects_formula_cells_and_multiple_worksheets(): void
+    {
+        Storage::fake('local');
+        $administrator = User::factory()->platformAdmin()->create();
+
+        try {
+            app(StageReferenceDataImport::class)->handle(
+                $administrator,
+                $this->xlsx('organizations', [
+                    ['FORMULA', '=1+1', 'national', '', 'formula@example.test', 'active'],
+                ]),
+                'organizations',
+                'Formula-bearing registry',
+                'SDD-REGISTRY-FORMULA',
+            );
+            $this->fail('Formula-bearing spreadsheets must fail closed.');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('formulas are not allowed', $exception->errors()['file'][0]);
+        }
+
+        $this->expectException(ValidationException::class);
+        app(StageReferenceDataImport::class)->handle(
+            $administrator,
+            $this->xlsx('organizations', [
+                ['MULTI', 'Multiple sheet registry', 'national', '', 'multi@example.test', 'active'],
+            ], true),
+            'organizations',
+            'Ambiguous multi-sheet registry',
+            'SDD-REGISTRY-MULTI-SHEET',
+        );
+    }
+
+    public function test_xlsx_import_rejects_external_workbook_links(): void
+    {
+        Storage::fake('local');
+        $administrator = User::factory()->platformAdmin()->create();
+
+        $this->expectException(ValidationException::class);
+        app(StageReferenceDataImport::class)->handle(
+            $administrator,
+            $this->xlsx('organizations', [
+                ['LINKED', 'Externally linked registry', 'national', '', 'linked@example.test', 'active'],
+            ], externalLink: true),
+            'organizations',
+            'Externally linked registry',
+            'SDD-REGISTRY-EXTERNAL-LINK',
+        );
+    }
+
     public function test_user_import_validates_roles_county_scopes_and_creates_invited_accounts_without_uploaded_passwords(): void
     {
         Storage::fake('local');
@@ -256,5 +340,37 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         }
 
         return UploadedFile::fake()->createWithContent("{$datasetType}.csv", implode("\n", $lines));
+    }
+
+    /** @param list<list<string>> $rows */
+    private function xlsx(string $datasetType, array $rows, bool $secondSheet = false, bool $externalLink = false): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'idmis-import-test-');
+        $this->assertIsString($path);
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $writer->addRow(Row::fromValues(StageReferenceDataImport::HEADERS[$datasetType]));
+        foreach ($rows as $row) {
+            $writer->addRow(Row::fromValues($row));
+        }
+        if ($secondSheet) {
+            $writer->addNewSheetAndMakeItCurrent();
+            $writer->addRow(Row::fromValues(['unexpected']));
+        }
+        $writer->close();
+        if ($externalLink) {
+            $archive = new ZipArchive;
+            $this->assertTrue($archive->open($path) === true);
+            $this->assertTrue($archive->addFromString('xl/externalLinks/externalLink1.xml', '<externalLink/>'));
+            $archive->close();
+        }
+
+        return new UploadedFile(
+            $path,
+            "{$datasetType}.xlsx",
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
     }
 }

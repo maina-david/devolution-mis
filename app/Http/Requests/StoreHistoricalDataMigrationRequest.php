@@ -18,7 +18,7 @@ class StoreHistoricalDataMigrationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:csv,txt', 'mimetypes:text/csv,text/plain,application/csv,application/vnd.ms-excel', 'max:20480'],
+            'file' => ['required', 'file', 'extensions:csv,xlsx', 'mimes:csv,txt,xlsx', 'mimetypes:text/csv,text/plain,application/csv,application/vnd.ms-excel,application/zip,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'max:20480'],
             'dataset_type' => ['required', Rule::in(['acpa_scores', 'performance_metrics', 'evaluation_baselines'])],
             'source_name' => ['required', 'string', 'min:5', 'max:255'],
             'source_reference' => ['required', 'string', 'min:3', 'max:255'],

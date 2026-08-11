@@ -4,6 +4,7 @@ import {
     DatabaseBackup,
     Download,
     Eye,
+    FileSpreadsheet,
     FileUp,
     MoreHorizontal,
     PlayCircle,
@@ -168,7 +169,8 @@ export default function HistoricalDataMigrations({
                             <p className="mt-3 max-w-2xl opacity-80">
                                 Validate, approve and atomically apply governed
                                 operational registers and historical result
-                                datasets from checksum-retained CSV sources.
+                                datasets from checksum-retained CSV or XLSX
+                                sources.
                             </p>
                         </div>
                         {capabilities.stage && (
@@ -361,10 +363,12 @@ export default function HistoricalDataMigrations({
 }
 
 function MigrationForm({ team }: { team: string }) {
+    const [datasetType, setDatasetType] = useState('acpa_scores');
+
     return (
         <FormSheet
             title="Stage historical source"
-            description="Upload an authorized CSV source for row-level validation and county reconciliation. No record is applied at this stage."
+            description="Upload an authorized CSV or XLSX source for row-level validation and county reconciliation. No record is applied at this stage."
             triggerLabel="Upload historical data"
             icon={FileUp}
             size="lg"
@@ -373,12 +377,14 @@ function MigrationForm({ team }: { team: string }) {
                 {({ errors, processing }) => (
                     <div className="flex flex-col gap-5">
                         <div className="flex flex-col gap-2">
-                            <Label htmlFor="migration-file">CSV source</Label>
+                            <Label htmlFor="migration-file">
+                                CSV or XLSX source
+                            </Label>
                             <Input
                                 id="migration-file"
                                 name="file"
                                 type="file"
-                                accept=".csv,text/csv"
+                                accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                 aria-invalid={Boolean(errors.file)}
                                 required
                             />
@@ -397,7 +403,13 @@ function MigrationForm({ team }: { team: string }) {
                             name="dataset_type"
                             label="Dataset type"
                             values={datasetOptions.map((option) => option.id)}
+                            value={datasetType}
+                            onValueChange={setDatasetType}
                             error={errors.dataset_type}
+                        />
+                        <TemplateDownloadMenu
+                            team={team}
+                            datasetType={datasetType}
                         />
                         <TextField
                             id="migration-source-name"
@@ -442,7 +454,7 @@ function ReferenceImportForm({ team }: { team: string }) {
     return (
         <FormSheet
             title="Upload reference data"
-            description="Upload a create-only CSV template. The file is dry-run validated and cannot change the registry until independent approval and final application."
+            description="Upload a create-only CSV or XLSX template. The file is dry-run validated and cannot change the registry until independent approval and final application."
             triggerLabel="Upload reference data"
             icon={FileUp}
             size="lg"
@@ -461,26 +473,19 @@ function ReferenceImportForm({ team }: { team: string }) {
                             onValueChange={setDatasetType}
                             error={errors.dataset_type}
                         />
-                        <Button variant="outline" asChild>
-                            <a
-                                href={showTemplate.url({
-                                    current_team: team,
-                                    datasetType,
-                                })}
-                            >
-                                <Download data-icon="inline-start" />
-                                Download {humanize(datasetType)} template
-                            </a>
-                        </Button>
+                        <TemplateDownloadMenu
+                            team={team}
+                            datasetType={datasetType}
+                        />
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="reference-import-file">
-                                Completed CSV template
+                                Completed CSV or XLSX template
                             </Label>
                             <Input
                                 id="reference-import-file"
                                 name="file"
                                 type="file"
-                                accept=".csv,text/csv"
+                                accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                 aria-invalid={Boolean(errors.file)}
                                 required
                             />
@@ -515,6 +520,47 @@ function ReferenceImportForm({ team }: { team: string }) {
                 )}
             </Form>
         </FormSheet>
+    );
+}
+
+function TemplateDownloadMenu({
+    team,
+    datasetType,
+}: {
+    team: string;
+    datasetType: string;
+}) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline">
+                    <Download data-icon="inline-start" />
+                    Download {humanize(datasetType)} template
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+                <DropdownMenuItem asChild>
+                    <a
+                        href={showTemplate.url({
+                            current_team: team,
+                            datasetType,
+                        })}
+                    >
+                        <Download /> CSV template
+                    </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <a
+                        href={showTemplate.url(
+                            { current_team: team, datasetType },
+                            { query: { format: 'xlsx' } },
+                        )}
+                    >
+                        <FileSpreadsheet /> XLSX template
+                    </a>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
 

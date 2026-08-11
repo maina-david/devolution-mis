@@ -7,20 +7,23 @@ use App\Models\DataMigrationBatch;
 use App\Models\HistoricalMetric;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\TabularImportReader;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use SplFileObject;
 use Throwable;
 
 class StageHistoricalDataMigration
 {
-    private const REQUIRED_HEADERS = ['county_code', 'period', 'metric_code', 'metric_name', 'numeric_value', 'narrative_value', 'unit', 'source_reference'];
+    public const REQUIRED_HEADERS = ['county_code', 'period', 'metric_code', 'metric_name', 'numeric_value', 'narrative_value', 'unit', 'source_reference'];
 
-    public function __construct(private AuditLogger $auditLogger) {}
+    public function __construct(
+        private AuditLogger $auditLogger,
+        private TabularImportReader $tabularImportReader,
+    ) {}
 
     public function handle(User $actor, UploadedFile $file, string $datasetType, string $sourceName, string $sourceReference, string $periodFrom, string $periodTo): DataMigrationBatch
     {
@@ -37,7 +40,7 @@ class StageHistoricalDataMigration
             throw ValidationException::withMessages(['file' => 'The source file checksum could not be calculated.']);
         }
 
-        $storedPath = $file->storeAs('data-migrations', Str::uuid().'.csv', 'local');
+        $storedPath = $file->storeAs('data-migrations', Str::uuid().'.'.$this->tabularImportReader->extension($file), 'local');
         if (! is_string($storedPath)) {
             throw ValidationException::withMessages(['file' => 'The source file could not be stored privately.']);
         }
@@ -90,26 +93,20 @@ class StageHistoricalDataMigration
             throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
         }
 
-        $csv = new SplFileObject($realPath);
-        $csv->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE);
-        $header = $csv->fgetcsv();
+        $sourceRows = $this->tabularImportReader->read($file);
+        $header = array_shift($sourceRows)['values'] ?? null;
         if (! is_array($header)) {
-            throw ValidationException::withMessages(['file' => 'The CSV header could not be read.']);
+            throw ValidationException::withMessages(['file' => 'The source header could not be read.']);
         }
         $normalizedHeader = array_map(fn (mixed $value): string => str((string) $value)->trim()->lower()->replace([' ', '-'], '_')->ltrim("\xEF\xBB\xBF")->toString(), $header);
         if ($normalizedHeader !== self::REQUIRED_HEADERS) {
-            throw ValidationException::withMessages(['file' => 'Use the required CSV columns in this exact order: '.implode(', ', self::REQUIRED_HEADERS).'.']);
+            throw ValidationException::withMessages(['file' => 'Use the required columns in this exact order: '.implode(', ', self::REQUIRED_HEADERS).'.']);
         }
 
         $counties = County::query()->get(['id', 'code'])->keyBy(fn (County $county): string => str_pad((string) $county->code, 3, '0', STR_PAD_LEFT));
         $rows = [];
-        $rowNumber = 1;
-        while (! $csv->eof()) {
-            $values = $csv->fgetcsv();
-            if (! is_array($values) || $values === [null]) {
-                continue;
-            }
-            $rowNumber++;
+        foreach ($sourceRows as $sourceRow) {
+            $values = $sourceRow['values'];
             if (count($rows) >= 5000) {
                 throw ValidationException::withMessages(['file' => 'A migration batch may contain at most 5,000 data rows.']);
             }
@@ -143,7 +140,7 @@ class StageHistoricalDataMigration
             }
             $canonicalPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
             $rows[] = [
-                'row_number' => $rowNumber,
+                'row_number' => $sourceRow['row_number'],
                 'county_id' => $county?->id,
                 'period' => $period,
                 'metric_code' => $payload['metric_code'] !== '' ? Str::upper($payload['metric_code']) : null,

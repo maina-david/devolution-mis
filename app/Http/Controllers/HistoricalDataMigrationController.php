@@ -16,11 +16,15 @@ use App\Models\DataMigrationBatch;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HistoricalDataMigrationController extends Controller
@@ -85,7 +89,7 @@ class HistoricalDataMigrationController extends Controller
         $user = $request->user();
         $attributes = $request->validated();
         $file = $request->file('file');
-        abort_unless($file instanceof UploadedFile, 422, 'A CSV source file is required.');
+        abort_unless($file instanceof UploadedFile, 422, 'A CSV or XLSX source file is required.');
         $stage->handle($user, $file, $attributes['dataset_type'], $attributes['source_name'], $attributes['source_reference'], $attributes['period_from'], $attributes['period_to']);
 
         return $this->success('Historical source staged and reconciled. Review every reported exception before approval.');
@@ -97,17 +101,37 @@ class HistoricalDataMigrationController extends Controller
         $user = $request->user();
         $attributes = $request->validated();
         $file = $request->file('file');
-        abort_unless($file instanceof UploadedFile, 422, 'A CSV source file is required.');
+        abort_unless($file instanceof UploadedFile, 422, 'A CSV or XLSX source file is required.');
         $stage->handle($user, $file, $attributes['dataset_type'], $attributes['source_name'], $attributes['source_reference']);
 
         return $this->success('Bulk import staged and validated. Review every reported exception before approval.');
     }
 
-    public function template(string $currentTeam, string $datasetType): StreamedResponse
+    public function template(Request $request, string $currentTeam, string $datasetType): BinaryFileResponse|StreamedResponse
     {
         $this->authorizeView();
-        abort_unless(array_key_exists($datasetType, StageReferenceDataImport::HEADERS), 404);
-        $headers = StageReferenceDataImport::HEADERS[$datasetType];
+        $headers = StageReferenceDataImport::HEADERS[$datasetType]
+            ?? (in_array($datasetType, ['acpa_scores', 'performance_metrics', 'evaluation_baselines'], true)
+                ? StageHistoricalDataMigration::REQUIRED_HEADERS
+                : null);
+        abort_unless(is_array($headers), 404);
+        $format = strtolower((string) $request->query('format', 'csv'));
+        abort_unless(in_array($format, ['csv', 'xlsx'], true), 404);
+
+        if ($format === 'xlsx') {
+            $path = tempnam(sys_get_temp_dir(), 'idmis-import-template-');
+            abort_if($path === false, 500, 'The XLSX template could not be created.');
+            $writer = new Writer;
+            $writer->openToFile($path);
+            $writer->addRow(Row::fromValues($headers));
+            $writer->close();
+
+            return response()->download(
+                $path,
+                "{$datasetType}-bulk-import-template.xlsx",
+                ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            )->deleteFileAfterSend(true);
+        }
 
         return response()->streamDownload(function () use ($headers): void {
             $stream = fopen('php://output', 'w');
