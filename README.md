@@ -64,6 +64,14 @@ composer setup
 
 Configure `.env` with a PostgreSQL database and mail, queue, broadcast, storage, and integration settings appropriate to the environment. Never commit `.env`, OAuth keys, database files, or credentials.
 
+Generate Passport signing keys once per environment before exercising OAuth client-credentials integrations:
+
+```bash
+php artisan passport:keys --no-interaction
+```
+
+In deployed environments, use approved secret custody or the `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY` environment variables instead of source-controlled keys. Rotating these keys invalidates existing access tokens and must follow the approved release procedure.
+
 For an authorized disposable development database, rebuild and seed with:
 
 ```bash

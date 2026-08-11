@@ -8,6 +8,14 @@ composer setup
 
 Configure a PostgreSQL connection in `.env`. Laravel Herd serves the project at `https://devolution-mis.test`; do not start a separate PHP development server.
 
+Generate the ignored Passport signing keys once for local OAuth client-credentials testing:
+
+```bash
+php artisan passport:keys --no-interaction
+```
+
+Do not regenerate deployed keys casually: rotation invalidates existing access tokens and requires approved secret custody and release coordination.
+
 For an explicitly disposable local database only:
 
 ```bash

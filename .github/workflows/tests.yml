@@ -62,6 +62,9 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Generate ephemeral Passport keys
+        run: php artisan passport:keys --force --no-interaction
+
       - name: Run CI Checks
         run: composer ci:check
 
