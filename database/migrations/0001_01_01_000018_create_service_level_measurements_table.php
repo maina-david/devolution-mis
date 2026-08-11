@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('service_level_measurements', function (Blueprint $table): void {
-            $table->uuid('id')->primary('service_level_measurements_pkey');
+            $table->uuid('id')->primary();
             $table->string('service', 100);
             $table->string('metric', 100);
             $table->decimal('value', 20, 4);

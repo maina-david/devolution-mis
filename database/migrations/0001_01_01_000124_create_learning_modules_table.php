@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('learning_modules', function (Blueprint $table): void {
-            $table->uuid('id')->primary('learning_modules_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('learning_course_id');
             $table->string('title', 255);
             $table->text('description')->nullable();

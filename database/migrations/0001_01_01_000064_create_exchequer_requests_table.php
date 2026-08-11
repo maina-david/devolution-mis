@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('exchequer_requests', function (Blueprint $table): void {
-            $table->uuid('id')->primary('exchequer_requests_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('county_grant_id');
             $table->uuid('county_id');
             $table->uuid('created_by');

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reconciliation_exceptions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('reconciliation_exceptions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('reconciliation_run_id');
             $table->uuid('integration_exchange_id')->nullable();
             $table->uuid('county_id')->nullable();

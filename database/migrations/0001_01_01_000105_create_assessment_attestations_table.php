@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assessment_attestations', function (Blueprint $table): void {
-            $table->uuid('id')->primary('assessment_attestations_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assessment_id');
             $table->uuid('attested_by');
             $table->string('attestor_title', 255);

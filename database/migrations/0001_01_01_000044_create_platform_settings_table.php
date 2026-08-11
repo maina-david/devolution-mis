@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('platform_settings', function (Blueprint $table): void {
-            $table->uuid('id')->primary('platform_settings_pkey');
+            $table->uuid('id')->primary();
             $table->string('key', 255);
             $table->string('group', 255);
             $table->string('label', 255);

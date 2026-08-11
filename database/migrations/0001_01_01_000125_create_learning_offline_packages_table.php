@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('learning_offline_packages', function (Blueprint $table): void {
-            $table->uuid('id')->primary('learning_offline_packages_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('learning_course_id');
             $table->uuid('generated_by');
             $table->integer('package_version');

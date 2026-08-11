@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('igr_forum_meetings', function (Blueprint $table): void {
-            $table->uuid('id')->primary('igr_forum_meetings_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('igr_forum_id');
             $table->string('reference', 255);
             $table->string('title', 255);

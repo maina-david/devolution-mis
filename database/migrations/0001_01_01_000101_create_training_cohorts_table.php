@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('training_cohorts', function (Blueprint $table): void {
-            $table->uuid('id')->primary('training_cohorts_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('rollout_wave_id');
             $table->uuid('county_id')->nullable();
             $table->uuid('facilitator_id')->nullable();

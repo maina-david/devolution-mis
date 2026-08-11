@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('performance_goals', function (Blueprint $table): void {
-            $table->uuid('id')->primary('performance_goals_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('performance_plan_id');
             $table->string('code', 255);
             $table->string('title', 255);

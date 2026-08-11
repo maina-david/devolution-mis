@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('access_review_items', function (Blueprint $table): void {
-            $table->uuid('id')->primary('access_review_items_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('access_review_campaign_id');
             $table->uuid('user_id')->nullable();
             $table->uuid('reviewed_by')->nullable();

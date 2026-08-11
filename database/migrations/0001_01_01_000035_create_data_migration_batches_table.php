@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_migration_batches', function (Blueprint $table): void {
-            $table->uuid('id')->primary('data_migration_batches_pkey');
+            $table->uuid('id')->primary();
             $table->string('reference', 255);
             $table->string('dataset_type', 40);
             $table->string('source_name', 255);

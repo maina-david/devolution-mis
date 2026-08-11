@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('performance_goal_amendments', function (Blueprint $table): void {
-            $table->uuid('id')->primary('performance_goal_amendments_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('performance_plan_id');
             $table->uuid('performance_goal_id');
             $table->uuid('base_version_id');

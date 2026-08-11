@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_assets', function (Blueprint $table): void {
-            $table->uuid('id')->primary('data_assets_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('data_owner_id')->nullable();
             $table->uuid('steward_id')->nullable();
             $table->string('code', 255);

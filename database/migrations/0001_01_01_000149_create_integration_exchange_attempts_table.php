@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('integration_exchange_attempts', function (Blueprint $table): void {
-            $table->uuid('id')->primary('integration_exchange_attempts_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('integration_exchange_id');
             $table->uuid('initiated_by')->nullable();
             $table->string('initiated_by_name', 255)->nullable();

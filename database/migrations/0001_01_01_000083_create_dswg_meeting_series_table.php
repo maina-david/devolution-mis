@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dswg_meeting_series', function (Blueprint $table): void {
-            $table->uuid('id')->primary('dswg_meeting_series_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('dswg_working_group_id');
             $table->string('reference_prefix', 255);
             $table->string('title', 255);

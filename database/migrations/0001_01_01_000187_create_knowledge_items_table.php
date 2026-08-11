@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('knowledge_items', function (Blueprint $table): void {
-            $table->uuid('id')->primary('knowledge_items_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_instance_id')->nullable();
             $table->uuid('assessment_document_id')->nullable();
             $table->uuid('county_id')->nullable();

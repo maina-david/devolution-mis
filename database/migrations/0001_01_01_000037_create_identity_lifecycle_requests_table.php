@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('identity_lifecycle_requests', function (Blueprint $table): void {
-            $table->uuid('id')->primary('identity_lifecycle_requests_pkey');
+            $table->uuid('id')->primary();
             $table->string('source_system', 100);
             $table->string('source_event_id', 255);
             $table->string('source_evidence_reference', 500);

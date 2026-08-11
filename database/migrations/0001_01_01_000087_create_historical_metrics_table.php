@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('historical_metrics', function (Blueprint $table): void {
-            $table->uuid('id')->primary('historical_metrics_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('data_migration_batch_id');
             $table->uuid('data_migration_row_id');
             $table->uuid('county_id');

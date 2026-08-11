@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('access_delegations', function (Blueprint $table): void {
-            $table->uuid('id')->primary('access_delegations_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('requested_by');
             $table->uuid('beneficiary_id');
             $table->uuid('approved_by')->nullable();

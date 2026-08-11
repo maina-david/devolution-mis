@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('document_versions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('document_versions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assessment_document_id');
             $table->integer('version_number');
             $table->string('storage_disk', 255)->default('local');

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('document_links', function (Blueprint $table): void {
-            $table->uuid('id')->primary('document_links_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assessment_document_id');
             $table->string('subject_type', 255);
             $table->uuid('subject_id');

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('citizen_case_messages', function (Blueprint $table): void {
-            $table->uuid('id')->primary('citizen_case_messages_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('citizen_case_id');
             $table->uuid('sender_user_id')->nullable();
             $table->string('direction', 255);

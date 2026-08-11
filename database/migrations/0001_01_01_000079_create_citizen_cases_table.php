@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('citizen_cases', function (Blueprint $table): void {
-            $table->uuid('id')->primary('citizen_cases_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_instance_id')->nullable();
             $table->string('reference', 255);
             $table->string('tracking_token_hash', 64);

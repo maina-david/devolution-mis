@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('document_legal_holds', function (Blueprint $table): void {
-            $table->uuid('id')->primary('document_legal_holds_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assessment_document_id');
             $table->string('reference', 255);
             $table->text('reason');

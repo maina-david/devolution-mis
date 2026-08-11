@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workflow_versions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('workflow_versions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_definition_id');
             $table->integer('version');
             $table->string('status', 255)->default('draft');

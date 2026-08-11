@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('report_runs', function (Blueprint $table): void {
-            $table->uuid('id')->primary('report_runs_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('report_schedule_id');
             $table->uuid('triggered_by')->nullable();
             $table->string('status', 255)->default('queued');

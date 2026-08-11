@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('project_progress_updates', function (Blueprint $table): void {
-            $table->uuid('id')->primary('project_progress_updates_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('devolution_project_id');
             $table->date('reporting_date');
             $table->decimal('physical_progress', 5, 2);

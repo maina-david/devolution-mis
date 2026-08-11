@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_migration_rows', function (Blueprint $table): void {
-            $table->uuid('id')->primary('data_migration_rows_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('data_migration_batch_id');
             $table->integer('row_number');
             $table->uuid('county_id')->nullable();

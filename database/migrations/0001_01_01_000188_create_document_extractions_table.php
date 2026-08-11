@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('document_extractions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('document_extractions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('document_version_id');
             $table->string('status', 255)->default('pending');
             $table->string('engine', 255)->nullable();

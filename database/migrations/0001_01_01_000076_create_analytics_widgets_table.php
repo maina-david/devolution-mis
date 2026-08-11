@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('analytics_widgets', function (Blueprint $table): void {
-            $table->uuid('id')->primary('analytics_widgets_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('analytics_dashboard_id');
             $table->string('title', 255);
             $table->text('description')->nullable();

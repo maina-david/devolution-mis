@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('igr_resolution_updates', function (Blueprint $table): void {
-            $table->uuid('id')->primary('igr_resolution_updates_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('igr_resolution_id');
             $table->smallInteger('progress_percentage');
             $table->text('narrative');

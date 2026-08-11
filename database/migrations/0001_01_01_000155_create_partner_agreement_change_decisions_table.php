@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('partner_agreement_change_decisions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('partner_agreement_change_decisions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('partner_agreement_change_request_id');
             $table->string('decision', 255);
             $table->text('decision_note');

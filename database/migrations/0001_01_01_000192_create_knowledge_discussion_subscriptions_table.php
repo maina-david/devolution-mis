@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('knowledge_discussion_subscriptions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('knowledge_discussion_subscriptions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('knowledge_discussion_id');
             $table->uuid('user_id');
             $table->string('delivery_frequency', 255)->default('instant');

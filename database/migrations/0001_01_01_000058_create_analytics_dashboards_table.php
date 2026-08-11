@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('analytics_dashboards', function (Blueprint $table): void {
-            $table->uuid('id')->primary('analytics_dashboards_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('created_by');
             $table->uuid('published_by')->nullable();
             $table->uuid('county_id')->nullable();

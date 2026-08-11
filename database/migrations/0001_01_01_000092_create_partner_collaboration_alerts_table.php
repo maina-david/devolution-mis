@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('partner_collaboration_alerts', function (Blueprint $table): void {
-            $table->uuid('id')->primary('partner_collaboration_alerts_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('primary_partner_id');
             $table->uuid('related_partner_id');
             $table->string('alert_type', 255);

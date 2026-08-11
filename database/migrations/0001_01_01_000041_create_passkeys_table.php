@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('passkeys', function (Blueprint $table): void {
-            $table->uuid('id')->primary('passkeys_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->string('name', 255);
             $table->string('credential_id', 255);

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('knowledge_community_reports', function (Blueprint $table): void {
-            $table->uuid('id')->primary('knowledge_community_reports_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_instance_id')->nullable();
             $table->uuid('knowledge_post_id');
             $table->uuid('county_id')->nullable();

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workflow_instances', function (Blueprint $table): void {
-            $table->uuid('id')->primary('workflow_instances_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_version_id');
             $table->string('subject_type', 255)->nullable();
             $table->uuid('subject_id')->nullable();

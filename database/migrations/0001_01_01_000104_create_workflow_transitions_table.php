@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workflow_transitions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('workflow_transitions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_instance_id');
             $table->string('transition_name', 255);
             $table->string('from_state', 255)->nullable();

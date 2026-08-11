@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('project_schedule_baselines', function (Blueprint $table): void {
-            $table->uuid('id')->primary('project_schedule_baselines_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('devolution_project_id');
             $table->integer('version');
             $table->string('status', 20)->default('pending');

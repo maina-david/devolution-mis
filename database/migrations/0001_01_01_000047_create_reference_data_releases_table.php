@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reference_data_releases', function (Blueprint $table): void {
-            $table->uuid('id')->primary('reference_data_releases_pkey');
+            $table->uuid('id')->primary();
             $table->integer('version');
             $table->uuid('submitted_by');
             $table->uuid('approved_by')->nullable();

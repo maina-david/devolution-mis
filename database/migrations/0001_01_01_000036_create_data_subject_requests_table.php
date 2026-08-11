@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_subject_requests', function (Blueprint $table): void {
-            $table->uuid('id')->primary('data_subject_requests_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assigned_to')->nullable();
             $table->uuid('identity_verified_by')->nullable();
             $table->uuid('decided_by')->nullable();

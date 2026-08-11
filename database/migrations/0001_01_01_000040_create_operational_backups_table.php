@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('operational_backups', function (Blueprint $table): void {
-            $table->uuid('id')->primary('operational_backups_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('initiated_by')->nullable();
             $table->uuid('restore_verified_by')->nullable();
             $table->string('reference', 255);

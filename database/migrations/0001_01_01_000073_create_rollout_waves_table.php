@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('rollout_waves', function (Blueprint $table): void {
-            $table->uuid('id')->primary('rollout_waves_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('created_by');
             $table->uuid('approved_by')->nullable();
             $table->string('code', 255);

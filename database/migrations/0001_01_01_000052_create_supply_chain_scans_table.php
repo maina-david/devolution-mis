@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('supply_chain_scans', function (Blueprint $table): void {
-            $table->uuid('id')->primary('supply_chain_scans_pkey');
+            $table->uuid('id')->primary();
             $table->string('environment', 40);
             $table->string('source_revision', 64)->nullable();
             $table->string('source_state', 30);

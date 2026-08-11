@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('igr_resolution_dependencies', function (Blueprint $table): void {
-            $table->uuid('id')->primary('igr_resolution_dependencies_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('dependent_resolution_id');
             $table->uuid('prerequisite_resolution_id');
             $table->string('dependency_type', 255)->default('blocks');

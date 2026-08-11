@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('processing_activities', function (Blueprint $table): void {
-            $table->uuid('id')->primary('processing_activities_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('data_asset_id');
             $table->uuid('retention_schedule_id')->nullable();
             $table->uuid('submitted_by')->nullable();

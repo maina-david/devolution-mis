@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('travel_itineraries', function (Blueprint $table): void {
-            $table->uuid('id')->primary('travel_itineraries_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('travel_request_id');
             $table->smallInteger('sequence');
             $table->string('origin', 255);

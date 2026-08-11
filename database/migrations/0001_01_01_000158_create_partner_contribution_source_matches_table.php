@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('partner_contribution_source_matches', function (Blueprint $table): void {
-            $table->uuid('id')->primary('partner_contribution_source_matches_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('reconciliation_run_id');
             $table->uuid('integration_exchange_id');
             $table->uuid('partner_contribution_id')->nullable();

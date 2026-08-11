@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('security_incident_events', function (Blueprint $table): void {
-            $table->uuid('id')->primary('security_incident_events_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('security_incident_id');
             $table->uuid('actor_id')->nullable();
             $table->string('actor_name', 255);

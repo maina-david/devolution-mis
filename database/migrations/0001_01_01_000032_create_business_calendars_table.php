@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('business_calendars', function (Blueprint $table): void {
-            $table->uuid('id')->primary('business_calendars_pkey');
+            $table->uuid('id')->primary();
             $table->string('code', 255);
             $table->integer('version');
             $table->string('name', 255);

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('oauth_clients', function (Blueprint $table): void {
-            $table->uuid('id')->primary('oauth_clients_pkey');
+            $table->uuid('id')->primary();
             $table->string('owner_type', 255)->nullable();
             $table->bigInteger('owner_id')->nullable();
             $table->string('name', 255);

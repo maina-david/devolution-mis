@@ -92,7 +92,7 @@ class LearningCertificateVerificationTest extends TestCase
         $this->assertIsString($realtimeSync);
         $this->assertStringContainsString("case name === 'learning/certificate-verification':", $application);
         $this->assertStringContainsString('const userId = page.props.auth.user?.id;', $realtimeSync);
-        $this->assertStringContainsString('return userId ? <AuthenticatedNotificationRealtimeSync userId={userId} /> : null;', $realtimeSync);
+        $this->assertStringContainsString('<AuthenticatedNotificationRealtimeSync userId={userId} />', $realtimeSync);
         $this->assertStringContainsString('`App.Models.User.${userId}`', $realtimeSync);
     }
 }

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('learning_certificates', function (Blueprint $table): void {
-            $table->uuid('id')->primary('learning_certificates_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('learning_enrollment_id');
             $table->string('certificate_number', 255);
             $table->string('verification_code', 255);

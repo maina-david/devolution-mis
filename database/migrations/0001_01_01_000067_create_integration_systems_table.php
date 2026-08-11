@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('integration_systems', function (Blueprint $table): void {
-            $table->uuid('id')->primary('integration_systems_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('owner_organization_id')->nullable();
             $table->string('code', 50);
             $table->string('name', 255);

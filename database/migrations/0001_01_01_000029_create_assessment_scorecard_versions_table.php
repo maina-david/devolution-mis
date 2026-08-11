@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('assessment_scorecard_versions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('assessment_scorecard_versions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('assessment_scorecard_id');
             $table->integer('version');
             $table->string('status', 255)->default('draft');

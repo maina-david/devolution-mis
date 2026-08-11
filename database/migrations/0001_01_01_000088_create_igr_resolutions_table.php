@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('igr_resolutions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('igr_resolutions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('igr_forum_id');
             $table->uuid('workflow_instance_id')->nullable();
             $table->string('resolution_number', 255);

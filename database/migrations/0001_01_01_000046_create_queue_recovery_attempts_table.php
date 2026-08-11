@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('queue_recovery_attempts', function (Blueprint $table): void {
-            $table->uuid('id')->primary('queue_recovery_attempts_pkey');
+            $table->uuid('id')->primary();
             $table->string('failed_job_uuid', 255);
             $table->uuid('initiated_by');
             $table->string('initiated_by_name', 255);

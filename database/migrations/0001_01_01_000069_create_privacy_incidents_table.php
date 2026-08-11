@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('privacy_incidents', function (Blueprint $table): void {
-            $table->uuid('id')->primary('privacy_incidents_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('data_asset_id')->nullable();
             $table->uuid('county_id')->nullable();
             $table->uuid('reported_by');

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('partner_operational_alerts', function (Blueprint $table): void {
-            $table->uuid('id')->primary('partner_operational_alerts_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('partner_profile_id');
             $table->uuid('county_id')->nullable();
             $table->string('subject_type', 255)->nullable();

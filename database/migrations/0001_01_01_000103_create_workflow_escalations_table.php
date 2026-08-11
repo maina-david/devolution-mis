@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('workflow_escalations', function (Blueprint $table): void {
-            $table->uuid('id')->primary('workflow_escalations_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('workflow_instance_id');
             $table->smallInteger('level')->default(DB::raw('\'1\'::smallint'));
             $table->string('reason', 255);

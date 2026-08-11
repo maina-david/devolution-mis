@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('learning_progress', function (Blueprint $table): void {
-            $table->uuid('id')->primary('learning_progress_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('learning_enrollment_id');
             $table->uuid('learning_lesson_id');
             $table->string('status', 255)->default('not_started');

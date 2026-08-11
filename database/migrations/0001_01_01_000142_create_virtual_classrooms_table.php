@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('virtual_classrooms', function (Blueprint $table): void {
-            $table->uuid('id')->primary('virtual_classrooms_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('learning_course_id');
             $table->uuid('facilitator_id');
             $table->string('title', 255);

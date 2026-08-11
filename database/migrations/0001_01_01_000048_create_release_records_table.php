@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('release_records', function (Blueprint $table): void {
-            $table->uuid('id')->primary('release_records_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('deployed_by')->nullable();
             $table->uuid('validated_by')->nullable();
             $table->uuid('rolled_back_by')->nullable();

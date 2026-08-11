@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dswg_actions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('dswg_actions_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('dswg_meeting_id');
             $table->uuid('dswg_decision_id')->nullable();
             $table->uuid('workflow_instance_id')->nullable();

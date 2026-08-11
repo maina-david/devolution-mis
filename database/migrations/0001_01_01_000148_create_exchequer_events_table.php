@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('exchequer_events', function (Blueprint $table): void {
-            $table->uuid('id')->primary('exchequer_events_pkey');
+            $table->uuid('id')->primary();
             $table->uuid('exchequer_request_id');
             $table->uuid('integration_exchange_id')->nullable();
             $table->uuid('recorded_by');

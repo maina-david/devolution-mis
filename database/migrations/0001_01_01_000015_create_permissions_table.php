@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('permissions', function (Blueprint $table): void {
-            $table->uuid('id')->primary('permissions_pkey');
+            $table->uuid('id')->primary();
             $table->string('name', 255);
             $table->string('guard_name', 255);
             $table->timestamp('created_at', 0)->nullable();
