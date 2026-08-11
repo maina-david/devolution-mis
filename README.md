@@ -129,7 +129,7 @@ Domain models use UUID primary keys and soft deletes where the retained-record p
 
 ## Documentation
 
-Repository-operational documentation is maintained in the private GitHub Wiki, with its reviewable source retained under [`docs/wiki`](docs/wiki/Home.md). Formal ToR traceability, implementation evidence, enterprise-readiness gates, architecture decisions, brand assets, and controlled project context are maintained in the separate IDMIS Obsidian vault.
+Repository-operational documentation is maintained as version-controlled, Wiki-ready Markdown under [`docs/wiki`](docs/wiki/Home.md). GitHub's private-Wiki feature is unavailable on the repository owner's current plan, so these files remain the canonical engineering documentation unless the account is upgraded. Formal ToR traceability, implementation evidence, enterprise-readiness gates, architecture decisions, brand assets, and controlled project context are maintained in the separate IDMIS Obsidian vault.
 
 ## Contribution workflow
 

@@ -1,6 +1,6 @@
-# IDMIS Engineering Wiki
+# IDMIS Engineering Documentation
 
-This private wiki is the operational companion to the IDMIS source repository. It documents how engineers and authorized reviewers navigate, run, test, and assess the platform without storing credentials or controlled programme evidence here.
+This Wiki-ready documentation is the operational companion to the private IDMIS source repository. GitHub's private-Wiki feature is unavailable on the repository owner's current plan, so this version-controlled directory is the canonical engineering source until the account is upgraded. It documents how engineers and authorized reviewers navigate, run, test, and assess the platform without storing credentials or controlled programme evidence here.
 
 ## Start here
 
@@ -14,5 +14,5 @@ This private wiki is the operational companion to the IDMIS source repository. I
 
 - County and portfolio scope is enforced by backend authorization.
 - Platform administrators are not county identities.
-- Credentials, `.env`, OAuth keys, production documents, and citizen personal data never belong in Git or this wiki.
+- Credentials, `.env`, OAuth keys, production documents, and citizen personal data never belong in Git or this documentation.
 - Automated tests prove implemented behavior, not government-interface approval, owner UAT, or production acceptance.
