@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Console/Commands/MonitorSupportTicketSlas.php,config/service-desk.php,tests/Feature/{SupportDeskWorkflowTest,PerformanceAssuranceTest}.php | .ai/rules/commands-feature.md |
 | app/{Actions,Console/Commands}/**/*IdentityLifecycle*.php | .ai/rules/commands.md |
 | app/Jobs/ExtractDocumentText.php,app/Models/DocumentExtraction*.php,database/migrations/*document_extraction*,app/Services/ProgrammeWorkspaceData.php,resources/js/components/evidence-row-action.tsx | .ai/rules/components.md |
 | app/Actions/PublishWorkflowVersion.php,app/Models/WorkflowVersion.php,database/migrations/*workflow_versions*,app/Http/Controllers/WorkflowDefinitionController.php | .ai/rules/controllers.md |

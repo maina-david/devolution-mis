@@ -27,6 +27,14 @@ class SupportDeskWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sla_monitor_rejects_invalid_or_unbounded_limits(): void
+    {
+        $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 0]));
+        $this->assertStringContainsString('The alert limit must be an integer between 1 and 5000.', Artisan::output());
+        $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 5001]));
+        $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 'unbounded']));
+    }
+
     public function test_county_request_follows_governed_assignment_resolution_and_acceptance_workflow(): void
     {
         Notification::fake();

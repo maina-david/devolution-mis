@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateServiceDeskPolicy;
+use App\Actions\PublishServiceDeskPolicy;
 use App\Enums\UserRole;
 use App\Models\AssessmentCycle;
+use App\Models\BusinessCalendar;
 use App\Models\County;
 use App\Models\IdentityLifecycleRequest;
 use App\Models\PerformanceTestRun;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
+use App\Models\ServiceDeskPolicy;
 use App\Models\User;
 use App\Services\ProgrammeAuthorization;
 use App\Support\CanonicalJson;
@@ -16,7 +20,9 @@ use App\Support\ReferenceCatalogue;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -351,6 +357,58 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(3000, $countyMilliseconds, "County community analytics took {$countyMilliseconds} ms at reference volume.");
     }
 
+    public function test_reference_volume_service_desk_register_and_sla_monitor_are_bounded_scoped_and_idempotent(): void
+    {
+        Notification::fake();
+        $homeCounty = County::factory()->create(['code' => 1]);
+        $counties = collect([$homeCounty])
+            ->merge(County::factory()->count(46)->sequence(fn ($sequence): array => ['code' => $sequence->index + 2])->create())
+            ->values();
+        $nationalUser = User::factory()->devolutionAdmin()->create();
+        $requester = User::factory()->devolutionAdmin()->create();
+        $resolver = User::factory()->devolutionAdmin()->create();
+        $publisher = User::factory()->platformAdmin()->create();
+        $countyUser = User::factory()->countyAdmin($homeCounty)->create();
+        $release = $this->publishedSupportReferenceRelease(array_values($counties->all()), $nationalUser);
+        $policy = $this->publishedPerformanceServicePolicy($resolver, $publisher);
+        $this->insertSupportTicketVolume(array_values($counties->all()), $release->id, $policy, $requester->id, $resolver->id, 4700);
+
+        $this->actingAs($nationalUser)->get(route('support-desk.index', $nationalUser->currentTeam->slug))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('support-desk.index', $nationalUser->currentTeam->slug)));
+        $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('workspace.pagination.total', 4700)
+            ->has('workspace.rows', 15)
+            ->where('summary.active', 4700)
+            ->where('summary.overdue', 4700));
+        $this->assertLessThanOrEqual(45, $nationalQueries, "National service-desk register used {$nationalQueries} database queries at reference volume.");
+        $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National service-desk register took {$nationalMilliseconds} ms at reference volume.");
+
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('support-desk.index', $countyUser->currentTeam->slug)));
+        $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('workspace.pagination.total', 100)
+            ->has('workspace.rows', 15)
+            ->where('summary.active', 100)
+            ->where('summary.overdue', 100));
+        $this->assertLessThanOrEqual(45, $countyQueries, "County service-desk register used {$countyQueries} database queries at reference volume.");
+        $this->assertLessThanOrEqual(3000, $countyMilliseconds, "County service-desk register took {$countyMilliseconds} ms at reference volume.");
+
+        [$exitCode, $monitorQueries, $monitorMilliseconds] = $this->measureOperation(fn (): int => Artisan::call('support-desk:monitor-slas', ['--limit' => 100]));
+        $this->assertSame(0, $exitCode);
+        $this->assertStringContainsString('Processed 100 service-desk SLA alert(s).', Artisan::output());
+        $this->assertLessThanOrEqual(900, $monitorQueries, "The bounded SLA monitor used {$monitorQueries} database queries for 100 alerts.");
+        $this->assertLessThanOrEqual(15000, $monitorMilliseconds, "The bounded SLA monitor took {$monitorMilliseconds} ms for 100 alerts.");
+        $this->assertSame(100, DB::table('support_tickets')->whereNotNull('reminder_sent_at')->count());
+        $this->assertSame(100, DB::table('support_ticket_activities')->where('activity_type', 'sla_escalated')->count());
+        $this->assertSame(100, DB::table('audit_events')->where('action', 'support.ticket.sla_escalated')->count());
+
+        $this->assertSame(0, Artisan::call('support-desk:monitor-slas', ['--limit' => 100]));
+        $this->assertSame(200, DB::table('support_tickets')->whereNotNull('reminder_sent_at')->count());
+        $this->assertSame(200, DB::table('support_ticket_activities')->where('activity_type', 'sla_escalated')->count());
+        $this->assertSame(0, DB::table('support_ticket_activities')->select('support_ticket_id')->where('activity_type', 'sla_escalated')->groupBy('support_ticket_id')->havingRaw('count(*) > 1')->count());
+        $this->assertSame(4500, DB::table('support_tickets')->whereNull('reminder_sent_at')->count());
+        Notification::assertCount(600);
+    }
+
     public function test_http_probe_records_passing_immutable_percentile_evidence(): void
     {
         config()->set('operations.performance.allowed_hosts', ['devolution-mis.test']);
@@ -567,6 +625,92 @@ OUTPUT;
             DB::table('knowledge_discussions')->insert($discussions);
             DB::table('knowledge_posts')->insert($posts);
             DB::table('knowledge_discussion_subscriptions')->insert($subscriptions);
+        }
+    }
+
+    /** @param list<County> $counties */
+    private function publishedSupportReferenceRelease(array $counties, User $approver): ReferenceDataRelease
+    {
+        $snapshot = [
+            'counties' => collect($counties)->map(fn (County $county): array => ['id' => $county->id, 'code' => $county->code, 'name' => $county->name])->values()->all(),
+            'organizations' => [],
+            'sectors' => [],
+            'programmes' => [],
+            'programme_county_coverages' => [],
+        ];
+
+        return ReferenceDataRelease::factory()->create([
+            'approved_by' => $approver->id,
+            'status' => 'published',
+            'snapshot' => $snapshot,
+            'checksum' => app(CanonicalJson::class)->checksum($snapshot),
+            'effective_from' => now()->subMinute(),
+            'published_at' => now(),
+        ]);
+    }
+
+    private function publishedPerformanceServicePolicy(User $resolver, User $publisher): ServiceDeskPolicy
+    {
+        $calendar = BusinessCalendar::factory()->published()->create(['effective_from' => now()->subYear()->toDateString()]);
+        $policy = app(CreateServiceDeskPolicy::class)->handle($resolver, [
+            'code' => 'IDMIS-PERFORMANCE-SUPPORT',
+            'name' => 'IDMIS performance-assurance support policy',
+            'description' => 'Synthetic non-production policy for reproducible representative-volume service-desk assurance.',
+            'business_calendar_id' => $calendar->id,
+            'categories' => [['code' => 'incident', 'name' => 'Service incident']],
+            'channels' => ['web'],
+            'priority_targets' => [
+                'critical' => ['first_response' => 1, 'resolution' => 4, 'reminder' => 0.5],
+                'high' => ['first_response' => 4, 'resolution' => 16, 'reminder' => 2],
+                'medium' => ['first_response' => 8, 'resolution' => 40, 'reminder' => 4],
+                'low' => ['first_response' => 16, 'resolution' => 80, 'reminder' => 8],
+            ],
+            'escalation_rules' => [['priority' => 'high', 'stage' => 'resolution', 'tier' => 3]],
+            'effective_from' => now()->subMinute(),
+            'effective_to' => null,
+            'roster' => [
+                ['user_id' => $resolver->id, 'county_id' => null, 'tier' => 1, 'duty_role' => 'responder', 'is_primary' => true, 'starts_at' => now()->subMinute(), 'ends_at' => null],
+                ['user_id' => $publisher->id, 'county_id' => null, 'tier' => 3, 'duty_role' => 'manager', 'is_primary' => true, 'starts_at' => now()->subMinute(), 'ends_at' => null],
+            ],
+        ]);
+
+        return app(PublishServiceDeskPolicy::class)->handle($policy, $publisher, ['authority_status' => 'provisional', 'approval_reference' => null]);
+    }
+
+    /** @param list<County> $counties */
+    private function insertSupportTicketVolume(array $counties, string $releaseId, ServiceDeskPolicy $policy, string $requesterId, string $resolverId, int $ticketCount): void
+    {
+        $createdAt = now();
+        $encryptedDescription = Crypt::encryptString('Synthetic non-production support narrative for representative-volume assurance.');
+        foreach (array_chunk(range(1, $ticketCount), 200) as $sequenceChunk) {
+            $tickets = [];
+            foreach ($sequenceChunk as $sequence) {
+                $county = $counties[($sequence - 1) % count($counties)];
+                $tickets[] = [
+                    'id' => (string) Str::uuid7(),
+                    'reference_data_release_id' => $releaseId,
+                    'service_desk_policy_id' => $policy->id,
+                    'service_desk_policy_checksum' => $policy->checksum,
+                    'requester_id' => $requesterId,
+                    'county_id' => $county->id,
+                    'assigned_to' => $resolverId,
+                    'reference' => 'PERF-SUP-'.str_pad((string) $sequence, 5, '0', STR_PAD_LEFT),
+                    'category' => 'incident',
+                    'priority' => 'high',
+                    'channel' => 'web',
+                    'subject' => "Reference service-desk workload {$sequence}",
+                    'description' => $encryptedDescription,
+                    'status' => 'in_progress',
+                    'requested_at' => $createdAt->copy()->subDays(2),
+                    'first_response_due_at' => $createdAt->copy()->subDay(),
+                    'first_responded_at' => $createdAt->copy()->subDay(),
+                    'resolution_due_at' => $createdAt->copy()->subHour(),
+                    'last_activity_at' => $createdAt->copy()->subDay(),
+                    'created_at' => $createdAt,
+                    'updated_at' => $createdAt,
+                ];
+            }
+            DB::table('support_tickets')->insert($tickets);
         }
     }
 

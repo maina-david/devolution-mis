@@ -13,23 +13,53 @@ use Illuminate\Console\Command;
 
 class MonitorSupportTicketSlas extends Command
 {
-    protected $signature = 'support-desk:monitor-slas';
+    protected $signature = 'support-desk:monitor-slas {--limit= : Maximum number of alerts to process in this run}';
 
     protected $description = 'Send idempotent service-desk SLA reminders and escalations';
 
     public function handle(RecordSupportTicketActivity $recordActivity, AuditLogger $auditLogger, EffectiveServiceDeskPolicyResolver $policyResolver): int
     {
+        $limit = $this->monitorLimit();
+        if ($limit === null) {
+            $this->components->error('The alert limit must be an integer between 1 and 5000.');
+
+            return self::INVALID;
+        }
+
         $processed = 0;
         $supportManagers = User::permission(ProgrammePermission::ManageSupportTickets->value)
             ->with(['county', 'assignedCounties'])
             ->get();
+        $candidateMultiplier = max(1, (int) config('service-desk.monitor_candidate_multiplier', 5));
+        $maximumCandidates = max(1, (int) config('service-desk.monitor_max_candidates', 5000));
+        $candidateLimit = min($maximumCandidates, $limit * $candidateMultiplier);
+        $lookaheadHours = max(0.25, (float) config('service-desk.monitor_max_lookahead_hours', 168));
+        $candidateIds = SupportTicket::query()
+            ->whereNotIn('status', ['resolved', 'closed'])
+            ->whereNull('reminder_sent_at')
+            ->where(function ($query) use ($lookaheadHours): void {
+                $latestCandidateDueAt = now()->addHours($lookaheadHours);
+                $query->where(function ($firstResponse) use ($latestCandidateDueAt): void {
+                    $firstResponse->whereNull('first_responded_at')->where('first_response_due_at', '<=', $latestCandidateDueAt);
+                })->orWhere(function ($resolution) use ($latestCandidateDueAt): void {
+                    $resolution->whereNotNull('first_responded_at')->where('resolution_due_at', '<=', $latestCandidateDueAt);
+                });
+            })
+            ->orderByRaw('CASE WHEN first_responded_at IS NULL THEN first_response_due_at ELSE resolution_due_at END')
+            ->limit($candidateLimit)
+            ->pluck('id');
 
         SupportTicket::query()
+            ->whereIn('id', $candidateIds)
             ->whereNotIn('status', ['resolved', 'closed'])
             ->whereNull('reminder_sent_at')
             ->with(['assignee:id,name', 'requester:id,name', 'county', 'serviceDeskPolicy.businessCalendar', 'serviceDeskPolicy.rosterMembers.user'])
-            ->chunkById(100, function ($tickets) use (&$processed, $recordActivity, $auditLogger, $supportManagers, $policyResolver): void {
+            ->chunkById(100, function ($tickets) use (&$processed, $limit, $recordActivity, $auditLogger, $supportManagers, $policyResolver): ?bool {
                 foreach ($tickets as $ticket) {
+                    if ($processed >= $limit) {
+                        return false;
+                    }
+
                     $dueAt = $ticket->first_responded_at === null ? $ticket->first_response_due_at : $ticket->resolution_due_at;
                     $policy = $ticket->serviceDeskPolicy;
                     $reminderHours = (float) config('service-desk.reminder_hours', 2);
@@ -66,10 +96,21 @@ class MonitorSupportTicketSlas extends Command
                     $auditLogger->record(null, $ticket, 'support.ticket.'.$activity, $narrative, $ticket->county_id, ['due_at' => $dueAt->toIso8601String(), 'recipients' => $recipients->count()]);
                     $processed++;
                 }
+
+                return $processed >= $limit ? false : null;
             });
 
         $this->components->info("Processed {$processed} service-desk SLA alert(s).");
 
         return self::SUCCESS;
+    }
+
+    private function monitorLimit(): ?int
+    {
+        $configuredLimit = (int) config('service-desk.monitor_batch_limit', 500);
+        $requestedLimit = $this->option('limit');
+        $value = $requestedLimit === null ? $configuredLimit : filter_var($requestedLimit, FILTER_VALIDATE_INT);
+
+        return is_int($value) && $value >= 1 && $value <= 5000 ? $value : null;
     }
 }

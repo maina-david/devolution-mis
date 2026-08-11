@@ -8,4 +8,8 @@ return [
         'low' => ['first_response' => 16, 'resolution' => 80],
     ],
     'reminder_hours' => 2,
+    'monitor_batch_limit' => (int) env('SERVICE_DESK_MONITOR_BATCH_LIMIT', 500),
+    'monitor_candidate_multiplier' => 5,
+    'monitor_max_candidates' => 5000,
+    'monitor_max_lookahead_hours' => 168,
 ];
