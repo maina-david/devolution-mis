@@ -245,8 +245,8 @@ function ContextualGroupMenu({
 }) {
     const [open, setOpen] = useState(false);
     const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const triggerHovered = useRef(false);
-    const contentHovered = useRef(false);
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const active = subgroup.items.some((item) =>
         navigationItemIsActive(item, currentUrl),
     );
@@ -261,7 +261,6 @@ function ContextualGroupMenu({
             return;
         }
 
-        triggerHovered.current = true;
         cancelClose();
         setOpen(true);
     };
@@ -270,7 +269,6 @@ function ContextualGroupMenu({
             return;
         }
 
-        contentHovered.current = true;
         cancelClose();
     };
     const closeAfterTriggerLeave = (event: React.PointerEvent) => {
@@ -278,7 +276,6 @@ function ContextualGroupMenu({
             return;
         }
 
-        triggerHovered.current = false;
         scheduleClose();
     };
     const closeAfterContentLeave = (event: React.PointerEvent) => {
@@ -286,27 +283,27 @@ function ContextualGroupMenu({
             return;
         }
 
-        contentHovered.current = false;
         scheduleClose();
     };
+    const pointerIsOverMenu = () =>
+        triggerRef.current?.matches(':hover') === true ||
+        contentRef.current?.matches(':hover') === true;
     const scheduleClose = () => {
         cancelClose();
         closeTimeout.current = setTimeout(() => {
-            if (!triggerHovered.current && !contentHovered.current) {
+            if (!pointerIsOverMenu()) {
                 setOpen(false);
             }
-        }, 250);
+        }, 200);
     };
     const handleOpenChange = (nextOpen: boolean) => {
-        if (!nextOpen && (triggerHovered.current || contentHovered.current)) {
+        if (!nextOpen && pointerIsOverMenu()) {
             return;
         }
 
         setOpen(nextOpen);
     };
     const dismissMenu = () => {
-        triggerHovered.current = false;
-        contentHovered.current = false;
         cancelClose();
         setOpen(false);
     };
@@ -324,6 +321,7 @@ function ContextualGroupMenu({
         <DropdownMenu modal={false} open={open} onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger asChild>
                 <Button
+                    ref={triggerRef}
                     variant="ghost"
                     aria-current={active ? 'page' : undefined}
                     onPointerEnter={openOnTriggerHover}
@@ -339,10 +337,12 @@ function ContextualGroupMenu({
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
+                ref={contentRef}
                 align="start"
-                sideOffset={0}
+                sideOffset={4}
                 onPointerEnter={openOnContentHover}
                 onPointerLeave={closeAfterContentLeave}
+                onCloseAutoFocus={(event) => event.preventDefault()}
                 onEscapeKeyDown={dismissMenu}
                 onPointerDownOutside={dismissMenu}
             >

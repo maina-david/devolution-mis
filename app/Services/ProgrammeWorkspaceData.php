@@ -46,6 +46,7 @@ use App\Models\ProcessingActivity;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\ProgrammeEvaluation;
 use App\Models\SecurityIncident;
+use App\Models\ServiceDeskPolicy;
 use App\Models\SupportTicket;
 use App\Models\TrainingParticipant;
 use App\Models\TravelRequest;
@@ -1101,13 +1102,13 @@ class ProgrammeWorkspaceData
             $this->supportTicketAccess->query($user)
                 ->when($filters->countyId, fn (Builder $query, string $countyId) => $query->where('county_id', $countyId))
                 ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
-                ->with(['referenceDataRelease:id,version,checksum', 'county', 'requester:id,name', 'assignee:id,name', 'resolver:id,name', 'closer:id,name'])
+                ->with(['referenceDataRelease:id,version,checksum', 'serviceDeskPolicy.businessCalendar:id,code,version,checksum', 'county', 'requester:id,name', 'assignee:id,name', 'resolver:id,name', 'closer:id,name'])
                 ->withCount(['activities', 'documentLinks']),
             $filters,
             ['reference', 'subject', 'category', 'priority', 'channel', 'status'],
         )->latest('requested_at')->paginate($filters->perPage)->withQueryString();
 
-        return $this->workspace('Service-desk support register', 'County-scoped requests, SLA response evidence, assignment, independent resolution acceptance and retained support history.', ['Reference', 'Subject', 'County', 'Requester', 'Assignee', 'Category', 'Priority', 'Channel', 'Requested', 'First response due', 'First response', 'Resolution due', 'Resolved', 'Resolver', 'Closed', 'Closer', 'Catalogue', 'Catalogue checksum', 'Activities', 'Documents', 'Status'], $tickets->through(fn (SupportTicket $ticket): array => [
+        return $this->workspace('Service-desk support register', 'County-scoped requests, SLA response evidence, assignment, independent resolution acceptance and retained support history.', ['Reference', 'Subject', 'County', 'Requester', 'Assignee', 'Category', 'Priority', 'Channel', 'Requested', 'First response due', 'First response', 'Resolution due', 'Resolved', 'Resolver', 'Closed', 'Closer', 'Catalogue', 'Catalogue checksum', 'Service policy', 'Policy authority', 'Policy checksum', 'Business calendar', 'Calendar checksum', 'Activities', 'Documents', 'Status'], $tickets->through(fn (SupportTicket $ticket): array => [
             'id' => $ticket->id,
             'status' => $ticket->status,
             'meta' => ['countyId' => $ticket->county_id],
@@ -1130,9 +1131,52 @@ class ProgrammeWorkspaceData
                 $ticket->closed_by ? $ticket->closer->name : 'Pending',
                 "v{$ticket->referenceDataRelease->version}",
                 $ticket->referenceDataRelease->checksum,
+                $ticket->serviceDeskPolicy ? "{$ticket->serviceDeskPolicy->code} v{$ticket->serviceDeskPolicy->version}" : 'Legacy config-derived',
+                $ticket->serviceDeskPolicy ? $ticket->serviceDeskPolicy->authority_status : 'Legacy ungoverned',
+                $ticket->service_desk_policy_checksum ?? 'Legacy unpinned',
+                $ticket->serviceDeskPolicy ? "{$ticket->serviceDeskPolicy->businessCalendar->code} v{$ticket->serviceDeskPolicy->businessCalendar->version}" : 'Legacy unpinned',
+                $ticket->serviceDeskPolicy?->businessCalendar->checksum ?? 'Legacy unpinned',
                 $ticket->activities_count,
                 $ticket->document_links_count,
                 $ticket->status,
+            ],
+        ]));
+    }
+
+    /** @return array<string, mixed> */
+    public function serviceDeskPolicies(User $user, WorkspaceFilters $filters): array
+    {
+        abort_unless($user->can(ProgrammePermission::ConfigureSupportDesk->value), 403);
+        $policies = $this->applyFilters(
+            ServiceDeskPolicy::query()
+                ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
+                ->with(['businessCalendar:id,code,version,timezone,checksum', 'creator:id,name', 'publisher:id,name', 'rosterMembers.user:id,name', 'rosterMembers.county']),
+            $filters,
+            ['code', 'name', 'description', 'authority_status', 'status'],
+        )->latest('version')->paginate($filters->perPage)->withQueryString();
+
+        return $this->workspace('Governed service-desk policy register', 'Effective-dated service catalogue, targets, escalation matrix, roster and independently published checksum evidence.', ['Policy', 'Version', 'Authority status', 'Approval reference', 'Business calendar', 'Calendar checksum', 'Categories', 'Channels', 'Priority targets', 'Escalation matrix', 'Roster', 'Effective from', 'Effective to', 'Author', 'Publisher', 'Published', 'Checksum', 'Status'], $policies->through(fn (ServiceDeskPolicy $policy): array => [
+            'id' => $policy->id,
+            'status' => $policy->status,
+            'cells' => [
+                $policy->code.' · '.$policy->name,
+                $policy->version,
+                $policy->authority_status,
+                $policy->approval_reference ?? 'Provisional / not approved',
+                "{$policy->businessCalendar->code} v{$policy->businessCalendar->version} · {$policy->businessCalendar->timezone}",
+                $policy->businessCalendar->checksum,
+                collect($policy->categories)->map(fn (array $category): string => (is_string($category['code'] ?? null) ? $category['code'] : 'unknown').' · '.(is_string($category['name'] ?? null) ? $category['name'] : 'Unnamed'))->implode('; '),
+                implode(', ', $policy->channels),
+                collect($policy->priority_targets)->map(fn (array $target, string $priority): string => "{$priority}: response ".(is_numeric($target['first_response'] ?? null) ? $target['first_response'] : 'invalid').'h, resolution '.(is_numeric($target['resolution'] ?? null) ? $target['resolution'] : 'invalid').'h, reminder '.(is_numeric($target['reminder'] ?? null) ? $target['reminder'] : 'invalid').'h')->implode('; '),
+                collect($policy->escalation_rules)->map(fn (array $rule): string => (is_string($rule['priority'] ?? null) ? $rule['priority'] : 'invalid').' '.(is_string($rule['stage'] ?? null) ? $rule['stage'] : 'invalid').' → tier '.(is_int($rule['tier'] ?? null) ? $rule['tier'] : 'invalid'))->implode('; '),
+                $policy->rosterMembers->map(fn ($member): string => "Tier {$member->tier} {$member->duty_role}: {$member->user->name}".($member->county_id ? " ({$member->county->name})" : ' (National)'))->implode('; '),
+                $policy->effective_from->toIso8601String(),
+                $policy->effective_to?->toIso8601String() ?? 'Open ended',
+                $policy->creator->name,
+                $policy->published_by ? $policy->publisher->name : 'Pending',
+                $policy->published_at?->toIso8601String() ?? 'Draft',
+                $policy->checksum ?? 'Draft',
+                $policy->status,
             ],
         ]));
     }

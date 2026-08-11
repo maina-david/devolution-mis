@@ -89,6 +89,8 @@ enum ProgrammePermission: string
     case SubmitSupportTickets = 'support-desk:submit';
     case ManageSupportTickets = 'support-desk:manage';
     case ResolveSupportTickets = 'support-desk:resolve';
+    case ConfigureSupportDesk = 'support-desk:configure';
+    case PublishSupportDeskPolicy = 'support-desk:publish-policy';
 
     public function label(): string
     {
@@ -178,6 +180,8 @@ enum ProgrammePermission: string
             self::SubmitSupportTickets => 'Submit service-desk tickets',
             self::ManageSupportTickets => 'Triage and assign service-desk tickets',
             self::ResolveSupportTickets => 'Investigate and resolve assigned support tickets',
+            self::ConfigureSupportDesk => 'Configure service-desk policies and rosters',
+            self::PublishSupportDeskPolicy => 'Independently publish service-desk policies',
         };
     }
 }

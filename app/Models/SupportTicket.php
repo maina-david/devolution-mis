@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property string $id
  * @property string $reference_data_release_id
+ * @property string|null $service_desk_policy_id
+ * @property string|null $service_desk_policy_checksum
  * @property string $requester_id
  * @property string|null $county_id
  * @property string|null $assigned_to
@@ -45,11 +47,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property User|null $closer
  * @property County|null $county
  * @property ReferenceDataRelease $referenceDataRelease
+ * @property ServiceDeskPolicy|null $serviceDeskPolicy
  * @property Collection<int, SupportTicketActivity> $activities
  * @property Collection<int, DocumentLink> $documentLinks
  * @property int $activities_count
  */
-#[Fillable(['reference_data_release_id', 'requester_id', 'county_id', 'assigned_to', 'resolved_by', 'closed_by', 'reference', 'category', 'priority', 'channel', 'subject', 'description', 'status', 'resolution_summary', 'requested_at', 'first_response_due_at', 'resolution_due_at', 'first_responded_at', 'resolved_at', 'closed_at', 'last_activity_at', 'reminder_sent_at', 'escalated_at'])]
+#[Fillable(['reference_data_release_id', 'service_desk_policy_id', 'service_desk_policy_checksum', 'requester_id', 'county_id', 'assigned_to', 'resolved_by', 'closed_by', 'reference', 'category', 'priority', 'channel', 'subject', 'description', 'status', 'resolution_summary', 'requested_at', 'first_response_due_at', 'resolution_due_at', 'first_responded_at', 'resolved_at', 'closed_at', 'last_activity_at', 'reminder_sent_at', 'escalated_at'])]
 class SupportTicket extends Model
 {
     /** @use HasFactory<SupportTicketFactory> */
@@ -78,6 +81,12 @@ class SupportTicket extends Model
     public function referenceDataRelease(): BelongsTo
     {
         return $this->belongsTo(ReferenceDataRelease::class);
+    }
+
+    /** @return BelongsTo<ServiceDeskPolicy, $this> */
+    public function serviceDeskPolicy(): BelongsTo
+    {
+        return $this->belongsTo(ServiceDeskPolicy::class);
     }
 
     /** @return BelongsTo<User, $this> */

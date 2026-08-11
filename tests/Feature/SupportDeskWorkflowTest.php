@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateServiceDeskPolicy;
+use App\Actions\PublishServiceDeskPolicy;
 use App\Models\AssessmentDocument;
+use App\Models\BusinessCalendar;
 use App\Models\County;
 use App\Models\ReferenceDataRelease;
 use App\Models\SupportTicket;
 use App\Models\SupportTicketActivity;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
+use App\Services\BusinessTimeCalculator;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +38,8 @@ class SupportDeskWorkflowTest extends TestCase
         $manager = User::factory()->devolutionAdmin()->create();
         $outsider = User::factory()->countyOfficial($otherCounty)->create();
         $release = $this->publishedReferenceRelease([$county, $otherCounty], $manager);
+        $publisher = User::factory()->platformAdmin()->create();
+        $this->publishedServicePolicy($manager, $publisher);
 
         $payload = [
             'county_id' => $county->id,
@@ -51,8 +57,15 @@ class SupportDeskWorkflowTest extends TestCase
         $this->assertTrue(Str::isUuid($ticket->id));
         $this->assertSame($release->id, $ticket->reference_data_release_id);
         $this->assertSame('open', $ticket->status);
-        $this->assertSame(4, (int) $ticket->requested_at->diffInHours($ticket->first_response_due_at));
-        $this->assertSame(16, (int) $ticket->requested_at->diffInHours($ticket->resolution_due_at));
+        $this->assertNotNull($ticket->service_desk_policy_id);
+        $this->assertSame(
+            app(BusinessTimeCalculator::class)->addHours($ticket->serviceDeskPolicy->businessCalendar, $ticket->requested_at, 4)->toIso8601String(),
+            $ticket->first_response_due_at->toIso8601String(),
+        );
+        $this->assertSame(
+            app(BusinessTimeCalculator::class)->addHours($ticket->serviceDeskPolicy->businessCalendar, $ticket->requested_at, 16)->toIso8601String(),
+            $ticket->resolution_due_at->toIso8601String(),
+        );
         $this->assertStringNotContainsString('approved quarterly indicator workbook', (string) SupportTicket::query()->toBase()->where('id', $ticket->id)->value('description'));
         $this->assertDatabaseHas('support_ticket_activities', [
             'support_ticket_id' => $ticket->id,
@@ -139,6 +152,38 @@ class SupportDeskWorkflowTest extends TestCase
         $activity = SupportTicketActivity::query()->latest('occurred_at')->firstOrFail();
         $this->expectException(QueryException::class);
         $activity->update(['to_status' => 'tampered']);
+    }
+
+    private function publishedServicePolicy(User $author, User $publisher): void
+    {
+        $calendar = BusinessCalendar::factory()->published()->create([
+            'effective_from' => now()->subYear()->toDateString(),
+        ]);
+        $policy = app(CreateServiceDeskPolicy::class)->handle($author, [
+            'code' => 'IDMIS-SUPPORT',
+            'name' => 'IDMIS support policy',
+            'description' => 'Governed support policy fixture with business-hour targets and an independently published national roster.',
+            'business_calendar_id' => $calendar->id,
+            'categories' => [['code' => 'data_quality', 'name' => 'Data quality']],
+            'channels' => ['web'],
+            'priority_targets' => [
+                'critical' => ['first_response' => 1, 'resolution' => 4, 'reminder' => 0.5],
+                'high' => ['first_response' => 4, 'resolution' => 16, 'reminder' => 2],
+                'medium' => ['first_response' => 8, 'resolution' => 40, 'reminder' => 4],
+                'low' => ['first_response' => 16, 'resolution' => 80, 'reminder' => 8],
+            ],
+            'escalation_rules' => [
+                ['priority' => 'high', 'stage' => 'first_response', 'tier' => 1],
+                ['priority' => 'high', 'stage' => 'resolution', 'tier' => 3],
+            ],
+            'effective_from' => now()->subMinute(),
+            'effective_to' => null,
+            'roster' => [
+                ['user_id' => $author->id, 'county_id' => null, 'tier' => 1, 'duty_role' => 'responder', 'is_primary' => true, 'starts_at' => now()->subMinute(), 'ends_at' => null],
+                ['user_id' => $publisher->id, 'county_id' => null, 'tier' => 3, 'duty_role' => 'manager', 'is_primary' => true, 'starts_at' => now()->subMinute(), 'ends_at' => null],
+            ],
+        ]);
+        app(PublishServiceDeskPolicy::class)->handle($policy, $publisher, ['authority_status' => 'provisional', 'approval_reference' => null]);
     }
 
     public function test_county_scope_and_separation_of_duties_are_enforced(): void

@@ -1,12 +1,14 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ClockAlert,
+    ClipboardCheck,
     Download,
     Eye,
     FileUp,
     Headphones,
     MoreHorizontal,
     Plus,
+    Settings2,
     ShieldCheck,
     UserRoundCheck,
 } from 'lucide-react';
@@ -14,11 +16,14 @@ import { useState } from 'react';
 import { storeSupportTicket } from '@/actions/App/Http/Controllers/LinkedDocumentController';
 import {
     assign,
+    publishPolicy,
     store,
+    storePolicy,
     transition,
 } from '@/actions/App/Http/Controllers/SupportDeskController';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
+import DatePickerField from '@/components/date-picker-field';
 import DateRangeFilter from '@/components/date-range-filter';
 import FormSheet from '@/components/form-sheet';
 import SearchableSelect from '@/components/searchable-select';
@@ -62,7 +67,13 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import {
+    DEFAULT_TIMEZONE,
+    formatDateTime as formatCatalogDateTime,
+    formatNumber,
+} from '@/lib/reference-catalog';
 import { download, preview } from '@/routes/evidence';
+import { exportMethod as exportWorkspace } from '@/routes/workspace';
 
 type Activity = {
     id: string;
@@ -113,8 +124,63 @@ type TicketDetail = {
         effectiveFrom: string | null;
         checksum: string;
     };
+    servicePolicy: {
+        id: string;
+        code: string;
+        version: number;
+        authorityStatus: string;
+        approvalReference: string | null;
+        checksum: string;
+        calendar: {
+            code: string;
+            version: number;
+            timezone: string;
+            checksum: string;
+        };
+    } | null;
     activities: Activity[];
     documents: DocumentRecord[];
+};
+
+type ServicePolicy = {
+    id: string;
+    code: string;
+    version: number;
+    name: string;
+    description: string;
+    status: string;
+    authorityStatus: string;
+    approvalReference: string | null;
+    effectiveFrom: string;
+    effectiveTo: string | null;
+    calendar: {
+        id: string;
+        name: string;
+        code: string;
+        version: number;
+        timezone: string;
+        checksum: string;
+    };
+    categories: Array<{ code: string; name: string }>;
+    channels: string[];
+    priorityTargets: Record<
+        string,
+        { first_response: number; resolution: number; reminder: number }
+    >;
+    creator: string;
+    publisher: string | null;
+    publishedAt: string | null;
+    checksum: string | null;
+    roster: Array<{
+        id: string;
+        user: string;
+        county: CountyIdentityValue | null;
+        tier: number;
+        dutyRole: string;
+        isPrimary: boolean;
+        startsAt: string;
+        endsAt: string | null;
+    }>;
 };
 
 type Props = {
@@ -138,12 +204,26 @@ type Props = {
     catalogue:
         | { available: false }
         | { available: true; version: number; checksum: string };
+    effectiveServicePolicy: {
+        id: string;
+        code: string;
+        version: number;
+        authority_status: string;
+        checksum: string;
+    } | null;
+    servicePolicies: ServicePolicy[];
+    policyOptions: {
+        calendars: SearchableSelectOption[];
+        resolvers: SearchableSelectOption[];
+    };
     capabilities: {
         submit: boolean;
         manage: boolean;
         resolve: boolean;
         national: boolean;
         userId: string;
+        configurePolicy: boolean;
+        publishPolicy: boolean;
     };
 };
 
@@ -163,6 +243,9 @@ export default function SupportDesk({
     summary,
     options,
     catalogue,
+    effectiveServicePolicy,
+    servicePolicies,
+    policyOptions,
     capabilities,
 }: Props) {
     const { currentTeam } = usePage().props;
@@ -203,11 +286,22 @@ export default function SupportDesk({
                                 teamSlug={currentTeam.slug}
                                 counties={options.counties}
                                 national={capabilities.national}
-                                catalogueAvailable={catalogue.available}
+                                intakeAvailable={
+                                    catalogue.available &&
+                                    effectiveServicePolicy !== null
+                                }
                             />
                         )}
                     </div>
                 </section>
+
+                <ServicePolicyRegister
+                    teamSlug={currentTeam.slug}
+                    policies={servicePolicies}
+                    options={policyOptions}
+                    capabilities={capabilities}
+                    effectivePolicyId={effectiveServicePolicy?.id ?? null}
+                />
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
@@ -303,16 +397,590 @@ export default function SupportDesk({
     );
 }
 
+const serviceCategories = [
+    { code: 'access', name: 'Access and identity' },
+    { code: 'incident', name: 'Service incident' },
+    { code: 'service_request', name: 'Service request' },
+    { code: 'data_quality', name: 'Data quality' },
+    { code: 'integration', name: 'Integration' },
+    { code: 'training', name: 'Training and adoption' },
+    { code: 'document', name: 'Documents and OCR' },
+    { code: 'other', name: 'Other' },
+];
+
+const priorityDefaults: Record<
+    string,
+    { firstResponse: number; resolution: number; reminder: number }
+> = {
+    critical: { firstResponse: 1, resolution: 4, reminder: 0.5 },
+    high: { firstResponse: 4, resolution: 16, reminder: 2 },
+    medium: { firstResponse: 8, resolution: 40, reminder: 4 },
+    low: { firstResponse: 16, resolution: 80, reminder: 8 },
+};
+
+function ServicePolicyRegister({
+    teamSlug,
+    policies,
+    options,
+    capabilities,
+    effectivePolicyId,
+}: {
+    teamSlug: string;
+    policies: ServicePolicy[];
+    options: Props['policyOptions'];
+    capabilities: Props['capabilities'];
+    effectivePolicyId: string | null;
+}) {
+    return (
+        <Card>
+            <CardHeader className="flex-row items-start justify-between gap-4">
+                <div>
+                    <CardTitle>Governed service catalogue</CardTitle>
+                    <CardDescription>
+                        Effective-dated targets, government business hours,
+                        responder roster and escalation authority used by new
+                        tickets.
+                    </CardDescription>
+                </div>
+                {capabilities.configurePolicy && (
+                    <div className="flex flex-wrap gap-2">
+                        <PolicyExportMenu teamSlug={teamSlug} />
+                        <CreateServicePolicySheet
+                            teamSlug={teamSlug}
+                            options={options}
+                        />
+                    </div>
+                )}
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                {policies.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                        No service policy has been configured. New ticket intake
+                        remains fail-closed.
+                    </p>
+                )}
+                {policies.map((policy) => (
+                    <div key={policy.id} className="rounded-xl border p-4">
+                        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h3 className="font-semibold">
+                                        {policy.name}
+                                    </h3>
+                                    <Badge variant="outline">
+                                        {policy.code} · v{policy.version}
+                                    </Badge>
+                                    <Badge
+                                        variant={
+                                            policy.status === 'published'
+                                                ? 'secondary'
+                                                : 'outline'
+                                        }
+                                    >
+                                        {humanize(policy.status)}
+                                    </Badge>
+                                    <Badge variant="outline">
+                                        {humanize(policy.authorityStatus)}
+                                    </Badge>
+                                    {policy.id === effectivePolicyId && (
+                                        <Badge>Effective now</Badge>
+                                    )}
+                                </div>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    {policy.description}
+                                </p>
+                            </div>
+                            {policy.status === 'draft' &&
+                                capabilities.publishPolicy && (
+                                    <PublishServicePolicySheet
+                                        teamSlug={teamSlug}
+                                        policy={policy}
+                                    />
+                                )}
+                        </div>
+                        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+                            <KeyValue
+                                label="Business calendar"
+                                value={`${policy.calendar.code} v${policy.calendar.version} · ${policy.calendar.timezone}`}
+                            />
+                            <KeyValue
+                                label="Effective period"
+                                value={`${formatDateTime(policy.effectiveFrom)} – ${policy.effectiveTo ? formatDateTime(policy.effectiveTo) : 'Open ended'}`}
+                            />
+                            <KeyValue
+                                label="Roster"
+                                value={`${policy.roster.length} governed member${policy.roster.length === 1 ? '' : 's'}`}
+                            />
+                            <KeyValue
+                                label="Publication lineage"
+                                value={
+                                    policy.checksum
+                                        ? `${policy.publisher ?? 'Unknown'} · ${policy.checksum.slice(0, 12)}…`
+                                        : `Drafted by ${policy.creator}`
+                                }
+                            />
+                        </div>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                            {Object.entries(policy.priorityTargets).map(
+                                ([priority, target]) => (
+                                    <div
+                                        key={priority}
+                                        className="rounded-lg border bg-muted/30 p-3 text-sm"
+                                    >
+                                        <p className="font-medium">
+                                            {humanize(priority)}
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            Respond {target.first_response}h ·
+                                            resolve {target.resolution}h ·
+                                            remind {target.reminder}h before due
+                                        </p>
+                                    </div>
+                                ),
+                            )}
+                        </div>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+    );
+}
+
+function PolicyExportMenu({ teamSlug }: { teamSlug: string }) {
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    <Download aria-hidden="true" />
+                    Export policies
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Export governed register</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                    {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
+                        <DropdownMenuItem key={format} asChild>
+                            <Link
+                                href={
+                                    exportWorkspace({
+                                        current_team: teamSlug,
+                                        workspace: 'service-desk-policies',
+                                        format,
+                                    }).url
+                                }
+                            >
+                                {format.toUpperCase()}
+                            </Link>
+                        </DropdownMenuItem>
+                    ))}
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}
+
+function CreateServicePolicySheet({
+    teamSlug,
+    options,
+}: {
+    teamSlug: string;
+    options: Props['policyOptions'];
+}) {
+    const [effectiveFrom, setEffectiveFrom] = useState('');
+
+    return (
+        <FormSheet
+            title="Draft service-desk policy"
+            description="Create a new immutable candidate version. An independent publication decision is required before runtime use."
+            triggerLabel="Configure policy"
+            icon={Settings2}
+            size="xl"
+            triggerDisabled={
+                options.calendars.length === 0 || options.resolvers.length < 2
+            }
+            triggerTitle={
+                options.calendars.length === 0 || options.resolvers.length < 2
+                    ? 'A published calendar and at least two authorized resolvers are required.'
+                    : undefined
+            }
+        >
+            <Form {...storePolicy.form(teamSlug)} resetOnSuccess>
+                {({ errors, processing }) => (
+                    <FieldGroup>
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <PolicyInput
+                                id="policy-code"
+                                name="code"
+                                label="Policy code"
+                                defaultValue="IDMIS-SUPPORT"
+                                error={errors.code}
+                            />
+                            <PolicyInput
+                                id="policy-name"
+                                name="name"
+                                label="Policy name"
+                                defaultValue="IDMIS operational support policy"
+                                error={errors.name}
+                            />
+                        </div>
+                        <Field data-invalid={Boolean(errors.description)}>
+                            <FieldLabel htmlFor="policy-description">
+                                Scope and service commitment
+                            </FieldLabel>
+                            <Textarea
+                                id="policy-description"
+                                name="description"
+                                required
+                                rows={4}
+                                defaultValue="Support for authorized IDMIS users across access, data, integration, records, training and operational incidents."
+                                aria-invalid={Boolean(errors.description)}
+                            />
+                            <FieldError>{errors.description}</FieldError>
+                        </Field>
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            <SearchableSelect
+                                id="policy-calendar"
+                                name="business_calendar_id"
+                                label="Published business calendar"
+                                options={options.calendars}
+                                error={errors.business_calendar_id}
+                            />
+                            <DatePickerField
+                                name="effective_from"
+                                label="Effective from"
+                                required
+                                includeTime
+                                error={errors.effective_from}
+                                value={effectiveFrom}
+                                onValueChange={setEffectiveFrom}
+                            />
+                        </div>
+                        <DatePickerField
+                            name="effective_to"
+                            label="Effective to (required for a finite calendar)"
+                            includeTime
+                            min={effectiveFrom.slice(0, 10)}
+                            error={errors.effective_to}
+                        />
+                        {serviceCategories.map((category, index) => (
+                            <span key={category.code}>
+                                <input
+                                    type="hidden"
+                                    name={`categories[${index}][code]`}
+                                    value={category.code}
+                                />
+                                <input
+                                    type="hidden"
+                                    name={`categories[${index}][name]`}
+                                    value={category.name}
+                                />
+                            </span>
+                        ))}
+                        {['web', 'email', 'phone', 'walk_in', 'training'].map(
+                            (channel, index) => (
+                                <input
+                                    key={channel}
+                                    type="hidden"
+                                    name={`channels[${index}]`}
+                                    value={channel}
+                                />
+                            ),
+                        )}
+                        <section aria-labelledby="priority-targets-heading">
+                            <h3
+                                id="priority-targets-heading"
+                                className="font-semibold"
+                            >
+                                Business-hour service targets
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Deadlines exclude non-working hours and calendar
+                                exceptions.
+                            </p>
+                            <div className="mt-4 grid gap-4 md:grid-cols-2">
+                                {Object.entries(priorityDefaults).map(
+                                    ([priority, defaults]) => (
+                                        <div
+                                            key={priority}
+                                            className="rounded-xl border p-4"
+                                        >
+                                            <p className="font-medium">
+                                                {humanize(priority)}
+                                            </p>
+                                            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                                                <PolicyNumberInput
+                                                    name={`priority_targets[${priority}][first_response]`}
+                                                    label="Response hours"
+                                                    defaultValue={
+                                                        defaults.firstResponse
+                                                    }
+                                                />
+                                                <PolicyNumberInput
+                                                    name={`priority_targets[${priority}][resolution]`}
+                                                    label="Resolution hours"
+                                                    defaultValue={
+                                                        defaults.resolution
+                                                    }
+                                                />
+                                                <PolicyNumberInput
+                                                    name={`priority_targets[${priority}][reminder]`}
+                                                    label="Reminder lead"
+                                                    defaultValue={
+                                                        defaults.reminder
+                                                    }
+                                                />
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                            </div>
+                        </section>
+                        {Object.keys(priorityDefaults).flatMap(
+                            (priority, priorityIndex) =>
+                                ['first_response', 'resolution'].flatMap(
+                                    (stage, stageIndex) => {
+                                        const index =
+                                            priorityIndex * 2 + stageIndex;
+
+                                        return [
+                                            <input
+                                                key={`${index}-priority`}
+                                                type="hidden"
+                                                name={`escalation_rules[${index}][priority]`}
+                                                value={priority}
+                                            />,
+                                            <input
+                                                key={`${index}-stage`}
+                                                type="hidden"
+                                                name={`escalation_rules[${index}][stage]`}
+                                                value={stage}
+                                            />,
+                                            <input
+                                                key={`${index}-tier`}
+                                                type="hidden"
+                                                name={`escalation_rules[${index}][tier]`}
+                                                value={
+                                                    priority === 'critical'
+                                                        ? 3
+                                                        : stage === 'resolution'
+                                                          ? 3
+                                                          : 2
+                                                }
+                                            />,
+                                        ];
+                                    },
+                                ),
+                        )}
+                        <section aria-labelledby="roster-heading">
+                            <h3 id="roster-heading" className="font-semibold">
+                                National duty roster
+                            </h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                Tier one receives new cases; tier three receives
+                                escalations. The two duties must be assigned to
+                                different authorized users.
+                            </p>
+                            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                                <SearchableSelect
+                                    id="policy-tier-one"
+                                    name="roster[0][user_id]"
+                                    label="Tier 1 primary responder"
+                                    options={options.resolvers}
+                                    error={errors['roster.0.user_id']}
+                                />
+                                <SearchableSelect
+                                    id="policy-tier-three"
+                                    name="roster[1][user_id]"
+                                    label="Tier 3 escalation manager"
+                                    options={options.resolvers}
+                                    error={errors['roster.1.user_id']}
+                                />
+                            </div>
+                            {[1, 3].map((tier, index) => (
+                                <span key={tier}>
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][county_id]`}
+                                        value=""
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][tier]`}
+                                        value={tier}
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][duty_role]`}
+                                        value={
+                                            tier === 1 ? 'responder' : 'manager'
+                                        }
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][is_primary]`}
+                                        value="1"
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][starts_at]`}
+                                        value={effectiveFrom}
+                                    />
+                                    <input
+                                        type="hidden"
+                                        name={`roster[${index}][ends_at]`}
+                                        value=""
+                                    />
+                                </span>
+                            ))}
+                        </section>
+                        <Button
+                            type="submit"
+                            disabled={processing || !effectiveFrom}
+                        >
+                            {processing ? 'Saving…' : 'Create policy draft'}
+                        </Button>
+                    </FieldGroup>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function PublishServicePolicySheet({
+    teamSlug,
+    policy,
+}: {
+    teamSlug: string;
+    policy: ServicePolicy;
+}) {
+    const [authorityStatus, setAuthorityStatus] = useState('provisional');
+
+    return (
+        <FormSheet
+            title={`Publish ${policy.code} v${policy.version}`}
+            description="Verify the calendar, targets, roster and escalation matrix. Publication is immutable and requires an actor independent of the author."
+            triggerLabel="Review publication"
+            icon={ClipboardCheck}
+        >
+            <Form
+                {...publishPolicy.form({
+                    current_team: teamSlug,
+                    serviceDeskPolicy: policy.id,
+                })}
+            >
+                {({ errors, processing }) => (
+                    <FieldGroup>
+                        <SearchableSelect
+                            id={`policy-authority-${policy.id}`}
+                            name="authority_status"
+                            label="Authority status"
+                            options={[
+                                {
+                                    id: 'provisional',
+                                    name: 'Provisional engineering policy',
+                                },
+                                {
+                                    id: 'approved',
+                                    name: 'Accountable owner approved',
+                                },
+                            ]}
+                            value={authorityStatus}
+                            onValueChange={setAuthorityStatus}
+                            error={errors.authority_status}
+                        />
+                        {authorityStatus === 'approved' && (
+                            <PolicyInput
+                                id={`policy-approval-${policy.id}`}
+                                name="approval_reference"
+                                label="Approval reference"
+                                error={errors.approval_reference}
+                            />
+                        )}
+                        {authorityStatus === 'provisional' && (
+                            <input
+                                type="hidden"
+                                name="approval_reference"
+                                value=""
+                            />
+                        )}
+                        <Button type="submit" disabled={processing}>
+                            {processing
+                                ? 'Publishing…'
+                                : 'Publish immutable policy'}
+                        </Button>
+                    </FieldGroup>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function PolicyInput({
+    id,
+    name,
+    label,
+    defaultValue,
+    error,
+}: {
+    id: string;
+    name: string;
+    label: string;
+    defaultValue?: string;
+    error?: string;
+}) {
+    return (
+        <Field data-invalid={Boolean(error)}>
+            <FieldLabel htmlFor={id}>{label}</FieldLabel>
+            <Input
+                id={id}
+                name={name}
+                required
+                defaultValue={defaultValue}
+                aria-invalid={Boolean(error)}
+            />
+            <FieldError>{error}</FieldError>
+        </Field>
+    );
+}
+
+function PolicyNumberInput({
+    name,
+    label,
+    defaultValue,
+}: {
+    name: string;
+    label: string;
+    defaultValue: number;
+}) {
+    const id = name.replaceAll(/[^a-zA-Z0-9_-]/g, '-');
+
+    return (
+        <Field>
+            <FieldLabel htmlFor={id}>{label}</FieldLabel>
+            <Input
+                id={id}
+                name={name}
+                type="number"
+                min="0.25"
+                max="1000"
+                step="0.25"
+                required
+                defaultValue={defaultValue}
+            />
+        </Field>
+    );
+}
+
 function CreateTicketSheet({
     teamSlug,
     counties,
     national,
-    catalogueAvailable,
+    intakeAvailable,
 }: {
     teamSlug: string;
     counties: CountyIdentityValue[];
     national: boolean;
-    catalogueAvailable: boolean;
+    intakeAvailable: boolean;
 }) {
     return (
         <FormSheet
@@ -320,11 +988,11 @@ function CreateTicketSheet({
             description="Create a governed service request. Personally sensitive narrative is encrypted at rest."
             triggerLabel="New support ticket"
             icon={Plus}
-            triggerDisabled={!catalogueAvailable}
+            triggerDisabled={!intakeAvailable}
             triggerTitle={
-                catalogueAvailable
+                intakeAvailable
                     ? undefined
-                    : 'No effective governed reference catalogue is available.'
+                    : 'A checksum-valid reference catalogue and effective service-desk policy are required.'
             }
         >
             <Form {...store.form(teamSlug)} resetOnSuccess>
@@ -356,6 +1024,10 @@ function CreateTicketSheet({
                                     {
                                         id: 'access',
                                         name: 'Access and identity',
+                                    },
+                                    {
+                                        id: 'incident',
+                                        name: 'Service incident',
                                     },
                                     {
                                         id: 'service_request',
@@ -758,8 +1430,9 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
             <CardHeader>
                 <CardTitle>Service-level targets</CardTitle>
                 <CardDescription>
-                    Provisional operational targets pending policy-owner
-                    approval.
+                    {ticket.servicePolicy
+                        ? `${humanize(ticket.servicePolicy.authorityStatus)} ${ticket.servicePolicy.code} v${ticket.servicePolicy.version} · ${ticket.servicePolicy.calendar.code} v${ticket.servicePolicy.calendar.version}`
+                        : 'Legacy config-derived targets without governed policy lineage.'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
@@ -793,6 +1466,14 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
                         }
                     />
                 </div>
+                {ticket.servicePolicy && (
+                    <p className="text-xs text-muted-foreground">
+                        Policy checksum{' '}
+                        {ticket.servicePolicy.checksum.slice(0, 16)}… · calendar
+                        checksum{' '}
+                        {ticket.servicePolicy.calendar.checksum.slice(0, 16)}…
+                    </p>
+                )}
             </CardContent>
         </Card>
     );
@@ -1078,18 +1759,21 @@ function humanize(value: string): string {
 }
 
 function formatDateTime(value: string): string {
-    return new Intl.DateTimeFormat('en-KE', {
+    return formatCatalogDateTime(value, {
         dateStyle: 'medium',
         timeStyle: 'short',
-        timeZone: 'Africa/Nairobi',
-    }).format(new Date(value));
+        timeZone: DEFAULT_TIMEZONE,
+    });
 }
 
 function formatBytes(value: number): string {
-    return new Intl.NumberFormat('en-KE', {
-        style: 'unit',
-        unit: value >= 1_000_000 ? 'megabyte' : 'kilobyte',
-        unitDisplay: 'short',
-        maximumFractionDigits: 1,
-    }).format(value >= 1_000_000 ? value / 1_000_000 : value / 1_000);
+    return formatNumber(
+        value >= 1_000_000 ? value / 1_000_000 : value / 1_000,
+        {
+            style: 'unit',
+            unit: value >= 1_000_000 ? 'megabyte' : 'kilobyte',
+            unitDisplay: 'short',
+            maximumFractionDigits: 1,
+        },
+    );
 }

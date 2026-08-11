@@ -52,9 +52,9 @@ enum UserRole: string
 
         return match ($this) {
             self::CountyAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets],
-            self::DevolutionAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ManageAnalytics],
-            self::PlatformAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules, ProgrammePermission::ViewUserActivity],
-            self::TopManagement => [...$permissions, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
+            self::DevolutionAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ManageAnalytics],
+            self::PlatformAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules, ProgrammePermission::ViewUserActivity],
+            self::TopManagement => [...$permissions, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
             default => $permissions,
         };
     }

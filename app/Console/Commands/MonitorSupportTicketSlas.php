@@ -8,6 +8,7 @@ use App\Models\SupportTicket;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use App\Services\AuditLogger;
+use App\Services\EffectiveServiceDeskPolicyResolver;
 use Illuminate\Console\Command;
 
 class MonitorSupportTicketSlas extends Command
@@ -16,10 +17,9 @@ class MonitorSupportTicketSlas extends Command
 
     protected $description = 'Send idempotent service-desk SLA reminders and escalations';
 
-    public function handle(RecordSupportTicketActivity $recordActivity, AuditLogger $auditLogger): int
+    public function handle(RecordSupportTicketActivity $recordActivity, AuditLogger $auditLogger, EffectiveServiceDeskPolicyResolver $policyResolver): int
     {
         $processed = 0;
-        $window = now()->addHours((int) config('service-desk.reminder_hours', 2));
         $supportManagers = User::permission(ProgrammePermission::ManageSupportTickets->value)
             ->with(['county', 'assignedCounties'])
             ->get();
@@ -27,21 +27,34 @@ class MonitorSupportTicketSlas extends Command
         SupportTicket::query()
             ->whereNotIn('status', ['resolved', 'closed'])
             ->whereNull('reminder_sent_at')
-            ->where(function ($query) use ($window): void {
-                $query->where(fn ($query) => $query->whereNull('first_responded_at')->where('first_response_due_at', '<=', $window))
-                    ->orWhere(fn ($query) => $query->whereNotNull('first_responded_at')->where('resolution_due_at', '<=', $window));
-            })
-            ->with(['assignee:id,name', 'requester:id,name', 'county'])
-            ->chunkById(100, function ($tickets) use (&$processed, $recordActivity, $auditLogger, $supportManagers): void {
+            ->with(['assignee:id,name', 'requester:id,name', 'county', 'serviceDeskPolicy.businessCalendar', 'serviceDeskPolicy.rosterMembers.user'])
+            ->chunkById(100, function ($tickets) use (&$processed, $recordActivity, $auditLogger, $supportManagers, $policyResolver): void {
                 foreach ($tickets as $ticket) {
                     $dueAt = $ticket->first_responded_at === null ? $ticket->first_response_due_at : $ticket->resolution_due_at;
+                    $policy = $ticket->serviceDeskPolicy;
+                    $reminderHours = (float) config('service-desk.reminder_hours', 2);
+                    if ($policy !== null && $ticket->service_desk_policy_checksum !== null) {
+                        $policyResolver->verifyPinned($policy, $ticket->service_desk_policy_checksum);
+                        $reminderHours = (float) $policyResolver->target($policy, $ticket->priority)['reminder'];
+                    }
+                    if (now()->lessThan($dueAt->copy()->subHours($reminderHours))) {
+                        continue;
+                    }
                     $overdue = $dueAt->isPast();
+                    $rosterRecipients = collect();
+                    if ($policy !== null) {
+                        $stage = $ticket->first_responded_at === null ? 'first_response' : 'resolution';
+                        $tier = $overdue ? $policyResolver->escalationTier($policy, $ticket->priority, $stage) : 1;
+                        $rosterRecipients = $policyResolver->recipients($policy, $ticket->county_id, now(), $tier);
+                    }
+                    $legacyManagers = $policy === null ? $supportManagers->filter(
+                        fn (User $manager): bool => $ticket->county_id === null
+                            ? $manager->programmeRole()->hasNationalScope()
+                            : $manager->programmeRole()->hasNationalScope() || $manager->canAccessCounty($ticket->county),
+                    ) : collect();
                     $recipients = collect([$ticket->assignee, $ticket->requester])
-                        ->merge($supportManagers->filter(
-                            fn (User $manager): bool => $ticket->county_id === null
-                                ? $manager->programmeRole()->hasNationalScope()
-                                : $manager->programmeRole()->hasNationalScope() || $manager->canAccessCounty($ticket->county),
-                        ))
+                        ->merge($rosterRecipients)
+                        ->merge($legacyManagers)
                         ->filter()
                         ->unique('id');
                     $title = $overdue ? 'Support SLA overdue' : 'Support SLA approaching';

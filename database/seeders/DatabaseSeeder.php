@@ -48,5 +48,6 @@ class DatabaseSeeder extends Seeder
         $this->call(AnalyticsReportingSeeder::class);
         $this->call(SupportDeskSeeder::class);
         $this->call(EnterpriseScenarioSeeder::class);
+        $this->call(ServiceDeskPolicySeeder::class);
     }
 }

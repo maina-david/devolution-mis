@@ -230,6 +230,8 @@ Route::prefix('{current_team}')
         Route::get('user-activity', UserActivityController::class)->name('user-activity.index');
         Route::get('support-desk', [SupportDeskController::class, 'index'])->name('support-desk.index');
         Route::post('support-desk', [SupportDeskController::class, 'store'])->name('support-desk.store');
+        Route::post('support-desk/policies', [SupportDeskController::class, 'storePolicy'])->name('support-desk.policies.store');
+        Route::patch('support-desk/policies/{serviceDeskPolicy}/publish', [SupportDeskController::class, 'publishPolicy'])->name('support-desk.policies.publish');
         Route::patch('support-desk/{supportTicket}/assign', [SupportDeskController::class, 'assign'])->name('support-desk.assign');
         Route::patch('support-desk/{supportTicket}/transition', [SupportDeskController::class, 'transition'])->name('support-desk.transition');
         Route::post('support-desk/{supportTicket}/documents', [LinkedDocumentController::class, 'storeSupportTicket'])->name('support-desk.documents.store');
@@ -344,7 +346,7 @@ Route::prefix('{current_team}')
         Route::delete('business-calendars/{businessCalendar}/holidays/{businessCalendarHoliday}', [BusinessCalendarController::class, 'destroyHoliday'])->name('business-calendars.holidays.destroy');
         Route::patch('business-calendars/{businessCalendar}/publish', [BusinessCalendarController::class, 'publish'])->name('business-calendars.publish');
         Route::get('{workspace}/export/{format}', WorkspaceExportController::class)
-            ->whereIn('workspace', ['counties', 'assessments', 'evidence', 'grants', 'exchequer', 'reports', 'users', 'audit', 'audit-assurance', 'platform', 'monitoring-evaluation', 'monitoring-performance', 'programme-evaluations', 'projects', 'partners', 'partner-actions', 'dswg', 'igr-resolutions', 'igr-gaps', 'citizen-cases', 'travel-clearance', 'departmental-performance', 'learning', 'learning-cohorts', 'learning-attendance', 'learning-offline-syncs', 'knowledge', 'knowledge-innovations', 'knowledge-moderation', 'integrations', 'integration-systems', 'operations', 'data-governance', 'privacy-incidents', 'security-governance', 'security-incidents', 'access-delegations', 'identity-lifecycle', 'business-calendars', 'change-readiness', 'programme-coverage', 'support-desk'])
+            ->whereIn('workspace', ['counties', 'assessments', 'evidence', 'grants', 'exchequer', 'reports', 'users', 'audit', 'audit-assurance', 'platform', 'monitoring-evaluation', 'monitoring-performance', 'programme-evaluations', 'projects', 'partners', 'partner-actions', 'dswg', 'igr-resolutions', 'igr-gaps', 'citizen-cases', 'travel-clearance', 'departmental-performance', 'learning', 'learning-cohorts', 'learning-attendance', 'learning-offline-syncs', 'knowledge', 'knowledge-innovations', 'knowledge-moderation', 'integrations', 'integration-systems', 'operations', 'data-governance', 'privacy-incidents', 'security-governance', 'security-incidents', 'access-delegations', 'identity-lifecycle', 'business-calendars', 'change-readiness', 'programme-coverage', 'support-desk', 'service-desk-policies'])
             ->whereIn('format', ['csv', 'json', 'xlsx', 'pdf'])
             ->name('workspace.export');
         Route::prefix('assessments/{assessment}')->controller(AssessmentWorkflowController::class)->group(function () {

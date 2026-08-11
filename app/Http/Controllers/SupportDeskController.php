@@ -3,13 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AssignSupportTicket;
+use App\Actions\CreateServiceDeskPolicy;
 use App\Actions\CreateSupportTicket;
+use App\Actions\PublishServiceDeskPolicy;
 use App\Actions\TransitionSupportTicket;
 use App\Enums\ProgrammePermission;
 use App\Http\Requests\AssignSupportTicketRequest;
+use App\Http\Requests\PublishServiceDeskPolicyRequest;
+use App\Http\Requests\StoreServiceDeskPolicyRequest;
 use App\Http\Requests\StoreSupportTicketRequest;
 use App\Http\Requests\TransitionSupportTicketRequest;
 use App\Http\Requests\WorkspaceIndexRequest;
+use App\Models\BusinessCalendar;
+use App\Models\ServiceDeskPolicy;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Services\EffectiveReferenceDataReleaseResolver;
@@ -48,6 +54,7 @@ class SupportDeskController extends Controller
             ->whereIn('id', $rowIds)
             ->with([
                 'referenceDataRelease:id,version,effective_from,checksum',
+                'serviceDeskPolicy.businessCalendar:id,code,version,name,timezone,checksum',
                 'county',
                 'requester:id,name,email',
                 'assignee:id,name,email',
@@ -65,6 +72,7 @@ class SupportDeskController extends Controller
             ->toBase()
             ->selectRaw("count(*) as total, count(*) filter (where status not in ('resolved', 'closed')) as active, count(*) filter (where assigned_to is null and status = 'open') as unassigned, count(*) filter (where status not in ('resolved', 'closed') and resolution_due_at < now()) as overdue")
             ->first();
+        $canGovernPolicy = $user->can(ProgrammePermission::ConfigureSupportDesk->value) || $user->can(ProgrammePermission::PublishSupportDeskPolicy->value);
 
         return Inertia::render('support-desk/index', [
             'workspace' => $workspace,
@@ -83,12 +91,30 @@ class SupportDeskController extends Controller
                     : [],
             ],
             'catalogue' => $release === null ? ['available' => false] : ['available' => true, 'version' => $release->version, 'checksum' => $release->checksum],
+            'effectiveServicePolicy' => ServiceDeskPolicy::query()->where('status', 'published')->where('effective_from', '<=', now())->where(fn ($query) => $query->whereNull('effective_to')->orWhere('effective_to', '>', now()))->latest('version')->first(['id', 'code', 'version', 'authority_status', 'checksum']),
+            'servicePolicies' => $canGovernPolicy ? ServiceDeskPolicy::query()
+                ->with(['businessCalendar:id,code,version,name,timezone,checksum', 'creator:id,name', 'publisher:id,name', 'rosterMembers.user:id,name', 'rosterMembers.county'])
+                ->latest('version')
+                ->orderBy('code')
+                ->get()
+                ->map(fn (ServiceDeskPolicy $policy): array => $this->policyDetail($policy))
+                ->values() : [],
+            'policyOptions' => [
+                'calendars' => $user->can(ProgrammePermission::ConfigureSupportDesk->value)
+                    ? BusinessCalendar::query()->where('status', 'published')->orderBy('name')->get()->map(fn (BusinessCalendar $calendar): array => ['id' => $calendar->id, 'name' => "{$calendar->name} · v{$calendar->version} · ".($calendar->effective_to?->toDateString() ?? 'open ended')])->values()
+                    : [],
+                'resolvers' => $user->can(ProgrammePermission::ConfigureSupportDesk->value)
+                    ? User::permission(ProgrammePermission::ResolveSupportTickets->value)->whereNull('access_revoked_at')->orderBy('name')->get(['id', 'name'])->map(fn (User $resolver): array => ['id' => $resolver->id, 'name' => $resolver->name])->values()
+                    : [],
+            ],
             'capabilities' => [
                 'submit' => $user->can(ProgrammePermission::SubmitSupportTickets->value),
                 'manage' => $user->can(ProgrammePermission::ManageSupportTickets->value),
                 'resolve' => $user->can(ProgrammePermission::ResolveSupportTickets->value),
                 'national' => $user->programmeRole()->hasNationalScope(),
                 'userId' => $user->id,
+                'configurePolicy' => $user->can(ProgrammePermission::ConfigureSupportDesk->value),
+                'publishPolicy' => $user->can(ProgrammePermission::PublishSupportDeskPolicy->value),
             ],
         ]);
     }
@@ -113,6 +139,24 @@ class SupportDeskController extends Controller
         $action->handle($supportTicket, $this->user($request), $request->validated());
 
         return back()->with('success', 'Support ticket workflow updated.');
+    }
+
+    public function storePolicy(StoreServiceDeskPolicyRequest $request, CreateServiceDeskPolicy $action): RedirectResponse
+    {
+        $policy = $action->handle($this->user($request), $request->validated());
+
+        return back()->with('success', "Service-desk policy {$policy->code} v{$policy->version} drafted.");
+    }
+
+    public function publishPolicy(PublishServiceDeskPolicyRequest $request, string $currentTeam, ServiceDeskPolicy $serviceDeskPolicy, PublishServiceDeskPolicy $action): RedirectResponse
+    {
+        $validated = $request->validated();
+        $action->handle($serviceDeskPolicy, $this->user($request), [
+            'authority_status' => (string) $validated['authority_status'],
+            'approval_reference' => is_string($validated['approval_reference'] ?? null) ? $validated['approval_reference'] : null,
+        ]);
+
+        return back()->with('success', 'Service-desk policy independently published.');
     }
 
     /** @return array<string, mixed> */
@@ -140,12 +184,48 @@ class SupportDeskController extends Controller
             'resolvedAt' => $ticket->resolved_at?->toIso8601String(),
             'closedAt' => $ticket->closed_at?->toIso8601String(),
             'referenceData' => ['version' => $ticket->referenceDataRelease->version, 'effectiveFrom' => $ticket->referenceDataRelease->effective_from?->toDateString(), 'checksum' => $ticket->referenceDataRelease->checksum],
+            'servicePolicy' => $ticket->serviceDeskPolicy === null ? null : [
+                'id' => $ticket->serviceDeskPolicy->id,
+                'code' => $ticket->serviceDeskPolicy->code,
+                'version' => $ticket->serviceDeskPolicy->version,
+                'authorityStatus' => $ticket->serviceDeskPolicy->authority_status,
+                'approvalReference' => $ticket->serviceDeskPolicy->approval_reference,
+                'checksum' => $ticket->service_desk_policy_checksum,
+                'calendar' => ['code' => $ticket->serviceDeskPolicy->businessCalendar->code, 'version' => $ticket->serviceDeskPolicy->businessCalendar->version, 'timezone' => $ticket->serviceDeskPolicy->businessCalendar->timezone, 'checksum' => $ticket->serviceDeskPolicy->businessCalendar->checksum],
+            ],
             'activities' => $ticket->activities->map(fn ($activity): array => ['id' => $activity->id, 'actor' => $activity->actor_name, 'type' => $activity->activity_type, 'fromStatus' => $activity->from_status, 'toStatus' => $activity->to_status, 'narrative' => $activity->narrative, 'occurredAt' => $activity->occurred_at->toIso8601String(), 'checksum' => $activity->evidence_checksum])->values(),
             'documents' => $ticket->documentLinks->map(fn ($link): array => ['id' => $link->document->id, 'title' => $link->document->title, 'originalName' => $link->document->original_name, 'mimeType' => $link->document->mime_type, 'sizeBytes' => $link->document->size_bytes, 'checksum' => $link->document->content_checksum, 'scanStatus' => $link->document->scan_status, 'ocrStatus' => $link->document->ocr_status, 'recordStatus' => $link->document->record_status])->values(),
         ];
     }
 
-    private function user(WorkspaceIndexRequest|StoreSupportTicketRequest|AssignSupportTicketRequest|TransitionSupportTicketRequest $request): User
+    /** @return array<string, mixed> */
+    private function policyDetail(ServiceDeskPolicy $policy): array
+    {
+        return [
+            'id' => $policy->id,
+            'code' => $policy->code,
+            'version' => $policy->version,
+            'name' => $policy->name,
+            'description' => $policy->description,
+            'status' => $policy->status,
+            'authorityStatus' => $policy->authority_status,
+            'approvalReference' => $policy->approval_reference,
+            'effectiveFrom' => $policy->effective_from->toIso8601String(),
+            'effectiveTo' => $policy->effective_to?->toIso8601String(),
+            'calendar' => ['id' => $policy->businessCalendar->id, 'name' => $policy->businessCalendar->name, 'code' => $policy->businessCalendar->code, 'version' => $policy->businessCalendar->version, 'timezone' => $policy->businessCalendar->timezone, 'checksum' => $policy->businessCalendar->checksum],
+            'categories' => $policy->categories,
+            'channels' => $policy->channels,
+            'priorityTargets' => $policy->priority_targets,
+            'escalationRules' => $policy->escalation_rules,
+            'creator' => $policy->creator->name,
+            'publisher' => $policy->publisher?->name,
+            'publishedAt' => $policy->published_at?->toIso8601String(),
+            'checksum' => $policy->checksum,
+            'roster' => $policy->rosterMembers->map(fn ($member): array => ['id' => $member->id, 'user' => $member->user->name, 'county' => $member->county?->identityCell(), 'tier' => $member->tier, 'dutyRole' => $member->duty_role, 'isPrimary' => $member->is_primary, 'startsAt' => $member->starts_at->toIso8601String(), 'endsAt' => $member->ends_at?->toIso8601String()])->values(),
+        ];
+    }
+
+    private function user(WorkspaceIndexRequest|StoreSupportTicketRequest|AssignSupportTicketRequest|TransitionSupportTicketRequest|StoreServiceDeskPolicyRequest|PublishServiceDeskPolicyRequest $request): User
     {
         /** @var User $user */
         $user = $request->user();

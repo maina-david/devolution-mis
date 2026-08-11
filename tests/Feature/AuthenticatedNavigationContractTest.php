@@ -108,7 +108,11 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('onPointerLeave={closeAfterContentLeave}', $header);
         $this->assertStringContainsString("event.pointerType !== 'mouse'", $header);
         $this->assertStringContainsString('modal={false} open={open} onOpenChange={handleOpenChange}', $header);
-        $this->assertStringContainsString('!triggerHovered.current && !contentHovered.current', $header);
+        $this->assertStringContainsString("triggerRef.current?.matches(':hover')", $header);
+        $this->assertStringContainsString("contentRef.current?.matches(':hover')", $header);
+        $this->assertStringContainsString('if (!nextOpen && pointerIsOverMenu())', $header);
+        $this->assertStringContainsString('sideOffset={4}', $header);
+        $this->assertStringContainsString('onCloseAutoFocus={(event) => event.preventDefault()}', $header);
         $this->assertStringContainsString('onEscapeKeyDown={dismissMenu}', $header);
         $this->assertStringContainsString('onPointerDownOutside={dismissMenu}', $header);
         $this->assertStringContainsString('<DropdownMenuGroup>', $header);

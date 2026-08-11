@@ -54,6 +54,8 @@ use App\Models\ReportSchedule;
 use App\Models\Role;
 use App\Models\RolloutWave;
 use App\Models\Sector;
+use App\Models\ServiceDeskPolicy;
+use App\Models\ServiceDeskRosterMember;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\TrainingAssessment;
@@ -131,6 +133,8 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             IgrGapCategory::class,
             IgrResolutionDependency::class,
             IgrResolutionGap::class,
+            ServiceDeskPolicy::class,
+            ServiceDeskRosterMember::class,
         ];
 
         foreach ($models as $modelClass) {
