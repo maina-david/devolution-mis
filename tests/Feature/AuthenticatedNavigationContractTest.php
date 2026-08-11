@@ -250,6 +250,10 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('<CardContent className="p-0">', $dashboard);
         $this->assertStringContainsString('<CardHeader className="py-6">', $dashboard);
         $this->assertStringContainsString('className="rounded-none border-x-0 border-b-0"', $dashboard);
+        $this->assertStringNotContainsString('max-w-xl', $partnerMap);
+        $this->assertStringContainsString('<CardContent className="p-0">', $partnerMap);
+        $this->assertStringContainsString('<CardHeader className="py-6">', $partnerMap);
+        $this->assertStringContainsString('className="rounded-none border-x-0 border-b-0"', $partnerMap);
     }
 
     public function test_zoomed_county_map_has_all_downloaded_osm_administrative_boundaries(): void

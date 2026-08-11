@@ -36,29 +36,42 @@ export default function PartnerPortfolioMap({
         `KES ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <MapPinned className="text-primary" aria-hidden="true" />
-                    Geographic partner portfolio
-                </CardTitle>
-                <CardDescription>
-                    {showFullCountry
-                        ? 'Nationwide geography with only authorized portfolio counties activated.'
-                        : 'Your county is automatically zoomed and isolated.'}{' '}
-                    Select an active county to inspect its partner portfolio.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(18rem,0.65fr)]">
-                <div className="mx-auto flex min-h-72 w-full max-w-xl items-center overflow-hidden rounded-xl bg-[#eef4f0] p-4 dark:bg-[#0c2830]">
+        <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(19rem,0.7fr)]">
+            <Card className="min-w-0 gap-0 overflow-hidden py-0">
+                <CardHeader className="py-6">
+                    <CardTitle className="flex items-center gap-2">
+                        <MapPinned
+                            className="text-primary"
+                            aria-hidden="true"
+                        />
+                        Geographic partner portfolio
+                    </CardTitle>
+                    <CardDescription>
+                        {showFullCountry
+                            ? 'Nationwide geography with only authorized portfolio counties activated.'
+                            : 'Your county is automatically zoomed and isolated.'}{' '}
+                        Select an active county to inspect its partner
+                        portfolio.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
                     <KenyaCountyMap
                         counties={counties}
                         showFullCountry={showFullCountry}
                         selectedCountyId={selected?.id}
                         onSelect={setSelected}
+                        className="rounded-none border-x-0 border-b-0"
                     />
-                </div>
-                <aside className="rounded-xl border bg-muted/25 p-5">
+                </CardContent>
+            </Card>
+            <Card aria-live="polite">
+                <CardHeader>
+                    <CardDescription>County portfolio</CardDescription>
+                    <CardTitle>
+                        {selected?.name ?? 'Select an authorized county'}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
                     {selected ? (
                         <div className="grid gap-5">
                             <CountyIdentity county={selected} />
@@ -95,9 +108,9 @@ export default function PartnerPortfolioMap({
                             its portfolio.
                         </div>
                     )}
-                </aside>
-            </CardContent>
-        </Card>
+                </CardContent>
+            </Card>
+        </section>
     );
 }
 
