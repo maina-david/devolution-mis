@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from 'react';
 import { usePage } from '@inertiajs/react';
+import type { PropsWithChildren } from 'react';
 
 import { PublicSiteFooter } from '@/components/public-site-footer';
 import { PublicSiteHeader } from '@/components/public-site-header';
