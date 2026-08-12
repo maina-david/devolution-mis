@@ -104,6 +104,7 @@ const datasetOptions = [
 ];
 
 const referenceDatasetOptions = [
+    { id: 'counties', name: 'Counties' },
     { id: 'organizations', name: 'Organizations' },
     { id: 'sectors', name: 'Sectors' },
     { id: 'programmes', name: 'Programmes' },

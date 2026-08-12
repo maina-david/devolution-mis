@@ -32,7 +32,7 @@ class ApplyHistoricalDataMigration
             abort_unless($locked->status === 'approved', 409, 'Only an approved migration batch can be applied.');
             abort_if(in_array($actor->id, [$locked->submitted_by, $locked->reviewed_by], true), 403, 'A third independent operator must apply the approved migration.');
 
-            if (in_array($locked->dataset_type, ['organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users'], true)) {
+            if (in_array($locked->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users'], true)) {
                 return $this->applyReferenceData($locked, $actor);
             }
 
@@ -108,6 +108,7 @@ class ApplyHistoricalDataMigration
         $codes = $rows->pluck('source_payload')->map(fn (?array $payload): string => Str::upper((string) ($payload['code'] ?? '')))->all();
         $emails = $rows->pluck('source_payload')->map(fn (?array $payload): string => Str::lower((string) ($payload['email'] ?? '')))->all();
         $hasConflict = match ($batch->dataset_type) {
+            'counties' => County::query()->withTrashed()->whereIn('code', array_map('intval', $codes))->exists(),
             'organizations' => Organization::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'sectors' => Sector::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'programmes' => Programme::query()->withTrashed()->whereIn('code', $codes)->exists(),
@@ -135,6 +136,15 @@ class ApplyHistoricalDataMigration
         foreach ($rows as $row) {
             $payload = $row->source_payload ?? [];
             match ($batch->dataset_type) {
+                'counties' => County::create([
+                    'code' => (int) $payload['code'],
+                    'name' => $payload['name'],
+                    'slug' => Str::slug($payload['name']),
+                    'region' => $payload['region'] ?: null,
+                    'official_website_url' => $payload['official_website_url'] ?: null,
+                    'map_x' => (float) $payload['map_x'],
+                    'map_y' => (float) $payload['map_y'],
+                ]),
                 'organizations' => Organization::create([
                     'code' => $payload['code'],
                     'name' => $payload['name'],
@@ -171,7 +181,7 @@ class ApplyHistoricalDataMigration
         }
 
         $release = null;
-        if (in_array($batch->dataset_type, ['organizations', 'sectors', 'programmes', 'programme_county_coverages'], true)) {
+        if (in_array($batch->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages'], true)) {
             $release = $this->createReferenceDataRelease->handle(
                 $actor,
                 "Automated candidate from governed {$batch->dataset_type} import {$batch->reference}; source {$batch->source_reference}; file SHA-256 {$batch->file_checksum}; {$rows->count()} records. Independent publication required.",

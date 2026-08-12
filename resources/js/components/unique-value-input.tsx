@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
-type UniqueResource = 'organizations' | 'sectors' | 'programmes';
+type UniqueResource = 'counties' | 'organizations' | 'sectors' | 'programmes';
 type UniqueField = 'code' | 'name';
 
 export default function UniqueValueInput({
@@ -18,6 +18,8 @@ export default function UniqueValueInput({
     field,
     serverError,
     required = false,
+    defaultValue = '',
+    excludeId,
 }: {
     id: string;
     name: string;
@@ -26,18 +28,25 @@ export default function UniqueValueInput({
     field: UniqueField;
     serverError?: string;
     required?: boolean;
+    defaultValue?: string;
+    excludeId?: string;
 }) {
-    const [value, setValue] = useState('');
+    const [value, setValue] = useState(defaultValue);
     const [result, setResult] = useState<{
         available: boolean;
         message: string;
     } | null>(null);
     const request = useHttp<
-        { resource: UniqueResource; field: UniqueField; value: string },
+        {
+            resource: UniqueResource;
+            field: UniqueField;
+            value: string;
+            exclude_id?: string;
+        },
         { available: boolean; message: string }
     >(
         () => UniqueValueController(),
-        () => ({ resource, field, value: value.trim() }),
+        () => ({ resource, field, value: value.trim(), exclude_id: excludeId }),
     );
     const feedbackId = `${id}-availability`;
 

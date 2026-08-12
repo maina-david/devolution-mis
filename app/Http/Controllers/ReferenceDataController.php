@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\BulkArchiveCounties;
 use App\Actions\CreateProgrammeCountyCoverage;
 use App\Actions\CreateReferenceDataRelease;
 use App\Actions\PublishReferenceDataRelease;
 use App\Enums\ProgrammePermission;
+use App\Http\Requests\BulkArchiveCountiesRequest;
 use App\Http\Requests\PublishReferenceDataReleaseRequest;
+use App\Http\Requests\StoreCountyRequest;
 use App\Http\Requests\StoreOrganizationRequest;
 use App\Http\Requests\StoreProgrammeCountyCoverageRequest;
 use App\Http\Requests\StoreProgrammeRequest;
 use App\Http\Requests\StoreReferenceDataReleaseRequest;
 use App\Http\Requests\StoreSectorRequest;
+use App\Http\Requests\UpdateCountyRequest;
 use App\Http\Requests\UpdateOrganizationRequest;
 use App\Http\Requests\UpdateProgrammeRequest;
 use App\Http\Requests\UpdateSectorRequest;
@@ -30,6 +34,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,6 +48,12 @@ class ReferenceDataController extends Controller
         $user = $request->user();
         $workspaceFilters = WorkspaceFilters::fromRequest($request);
 
+        $counties = County::query()
+            ->withCount(['users', 'assessments', 'documents', 'grants', 'programmeCoverages'])
+            ->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('region', 'ilike', "%{$search}%")->orWhereRaw('CAST(code AS TEXT) ILIKE ?', ["%{$search}%"])))
+            ->orderBy('code')
+            ->paginate(15, pageName: 'counties_page')
+            ->withQueryString();
         $organizations = Organization::query()->with('county:id,name,code,logo_path,logo_source_authority,logo_verified_at')->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")))->latest()->paginate(15, pageName: 'organizations_page')->withQueryString();
         $sectors = Sector::query()->with('parent:id,name,code')->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")->orWhereHas('parent', fn (Builder $parent) => $parent->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%"))))->latest()->paginate(15, pageName: 'sectors_page')->withQueryString();
         $programmes = Programme::query()->with(['leadOrganization:id,name', 'sector:id,name'])->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")))->latest()->paginate(15, pageName: 'programmes_page')->withQueryString();
@@ -57,6 +68,14 @@ class ReferenceDataController extends Controller
                 'sector_id' => $workspaceFilters->sectorId,
                 'status' => $workspaceFilters->status,
             ],
+            'counties' => $counties->through(fn (County $county): array => [
+                'id' => $county->id,
+                'identity' => $county->identityCell(),
+                'region' => $county->region,
+                'mapX' => $county->map_x,
+                'mapY' => $county->map_y,
+                'references' => $county->users_count + $county->assessments_count + $county->documents_count + $county->grants_count + $county->programme_coverages_count,
+            ]),
             'organizations' => $organizations->through(fn (Organization $organization): array => ['id' => $organization->id, 'code' => $organization->code, 'name' => $organization->name, 'type' => $organization->type, 'county' => $organization->county?->identityCell(), 'email' => $organization->email, 'status' => $organization->status]),
             'sectors' => $sectors->through(fn (Sector $sector): array => ['id' => $sector->id, 'code' => $sector->code, 'name' => $sector->name, 'parent' => $sector->parent ? ['id' => $sector->parent->id, 'code' => $sector->parent->code, 'name' => $sector->parent->name] : null, 'description' => $sector->description, 'isActive' => $sector->is_active]),
             'programmes' => $programmes->through(fn (Programme $programme): array => ['id' => $programme->id, 'code' => $programme->code, 'name' => $programme->name, 'description' => $programme->description, 'organization' => $programme->leadOrganization?->name, 'sector' => $programme->sector?->name, 'startsOn' => $programme->starts_on?->toDateString(), 'endsOn' => $programme->ends_on?->toDateString(), 'status' => $programme->status, 'budgetAmount' => $programme->budget_amount, 'currency' => $programme->currency]),
@@ -76,6 +95,42 @@ class ReferenceDataController extends Controller
                 'programmes' => Programme::query()->whereIn('status', ['planned', 'active', 'on_hold'])->orderBy('name')->get(['id', 'name']),
             ],
         ]);
+    }
+
+    public function storeCounty(StoreCountyRequest $request, AuditLogger $auditLogger): RedirectResponse
+    {
+        $attributes = $request->validated();
+        $county = County::create([...$attributes, 'slug' => Str::slug($attributes['name'])]);
+        $this->auditCounty($request, $auditLogger, $county, 'reference.county.created');
+
+        return $this->success('County created. Verify and attach its official identity assets before publication.');
+    }
+
+    public function updateCounty(UpdateCountyRequest $request, County $county, AuditLogger $auditLogger): RedirectResponse
+    {
+        $attributes = $request->validated();
+        $county->update([...$attributes, 'slug' => Str::slug($attributes['name'])]);
+        $this->auditCounty($request, $auditLogger, $county, 'reference.county.updated');
+
+        return $this->success('County updated. Submit a new reference-data release for independent publication.');
+    }
+
+    public function destroyCounty(BulkArchiveCountiesRequest $request, County $county, BulkArchiveCounties $archive): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $archive->handle($user, [$county->id]);
+
+        return $this->success('County archived.');
+    }
+
+    public function bulkArchiveCounties(BulkArchiveCountiesRequest $request, BulkArchiveCounties $archive): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $count = $archive->handle($user, $request->ids());
+
+        return $this->success("{$count} counties archived.");
     }
 
     public function storeRelease(StoreReferenceDataReleaseRequest $request, CreateReferenceDataRelease $create): RedirectResponse
@@ -208,6 +263,13 @@ class ReferenceDataController extends Controller
         /** @var User $user */
         $user = $request->user();
         $auditLogger->record($user, $subject, $action, "{$subject->name} reference data changed.");
+    }
+
+    private function auditCounty(Request $request, AuditLogger $auditLogger, County $county, string $action): void
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $auditLogger->record($user, $county, $action, "{$county->name} county reference data changed.", $county->id, ['code' => $county->code]);
     }
 
     private function success(string $message): RedirectResponse

@@ -1,9 +1,12 @@
+import type { Method } from '@inertiajs/core';
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     Building2,
+    Archive,
     ClipboardCheck,
     Database,
     FileUp,
+    Map,
     MapPinned,
     Layers3,
     MoreHorizontal,
@@ -29,11 +32,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -62,6 +68,13 @@ import type {
 import WorkspaceDataTable from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { index as dataImportsIndex } from '@/routes/data-migrations';
+import { show as dataImportTemplate } from '@/routes/data-migrations/templates';
+import {
+    bulkArchive as bulkArchiveCounties,
+    destroy as destroyCounty,
+    store as storeCounty,
+    update as updateCounty,
+} from '@/routes/reference-data/counties';
 import { store as storeOrganization } from '@/routes/reference-data/organizations';
 import {
     destroy as destroyProgrammeCoverage,
@@ -73,6 +86,7 @@ import {
     store as storeRelease,
 } from '@/routes/reference-data/releases';
 import { store as storeSector } from '@/routes/reference-data/sectors';
+import { exportMethod as exportWorkspace } from '@/routes/workspace';
 
 type Pagination<T> = {
     data: T[];
@@ -88,6 +102,14 @@ type RegistryCell = ReactNode | CountyIdentityValue;
 
 type Props = {
     filters: Record<string, string | undefined>;
+    counties: Pagination<{
+        id: string;
+        identity: CountyIdentityValue;
+        region: string | null;
+        mapX: number;
+        mapY: number;
+        references: number;
+    }>;
     organizations: Pagination<{
         id: string;
         code: string;
@@ -208,6 +230,7 @@ function Field({
 }
 
 export default function ReferenceDataIndex({
+    counties,
     filters,
     organizations,
     sectors,
@@ -541,6 +564,11 @@ export default function ReferenceDataIndex({
                     canManage={capabilities.manage}
                 />
 
+                <CountyRegister
+                    counties={counties}
+                    canManage={capabilities.manage}
+                />
+
                 <ReleaseRegister
                     releases={releases}
                     capabilities={capabilities}
@@ -602,6 +630,455 @@ export default function ReferenceDataIndex({
                 />
             </div>
         </>
+    );
+}
+
+function CountyRegister({
+    counties,
+    canManage,
+}: {
+    counties: Props['counties'];
+    canManage: boolean;
+}) {
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [editing, setEditing] = useState<
+        Props['counties']['data'][number] | null
+    >(null);
+    const [archiving, setArchiving] = useState<
+        Props['counties']['data'][number] | null
+    >(null);
+    const [bulkOpen, setBulkOpen] = useState(false);
+    const allSelected =
+        counties.data.length > 0 &&
+        counties.data.every((county) => selectedIds.includes(county.id));
+    const toggle = (id: string) =>
+        setSelectedIds((current) =>
+            current.includes(id)
+                ? current.filter((value) => value !== id)
+                : [...current, id],
+        );
+
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader className="flex-row items-start justify-between gap-4">
+                <div>
+                    <CardTitle>Counties</CardTitle>
+                    <CardDescription>
+                        Govern the official 47-county registry, identity
+                        provenance and map placement.
+                    </CardDescription>
+                </div>
+                {canManage && (
+                    <div className="flex flex-wrap gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button type="button" variant="outline">
+                                    <Database data-icon="inline-start" /> Export
+                                    counties
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>
+                                    Download format
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {['csv', 'xlsx', 'json', 'pdf'].map(
+                                    (format) => (
+                                        <DropdownMenuItem key={format} asChild>
+                                            <a
+                                                href={exportWorkspace.url({
+                                                    workspace: 'counties',
+                                                    format,
+                                                })}
+                                            >
+                                                {format.toUpperCase()}
+                                            </a>
+                                        </DropdownMenuItem>
+                                    ),
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button asChild variant="outline">
+                            <Link
+                                href={dataImportTemplate.url({
+                                    datasetType: 'counties',
+                                })}
+                            >
+                                <FileUp data-icon="inline-start" /> Download
+                                import template
+                            </Link>
+                        </Button>
+                        <Button asChild variant="outline">
+                            <Link
+                                href={dataImportsIndex.url({
+                                    query: { type: 'counties' },
+                                })}
+                            >
+                                <FileUp data-icon="inline-start" /> Bulk upload
+                            </Link>
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            disabled={selectedIds.length === 0}
+                            onClick={() => setBulkOpen(true)}
+                        >
+                            <Archive data-icon="inline-start" /> Archive
+                            selected
+                        </Button>
+                        <FormSheet
+                            title="Create county"
+                            description="Add a county reference. Official identity assets require separate provenance verification."
+                            triggerLabel="Create county"
+                            icon={Map}
+                        >
+                            <CountyForm
+                                form={storeCounty.form()}
+                                submitLabel="Create county"
+                            />
+                        </FormSheet>
+                    </div>
+                )}
+            </CardHeader>
+            <CardContent className="p-0">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            {canManage && (
+                                <TableHead className="w-12">
+                                    <Checkbox
+                                        checked={allSelected}
+                                        onCheckedChange={(checked) =>
+                                            setSelectedIds(
+                                                checked
+                                                    ? counties.data.map(
+                                                          (county) => county.id,
+                                                      )
+                                                    : [],
+                                            )
+                                        }
+                                        aria-label="Select all counties on this page"
+                                    />
+                                </TableHead>
+                            )}
+                            <TableHead>#</TableHead>
+                            <TableHead>County</TableHead>
+                            <TableHead>Region</TableHead>
+                            <TableHead>Map position</TableHead>
+                            <TableHead>References</TableHead>
+                            {canManage && (
+                                <TableHead className="text-right">
+                                    Actions
+                                </TableHead>
+                            )}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {counties.data.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={canManage ? 7 : 5}>
+                                    <TableEmptyState />
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            counties.data.map((county, index) => (
+                                <TableRow key={county.id}>
+                                    {canManage && (
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedIds.includes(
+                                                    county.id,
+                                                )}
+                                                onCheckedChange={() =>
+                                                    toggle(county.id)
+                                                }
+                                                aria-label={`Select ${county.identity.name}`}
+                                            />
+                                        </TableCell>
+                                    )}
+                                    <TableCell>
+                                        {(counties.current_page - 1) * 15 +
+                                            index +
+                                            1}
+                                    </TableCell>
+                                    <TableCell>
+                                        <CountyIdentity
+                                            county={county.identity}
+                                            compact
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        {county.region ?? 'Not specified'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {county.mapX.toFixed(2)},{' '}
+                                        {county.mapY.toFixed(2)}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            variant={
+                                                county.references > 0
+                                                    ? 'secondary'
+                                                    : 'outline'
+                                            }
+                                        >
+                                            {county.references}
+                                        </Badge>
+                                    </TableCell>
+                                    {canManage && (
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        aria-label={`Actions for ${county.identity.name}`}
+                                                    >
+                                                        <MoreHorizontal />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuGroup>
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                setEditing(
+                                                                    county,
+                                                                )
+                                                            }
+                                                        >
+                                                            Edit county
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            disabled={
+                                                                county.references >
+                                                                0
+                                                            }
+                                                            onSelect={() =>
+                                                                setArchiving(
+                                                                    county,
+                                                                )
+                                                            }
+                                                        >
+                                                            Archive county
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuGroup>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+                <PaginationControls pagination={counties} />
+            </CardContent>
+            <Sheet
+                open={editing !== null}
+                onOpenChange={(open) => !open && setEditing(null)}
+            >
+                <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+                    <SheetHeader>
+                        <SheetTitle>Edit county</SheetTitle>
+                        <SheetDescription>
+                            Update governed county metadata. Published snapshots
+                            retain their prior values.
+                        </SheetDescription>
+                    </SheetHeader>
+                    {editing && (
+                        <div className="px-4 pb-8">
+                            <CountyForm
+                                form={updateCounty.form({ county: editing.id })}
+                                county={editing}
+                                submitLabel="Save county"
+                                onSuccess={() => setEditing(null)}
+                            />
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+            <Sheet
+                open={archiving !== null}
+                onOpenChange={(open) => !open && setArchiving(null)}
+            >
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Archive county</SheetTitle>
+                        <SheetDescription>
+                            Only an unreferenced county can be archived.
+                        </SheetDescription>
+                    </SheetHeader>
+                    {archiving && (
+                        <div className="px-4">
+                            <Form
+                                {...destroyCounty.form({
+                                    county: archiving.id,
+                                })}
+                                onSuccess={() => setArchiving(null)}
+                            >
+                                {({ processing }) => (
+                                    <Button
+                                        type="submit"
+                                        variant="destructive"
+                                        disabled={processing}
+                                    >
+                                        <Archive data-icon="inline-start" />{' '}
+                                        Archive {archiving.identity.name}
+                                    </Button>
+                                )}
+                            </Form>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+            <Sheet open={bulkOpen} onOpenChange={setBulkOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Archive selected counties</SheetTitle>
+                        <SheetDescription>
+                            This atomic action fails if any selected county is
+                            referenced.
+                        </SheetDescription>
+                    </SheetHeader>
+                    <div className="px-4">
+                        <Form
+                            {...bulkArchiveCounties.form()}
+                            onSuccess={() => {
+                                setBulkOpen(false);
+                                setSelectedIds([]);
+                            }}
+                        >
+                            {({ processing }) => (
+                                <>
+                                    <input
+                                        type="hidden"
+                                        name="ids"
+                                        value={selectedIds.join(',')}
+                                    />
+                                    {selectedIds.map((id) => (
+                                        <input
+                                            key={id}
+                                            type="hidden"
+                                            name="ids[]"
+                                            value={id}
+                                        />
+                                    ))}
+                                    <Button
+                                        type="submit"
+                                        variant="destructive"
+                                        disabled={processing}
+                                    >
+                                        <Archive data-icon="inline-start" />{' '}
+                                        Archive {selectedIds.length} counties
+                                    </Button>
+                                </>
+                            )}
+                        </Form>
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </Card>
+    );
+}
+
+function CountyForm({
+    form,
+    county,
+    submitLabel,
+    onSuccess,
+}: {
+    form: { action: string; method: Method };
+    county?: Props['counties']['data'][number];
+    submitLabel: string;
+    onSuccess?: () => void;
+}) {
+    return (
+        <Form
+            {...form}
+            resetOnSuccess={!county}
+            onSuccess={onSuccess}
+            className="flex flex-col gap-4"
+        >
+            {({ errors, processing }) => (
+                <>
+                    <UniqueValueInput
+                        id="county-code"
+                        name="code"
+                        label="County code"
+                        resource="counties"
+                        field="code"
+                        defaultValue={
+                            county ? String(county.identity.code) : ''
+                        }
+                        excludeId={county?.id}
+                        serverError={errors.code}
+                        required
+                    />
+                    <UniqueValueInput
+                        id="county-name"
+                        name="name"
+                        label="County name"
+                        resource="counties"
+                        field="name"
+                        defaultValue={county?.identity.name ?? ''}
+                        excludeId={county?.id}
+                        serverError={errors.name}
+                        required
+                    />
+                    <Field label="Region" name="county-region">
+                        <Input
+                            id="county-region"
+                            name="region"
+                            defaultValue={county?.region ?? ''}
+                            aria-invalid={Boolean(errors.region)}
+                        />
+                    </Field>
+                    <Field label="Official website" name="county-website">
+                        <Input
+                            id="county-website"
+                            name="official_website_url"
+                            type="url"
+                            defaultValue={
+                                county?.identity.officialWebsiteUrl ?? ''
+                            }
+                            aria-invalid={Boolean(errors.official_website_url)}
+                        />
+                    </Field>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Map X" name="county-map-x">
+                            <Input
+                                id="county-map-x"
+                                name="map_x"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                defaultValue={county?.mapX ?? ''}
+                                required
+                                aria-invalid={Boolean(errors.map_x)}
+                            />
+                        </Field>
+                        <Field label="Map Y" name="county-map-y">
+                            <Input
+                                id="county-map-y"
+                                name="map_y"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                defaultValue={county?.mapY ?? ''}
+                                required
+                                aria-invalid={Boolean(errors.map_y)}
+                            />
+                        </Field>
+                    </div>
+                    <Button type="submit" disabled={processing}>
+                        {submitLabel}
+                    </Button>
+                </>
+            )}
+        </Form>
     );
 }
 

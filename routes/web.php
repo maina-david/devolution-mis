@@ -290,6 +290,10 @@ Route::middleware(['auth', 'verified'])
         Route::get('assessments/{assessment}', [AssessmentWorkflowController::class, 'show'])->name('assessments.show');
         Route::get('reference-data', [ReferenceDataController::class, 'index'])->name('reference-data.index');
         Route::post('reference-data/unique-value', UniqueValueController::class)->middleware('throttle:unique-value')->name('reference-data.unique-value');
+        Route::post('reference-data/counties', [ReferenceDataController::class, 'storeCounty'])->name('reference-data.counties.store');
+        Route::patch('reference-data/counties/{county}', [ReferenceDataController::class, 'updateCounty'])->name('reference-data.counties.update');
+        Route::delete('reference-data/counties/{county}', [ReferenceDataController::class, 'destroyCounty'])->name('reference-data.counties.destroy');
+        Route::post('reference-data/counties/bulk-archive', [ReferenceDataController::class, 'bulkArchiveCounties'])->name('reference-data.counties.bulk-archive');
         Route::get('data-migrations', [HistoricalDataMigrationController::class, 'index'])->name('data-migrations.index');
         Route::post('data-migrations', [HistoricalDataMigrationController::class, 'store'])->name('data-migrations.store');
         Route::post('data-migrations/reference-data', [HistoricalDataMigrationController::class, 'storeReferenceData'])->name('data-migrations.reference-data.store');

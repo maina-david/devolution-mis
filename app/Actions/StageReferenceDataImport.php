@@ -32,6 +32,7 @@ class StageReferenceDataImport
 {
     /** @var array<string, list<string>> */
     public const HEADERS = [
+        'counties' => ['code', 'name', 'region', 'official_website_url', 'map_x', 'map_y'],
         'organizations' => ['code', 'name', 'type', 'county_code', 'email', 'status'],
         'sectors' => ['code', 'name', 'parent_sector_code', 'description', 'is_active'],
         'programmes' => ['code', 'name', 'description', 'lead_organization_code', 'sector_code', 'starts_on', 'ends_on', 'status', 'budget_amount', 'currency'],
@@ -126,6 +127,7 @@ class StageReferenceDataImport
         }
 
         $existingCodes = match ($datasetType) {
+            'counties' => County::query()->withTrashed()->pluck('code')->map(fn (int $code): string => (string) $code)->all(),
             'organizations' => Organization::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'sectors' => Sector::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'programmes' => Programme::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
@@ -156,6 +158,9 @@ class StageReferenceDataImport
             } elseif ($datasetType === 'users') {
                 $identity = Str::lower($payload['email']);
                 $payload['email'] = $identity;
+            } elseif ($datasetType === 'counties') {
+                $identity = (string) ((int) $payload['code']);
+                $payload['code'] = $identity;
             } else {
                 $identity = Str::upper($payload['code']);
                 $payload['code'] = $identity;
@@ -251,6 +256,20 @@ class StageReferenceDataImport
             }
             if (! in_array($payload['status'], ['active', 'inactive'], true)) {
                 $errors[] = 'invalid_status';
+            }
+        }
+
+        if ($datasetType === 'counties') {
+            if (! ctype_digit($payload['code']) || (int) $payload['code'] < 1 || (int) $payload['code'] > 999) {
+                $errors[] = 'invalid_county_code';
+            }
+            if ($payload['official_website_url'] !== '' && filter_var($payload['official_website_url'], FILTER_VALIDATE_URL) === false) {
+                $errors[] = 'invalid_official_website_url';
+            }
+            foreach (['map_x', 'map_y'] as $coordinate) {
+                if (! is_numeric($payload[$coordinate]) || (float) $payload[$coordinate] < 0 || (float) $payload[$coordinate] > 100) {
+                    $errors[] = "invalid_{$coordinate}";
+                }
             }
         }
 
