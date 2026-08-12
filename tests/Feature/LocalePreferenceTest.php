@@ -65,4 +65,20 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('lang={locale.code}', $source);
         $this->assertStringContainsString('aria-hidden="true">{locale.flag}', $source);
     }
+
+    public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
+    {
+        $logo = file_get_contents(resource_path('js/components/app-logo-icon.tsx'));
+        $rootView = file_get_contents(resource_path('views/app.blade.php'));
+
+        $this->assertIsString($logo);
+        $this->assertIsString($rootView);
+        $this->assertStringContainsString('/images/branding/devolution-emblem.png', $logo);
+        $this->assertStringContainsString('href="/favicon.ico" sizes="32x32"', $rootView);
+        $this->assertStringContainsString('href="/apple-touch-icon.png" sizes="180x180"', $rootView);
+        $this->assertFileExists(public_path('images/branding/devolution-emblem.png'));
+        $this->assertFileExists(public_path('favicon.ico'));
+        $this->assertFileExists(public_path('apple-touch-icon.png'));
+        $this->assertFileDoesNotExist(public_path('favicon.svg'));
+    }
 }
