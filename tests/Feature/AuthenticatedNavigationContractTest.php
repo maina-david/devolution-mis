@@ -40,6 +40,13 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('onPointerEnter={openOnHover}', $navMain);
         $this->assertStringContainsString('onPointerEnter={retainOnContentHover}', $navMain);
         $this->assertStringContainsString('mouseHoverSession.current', $navMain);
+
+        $this->assertStringContainsString('<SidebarFooter', $sidebar);
+        $this->assertStringContainsString('notificationsIndex(teamSlug)', $sidebar);
+        $this->assertStringContainsString('page.props.notificationSummary.unread', $sidebar);
+        $this->assertStringContainsString('href={profileEdit()}', $sidebar);
+        $this->assertStringContainsString("currentUrl.startsWith('/settings')", $sidebar);
+        $this->assertStringContainsString('page.props.localization.copy.settings', $sidebar);
     }
 
     public function test_sidebar_contexts_reference_all_fourteen_tor_modules(): void

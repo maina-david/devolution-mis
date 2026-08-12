@@ -1,4 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Bell, Settings2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import NotificationRealtimeSync from '@/components/notification-realtime-sync';
@@ -6,8 +7,10 @@ import { TeamSwitcher } from '@/components/team-switcher';
 import {
     Sidebar,
     SidebarContent,
+    SidebarFooter,
     SidebarHeader,
     SidebarMenu,
+    SidebarMenuBadge,
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -17,10 +20,12 @@ import {
     appNavigationGroups,
 } from '@/lib/app-navigation';
 import { dashboard, home } from '@/routes';
+import { index as notificationsIndex } from '@/routes/notifications';
+import { edit as profileEdit } from '@/routes/profile';
 
 export function AppSidebar() {
     const page = usePage();
-    const { currentUrl } = useCurrentUrl();
+    const { currentUrl, isCurrentUrl } = useCurrentUrl();
     const teamSlug = page.props.currentTeam?.slug;
     const dashboardUrl = teamSlug ? dashboard(teamSlug) : home();
     const navigationGroups = teamSlug
@@ -69,6 +74,62 @@ export function AppSidebar() {
                 <SidebarContent className="py-3">
                     <NavMain items={groups} label="Work areas" />
                 </SidebarContent>
+                <SidebarFooter className="border-t border-sidebar-border p-3">
+                    <SidebarMenu className="gap-1">
+                        {teamSlug && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={isCurrentUrl(
+                                        notificationsIndex(teamSlug),
+                                    )}
+                                    tooltip={{
+                                        children:
+                                            page.props.localization.copy
+                                                .notifications,
+                                    }}
+                                    className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
+                                >
+                                    <Link
+                                        href={notificationsIndex(teamSlug)}
+                                        prefetch
+                                    >
+                                        <Bell aria-hidden="true" />
+                                        <span>
+                                            {
+                                                page.props.localization.copy
+                                                    .notifications
+                                            }
+                                        </span>
+                                    </Link>
+                                </SidebarMenuButton>
+                                {page.props.notificationSummary.unread > 0 && (
+                                    <SidebarMenuBadge className="right-2 bg-sidebar-foreground/12 text-sidebar-foreground">
+                                        {page.props.notificationSummary.unread}
+                                    </SidebarMenuBadge>
+                                )}
+                            </SidebarMenuItem>
+                        )}
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={currentUrl.startsWith('/settings')}
+                                tooltip={{
+                                    children:
+                                        page.props.localization.copy.settings,
+                                }}
+                                className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
+                            >
+                                <Link href={profileEdit()} prefetch>
+                                    <Settings2 aria-hidden="true" />
+                                    <span>
+                                        {page.props.localization.copy.settings}
+                                    </span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                </SidebarFooter>
             </Sidebar>
         </>
     );

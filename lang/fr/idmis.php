@@ -9,6 +9,7 @@ return [
         'light' => 'Clair',
         'no_notifications' => 'Aucune notification pour le moment.',
         'notifications' => 'Notifications',
+        'settings' => 'Paramètres',
         'open_account_menu' => 'Ouvrir le menu du compte',
         'system' => 'Système',
         'theme' => 'Thème',

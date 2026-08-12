@@ -33,6 +33,7 @@ declare module '@inertiajs/core' {
                     dark: string;
                     system: string;
                     notifications: string;
+                    settings: string;
                     unread: string;
                     noNotifications: string;
                     viewAllNotifications: string;

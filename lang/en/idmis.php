@@ -9,6 +9,7 @@ return [
         'light' => 'Light',
         'no_notifications' => 'No notifications yet.',
         'notifications' => 'Notifications',
+        'settings' => 'Settings',
         'open_account_menu' => 'Open account menu',
         'system' => 'System',
         'theme' => 'Theme',

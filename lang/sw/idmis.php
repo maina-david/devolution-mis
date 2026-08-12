@@ -9,6 +9,7 @@ return [
         'light' => 'Mwanga',
         'no_notifications' => 'Bado hakuna arifa.',
         'notifications' => 'Arifa',
+        'settings' => 'Mipangilio',
         'open_account_menu' => 'Fungua menyu ya akaunti',
         'system' => 'Mfumo',
         'theme' => 'Mandhari',
