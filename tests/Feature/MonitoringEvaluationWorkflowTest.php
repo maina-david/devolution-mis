@@ -242,14 +242,14 @@ class MonitoringEvaluationWorkflowTest extends TestCase
                 ->has('options.evaluations', 1)
                 ->where('options.evaluations.0.title', 'Visible county evaluation'));
 
-        $this->actingAs($user)->get(route('workspace.export', [$team->slug, 'monitoring-evaluation', 'json']))
+        $this->actingAs($user)->get(route('workspace.export', ['workspace' => 'monitoring-evaluation', 'format' => 'json']))
             ->assertOk()
             ->assertDontSee('Hidden County');
         $dataset = app(ProgrammeWorkspaceData::class)->monitoringEvaluation($user, new WorkspaceFilters(null, null, '', 15));
         $this->assertSame('Legacy unpinned', $dataset['rows'][0]['cells'][1]);
-        $this->actingAs($user)->get(route('monitoring-evaluation.index', [$team->slug, 'county_id' => $otherCounty->id]))
+        $this->actingAs($user)->get(route('monitoring-evaluation.index', ['county_id' => $otherCounty->id]))
             ->assertForbidden();
-        $this->actingAs($user)->get(route('workspace.export', [$team->slug, 'monitoring-evaluation', 'json', 'county_id' => $otherCounty->id]))
+        $this->actingAs($user)->get(route('workspace.export', ['workspace' => 'monitoring-evaluation', 'format' => 'json', 'county_id' => $otherCounty->id]))
             ->assertForbidden();
     }
 

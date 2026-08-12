@@ -9,4 +9,9 @@ use Spatie\Permission\Models\Role as SpatieRole;
 class Role extends SpatieRole
 {
     use HasUuids, SoftDeletes;
+
+    /** @var string */
+    protected $keyType = 'string';
+
+    public $incrementing = false;
 }

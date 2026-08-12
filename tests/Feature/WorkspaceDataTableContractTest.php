@@ -13,7 +13,7 @@ class WorkspaceDataTableContractTest extends TestCase
         $this->assertStringContainsString("id: 'row-number'", $source);
         $this->assertStringContainsString('(pagination.currentPage - 1) * pagination.perPage', $source);
         $this->assertStringContainsString('Rows per page', $source);
-        $this->assertStringContainsString("url.searchParams.set('per_page', value)", $source);
+        $this->assertStringContainsString("url.searchParams.set(pagination.perPageName ?? 'per_page', value)", $source);
         $this->assertStringContainsString("url.searchParams.set(pagination.pageName ?? 'page', '1')", $source);
         $this->assertStringContainsString('Showing {firstRecord.toLocaleString()}', $source);
     }
@@ -24,7 +24,8 @@ class WorkspaceDataTableContractTest extends TestCase
 
         $this->assertStringContainsString('sm:flex-wrap sm:items-end', $source);
         $this->assertStringContainsString("'per_page'", $source);
-        $this->assertStringContainsString('per_page: currentPerPage || undefined', $source);
+        $this->assertStringContainsString('currentQuery.get(perPageKey)', $source);
+        $this->assertStringContainsString('[perPageKey]: currentPerPage || undefined', $source);
         $this->assertStringContainsString('cycles ?? page.props.assessmentCycles', $source);
         $this->assertStringContainsString("currentQuery.get('cycle_id')", $source);
     }
@@ -70,9 +71,10 @@ class WorkspaceDataTableContractTest extends TestCase
         $layout = $this->source('resources/js/layouts/settings/layout.tsx');
 
         $this->assertStringContainsString('settingsNavigationGroup', $navigation);
-        foreach (['Profile', 'Security', 'Teams', 'Appearance'] as $tab) {
+        foreach (['Profile', 'Security', 'Appearance'] as $tab) {
             $this->assertStringContainsString("title: '{$tab}'", $navigation);
         }
+        $this->assertStringNotContainsString("title: 'Teams'", $navigation);
         $this->assertStringNotContainsString('<aside', $layout);
         $this->assertStringNotContainsString('sidebarNavItems', $layout);
         $this->assertStringContainsString('w-full min-w-0', $layout);

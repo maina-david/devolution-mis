@@ -125,6 +125,15 @@ class EffectiveReferenceDataReleaseResolver
         return $release;
     }
 
+    /** @param list<string> $countyIds */
+    public function forUatCampaign(array $countyIds, CarbonInterface $effectiveAt): ReferenceDataRelease
+    {
+        $release = $this->effectiveRelease($effectiveAt, 'planning a user-acceptance campaign');
+        $this->assertContains($release, 'counties', $countyIds, 'county_ids');
+
+        return $release;
+    }
+
     public function forTrainingCohort(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
         $release = $this->effectiveRelease($effectiveAt, 'planning a training cohort');

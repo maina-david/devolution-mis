@@ -77,7 +77,7 @@ class GlobalSearch
     }
 
     /**
-     * @return list<array{category: string, method: string, permission: string, route: string, detailRoute?: string}>
+     * @return list<array{category: string, method: string, permission: string, route: string, detailRoute?: string, queryKey?: string}>
      */
     private function providers(): array
     {
@@ -101,6 +101,7 @@ class GlobalSearch
             ['category' => 'Data governance', 'method' => 'dataGovernance', 'permission' => ProgrammePermission::ViewDataGovernance->value, 'route' => 'data-governance.index'],
             ['category' => 'Security governance', 'method' => 'securityIncidents', 'permission' => ProgrammePermission::ViewSecurityGovernance->value, 'route' => 'security-governance.index'],
             ['category' => 'Rollout & training', 'method' => 'changeReadiness', 'permission' => ProgrammePermission::ViewChangeReadiness->value, 'route' => 'change-readiness.index'],
+            ['category' => 'Pilot UAT', 'method' => 'uatCampaigns', 'permission' => ProgrammePermission::ViewChangeReadiness->value, 'route' => 'change-readiness.index', 'queryKey' => 'uat_search'],
             ['category' => 'Service desk', 'method' => 'supportTickets', 'permission' => ProgrammePermission::ViewSupportDesk->value, 'route' => 'support-desk.index'],
             ['category' => 'Service policies', 'method' => 'serviceDeskPolicies', 'permission' => ProgrammePermission::ConfigureSupportDesk->value, 'route' => 'support-desk.index'],
             ['category' => 'Users', 'method' => 'users', 'permission' => ProgrammePermission::ManageCountyUsers->value, 'route' => 'programme-users.index'],
@@ -108,7 +109,7 @@ class GlobalSearch
     }
 
     /**
-     * @param  array{category: string, method: string, permission: string, route: string, detailRoute?: string}  $provider
+     * @param  array{category: string, method: string, permission: string, route: string, detailRoute?: string, queryKey?: string}  $provider
      * @param  array{id: string, cells: list<mixed>}  $row
      * @param  array<string, mixed>  $workspace
      * @return array{category: string, id: string, title: string, description: string, url: string}
@@ -120,7 +121,7 @@ class GlobalSearch
         if (isset($provider['detailRoute'])) {
             $parameters[$provider['method'] === 'projects' ? 'project' : 'assessment'] = $row['id'];
         } else {
-            $parameters['search'] = $term;
+            $parameters[$provider['queryKey'] ?? 'search'] = $term;
         }
 
         return [

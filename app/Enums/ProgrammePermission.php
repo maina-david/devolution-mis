@@ -78,6 +78,7 @@ enum ProgrammePermission: string
     case ViewChangeReadiness = 'change-readiness:view';
     case ManageChangeReadiness = 'change-readiness:manage';
     case RecordTrainingEvidence = 'training-evidence:record';
+    case RecordUatEvidence = 'uat-evidence:record';
     case ApproveRolloutReadiness = 'rollout-readiness:approve';
     case ViewAnalytics = 'analytics:view';
     case ManageAnalytics = 'analytics:manage';
@@ -169,6 +170,7 @@ enum ProgrammePermission: string
             self::ViewChangeReadiness => 'View rollout and capacity-building readiness',
             self::ManageChangeReadiness => 'Manage rollout waves and training cohorts',
             self::RecordTrainingEvidence => 'Record attendance and competency evidence',
+            self::RecordUatEvidence => 'Execute assigned pilot UAT scenarios',
             self::ApproveRolloutReadiness => 'Independently approve rollout readiness',
             self::ViewAnalytics => 'View authorized analytics and report artifacts',
             self::ManageAnalytics => 'Configure dashboards and report schedules',

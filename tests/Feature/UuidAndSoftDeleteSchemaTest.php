@@ -59,6 +59,11 @@ use App\Models\ServiceDeskRosterMember;
 use App\Models\TrainingAssessment;
 use App\Models\TrainingCohort;
 use App\Models\TrainingParticipant;
+use App\Models\UatAcceptance;
+use App\Models\UatCampaign;
+use App\Models\UatExecution;
+use App\Models\UatFinding;
+use App\Models\UatScenario;
 use App\Models\User;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowEscalation;
@@ -142,6 +147,8 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             IgrResolutionGap::class,
             ServiceDeskPolicy::class,
             ServiceDeskRosterMember::class,
+            UatCampaign::class,
+            UatScenario::class,
         ];
 
         foreach ($models as $modelClass) {
@@ -204,6 +211,20 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
         $this->assertFalse($assessment->getIncrementing());
         $this->assertSame('string', $assessment->getKeyType());
         $this->assertFalse(Schema::hasColumn($assessment->getTable(), 'deleted_at'));
+    }
+
+    public function test_uat_execution_finding_and_acceptance_use_retained_evidence_storage(): void
+    {
+        foreach ([UatExecution::class, UatFinding::class, UatAcceptance::class] as $modelClass) {
+            $traits = class_uses_recursive($modelClass);
+            $model = new $modelClass;
+
+            $this->assertArrayHasKey(HasUuids::class, $traits);
+            $this->assertArrayNotHasKey(SoftDeletes::class, $traits);
+            $this->assertFalse($model->getIncrementing());
+            $this->assertSame('string', $model->getKeyType());
+            $this->assertFalse(Schema::hasColumn($model->getTable(), 'deleted_at'));
+        }
     }
 
     public function test_report_runs_use_uuid_and_retained_artifact_evidence_storage(): void

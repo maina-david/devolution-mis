@@ -17,6 +17,8 @@ import FormSheet from '@/components/form-sheet';
 import ReferenceCatalogSelect from '@/components/reference-catalog-select';
 import SearchableMultiSelect from '@/components/searchable-multi-select';
 import SearchableSelect from '@/components/searchable-select';
+import UatGovernanceWorkspace from '@/components/uat-governance-workspace';
+import type { UatPageSet } from '@/components/uat-governance-workspace';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -136,6 +138,8 @@ type PageSet<T> = {
 type Props = {
     waves: Wave[];
     cohorts: PageSet<Cohort>;
+    uatCampaigns: UatPageSet;
+    uatCopy: Record<string, string>;
     filters: Record<string, string | undefined>;
     catalogue: { available: false } | ({ available: true } & ReferenceData);
     options: {
@@ -146,6 +150,7 @@ type Props = {
     capabilities: {
         manage: boolean;
         recordEvidence: boolean;
+        recordUatEvidence: boolean;
         approve: boolean;
     };
 };
@@ -153,6 +158,8 @@ type Props = {
 export default function ChangeReadiness({
     waves,
     cohorts,
+    uatCampaigns,
+    uatCopy,
     filters,
     options,
     capabilities,
@@ -332,6 +339,20 @@ export default function ChangeReadiness({
                         />
                     )}
                 </section>
+                <UatGovernanceWorkspace
+                    campaigns={uatCampaigns}
+                    filters={filters}
+                    counties={options.counties}
+                    users={options.users}
+                    roles={options.roles}
+                    capabilities={{
+                        manage: capabilities.manage,
+                        record: capabilities.recordUatEvidence,
+                        approve: capabilities.approve,
+                    }}
+                    catalogueAvailable={catalogue.available}
+                    copy={uatCopy}
+                />
             </main>
         </>
     );

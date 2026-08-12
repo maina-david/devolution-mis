@@ -282,6 +282,12 @@ Route::middleware(['auth', 'verified'])
         Route::post('change-readiness/participants', [ChangeReadinessController::class, 'enroll'])->name('change-readiness.participants.store');
         Route::post('change-readiness/participants/{participant}/assessments', [ChangeReadinessController::class, 'assess'])->name('change-readiness.assessments.store');
         Route::patch('change-readiness/waves/{wave}/approve', [ChangeReadinessController::class, 'approve'])->name('change-readiness.waves.approve');
+        Route::post('change-readiness/uat/campaigns', [ChangeReadinessController::class, 'storeUatCampaign'])->name('change-readiness.uat.campaigns.store');
+        Route::post('change-readiness/uat/campaigns/{campaign}/scenarios', [ChangeReadinessController::class, 'storeUatScenario'])->name('change-readiness.uat.scenarios.store');
+        Route::post('change-readiness/uat/scenarios/{scenario}/executions', [ChangeReadinessController::class, 'recordUatExecution'])->name('change-readiness.uat.executions.store');
+        Route::patch('change-readiness/uat/findings/{finding}', [ChangeReadinessController::class, 'transitionUatFinding'])->name('change-readiness.uat.findings.update');
+        Route::post('change-readiness/uat/campaigns/{campaign}/submit', [ChangeReadinessController::class, 'submitUatCampaign'])->name('change-readiness.uat.campaigns.submit');
+        Route::patch('change-readiness/uat/acceptances/{acceptance}', [ChangeReadinessController::class, 'decideUatCampaign'])->name('change-readiness.uat.acceptances.update');
         Route::get('analytics', [AnalyticsReportingController::class, 'index'])->name('analytics.index');
         Route::post('analytics/dashboards', [AnalyticsReportingController::class, 'storeDashboard'])->name('analytics.dashboards.store');
         Route::post('analytics/dashboards/{dashboard}/widgets', [AnalyticsReportingController::class, 'storeWidget'])->name('analytics.widgets.store');
@@ -353,7 +359,7 @@ Route::middleware(['auth', 'verified'])
         Route::delete('business-calendars/{businessCalendar}/holidays/{businessCalendarHoliday}', [BusinessCalendarController::class, 'destroyHoliday'])->name('business-calendars.holidays.destroy');
         Route::patch('business-calendars/{businessCalendar}/publish', [BusinessCalendarController::class, 'publish'])->name('business-calendars.publish');
         Route::get('{workspace}/export/{format}', WorkspaceExportController::class)
-            ->whereIn('workspace', ['counties', 'assessments', 'evidence', 'grants', 'exchequer', 'reports', 'users', 'audit', 'audit-assurance', 'platform', 'monitoring-evaluation', 'monitoring-performance', 'programme-evaluations', 'projects', 'partners', 'partner-actions', 'dswg', 'igr-resolutions', 'igr-gaps', 'citizen-cases', 'travel-clearance', 'departmental-performance', 'learning', 'learning-cohorts', 'learning-attendance', 'learning-offline-syncs', 'knowledge', 'knowledge-innovations', 'knowledge-moderation', 'integrations', 'integration-systems', 'operations', 'operational-alerts', 'data-governance', 'privacy-incidents', 'security-governance', 'security-incidents', 'access-delegations', 'identity-lifecycle', 'business-calendars', 'change-readiness', 'programme-coverage', 'support-desk', 'service-desk-policies'])
+            ->whereIn('workspace', ['counties', 'assessments', 'evidence', 'grants', 'exchequer', 'reports', 'users', 'audit', 'audit-assurance', 'platform', 'monitoring-evaluation', 'monitoring-performance', 'programme-evaluations', 'projects', 'partners', 'partner-actions', 'dswg', 'igr-resolutions', 'igr-gaps', 'citizen-cases', 'travel-clearance', 'departmental-performance', 'learning', 'learning-cohorts', 'learning-attendance', 'learning-offline-syncs', 'knowledge', 'knowledge-innovations', 'knowledge-moderation', 'integrations', 'integration-systems', 'operations', 'operational-alerts', 'data-governance', 'privacy-incidents', 'security-governance', 'security-incidents', 'access-delegations', 'identity-lifecycle', 'business-calendars', 'change-readiness', 'uat-campaigns', 'programme-coverage', 'support-desk', 'service-desk-policies'])
             ->whereIn('format', ['csv', 'json', 'xlsx', 'pdf'])
             ->name('workspace.export');
         Route::prefix('assessments/{assessment}')->controller(AssessmentWorkflowController::class)->group(function () {

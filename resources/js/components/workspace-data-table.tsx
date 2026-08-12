@@ -84,6 +84,7 @@ export type WorkspacePagination = {
     perPage: number;
     total: number;
     pageName?: string;
+    perPageName?: string;
 };
 
 function humanize(value: string) {
@@ -291,7 +292,7 @@ export default function WorkspaceDataTable({
     };
     const changePerPage = (value: string) => {
         const url = new URL(page.url, window.location.origin);
-        url.searchParams.set('per_page', value);
+        url.searchParams.set(pagination.perPageName ?? 'per_page', value);
         url.searchParams.set(pagination.pageName ?? 'page', '1');
         router.get(
             `${url.pathname}?${url.searchParams.toString()}`,

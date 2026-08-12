@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Models/{Role,Permission}.php,database/migrations/*{roles,permissions}*,config/permission.php | .ai/rules/app-models-migrations.md |
 | app/Console/Commands/MonitorSupportTicketSlas.php,config/service-desk.php,tests/Feature/{SupportDeskWorkflowTest,PerformanceAssuranceTest}.php | .ai/rules/commands-feature.md |
 | app/{Actions,Console/Commands}/**/*IdentityLifecycle*.php | .ai/rules/commands.md |
 | app/Http/Controllers/EvidenceController.php,resources/js/components/evidence-row-action.tsx,tests/Feature/DocumentRecordsGovernanceTest.php | .ai/rules/components-feature.md |
@@ -15,6 +16,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | {app/Actions/**,routes/**,resources/js/**,database/factories/**} | .ai/rules/factories.md |
 | resources/js/components/{app-content,app-shell,input-error}.tsx,resources/js/layouts/auth/**,resources/js/pages/{welcome,help,faqs}.tsx,resources/js/pages/auth/**,tests/Feature/AccessibilityContractTest.php | .ai/rules/feature.md |
 | {resources/js/**,lang/**,app/Http/**,routes/**,tests/**} | .ai/rules/http.md |
+| app/{Actions,Models,Services,Http/Controllers,Http/Requests}/**/*Uat*.php,database/migrations/*uat*,database/seeders/ChangeReadinessSeeder.php,resources/js/components/uat-governance-workspace.tsx,tests/Feature/UatGovernanceWorkflowTest.php | .ai/rules/js-components-feature.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*Audit*.php,database/migrations/*audit_assurance*,resources/js/**/*audit-assurance*,tests/Feature/{AuditTrailTest,AuditAssuranceTest}.php | .ai/rules/js-feature.md |
 | routes/**,resources/js/** | .ai/rules/js.md |
 | app/{Actions,Models,Http/Controllers,Http/Requests}/**/*Learning*.php,database/migrations/*learning_offline_package*,resources/js/pages/learning/**,tests/Feature/LearningOfflinePackageTest.php | .ai/rules/learning-feature.md |

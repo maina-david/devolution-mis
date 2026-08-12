@@ -18,6 +18,8 @@ type Props = {
     initialFrom?: string | null;
     initialTo?: string | null;
     initialSearch?: string;
+    fromKey?: string;
+    toKey?: string;
     searchKey?: string;
     searchPlaceholder?: string;
     initialCycleId?: string | null;
@@ -28,17 +30,21 @@ type Props = {
         options: SearchableSelectOption[];
         value?: string | null;
     }>;
+    perPageKey?: string;
 };
 
 export default function DateRangeFilter({
     initialFrom,
     initialTo,
     initialSearch = '',
+    fromKey = 'from',
+    toKey = 'to',
     searchKey = 'search',
     searchPlaceholder = 'Search authorized records',
     initialCycleId,
     cycles,
     selectFilters = [],
+    perPageKey = 'per_page',
 }: Props) {
     const page = usePage();
     const currentQuery = new URLSearchParams(page.url.split('?')[1]);
@@ -58,19 +64,20 @@ export default function DateRangeFilter({
             ),
     );
     const currentPath = page.url.split('?')[0];
-    const currentPerPage = currentQuery.get('per_page');
+    const currentPerPage = currentQuery.get(perPageKey);
 
     const apply = () =>
         router.get(
             currentPath,
             {
-                from: range?.from
+                ...Object.fromEntries(currentQuery.entries()),
+                [fromKey]: range?.from
                     ? format(range.from, 'yyyy-MM-dd')
                     : undefined,
-                to: range?.to ? format(range.to, 'yyyy-MM-dd') : undefined,
+                [toKey]: range?.to ? format(range.to, 'yyyy-MM-dd') : undefined,
                 [searchKey]: search || undefined,
                 cycle_id: cycleId || undefined,
-                per_page: currentPerPage || undefined,
+                [perPageKey]: currentPerPage || undefined,
                 ...Object.fromEntries(
                     Object.entries(selectValues).map(([key, value]) => [
                         key,
@@ -87,11 +94,19 @@ export default function DateRangeFilter({
         setSelectValues(
             Object.fromEntries(selectFilters.map((filter) => [filter.key, ''])),
         );
-        router.get(
-            currentPath,
-            { per_page: currentPerPage || undefined },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
+        const retainedQuery = new URLSearchParams(currentQuery);
+        [
+            fromKey,
+            toKey,
+            searchKey,
+            'cycle_id',
+            ...selectFilters.map((filter) => filter.key),
+        ].forEach((key) => retainedQuery.delete(key));
+        router.get(currentPath, Object.fromEntries(retainedQuery.entries()), {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
     };
 
     return (
