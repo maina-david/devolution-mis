@@ -140,7 +140,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', "Knowledge item {$item->reference} created.");
     }
 
-    public function transition(TransitionKnowledgeItemRequest $request, string $currentTeam, KnowledgeItem $item, TransitionKnowledgeItem $action): RedirectResponse
+    public function transition(TransitionKnowledgeItemRequest $request, KnowledgeItem $item, TransitionKnowledgeItem $action): RedirectResponse
     {
         $this->authorizeItem($this->user($request), $item);
         $action->handle($item, $this->user($request), $request->validated());
@@ -163,7 +163,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Community discussion opened.');
     }
 
-    public function storePost(StoreKnowledgePostRequest $request, string $currentTeam, KnowledgeDiscussion $discussion, CreateKnowledgePost $action): RedirectResponse
+    public function storePost(StoreKnowledgePostRequest $request, KnowledgeDiscussion $discussion, CreateKnowledgePost $action): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($discussion->status === 'open' && $this->canSeeCounty($user, $discussion->county_id), 403);
@@ -172,7 +172,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Contribution posted.');
     }
 
-    public function updateDiscussionSubscription(UpdateKnowledgeDiscussionSubscriptionRequest $request, string $currentTeam, KnowledgeDiscussion $discussion, UpdateKnowledgeDiscussionSubscription $action): RedirectResponse
+    public function updateDiscussionSubscription(UpdateKnowledgeDiscussionSubscriptionRequest $request, KnowledgeDiscussion $discussion, UpdateKnowledgeDiscussionSubscription $action): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->canSeeCounty($user, $discussion->county_id), 403);
@@ -181,7 +181,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', $request->boolean('subscribed') ? 'Discussion notifications enabled.' : 'Discussion notifications disabled.');
     }
 
-    public function moderatePost(ModerateKnowledgePostRequest $request, string $currentTeam, KnowledgePost $post, ModerateKnowledgePost $action): RedirectResponse
+    public function moderatePost(ModerateKnowledgePostRequest $request, KnowledgePost $post, ModerateKnowledgePost $action): RedirectResponse
     {
         $user = $this->user($request);
         $post->loadMissing('discussion');
@@ -191,7 +191,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Contribution moderation updated.');
     }
 
-    public function storeCommunityReport(StoreKnowledgeCommunityReportRequest $request, string $currentTeam, KnowledgePost $post, CreateKnowledgeCommunityReport $action): RedirectResponse
+    public function storeCommunityReport(StoreKnowledgeCommunityReportRequest $request, KnowledgePost $post, CreateKnowledgeCommunityReport $action): RedirectResponse
     {
         $user = $this->user($request);
         $post->loadMissing('discussion');
@@ -205,7 +205,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Contribution report entered the governed moderation queue.');
     }
 
-    public function transitionCommunityReport(TransitionKnowledgeCommunityReportRequest $request, string $currentTeam, KnowledgeCommunityReport $report, TransitionKnowledgeCommunityReport $action): RedirectResponse
+    public function transitionCommunityReport(TransitionKnowledgeCommunityReportRequest $request, KnowledgeCommunityReport $report, TransitionKnowledgeCommunityReport $action): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->canSeeCounty($user, $report->county_id), 403);
@@ -221,7 +221,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', "Innovation {$innovation->reference} created.");
     }
 
-    public function transitionInnovation(TransitionDevolutionInnovationRequest $request, string $currentTeam, DevolutionInnovation $innovation, TransitionDevolutionInnovation $action): RedirectResponse
+    public function transitionInnovation(TransitionDevolutionInnovationRequest $request, DevolutionInnovation $innovation, TransitionDevolutionInnovation $action): RedirectResponse
     {
         abort_unless($this->canSeeCounty($this->user($request), $innovation->county_id), 403);
         $action->handle($innovation, $this->user($request), $request->validated());
@@ -229,28 +229,28 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Innovation incubation workflow updated.');
     }
 
-    public function storeInnovationPanelReview(StoreInnovationPanelReviewRequest $request, string $currentTeam, DevolutionInnovation $innovation, RecordInnovationPanelReview $action): RedirectResponse
+    public function storeInnovationPanelReview(StoreInnovationPanelReviewRequest $request, DevolutionInnovation $innovation, RecordInnovationPanelReview $action): RedirectResponse
     {
         $action->handle($innovation, $this->user($request), $request->validated());
 
         return back()->with('success', 'Immutable innovation panel review recorded.');
     }
 
-    public function storeInnovationFundingDecision(StoreInnovationFundingDecisionRequest $request, string $currentTeam, DevolutionInnovation $innovation, RecordInnovationFundingDecision $action): RedirectResponse
+    public function storeInnovationFundingDecision(StoreInnovationFundingDecisionRequest $request, DevolutionInnovation $innovation, RecordInnovationFundingDecision $action): RedirectResponse
     {
         $action->handle($innovation, $this->user($request), $request->validated());
 
         return back()->with('success', 'Versioned innovation funding decision recorded.');
     }
 
-    public function storeInnovationMilestone(StoreInnovationExperimentMilestoneRequest $request, string $currentTeam, DevolutionInnovation $innovation, CreateInnovationExperimentMilestone $action): RedirectResponse
+    public function storeInnovationMilestone(StoreInnovationExperimentMilestoneRequest $request, DevolutionInnovation $innovation, CreateInnovationExperimentMilestone $action): RedirectResponse
     {
         $action->handle($innovation, $this->user($request), $request->validated());
 
         return back()->with('success', 'Pilot experiment milestone defined.');
     }
 
-    public function updateInnovationMilestone(UpdateInnovationExperimentMilestoneRequest $request, string $currentTeam, DevolutionInnovation $innovation, InnovationExperimentMilestone $milestone, UpdateInnovationExperimentMilestone $action): RedirectResponse
+    public function updateInnovationMilestone(UpdateInnovationExperimentMilestoneRequest $request, DevolutionInnovation $innovation, InnovationExperimentMilestone $milestone, UpdateInnovationExperimentMilestone $action): RedirectResponse
     {
         abort_unless($milestone->devolution_innovation_id === $innovation->id, 404);
         $action->handle($milestone, $this->user($request), $request->validated());
@@ -258,7 +258,7 @@ class KnowledgeManagementController extends Controller
         return back()->with('success', 'Pilot milestone evidence updated.');
     }
 
-    public function verifyInnovationMilestone(VerifyInnovationExperimentMilestoneRequest $request, string $currentTeam, DevolutionInnovation $innovation, InnovationExperimentMilestone $milestone, VerifyInnovationExperimentMilestone $action): RedirectResponse
+    public function verifyInnovationMilestone(VerifyInnovationExperimentMilestoneRequest $request, DevolutionInnovation $innovation, InnovationExperimentMilestone $milestone, VerifyInnovationExperimentMilestone $action): RedirectResponse
     {
         abort_unless($milestone->devolution_innovation_id === $innovation->id, 404);
         $action->handle($milestone, $this->user($request), $request->validated());

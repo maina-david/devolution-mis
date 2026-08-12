@@ -61,7 +61,7 @@ class EvidenceController extends Controller
 
     public function __construct(private DocumentIntegrityVerifier $integrityVerifier, private DocumentAccess $documentAccess) {}
 
-    public function preview(Request $request, string $currentTeam, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
+    public function preview(Request $request, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
     {
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
         abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
@@ -83,7 +83,7 @@ class EvidenceController extends Controller
         ]);
     }
 
-    public function download(Request $request, string $currentTeam, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
+    public function download(Request $request, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
     {
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
         abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
@@ -97,7 +97,7 @@ class EvidenceController extends Controller
         return Storage::download($document->path, $downloadName);
     }
 
-    public function previewVersion(Request $request, string $currentTeam, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
+    public function previewVersion(Request $request, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
     {
         $this->authorizeVersionAccess($request, $document, $version);
         abort_unless($this->isPreviewableMimeType($version->mime_type), 415, 'Preview is not available for this file type.');
@@ -114,7 +114,7 @@ class EvidenceController extends Controller
         ]);
     }
 
-    public function downloadVersion(Request $request, string $currentTeam, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
+    public function downloadVersion(Request $request, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
     {
         $this->authorizeVersionAccess($request, $document, $version);
         $auditLogger->record($this->user($request), $version, 'evidence.version_downloaded', "Document version {$version->version_number} downloaded: {$document->title}.", $document->county_id);
@@ -122,7 +122,7 @@ class EvidenceController extends Controller
         return Storage::disk($version->storage_disk)->download($version->path, $version->original_name);
     }
 
-    public function store(StoreEvidenceRequest $request, string $currentTeam, Assessment $assessment, StoreAssessmentEvidence $storeEvidence): RedirectResponse
+    public function store(StoreEvidenceRequest $request, Assessment $assessment, StoreAssessmentEvidence $storeEvidence): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($assessment->county), 403);
         abort_if(in_array($assessment->status, [AssessmentStatus::Assessed, AssessmentStatus::Approved, AssessmentStatus::Published]), 409, 'Evidence is locked after assessment.');
@@ -138,7 +138,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function verify(VerifyEvidenceRequest $request, string $currentTeam, AssessmentDocument $document, VerifyAssessmentEvidence $verifyEvidence): RedirectResponse
+    public function verify(VerifyEvidenceRequest $request, AssessmentDocument $document, VerifyAssessmentEvidence $verifyEvidence): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
         $verifyEvidence->handle($document, $request->validated('status'), $this->user($request));
@@ -147,7 +147,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function update(UpdateDocumentRequest $request, string $currentTeam, AssessmentDocument $document, AuditLogger $auditLogger): RedirectResponse
+    public function update(UpdateDocumentRequest $request, AssessmentDocument $document, AuditLogger $auditLogger): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
         abort_if($document->hasActiveLegalHold() && $request->validated('retention_until') !== $document->retention_until?->toDateString(), 409, 'Retention cannot be changed while a legal hold is active.');
@@ -161,7 +161,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, string $currentTeam, AssessmentDocument $document, AuditLogger $auditLogger): RedirectResponse
+    public function destroy(Request $request, AssessmentDocument $document, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::UploadEvidence->value);
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
@@ -173,7 +173,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function replace(ReplaceDocumentVersionRequest $request, string $currentTeam, AssessmentDocument $document, ReplaceDocumentVersion $replace): RedirectResponse
+    public function replace(ReplaceDocumentVersionRequest $request, AssessmentDocument $document, ReplaceDocumentVersion $replace): RedirectResponse
     {
         $replace->handle($document, $this->user($request), $request->file('document'), $request->string('change_summary')->toString());
         Inertia::flash('toast', ['type' => 'success', 'message' => 'A new immutable document version was uploaded.']);
@@ -181,7 +181,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function extract(Request $request, string $currentTeam, AssessmentDocument $document): RedirectResponse
+    public function extract(Request $request, AssessmentDocument $document): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageRecords->value);
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
@@ -193,7 +193,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function placeLegalHold(StoreDocumentLegalHoldRequest $request, string $currentTeam, AssessmentDocument $document, PlaceDocumentLegalHold $placeHold): RedirectResponse
+    public function placeLegalHold(StoreDocumentLegalHoldRequest $request, AssessmentDocument $document, PlaceDocumentLegalHold $placeHold): RedirectResponse
     {
         $placeHold->handle($document, $this->user($request), [
             'reference' => $request->string('reference')->toString(),
@@ -205,7 +205,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function releaseLegalHold(ReleaseDocumentLegalHoldRequest $request, string $currentTeam, AssessmentDocument $document, DocumentLegalHold $legalHold, AuditLogger $auditLogger): RedirectResponse
+    public function releaseLegalHold(ReleaseDocumentLegalHoldRequest $request, AssessmentDocument $document, DocumentLegalHold $legalHold, AuditLogger $auditLogger): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
         abort_unless($legalHold->assessment_document_id === $document->id && $legalHold->released_at === null, 404);
@@ -218,7 +218,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function requestDisposition(StoreDocumentDispositionRequest $request, string $currentTeam, AssessmentDocument $document, RequestDocumentDisposition $requestDisposition): RedirectResponse
+    public function requestDisposition(StoreDocumentDispositionRequest $request, AssessmentDocument $document, RequestDocumentDisposition $requestDisposition): RedirectResponse
     {
         $requestDisposition->handle($document, $this->user($request), [
             'reason' => $request->string('reason')->toString(),
@@ -230,7 +230,7 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function decideDisposition(DecideDocumentDispositionRequest $request, string $currentTeam, AssessmentDocument $document, DocumentDisposition $disposition, DecideDocumentDisposition $decide): RedirectResponse
+    public function decideDisposition(DecideDocumentDispositionRequest $request, AssessmentDocument $document, DocumentDisposition $disposition, DecideDocumentDisposition $decide): RedirectResponse
     {
         abort_unless($disposition->assessment_document_id === $document->id, 404);
         $decide->handle($disposition, $this->user($request), $request->string('decision')->toString(), $request->string('decision_reason')->toString());
@@ -239,13 +239,13 @@ class EvidenceController extends Controller
         return back();
     }
 
-    public function executeDisposition(ExecuteDocumentDispositionRequest $request, string $currentTeam, AssessmentDocument $document, DocumentDisposition $disposition, ExecuteDocumentDisposition $execute): RedirectResponse
+    public function executeDisposition(ExecuteDocumentDispositionRequest $request, AssessmentDocument $document, DocumentDisposition $disposition, ExecuteDocumentDisposition $execute): RedirectResponse
     {
         abort_unless($disposition->assessment_document_id === $document->id, 404);
         $execute->handle($disposition, $this->user($request));
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Controlled disposition executed and evidence retained.']);
 
-        return redirect()->route('evidence.index', $currentTeam);
+        return redirect()->route('evidence.index');
     }
 
     private function user(Request $request): User

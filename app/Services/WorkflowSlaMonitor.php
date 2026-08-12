@@ -54,12 +54,11 @@ class WorkflowSlaMonitor
         $recipients = $this->recipients($instance);
 
         foreach ($recipients as $recipient) {
-            $url = $recipient->currentTeam ? route('workflows.index', $recipient->currentTeam->slug) : null;
             $recipient->notify(new ProgrammeAlert(
                 title: 'Workflow SLA breached',
                 message: "A {$instance->current_state} workflow state passed its deadline and requires attention.",
                 category: 'workflow_sla',
-                url: $url,
+                url: route('workflows.index'),
             ));
         }
     }

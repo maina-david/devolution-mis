@@ -37,7 +37,7 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function read(Request $request, string $currentTeam, DatabaseNotification $notification): RedirectResponse
+    public function read(Request $request, DatabaseNotification $notification): RedirectResponse
     {
         abort_unless($notification->notifiable_id === $this->user($request)->id && $notification->notifiable_type === User::class, 403);
         $notification->markAsRead();

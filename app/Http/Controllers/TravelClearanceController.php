@@ -57,7 +57,7 @@ class TravelClearanceController extends Controller
         return back()->with('success', "Travel request {$travelRequest->reference} created.");
     }
 
-    public function transition(TransitionTravelRequestRequest $request, string $currentTeam, TravelRequest $travelRequest, TransitionTravelRequest $transitionTravelRequest, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function transition(TransitionTravelRequestRequest $request, TravelRequest $travelRequest, TransitionTravelRequest $transitionTravelRequest, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visibleRequests($user, $countyScope)->whereKey($travelRequest)->exists(), 403);

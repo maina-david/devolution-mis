@@ -79,7 +79,7 @@ class DataGovernanceController extends Controller
         return back()->with('success', __('data-governance.retention_submitted'));
     }
 
-    public function reviewRetentionSchedule(ReviewRetentionScheduleRequest $request, string $currentTeam, RetentionSchedule $retentionSchedule, ReviewRetentionSchedule $action): RedirectResponse
+    public function reviewRetentionSchedule(ReviewRetentionScheduleRequest $request, RetentionSchedule $retentionSchedule, ReviewRetentionSchedule $action): RedirectResponse
     {
         $action->handle($retentionSchedule, $this->user($request), $request->reviewData());
 
@@ -96,7 +96,7 @@ class DataGovernanceController extends Controller
         return back()->with('success', 'Processing activity submitted for independent review.');
     }
 
-    public function reviewProcessingActivity(ReviewProcessingActivityRequest $request, string $currentTeam, ProcessingActivity $processingActivity, ReviewProcessingActivity $action): RedirectResponse
+    public function reviewProcessingActivity(ReviewProcessingActivityRequest $request, ProcessingActivity $processingActivity, ReviewProcessingActivity $action): RedirectResponse
     {
         $action->handle($processingActivity, $this->user($request), ['decision' => (string) $request->validated('decision'), 'review_note' => (string) $request->validated('review_note')]);
 
@@ -112,7 +112,7 @@ class DataGovernanceController extends Controller
         return back()->with('success', 'Privacy request recorded with a controlled due date.');
     }
 
-    public function advanceDataSubjectRequest(AdvanceDataSubjectRequestRequest $request, string $currentTeam, DataSubjectRequest $dataSubjectRequest, AdvanceDataSubjectRequest $action): RedirectResponse
+    public function advanceDataSubjectRequest(AdvanceDataSubjectRequestRequest $request, DataSubjectRequest $dataSubjectRequest, AdvanceDataSubjectRequest $action): RedirectResponse
     {
         $action->handle($dataSubjectRequest, $this->user($request), $request->validated());
 
@@ -130,7 +130,7 @@ class DataGovernanceController extends Controller
         return back()->with('success', 'Privacy incident recorded with controlled notification deadlines.');
     }
 
-    public function advancePrivacyIncident(AdvancePrivacyIncidentRequest $request, string $currentTeam, PrivacyIncident $privacyIncident, AdvancePrivacyIncident $action): RedirectResponse
+    public function advancePrivacyIncident(AdvancePrivacyIncidentRequest $request, PrivacyIncident $privacyIncident, AdvancePrivacyIncident $action): RedirectResponse
     {
         $action->handle($privacyIncident, $this->user($request), $request->validated());
 

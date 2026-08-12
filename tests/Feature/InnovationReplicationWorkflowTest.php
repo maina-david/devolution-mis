@@ -34,7 +34,7 @@ class InnovationReplicationWorkflowTest extends TestCase
         $innovation = DevolutionInnovation::factory()->create(['county_id' => $sourceCounty->id, 'reference_data_release_id' => $release->id, 'submitted_by' => $creator->id, 'status' => 'scaling', 'stage' => 'scale']);
         $this->seed(KnowledgeWorkflowSeeder::class);
 
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($innovation, $targetCounty, $adopter))->assertRedirect();
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($innovation, $targetCounty, $adopter))->assertRedirect();
         $replication = InnovationReplication::query()->with('workflowInstance.transitions')->sole();
         $this->assertTrue(Str::isUuid($replication->id));
         $this->assertSame($sourceCounty->id, $replication->source_county_id);
@@ -43,32 +43,32 @@ class InnovationReplicationWorkflowTest extends TestCase
         $this->assertSame('planned', $replication->status);
         $this->assertNotNull($replication->workflow_instance_id);
 
-        $this->actingAs($creator)->patch(route('knowledge.innovation-replications.update', [$creator->currentTeam->slug, $replication]), ['transition' => 'activate', 'rationale' => 'Target-county adoption authority, accountable owner and measurable implementation plan confirmed.'])->assertRedirect();
-        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$adopter->currentTeam->slug, $replication]), ['transition' => 'start_pilot', 'rationale' => 'Local process adaptation and implementation team readiness checks are complete.'])->assertRedirect();
-        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$adopter->currentTeam->slug, $replication]), ['transition' => 'submit_verification', 'actual_value' => 87, 'outcome_summary' => 'The target county achieved complete and timely submissions in 87 percent of participating wards.', 'rationale' => 'Measured pilot outcome is ready for independent verification.'])->assertSessionHasErrors('document');
+        $this->actingAs($creator)->patch(route('knowledge.innovation-replications.update', [$replication]), ['transition' => 'activate', 'rationale' => 'Target-county adoption authority, accountable owner and measurable implementation plan confirmed.'])->assertRedirect();
+        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$replication]), ['transition' => 'start_pilot', 'rationale' => 'Local process adaptation and implementation team readiness checks are complete.'])->assertRedirect();
+        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$replication]), ['transition' => 'submit_verification', 'actual_value' => 87, 'outcome_summary' => 'The target county achieved complete and timely submissions in 87 percent of participating wards.', 'rationale' => 'Measured pilot outcome is ready for independent verification.'])->assertSessionHasErrors('document');
 
-        $this->actingAs($adopter)->post(route('knowledge.innovation-replications.documents.store', [$adopter->currentTeam->slug, $replication]), ['title' => 'Signed target-county pilot outcome report', 'category' => 'Replication evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->image('signed-outcome.jpg')])->assertRedirect();
-        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$adopter->currentTeam->slug, $replication]), ['transition' => 'submit_verification', 'actual_value' => 87, 'outcome_summary' => 'The target county achieved complete and timely submissions in 87 percent of participating wards.', 'rationale' => 'Measured outcome and clean signed evidence are ready for independent verification.'])->assertRedirect();
+        $this->actingAs($adopter)->post(route('knowledge.innovation-replications.documents.store', [$replication]), ['title' => 'Signed target-county pilot outcome report', 'category' => 'Replication evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->image('signed-outcome.jpg')])->assertRedirect();
+        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.update', [$replication]), ['transition' => 'submit_verification', 'actual_value' => 87, 'outcome_summary' => 'The target county achieved complete and timely submissions in 87 percent of participating wards.', 'rationale' => 'Measured outcome and clean signed evidence are ready for independent verification.'])->assertRedirect();
         $this->assertSame('verification', $replication->refresh()->status);
 
-        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.verify', [$adopter->currentTeam->slug, $replication]), ['decision' => 'approve', 'rationale' => 'Attempted self-verification of the submitted target-county outcome evidence.'])->assertForbidden();
-        $this->actingAs($verifier)->patch(route('knowledge.innovation-replications.verify', [$verifier->currentTeam->slug, $replication]), ['decision' => 'approve', 'rationale' => 'Independent review confirmed the measure, signed evidence, local adaptation and target-county outcome.'])->assertRedirect();
+        $this->actingAs($adopter)->patch(route('knowledge.innovation-replications.verify', [$replication]), ['decision' => 'approve', 'rationale' => 'Attempted self-verification of the submitted target-county outcome evidence.'])->assertForbidden();
+        $this->actingAs($verifier)->patch(route('knowledge.innovation-replications.verify', [$replication]), ['decision' => 'approve', 'rationale' => 'Independent review confirmed the measure, signed evidence, local adaptation and target-county outcome.'])->assertRedirect();
         $replication->refresh();
         $this->assertSame('adopted', $replication->status);
         $this->assertSame('approved', $replication->verification_decision);
         $this->assertSame(64, strlen((string) $replication->decision_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $replication->id, 'action' => 'knowledge.innovation_replication.verified']);
 
-        $this->actingAs($verifier)->get(route('knowledge.innovation-replications.index', $verifier->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($verifier)->get(route('knowledge.innovation-replications.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('summary.adopted', 1)
             ->where('replications.data.0.targetCounty.kind', 'county')
             ->where('replications.data.0.targetCounty.logoUrl', '/images/counties/mombasa.webp')
             ->where('replications.data.0.referenceData.version', $release->version)
             ->where('replications.data.0.documents.0.scanStatus', 'clean'));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($verifier)->get(route('knowledge.innovation-replications.export', [$verifier->currentTeam->slug, $format]))->assertOk()->assertDownload();
+            $this->actingAs($verifier)->get(route('knowledge.innovation-replications.export', [$format]))->assertOk()->assertDownload();
         }
-        $this->actingAs($verifier)->getJson(route('search.global', ['current_team' => $verifier->currentTeam->slug, 'q' => $replication->reference]))->assertOk()->assertJsonFragment(['category' => 'Innovation replication', 'id' => $replication->id]);
+        $this->actingAs($verifier)->getJson(route('search.global', ['q' => $replication->reference]))->assertOk()->assertJsonFragment(['category' => 'Innovation replication', 'id' => $replication->id]);
 
         $page = file_get_contents(resource_path('js/pages/knowledge/innovation-replications.tsx'));
         $this->assertIsString($page);
@@ -92,14 +92,14 @@ class InnovationReplicationWorkflowTest extends TestCase
         $scaled = DevolutionInnovation::factory()->create(['county_id' => $sourceCounty->id, 'reference_data_release_id' => $release->id, 'submitted_by' => $creator->id, 'status' => 'scaling', 'stage' => 'scale']);
         $this->seed(KnowledgeWorkflowSeeder::class);
 
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($draft, $targetCounty, $adopter))->assertSessionHasErrors('devolution_innovation_id');
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($scaled, $sourceCounty, $adopter))->assertSessionHasErrors('target_county_id');
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($scaled, $targetCounty, $outsideUser))->assertSessionHasErrors('accountable_user_id');
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($scaled, $targetCounty, $adopter))->assertRedirect();
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($draft, $targetCounty, $adopter))->assertSessionHasErrors('devolution_innovation_id');
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($scaled, $sourceCounty, $adopter))->assertSessionHasErrors('target_county_id');
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($scaled, $targetCounty, $outsideUser))->assertSessionHasErrors('accountable_user_id');
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($scaled, $targetCounty, $adopter))->assertRedirect();
 
-        $this->actingAs($targetAdmin)->get(route('knowledge.innovation-replications.index', $targetAdmin->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->where('replications.total', 1));
-        $this->actingAs($outsideUser)->get(route('knowledge.innovation-replications.index', $outsideUser->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->where('replications.total', 0));
-        $this->actingAs($outsideUser)->get(route('knowledge.innovation-replications.index', [$outsideUser->currentTeam->slug, 'county_id' => $targetCounty->id]))->assertForbidden();
+        $this->actingAs($targetAdmin)->get(route('knowledge.innovation-replications.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('replications.total', 1));
+        $this->actingAs($outsideUser)->get(route('knowledge.innovation-replications.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('replications.total', 0));
+        $this->actingAs($outsideUser)->get(route('knowledge.innovation-replications.index', ['county_id' => $targetCounty->id]))->assertForbidden();
     }
 
     public function test_adopted_replication_is_database_immutable(): void
@@ -118,7 +118,7 @@ class InnovationReplicationWorkflowTest extends TestCase
         $adopter = User::factory()->countyOfficial($target)->create();
         $legacyInnovation = DevolutionInnovation::factory()->create(['county_id' => $source->id, 'reference_data_release_id' => null, 'submitted_by' => $creator->id, 'status' => 'scaling', 'stage' => 'scale']);
 
-        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store', $creator->currentTeam->slug), $this->payload($legacyInnovation, $target, $adopter))->assertSessionHasErrors('devolution_innovation_id');
+        $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($legacyInnovation, $target, $adopter))->assertSessionHasErrors('devolution_innovation_id');
         $this->assertDatabaseCount('innovation_replications', 0);
     }
 

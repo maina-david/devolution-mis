@@ -12,14 +12,12 @@ import { store } from '@/routes/projects';
 
 type Option = { id: string; name: string; code?: string };
 export default function ProjectInitiationForm({
-    teamSlug,
     counties,
     sectors,
     programmes,
     organizations,
     indicators,
 }: {
-    teamSlug: string;
     counties: Option[];
     sectors: Option[];
     programmes: Option[];
@@ -35,7 +33,7 @@ export default function ProjectInitiationForm({
             description="Start the published project lifecycle and record county, sector, investment, climate, budget and M&E scope."
         >
             <Form
-                {...store.form({ current_team: teamSlug })}
+                {...store.form({})}
                 className="grid gap-4 md:grid-cols-2"
                 resetOnSuccess
             >

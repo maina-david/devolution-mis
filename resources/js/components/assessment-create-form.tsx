@@ -14,10 +14,8 @@ type AssessmentCreationOptions = {
 };
 
 export default function AssessmentCreateForm({
-    teamSlug,
     options,
 }: {
-    teamSlug: string;
     options: AssessmentCreationOptions;
 }) {
     const [countyId, setCountyId] = useState('');
@@ -63,11 +61,7 @@ export default function AssessmentCreateForm({
             }
             icon={ClipboardCheck}
         >
-            <Form
-                {...store.form({ current_team: teamSlug })}
-                className="grid gap-5"
-                resetOnSuccess
-            >
+            <Form {...store.form({})} className="grid gap-5" resetOnSuccess>
                 {({ processing, errors }) => (
                     <>
                         <SearchableSelect

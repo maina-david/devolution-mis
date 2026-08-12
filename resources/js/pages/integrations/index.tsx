@@ -191,9 +191,9 @@ export default function IntegrationManagement({
     catalogue,
     options,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -248,18 +248,11 @@ export default function IntegrationManagement({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <IntegrationSystemExport
-                                teamSlug={currentTeam.slug}
-                                filters={filters}
-                            />
+                            <IntegrationSystemExport filters={filters} />
                             {capabilities.manage && (
                                 <>
-                                    <ContractForm
-                                        teamSlug={currentTeam.slug}
-                                        systems={systems}
-                                    />
+                                    <ContractForm systems={systems} />
                                     <SystemForm
-                                        teamSlug={currentTeam.slug}
                                         organizations={options.organizations}
                                         catalogue={catalogue}
                                     />
@@ -303,7 +296,6 @@ export default function IntegrationManagement({
                         <SystemCard
                             key={system.id}
                             system={system}
-                            teamSlug={currentTeam.slug}
                             capabilities={capabilities}
                             counties={options.counties}
                         />
@@ -320,7 +312,6 @@ export default function IntegrationManagement({
                     <RegisterHeader
                         title="Exchange register"
                         description={`${exchanges.total.toLocaleString()} payload-safe exchange records`}
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                     />
                     {exchangeRows.length ? (
@@ -339,7 +330,6 @@ export default function IntegrationManagement({
                             rows={exchangeRows}
                             pagination={page(exchanges)}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'integrations',
                                 filters,
                             }}
@@ -351,7 +341,6 @@ export default function IntegrationManagement({
                                 return exchange ? (
                                     <ExchangeAction
                                         exchange={exchange}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -403,7 +392,6 @@ export default function IntegrationManagement({
                                 return exception ? (
                                     <ExceptionAction
                                         exception={exception}
-                                        teamSlug={currentTeam.slug}
                                         canResolve={capabilities.resolve}
                                     />
                                 ) : null;
@@ -424,12 +412,10 @@ export default function IntegrationManagement({
 
 function SystemCard({
     system,
-    teamSlug,
     capabilities,
     counties,
 }: {
     system: System;
-    teamSlug: string;
     capabilities: Props['capabilities'];
     counties: CountyIdentityValue[];
 }) {
@@ -524,20 +510,15 @@ function SystemCard({
                         {surface === 'details' ? (
                             <SystemDetails
                                 system={system}
-                                teamSlug={teamSlug}
                                 canManage={capabilities.manage}
                             />
                         ) : surface === 'dispatch' && published ? (
                             <DispatchForm
-                                teamSlug={teamSlug}
                                 contract={published}
                                 counties={counties}
                             />
                         ) : surface === 'activate' ? (
-                            <ActivationForm
-                                teamSlug={teamSlug}
-                                system={system}
-                            />
+                            <ActivationForm system={system} />
                         ) : null}
                     </div>
                 </SheetContent>
@@ -548,11 +529,9 @@ function SystemCard({
 
 function SystemDetails({
     system,
-    teamSlug,
     canManage,
 }: {
     system: System;
-    teamSlug: string;
     canManage: boolean;
 }) {
     return (
@@ -619,7 +598,6 @@ function SystemDetails({
                         </p>
                         {canManage && contract.status === 'review' && (
                             <PublishContractForm
-                                teamSlug={teamSlug}
                                 system={system}
                                 contract={contract}
                             />
@@ -632,11 +610,9 @@ function SystemDetails({
 }
 
 function PublishContractForm({
-    teamSlug,
     system,
     contract,
 }: {
-    teamSlug: string;
     system: System;
     contract: Contract;
 }) {
@@ -648,10 +624,7 @@ function PublishContractForm({
             icon={ShieldCheck}
         >
             <Form
-                action={publish({
-                    current_team: teamSlug,
-                    contract: contract.id,
-                })}
+                action={publish({ contract: contract.id })}
                 className="grid gap-4 pt-4"
             >
                 <Field
@@ -684,11 +657,9 @@ function PublishContractForm({
 }
 
 function SystemForm({
-    teamSlug,
     organizations,
     catalogue,
 }: {
-    teamSlug: string;
     organizations: Option[];
     catalogue: Props['catalogue'];
 }) {
@@ -706,7 +677,7 @@ function SystemForm({
                     : 'No checksum-valid published reference catalogue is currently effective.'
             }
         >
-            <Form action={storeSystem(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeSystem()} className="grid gap-5 pt-4">
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -811,13 +782,7 @@ function SystemForm({
     );
 }
 
-function IntegrationSystemExport({
-    teamSlug,
-    filters,
-}: {
-    teamSlug: string;
-    filters: Props['filters'];
-}) {
+function IntegrationSystemExport({ filters }: { filters: Props['filters'] }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -832,7 +797,6 @@ function IntegrationSystemExport({
                             <a
                                 href={exportMethod.url(
                                     {
-                                        current_team: teamSlug,
                                         workspace: 'integration-systems',
                                         format,
                                     },
@@ -849,13 +813,7 @@ function IntegrationSystemExport({
     );
 }
 
-function ContractForm({
-    teamSlug,
-    systems,
-}: {
-    teamSlug: string;
-    systems: System[];
-}) {
+function ContractForm({ systems }: { systems: System[] }) {
     return (
         <FormSheet
             title="Submit interface contract"
@@ -864,7 +822,7 @@ function ContractForm({
             icon={FileJson}
             size="xl"
         >
-            <Form action={storeContract(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeContract()} className="grid gap-5 pt-4">
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -952,17 +910,15 @@ function ContractForm({
 }
 
 function DispatchForm({
-    teamSlug,
     contract,
     counties,
 }: {
-    teamSlug: string;
     contract: Contract;
     counties: CountyIdentityValue[];
 }) {
     return (
         <Form
-            action={dispatch({ current_team: teamSlug, contract: contract.id })}
+            action={dispatch({ contract: contract.id })}
             className="grid gap-4"
         >
             <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
@@ -1000,18 +956,9 @@ function DispatchForm({
     );
 }
 
-function ActivationForm({
-    teamSlug,
-    system,
-}: {
-    teamSlug: string;
-    system: System;
-}) {
+function ActivationForm({ system }: { system: System }) {
     return (
-        <Form
-            action={activate({ current_team: teamSlug, system: system.id })}
-            className="grid gap-4"
-        >
+        <Form action={activate({ system: system.id })} className="grid gap-4">
             <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
                 Record activation only after source-owner approval, interface
                 agreement, allowlisting and vault provisioning are evidenced.
@@ -1035,11 +982,9 @@ function ActivationForm({
 
 function ExchangeAction({
     exchange,
-    teamSlug,
     canManage,
 }: {
     exchange: Exchange;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -1178,12 +1123,7 @@ function ExchangeAction({
                             />
                         )}
                         {canRetry && (
-                            <Form
-                                {...retry.form({
-                                    current_team: teamSlug,
-                                    exchange: exchange.id,
-                                })}
-                            >
+                            <Form {...retry.form({ exchange: exchange.id })}>
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
                                         <RefreshCcw /> Retry exchange now
@@ -1200,11 +1140,9 @@ function ExchangeAction({
 
 function ExceptionAction({
     exception,
-    teamSlug,
     canResolve,
 }: {
     exception: Exception;
-    teamSlug: string;
     canResolve: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -1238,10 +1176,7 @@ function ExceptionAction({
                         />
                         {canResolve && exception.status === 'open' && (
                             <Form
-                                action={resolve({
-                                    current_team: teamSlug,
-                                    exception: exception.id,
-                                })}
+                                action={resolve({ exception: exception.id })}
                                 className="grid gap-4"
                             >
                                 <TextField
@@ -1263,12 +1198,10 @@ function ExceptionAction({
 function RegisterHeader({
     title,
     description,
-    teamSlug,
     filters,
 }: {
     title: string;
     description: string;
-    teamSlug: string;
     filters: Props['filters'];
 }) {
     return (
@@ -1288,11 +1221,7 @@ function RegisterHeader({
                         <DropdownMenuItem key={format} asChild>
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'integrations',
-                                        format,
-                                    },
+                                    { workspace: 'integrations', format },
                                     { query: filters },
                                 )}
                             >

@@ -20,7 +20,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class WorkspaceExportController extends Controller
 {
-    public function __invoke(WorkspaceIndexRequest $request, string $currentTeam, string $workspace, string $format, ProgrammeWorkspaceData $workspaceData, MonitoringEvaluationResults $monitoringResults, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): Response
+    public function __invoke(WorkspaceIndexRequest $request, string $workspace, string $format, ProgrammeWorkspaceData $workspaceData, MonitoringEvaluationResults $monitoringResults, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): Response
     {
         if ($workspace === 'users') {
             abort_unless($request->user()?->can(ProgrammePermission::ManageCountyUsers->value) || $request->user()?->can(ProgrammePermission::ManageUserAccess->value), 403);

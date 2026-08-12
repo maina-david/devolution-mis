@@ -1,4 +1,4 @@
-import { Form, Head, router, useForm, usePage } from '@inertiajs/react';
+import { Form, Head, router, useForm } from '@inertiajs/react';
 import {
     CalendarDays,
     GitBranch,
@@ -184,12 +184,10 @@ const starterConfiguration: WorkflowConfiguration = {
 function DraftEditor({
     workflow,
     version,
-    teamSlug,
     calendars,
 }: {
     workflow: Workflow;
     version: WorkflowVersion;
-    teamSlug: string;
     calendars: BusinessCalendar[];
 }) {
     const form = useForm<{
@@ -246,7 +244,7 @@ function DraftEditor({
             return;
         }
 
-        form.patch(update.url([teamSlug, workflow.id, version.id]), {
+        form.patch(update.url([workflow.id, version.id]), {
             preserveScroll: true,
         });
     }
@@ -303,11 +301,7 @@ function DraftEditor({
                         variant="outline"
                         onClick={() =>
                             router.patch(
-                                publish.url([
-                                    teamSlug,
-                                    workflow.id,
-                                    version.id,
-                                ]),
+                                publish.url([workflow.id, version.id]),
                                 {},
                                 { preserveScroll: true },
                             )
@@ -321,7 +315,7 @@ function DraftEditor({
     );
 }
 
-function WorkflowForm({ teamSlug }: { teamSlug: string }) {
+function WorkflowForm() {
     return (
         <FormSheet
             title="Create workflow definition"
@@ -330,11 +324,7 @@ function WorkflowForm({ teamSlug }: { teamSlug: string }) {
             icon={Plus}
             size="lg"
         >
-            <Form
-                {...store.form(teamSlug)}
-                resetOnSuccess
-                className="grid gap-4 pt-4"
-            >
+            <Form {...store.form()} resetOnSuccess className="grid gap-4 pt-4">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
@@ -392,7 +382,7 @@ const weekdays = [
     { id: '7', name: 'Sunday' },
 ];
 
-function CalendarForm({ teamSlug }: { teamSlug: string }) {
+function CalendarForm() {
     return (
         <FormSheet
             title="Create business-calendar version"
@@ -402,7 +392,7 @@ function CalendarForm({ teamSlug }: { teamSlug: string }) {
             size="xl"
         >
             <Form
-                {...storeCalendar.form(teamSlug)}
+                {...storeCalendar.form()}
                 resetOnSuccess
                 className="grid gap-5 pt-4"
             >
@@ -472,13 +462,7 @@ function CalendarForm({ teamSlug }: { teamSlug: string }) {
     );
 }
 
-function BusinessCalendarCard({
-    calendar,
-    teamSlug,
-}: {
-    calendar: BusinessCalendar;
-    teamSlug: string;
-}) {
+function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
     const [sheet, setSheet] = useState<'details' | 'holiday' | null>(null);
     const workingDayNames = calendar.workingDays
         .map(
@@ -525,7 +509,6 @@ function BusinessCalendarCard({
                                             onSelect={() =>
                                                 router.patch(
                                                     publishCalendar.url({
-                                                        current_team: teamSlug,
                                                         businessCalendar:
                                                             calendar.id,
                                                     }),
@@ -586,7 +569,6 @@ function BusinessCalendarCard({
                         {sheet === 'holiday' ? (
                             <Form
                                 {...storeHoliday.form({
-                                    current_team: teamSlug,
                                     businessCalendar: calendar.id,
                                 })}
                                 resetOnSuccess
@@ -673,8 +655,6 @@ function BusinessCalendarCard({
                                                     onClick={() =>
                                                         router.delete(
                                                             destroyHoliday.url({
-                                                                current_team:
-                                                                    teamSlug,
                                                                 businessCalendar:
                                                                     calendar.id,
                                                                 businessCalendarHoliday:
@@ -727,13 +707,11 @@ export default function WorkflowRegistry({
     users,
     workflows,
 }: Props) {
-    const teamSlug = usePage().props.currentTeam!.slug;
-
     function search(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         router.get(
-            index.url(teamSlug),
+            index.url(),
             { search: data.get('search')?.toString() ?? '' },
             { preserveState: true },
         );
@@ -778,7 +756,6 @@ export default function WorkflowRegistry({
                                     <a
                                         href={
                                             exportMethod({
-                                                current_team: teamSlug,
                                                 workspace: 'business-calendars',
                                                 format,
                                             }).url
@@ -788,7 +765,7 @@ export default function WorkflowRegistry({
                                     </a>
                                 </Button>
                             ))}
-                            <CalendarForm teamSlug={teamSlug} />
+                            <CalendarForm />
                         </div>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -796,7 +773,6 @@ export default function WorkflowRegistry({
                             <BusinessCalendarCard
                                 key={calendar.id}
                                 calendar={calendar}
-                                teamSlug={teamSlug}
                             />
                         ))}
                         {calendars.length === 0 && (
@@ -820,7 +796,7 @@ export default function WorkflowRegistry({
                                 across IDMIS modules.
                             </p>
                         </div>
-                        <WorkflowForm teamSlug={teamSlug} />
+                        <WorkflowForm />
                     </div>
                     <div className="space-y-4">
                         <form onSubmit={search} className="flex gap-2">
@@ -899,7 +875,6 @@ export default function WorkflowRegistry({
                                                 (version) => (
                                                     <WorkflowSimulatorSheet
                                                         key={`simulation-${version.id}`}
-                                                        teamSlug={teamSlug}
                                                         workflowId={workflow.id}
                                                         workflowName={
                                                             workflow.name
@@ -914,7 +889,6 @@ export default function WorkflowRegistry({
                                             <DraftEditor
                                                 workflow={workflow}
                                                 version={draft}
-                                                teamSlug={teamSlug}
                                                 calendars={calendars}
                                             />
                                         ) : (
@@ -926,7 +900,6 @@ export default function WorkflowRegistry({
                                                 onClick={() =>
                                                     router.post(
                                                         storeVersion.url([
-                                                            teamSlug,
                                                             workflow.id,
                                                         ]),
                                                         {

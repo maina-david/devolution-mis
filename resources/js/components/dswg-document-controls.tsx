@@ -21,7 +21,6 @@ import { store as storeMeetingDocument } from '@/routes/dswg/meetings/documents'
 import { download, preview } from '@/routes/evidence';
 
 type Props = {
-    teamSlug: string;
     subjectId: string;
     subjectType: 'meeting' | 'action';
     documents: WorkspaceDocument[];
@@ -107,8 +106,6 @@ export default function DswgDocumentControls(props: Props) {
                                         >
                                             <a
                                                 href={download.url({
-                                                    current_team:
-                                                        props.teamSlug,
                                                     document: document.id,
                                                 })}
                                             >
@@ -139,10 +136,7 @@ export default function DswgDocumentControls(props: Props) {
                     {previewDocument && (
                         <iframe
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: props.teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
                     )}
@@ -165,14 +159,8 @@ function UploadRecord(props: Props) {
               ];
     const route =
         props.subjectType === 'meeting'
-            ? storeMeetingDocument.form({
-                  current_team: props.teamSlug,
-                  meeting: props.subjectId,
-              })
-            : storeActionDocument.form({
-                  current_team: props.teamSlug,
-                  action: props.subjectId,
-              });
+            ? storeMeetingDocument.form({ meeting: props.subjectId })
+            : storeActionDocument.form({ action: props.subjectId });
 
     return (
         <FormSheet

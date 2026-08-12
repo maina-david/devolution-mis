@@ -144,7 +144,7 @@ export default function Dashboard({
     filters,
 }: Props) {
     const page = usePage();
-    const { currentTeam } = page.props;
+    const { routeContext } = page.props;
     const [selectedCounty, setSelectedCounty] = useState<CountyMetric | null>(
         counties.length === 1 ? counties[0] : null,
     );
@@ -528,7 +528,7 @@ export default function Dashboard({
                                                         </div>
                                                     ))}
                                                 </dl>
-                                                {currentTeam && (
+                                                {routeContext && (
                                                     <Button
                                                         asChild
                                                         className="w-full"
@@ -536,8 +536,6 @@ export default function Dashboard({
                                                         <Link
                                                             href={preserveDrilldownFilters(
                                                                 showCounty.url({
-                                                                    current_team:
-                                                                        currentTeam.slug,
                                                                     county: selectedCounty.id,
                                                                 }),
                                                                 page.url,
@@ -629,7 +627,7 @@ export default function Dashboard({
                                                             )}
                                                         </strong>
                                                     </div>
-                                                    {currentTeam && (
+                                                    {routeContext && (
                                                         <Button
                                                             asChild
                                                             variant="outline"
@@ -639,8 +637,6 @@ export default function Dashboard({
                                                                 href={preserveDrilldownFilters(
                                                                     showCounty.url(
                                                                         {
-                                                                            current_team:
-                                                                                currentTeam.slug,
                                                                             county: county.id,
                                                                         },
                                                                     ),
@@ -1010,11 +1006,13 @@ function OperationalSignal({
     );
 }
 
-Dashboard.layout = (props: { currentTeam?: { slug: string } | null }) => ({
+Dashboard.layout = (props: {
+    routeContext?: { key: any; slug: any } | null;
+}) => ({
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: props.currentTeam ? dashboard(props.currentTeam.slug) : '/',
+            href: props.routeContext ? dashboard() : '/',
         },
     ],
 });

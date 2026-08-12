@@ -20,7 +20,7 @@ class AssessmentDetailPageTest extends TestCase
         $admin = User::factory()->countyAdmin($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($admin)->get(route('assessments.show', [$admin->currentTeam->slug, $assessment]))
+        $this->actingAs($admin)->get(route('assessments.show', [$assessment]))
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('assessments/show')
@@ -36,6 +36,6 @@ class AssessmentDetailPageTest extends TestCase
         $official = User::factory()->countyOfficial($home)->create();
         $assessment = Assessment::factory()->create(['county_id' => $other->id]);
 
-        $this->actingAs($official)->get(route('assessments.show', [$official->currentTeam->slug, $assessment]))->assertForbidden();
+        $this->actingAs($official)->get(route('assessments.show', [$assessment]))->assertForbidden();
     }
 }

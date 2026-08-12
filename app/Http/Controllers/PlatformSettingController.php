@@ -11,7 +11,7 @@ use Inertia\Inertia;
 
 class PlatformSettingController extends Controller
 {
-    public function update(UpdatePlatformSettingRequest $request, string $currentTeam, PlatformSetting $setting, AuditLogger $auditLogger): RedirectResponse
+    public function update(UpdatePlatformSettingRequest $request, PlatformSetting $setting, AuditLogger $auditLogger): RedirectResponse
     {
         /** @var User $actor */
         $actor = $request->user();

@@ -24,7 +24,7 @@ use Inertia\Response;
 
 class ProgrammeUserController extends Controller
 {
-    public function show(WorkspaceIndexRequest $request, string $currentTeam, User $programmeUser): Response
+    public function show(WorkspaceIndexRequest $request, User $programmeUser): Response
     {
         $actor = $this->user($request);
         $this->authorizeView($actor, $programmeUser);
@@ -104,7 +104,7 @@ class ProgrammeUserController extends Controller
         ]);
     }
 
-    public function store(StoreProgrammeUserRequest $request, string $currentTeam, GrantProgrammeAccess $grantAccess): RedirectResponse
+    public function store(StoreProgrammeUserRequest $request, GrantProgrammeAccess $grantAccess): RedirectResponse
     {
         $grantAccess->handle($request->accessData(), $this->user($request));
         Inertia::flash('toast', ['type' => 'success', 'message' => 'User access granted and password setup requested.']);
@@ -112,7 +112,7 @@ class ProgrammeUserController extends Controller
         return back();
     }
 
-    public function destroy(Request $request, string $currentTeam, User $programmeUser, DeactivateProgrammeUser $deactivate): RedirectResponse
+    public function destroy(Request $request, User $programmeUser, DeactivateProgrammeUser $deactivate): RedirectResponse
     {
         $actor = $this->user($request);
         $deactivate->handle($programmeUser, $actor);

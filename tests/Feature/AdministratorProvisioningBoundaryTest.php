@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Actions\GrantProgrammeAccess;
-use App\Actions\ProvisionUserWorkspace;
 use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,7 +10,6 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Inertia\Testing\AssertableInertia as Assert;
-use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AdministratorProvisioningBoundaryTest extends TestCase
@@ -21,18 +19,12 @@ class AdministratorProvisioningBoundaryTest extends TestCase
     public function test_self_service_workspace_and_invitation_endpoints_do_not_exist(): void
     {
         $user = User::factory()->create();
-        $workspace = $user->currentTeam;
-
         $requests = [
             ['get', '/settings/teams'],
             ['post', '/settings/teams'],
-            ['get', "/settings/teams/{$workspace->slug}"],
-            ['patch', "/settings/teams/{$workspace->slug}"],
-            ['delete', "/settings/teams/{$workspace->slug}"],
-            ['delete', "/settings/teams/{$workspace->slug}/leave"],
-            ['patch', "/settings/teams/{$workspace->slug}/members/{$user->id}"],
-            ['delete', "/settings/teams/{$workspace->slug}/members/{$user->id}"],
-            ['post', "/settings/teams/{$workspace->slug}/invitations"],
+            ['get', '/settings/teams/obsolete-workspace'],
+            ['patch', '/settings/teams/obsolete-workspace'],
+            ['delete', '/settings/teams/obsolete-workspace'],
             ['post', '/invitations/01911111-1111-7111-8111-111111111111/accept'],
             ['delete', '/invitations/01911111-1111-7111-8111-111111111111'],
         ];
@@ -45,6 +37,8 @@ class AdministratorProvisioningBoundaryTest extends TestCase
             $this->assertFalse(Route::has($routeName), "{$routeName} must not be registered.");
         }
 
+        $this->assertFalse(Schema::hasTable('teams'));
+        $this->assertFalse(Schema::hasTable('team_members'));
         $this->assertFalse(Schema::hasTable('team_invitations'));
     }
 
@@ -58,14 +52,14 @@ class AdministratorProvisioningBoundaryTest extends TestCase
                 ->component('auth/login')
                 ->missing('teamInvitation'));
 
-        $this->actingAs($user)->get(route('dashboard', $user->currentTeam->slug))
+        $this->actingAs($user)->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dashboard')
                 ->missing('pendingInvitations'));
     }
 
-    public function test_governed_access_grant_provisions_exactly_one_internal_workspace(): void
+    public function test_governed_access_grant_creates_an_account_without_a_workspace(): void
     {
         Notification::fake();
         $administrator = User::factory()->platformAdmin()->create();
@@ -77,18 +71,14 @@ class AdministratorProvisioningBoundaryTest extends TestCase
             'assigned_county_ids' => [],
         ], $administrator, sendSetup: false);
 
-        $this->assertSame(1, $user->teams()->count());
-        $this->assertTrue($user->currentTeam->is_personal);
-        $this->assertSame("Amina Hassan's Workspace", $user->currentTeam->name);
+        $this->assertFalse(Schema::hasColumn('users', 'current_team_id'));
+        $this->assertFalse(Schema::hasTable('teams'));
         $this->assertSame(UserRole::DevolutionAdmin, $user->programmeRole());
         $this->assertDatabaseHas('audit_events', [
             'actor_id' => $administrator->id,
             'subject_id' => $user->id,
             'action' => 'access.granted',
         ]);
-
-        $this->expectException(HttpException::class);
-        app(ProvisionUserWorkspace::class)->handle($user, 'Second workspace');
     }
 
     public function test_removed_self_service_source_surfaces_are_absent(): void

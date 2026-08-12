@@ -71,7 +71,7 @@ class AssessmentRuntimeGovernanceTest extends TestCase
         $official = User::factory()->countyOfficial($assessment->county)->create();
         $assessment->update(['status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Verified sector policy',
             'category' => 'policy',
             'source_type' => 'digital',

@@ -21,7 +21,7 @@ class UserPageViewFactory extends Factory
         return [
             'user_id' => User::factory(),
             'route_name' => 'dashboard',
-            'path' => '/workspace/dashboard',
+            'path' => '/dashboard',
             'page_title' => 'Dashboard',
             'ip_address' => fake()->ipv4(),
             'user_agent' => fake()->userAgent(),

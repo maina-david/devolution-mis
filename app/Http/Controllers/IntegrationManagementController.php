@@ -75,7 +75,7 @@ class IntegrationManagementController extends Controller
         return back()->with('success', "Integration system {$system->code} registered.");
     }
 
-    public function activate(ActivateIntegrationSystemRequest $request, string $currentTeam, IntegrationSystem $system, ActivateIntegrationSystem $action): RedirectResponse
+    public function activate(ActivateIntegrationSystemRequest $request, IntegrationSystem $system, ActivateIntegrationSystem $action): RedirectResponse
     {
         $action->handle($system, $this->user($request), $request->validated());
 
@@ -94,21 +94,21 @@ class IntegrationManagementController extends Controller
         return back()->with('success', "Interface contract v{$version} submitted for review.");
     }
 
-    public function publish(PublishIntegrationContractRequest $request, string $currentTeam, IntegrationContract $contract, PublishIntegrationContract $action): RedirectResponse
+    public function publish(PublishIntegrationContractRequest $request, IntegrationContract $contract, PublishIntegrationContract $action): RedirectResponse
     {
         $action->handle($contract, $this->user($request), $request->validated());
 
         return back()->with('success', 'Interface contract independently published.');
     }
 
-    public function dispatch(DispatchIntegrationExchangeRequest $request, string $currentTeam, IntegrationContract $contract, DispatchIntegrationExchange $action): RedirectResponse
+    public function dispatch(DispatchIntegrationExchangeRequest $request, IntegrationContract $contract, DispatchIntegrationExchange $action): RedirectResponse
     {
         $exchange = $action->handle($contract, $this->user($request), $request->validated());
 
         return back()->with('success', "Exchange {$exchange->correlation_id} recorded as {$exchange->status}.");
     }
 
-    public function retry(RetryIntegrationExchangeRequest $request, string $currentTeam, IntegrationExchange $exchange, AttemptIntegrationExchangeDelivery $action): RedirectResponse
+    public function retry(RetryIntegrationExchangeRequest $request, IntegrationExchange $exchange, AttemptIntegrationExchangeDelivery $action): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($exchange->county_id === null || $user->programmeRole()->hasNationalScope() || $this->countyScope->query($user)->whereKey($exchange->county_id)->exists(), 403);
@@ -117,7 +117,7 @@ class IntegrationManagementController extends Controller
         return back()->with('success', "Exchange {$exchange->correlation_id} retry completed as {$exchange->status}.");
     }
 
-    public function resolve(ResolveReconciliationExceptionRequest $request, string $currentTeam, ReconciliationException $exception, ResolveReconciliationException $action): RedirectResponse
+    public function resolve(ResolveReconciliationExceptionRequest $request, ReconciliationException $exception, ResolveReconciliationException $action): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($exception->county_id === null || $user->programmeRole()->hasNationalScope() || $this->countyScope->query($user)->whereKey($exception->county_id)->exists(), 403);

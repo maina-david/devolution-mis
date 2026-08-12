@@ -42,7 +42,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $release = $this->publishedReferenceRelease([$county], [$sector], [], $administrator);
         $this->seed(DswgWorkflowSeeder::class);
 
-        $this->actingAs($administrator)->post(route('dswg.groups.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('dswg.groups.store'), [
             'code' => 'DSWG-WASH', 'name' => 'Water and Sanitation DSWG', 'mandate' => 'Coordinate county and national water-sector delivery.', 'scope' => 'sector',
             'secretariat_user_id' => $administrator->id, 'meeting_frequency' => 'Quarterly', 'county_ids' => [$county->id], 'sector_ids' => [$sector->id], 'member_ids' => [$member->id],
         ])->assertRedirect();
@@ -54,7 +54,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->assertSame($release->id, $creationEvent->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $creationEvent->metadata['reference_data_release_checksum']);
 
-        $this->actingAs($administrator)->post(route('dswg.meetings.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('dswg.meetings.store'), [
             'dswg_working_group_id' => $group->id, 'reference' => 'DSWG-WASH-2026-Q3', 'title' => 'Quarterly delivery review',
             'starts_at' => now()->addDay()->toIso8601String(), 'ends_at' => now()->addDay()->addHours(2)->toIso8601String(), 'meeting_mode' => 'hybrid',
             'venue' => 'SDD boardroom', 'virtual_link' => 'https://meet.example.org/wash', 'agenda' => 'Review performance, financing bottlenecks, decisions and accountable actions.',
@@ -64,22 +64,22 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->assertSame('scheduled', $meeting->status);
         $this->assertNotNull($meeting->workflow_instance_id);
 
-        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$administrator->currentTeam->slug, $meeting]), [
+        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$meeting]), [
             'record_purpose' => 'agenda', 'title' => 'Approved quarterly meeting agenda', 'category' => 'Agenda', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('approved-agenda.pdf', 20, 'application/pdf'),
         ])->assertRedirect();
 
-        $this->actingAs($member)->patch(route('dswg.meetings.invitation.respond', [$member->currentTeam->slug, $meeting]), ['invitation_status' => 'accepted'])->assertRedirect();
-        $this->actingAs($administrator)->patch(route('dswg.meetings.outcomes.record', [$administrator->currentTeam->slug, $meeting]), [
+        $this->actingAs($member)->patch(route('dswg.meetings.invitation.respond', [$meeting]), ['invitation_status' => 'accepted'])->assertRedirect();
+        $this->actingAs($administrator)->patch(route('dswg.meetings.outcomes.record', [$meeting]), [
             'minutes' => 'The members confirmed quorum, reviewed the delivery portfolio, adopted the financing decision and assigned accountable follow-up actions.',
             'present_user_ids' => [$administrator->id, $member->id],
         ])->assertRedirect();
         $this->assertSame('minutes_pending', $meeting->refresh()->status);
         $this->assertSame('present', $meeting->invitees()->whereKey($member)->firstOrFail()->pivot->attendance_status);
 
-        $this->actingAs($approver)->patch(route('dswg.meetings.minutes.approve', [$approver->currentTeam->slug, $meeting]), ['approval_comment' => 'Approval must wait for the signed repository record.'])->assertStatus(409);
+        $this->actingAs($approver)->patch(route('dswg.meetings.minutes.approve', [$meeting]), ['approval_comment' => 'Approval must wait for the signed repository record.'])->assertStatus(409);
 
-        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$administrator->currentTeam->slug, $meeting]), [
+        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$meeting]), [
             'record_purpose' => 'minutes', 'title' => 'Signed quarterly meeting minutes', 'category' => 'Minutes', 'source_type' => 'scanned',
             'document' => UploadedFile::fake()->image('signed-minutes.jpg'),
         ])->assertRedirect();
@@ -88,20 +88,20 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->assertTrue($links->every(fn (DocumentLink $link): bool => $link->subject_id === $meeting->id && $link->document->currentVersion !== null));
         $links->each(fn (DocumentLink $link) => Storage::disk('local')->assertExists($link->document->path));
         $minutesDocument = DocumentLink::query()->with('document')->where('purpose', 'dswg-minutes-record')->sole()->document;
-        $this->actingAs($member)->get(route('evidence.preview', [$member->currentTeam->slug, $minutesDocument]))->assertOk();
+        $this->actingAs($member)->get(route('evidence.preview', [$minutesDocument]))->assertOk();
         $outsideUser = User::factory()->countyAdmin(County::factory()->create())->create();
-        $this->actingAs($outsideUser)->get(route('evidence.preview', [$outsideUser->currentTeam->slug, $minutesDocument]))->assertForbidden();
-        $this->actingAs($member)->get(route('dswg.index', $member->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($outsideUser)->get(route('evidence.preview', [$minutesDocument]))->assertForbidden();
+        $this->actingAs($member)->get(route('dswg.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('meetings.0.documents', 2));
-        $this->actingAs($member)->get(route('evidence.index', $member->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($member)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('workspace.pagination.total', 2));
 
-        $this->actingAs($administrator)->patch(route('dswg.meetings.minutes.approve', [$administrator->currentTeam->slug, $meeting]), ['approval_comment' => 'Minutes accurately reflect the adopted decisions.'])->assertForbidden();
-        $this->actingAs($approver)->patch(route('dswg.meetings.minutes.approve', [$approver->currentTeam->slug, $meeting]), ['approval_comment' => 'Minutes independently reviewed and approved.'])->assertRedirect();
+        $this->actingAs($administrator)->patch(route('dswg.meetings.minutes.approve', [$meeting]), ['approval_comment' => 'Minutes accurately reflect the adopted decisions.'])->assertForbidden();
+        $this->actingAs($approver)->patch(route('dswg.meetings.minutes.approve', [$meeting]), ['approval_comment' => 'Minutes independently reviewed and approved.'])->assertRedirect();
         $this->assertSame('closed', $meeting->refresh()->status);
         $this->assertSame($approver->id, $meeting->minutes_approved_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $meeting->id, 'action' => 'dswg.minutes.approved']);
-        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$administrator->currentTeam->slug, $meeting]), [
+        $this->actingAs($administrator)->post(route('dswg.meetings.documents.store', [$meeting]), [
             'record_purpose' => 'supporting', 'title' => 'Late meeting record', 'category' => 'Supporting', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
@@ -115,23 +115,23 @@ class DswgCoordinationWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $payload = $this->workingGroupPayload($county, $sector, $administrator, $leadOrganization);
 
-        $this->actingAs($administrator)->post(route('dswg.groups.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('dswg.groups.store'), $payload)
             ->assertStatus(409);
         $this->assertDatabaseCount('dswg_working_groups', 0);
 
         $this->publishedReferenceRelease([$county], [$sector], [], $administrator);
-        $this->actingAs($administrator)->post(route('dswg.groups.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('dswg.groups.store'), $payload)
             ->assertSessionHasErrors('lead_organization_id');
         $this->assertDatabaseCount('dswg_working_groups', 0);
 
         $release = $this->publishedReferenceRelease([$county], [$sector], [$leadOrganization], $administrator);
-        $this->actingAs($administrator)->post(route('dswg.groups.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('dswg.groups.store'), $payload)
             ->assertRedirect();
         $group = DswgWorkingGroup::query()->sole();
         $meeting = DswgMeeting::factory()->for($group, 'workingGroup')->create(['organized_by' => $administrator->id]);
         $action = DswgAction::factory()->for($meeting, 'meeting')->create(['county_id' => $county->id, 'accountable_user_id' => $administrator->id]);
 
-        $this->actingAs($administrator)->get(route('dswg.index', $administrator->currentTeam->slug))
+        $this->actingAs($administrator)->get(route('dswg.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('workspace.columns.2', 'Group reference release')
@@ -141,17 +141,17 @@ class DswgCoordinationWorkflowTest extends TestCase
                 ->where('workspace.rows.0.cells.3', $release->checksum));
 
         foreach (['json', 'csv'] as $format) {
-            $export = $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'dswg', $format]))
+            $export = $this->actingAs($administrator)->get(route('workspace.export', ['dswg', $format]))
                 ->assertOk()
                 ->streamedContent();
             $this->assertStringContainsString('Group reference release', $export);
             $this->assertStringContainsString("v{$release->version}", $export);
             $this->assertStringContainsString($release->checksum, $export);
         }
-        $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'dswg', 'xlsx']))
+        $this->actingAs($administrator)->get(route('workspace.export', ['dswg', 'xlsx']))
             ->assertOk()
             ->assertDownload();
-        $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'dswg', 'pdf']))
+        $this->actingAs($administrator)->get(route('workspace.export', ['dswg', 'pdf']))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
     }
@@ -166,7 +166,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$home, $outside], [$sector], [], $countyAdministrator);
 
         $this->actingAs($countyAdministrator)->post(
-            route('dswg.groups.store', $countyAdministrator->currentTeam->slug),
+            route('dswg.groups.store'),
             $this->workingGroupPayload($outside, $sector, $countyAdministrator),
         )->assertForbidden();
 
@@ -182,7 +182,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $release = $this->publishedReferenceRelease([$county], [], [$accountableOrganization], $administrator);
         $group->members()->attach($accountable, ['membership_role' => 'member', 'status' => 'active']);
 
-        $this->actingAs($administrator)->post(route('dswg.actions.store', [$administrator->currentTeam->slug, $meeting]), [
+        $this->actingAs($administrator)->post(route('dswg.actions.store', [$meeting]), [
             'code' => 'DSWG-ACT-001', 'title' => 'Reconcile county project pipeline', 'description' => 'Reconcile the county pipeline and submit an evidence-backed exception report.',
             'accountable_user_id' => $accountable->id, 'accountable_organization_id' => $accountableOrganization->id, 'county_id' => $county->id, 'due_on' => today()->addWeeks(2)->toDateString(), 'priority' => 'high',
         ])->assertRedirect();
@@ -196,41 +196,41 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->assertSame($release->version, $creationEvent->metadata['reference_data_release_version']);
         $this->assertSame($release->checksum, $creationEvent->metadata['reference_data_release_checksum']);
 
-        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$accountable->currentTeam->slug, $action]), [
+        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$action]), [
             'transition' => 'start', 'progress_percentage' => 10, 'progress_note' => 'Source records collected.', 'comment' => 'Action implementation has started.',
         ])->assertRedirect();
-        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$accountable->currentTeam->slug, $action]), [
+        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$action]), [
             'transition' => 'submit_completion', 'progress_percentage' => 100, 'completion_evidence' => 'Narrative reference without a repository object.', 'comment' => 'Attempt completion before uploading evidence.',
         ])->assertSessionHasErrors('transition');
-        $this->actingAs($accountable)->post(route('dswg.actions.documents.store', [$accountable->currentTeam->slug, $action]), [
+        $this->actingAs($accountable)->post(route('dswg.actions.documents.store', [$action]), [
             'title' => 'Signed county pipeline reconciliation', 'category' => 'Action evidence', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('reconciliation.pdf', 20, 'application/pdf'),
         ])->assertRedirect();
-        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$accountable->currentTeam->slug, $action]), [
+        $this->actingAs($accountable)->patch(route('dswg.actions.transition', [$action]), [
             'transition' => 'submit_completion', 'progress_percentage' => 100, 'completion_evidence' => 'Reconciled project register reference DSWG/EVIDENCE/2026/001 with signed exception schedule.', 'comment' => 'Completed work submitted for independent verification.',
         ])->assertRedirect();
         $this->assertSame('completion_review', $action->refresh()->status);
         $link = DocumentLink::query()->with('document')->where('subject_id', $action->id)->sole();
         $this->assertSame('dswg-action-evidence', $link->purpose);
         Storage::disk('local')->assertExists($link->document->path);
-        $this->actingAs($accountable)->get(route('dswg.index', $accountable->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($accountable)->get(route('dswg.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('workspace.rows.0.documents', 1)
             ->where('workspace.rows.0.cells.4', "v{$release->version} · {$release->effective_from?->toDateString()}")
             ->where('workspace.rows.0.cells.5', $release->checksum)
             ->where('workspace.rows.0.cells.8', 'County Planning Directorate'));
-        $export = $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'dswg', 'csv']))->assertOk()->streamedContent();
+        $export = $this->actingAs($administrator)->get(route('workspace.export', ['dswg', 'csv']))->assertOk()->streamedContent();
         $this->assertStringContainsString($release->checksum, $export);
         $this->assertStringContainsString('County Planning Directorate', $export);
 
         $verifier = User::factory()->topManagement()->create();
         $verifier->assignedCounties()->attach($county);
-        $this->actingAs($verifier)->patch(route('dswg.actions.transition', [$verifier->currentTeam->slug, $action]), [
+        $this->actingAs($verifier)->patch(route('dswg.actions.transition', [$action]), [
             'transition' => 'verify', 'comment' => 'Evidence and county exception schedule independently reconciled.',
         ])->assertRedirect();
         $this->assertSame('completed', $action->refresh()->status);
         $this->assertSame($verifier->id, $action->verified_by);
         $this->assertSame(100, $action->progress_percentage);
-        $this->actingAs($accountable)->post(route('dswg.actions.documents.store', [$accountable->currentTeam->slug, $action]), [
+        $this->actingAs($accountable)->post(route('dswg.actions.documents.store', [$action]), [
             'title' => 'Late action evidence', 'category' => 'Action evidence', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late-action.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
@@ -250,14 +250,14 @@ class DswgCoordinationWorkflowTest extends TestCase
         $hiddenMeeting = DswgMeeting::factory()->for($hiddenGroup, 'workingGroup')->create();
         $hiddenAction = DswgAction::factory()->for($hiddenMeeting, 'meeting')->create(['county_id' => $other->id]);
 
-        $this->actingAs($countyUser)->get(route('dswg.index', $countyUser->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($countyUser)->get(route('dswg.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('dswg/index')->where('workspace.pagination.total', 1)->where('workspace.rows.0.id', $visibleAction->id));
-        $export = $this->actingAs($countyUser)->get(route('workspace.export', [$countyUser->currentTeam->slug, 'dswg', 'json']))->assertOk();
+        $export = $this->actingAs($countyUser)->get(route('workspace.export', ['dswg', 'json']))->assertOk();
         $content = $export->streamedContent();
         $this->assertStringContainsString($visibleAction->code, $content);
         $this->assertStringNotContainsString($hiddenAction->code, $content);
 
-        $this->actingAs($countyUser)->post(route('dswg.actions.store', [$countyUser->currentTeam->slug, $hiddenMeeting]), [
+        $this->actingAs($countyUser)->post(route('dswg.actions.store', [$hiddenMeeting]), [
             'code' => 'FORBIDDEN-ACTION', 'title' => 'Forbidden action', 'description' => 'Must not cross the county boundary.', 'accountable_user_id' => $countyUser->id,
             'county_id' => $other->id, 'due_on' => today()->addWeek()->toDateString(), 'priority' => 'medium',
         ])->assertForbidden();
@@ -273,11 +273,11 @@ class DswgCoordinationWorkflowTest extends TestCase
         ReferenceDataRelease::factory()->create(['version' => 2, 'approved_by' => $administrator->id, 'status' => 'published', 'snapshot' => $snapshot, 'checksum' => str_repeat('a', 64), 'effective_from' => now()->subSeconds(30), 'published_at' => now()]);
         $payload = ['code' => 'DSWG-ACT-CATALOGUE', 'title' => 'Validate action catalogue', 'description' => 'Validate the accountable action against the effective governed catalogue.', 'accountable_user_id' => $accountable->id, 'accountable_organization_id' => $organization->id, 'county_id' => $county->id, 'due_on' => today()->addWeek()->toDateString(), 'priority' => 'high'];
 
-        $this->actingAs($administrator)->post(route('dswg.actions.store', [$administrator->currentTeam->slug, $meeting]), $payload)->assertStatus(409);
+        $this->actingAs($administrator)->post(route('dswg.actions.store', [$meeting]), $payload)->assertStatus(409);
 
         $incompleteSnapshot = ['counties' => [['id' => $county->id]], 'organizations' => [], 'sectors' => [], 'programmes' => [], 'programme_county_coverages' => []];
         ReferenceDataRelease::factory()->create(['version' => 3, 'approved_by' => $administrator->id, 'status' => 'published', 'snapshot' => $incompleteSnapshot, 'checksum' => app(CanonicalJson::class)->checksum($incompleteSnapshot), 'effective_from' => now(), 'published_at' => now()]);
-        $this->actingAs($administrator)->post(route('dswg.actions.store', [$administrator->currentTeam->slug, $meeting]), $payload)->assertSessionHasErrors('accountable_organization_id');
+        $this->actingAs($administrator)->post(route('dswg.actions.store', [$meeting]), $payload)->assertSessionHasErrors('accountable_organization_id');
         $this->assertDatabaseCount('dswg_actions', 0);
     }
 
@@ -312,7 +312,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         ]);
         Notification::fake();
 
-        $this->actingAs($administrator)->post(route('dswg.meeting-series.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('dswg.meeting-series.store'), [
             'dswg_working_group_id' => $group->id,
             'reference_prefix' => 'DSWG-WASH-REC',
             'title' => 'Weekly county delivery coordination',
@@ -349,7 +349,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $this->artisan('dswg:generate-recurring-meetings')->assertSuccessful();
         $this->assertSame(3, $series->meetings()->count());
         $this->assertSame(4, $series->refresh()->next_sequence);
-        $this->actingAs($administrator)->get(route('dswg.index', $administrator->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($administrator)->get(route('dswg.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('series.0.referencePrefix', 'DSWG-WASH-REC')
             ->where('series.0.generatedMeetings', 3));
     }
@@ -374,16 +374,16 @@ class DswgCoordinationWorkflowTest extends TestCase
             'quorum_required' => 1, 'generation_horizon_days' => 60, 'invitee_ids' => [$countyAdministrator->id],
         ];
 
-        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store', $countyAdministrator->currentTeam->slug), [
+        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store'), [
             ...$payload, 'dswg_working_group_id' => $hiddenGroup->id,
         ])->assertNotFound();
-        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store', $countyAdministrator->currentTeam->slug), [
+        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store'), [
             ...$payload, 'dswg_working_group_id' => $visibleGroup->id, 'invitee_ids' => [$outsider->id],
         ])->assertStatus(422);
-        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store', $countyAdministrator->currentTeam->slug), [
+        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store'), [
             ...$payload, 'dswg_working_group_id' => $visibleGroup->id, 'quorum_required' => 2,
         ])->assertStatus(422);
-        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store', $countyAdministrator->currentTeam->slug), [
+        $this->actingAs($countyAdministrator)->post(route('dswg.meeting-series.store'), [
             ...$payload, 'dswg_working_group_id' => $visibleGroup->id, 'timezone' => 'Mars/Olympus',
         ])->assertSessionHasErrors('timezone');
         $this->assertSame(0, DswgMeetingSeries::query()->count());

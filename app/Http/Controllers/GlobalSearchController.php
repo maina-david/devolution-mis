@@ -12,13 +12,13 @@ class GlobalSearchController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(GlobalSearchRequest $request, string $currentTeam, GlobalSearch $search): JsonResponse
+    public function __invoke(GlobalSearchRequest $request, GlobalSearch $search): JsonResponse
     {
         /** @var User $user */
         $user = $request->user();
 
         return response()->json([
-            'results' => $search->for($user, $currentTeam, $request->string('q')->trim()->toString()),
+            'results' => $search->for($user, $request->string('q')->trim()->toString()),
         ]);
     }
 }

@@ -15,7 +15,7 @@ use Inertia\Response;
 
 class CountyController extends Controller
 {
-    public function __invoke(WorkspaceIndexRequest $request, string $currentTeam, County $county, CountyDetailData $countyDetailData): Response
+    public function __invoke(WorkspaceIndexRequest $request, County $county, CountyDetailData $countyDetailData): Response
     {
         Gate::authorize(ProgrammePermission::ViewCountyData->value);
         $user = $this->user($request);

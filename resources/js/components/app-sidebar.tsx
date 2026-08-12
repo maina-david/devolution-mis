@@ -26,10 +26,8 @@ export function AppSidebar() {
     const page = usePage();
     const { currentUrl, isCurrentUrl } = useCurrentUrl();
     const user = page.props.auth.user;
-    const teamSlug = page.props.currentTeam?.slug;
-    const dashboardUrl = teamSlug ? dashboard(teamSlug) : home();
-    const navigationGroups =
-        teamSlug && user ? appNavigationGroups(teamSlug, user.permissions) : [];
+    const dashboardUrl = user ? dashboard() : home();
+    const navigationGroups = user ? appNavigationGroups(user.permissions) : [];
     const activeGroup = activeNavigationGroup(navigationGroups, currentUrl);
     const groups = navigationGroups.map((group) => ({
         title: group.title,
@@ -72,12 +70,12 @@ export function AppSidebar() {
                 </SidebarContent>
                 <SidebarFooter className="border-t border-sidebar-border p-3">
                     <SidebarMenu className="gap-1">
-                        {teamSlug && (
+                        {user && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton
                                     asChild
                                     isActive={isCurrentUrl(
-                                        notificationsIndex(teamSlug),
+                                        notificationsIndex(),
                                     )}
                                     tooltip={{
                                         children:
@@ -86,10 +84,7 @@ export function AppSidebar() {
                                     }}
                                     className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
                                 >
-                                    <Link
-                                        href={notificationsIndex(teamSlug)}
-                                        prefetch
-                                    >
+                                    <Link href={notificationsIndex()} prefetch>
                                         <Bell aria-hidden="true" />
                                         <span>
                                             {

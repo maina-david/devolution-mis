@@ -13,7 +13,7 @@ use Inertia\Inertia;
 
 class IdentityLifecycleController extends Controller
 {
-    public function store(StoreIdentityLifecycleRequest $request, string $currentTeam, CreateIdentityLifecycleRequest $action): RedirectResponse
+    public function store(StoreIdentityLifecycleRequest $request, CreateIdentityLifecycleRequest $action): RedirectResponse
     {
         $action->handle($this->user($request), $request->lifecycleData());
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Identity lifecycle request staged for independent decision.']);
@@ -21,7 +21,7 @@ class IdentityLifecycleController extends Controller
         return back();
     }
 
-    public function decide(DecideRequest $request, string $currentTeam, IdentityLifecycleRequest $identityLifecycleRequest, DecideIdentityLifecycleRequest $action): RedirectResponse
+    public function decide(DecideRequest $request, IdentityLifecycleRequest $identityLifecycleRequest, DecideIdentityLifecycleRequest $action): RedirectResponse
     {
         $action->handle($identityLifecycleRequest, $this->user($request), $request->decisionData());
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Identity lifecycle decision recorded and applicable access reconciled.']);

@@ -207,7 +207,7 @@ class WorkflowRuntimeTest extends TestCase
         $instance = app(StartWorkflow::class)->handle($definition, $assessment, $submitter, ['evidence_count' => 1], $assessment->county_id);
         $instance->update(['due_at' => now()->subMinute()]);
 
-        $this->actingAs($administrator)->get(route('workflows.index', $administrator->currentTeam->slug))
+        $this->actingAs($administrator)->get(route('workflows.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('workflows.data.0.activeInstances', 1)

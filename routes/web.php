@@ -54,7 +54,6 @@ use App\Http\Controllers\UniqueValueController;
 use App\Http\Controllers\UserActivityController;
 use App\Http\Controllers\WorkflowDefinitionController;
 use App\Http\Controllers\WorkspaceExportController;
-use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -74,8 +73,7 @@ Route::post('citizen-engagement/track', [PublicCitizenCaseController::class, 'tr
 Route::get('citizen-engagement/tracking', [PublicCitizenCaseController::class, 'tracking'])->name('citizen-engagement.tracking');
 Route::post('citizen-engagement/rate', [PublicCitizenCaseController::class, 'rate'])->middleware('throttle:citizen-tracking')->name('citizen-engagement.rate');
 
-Route::prefix('{current_team}')
-    ->middleware(['auth', 'verified', EnsureTeamMembership::class])
+Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
         Route::get('search', GlobalSearchController::class)->middleware('throttle:global-search')->name('search.global');

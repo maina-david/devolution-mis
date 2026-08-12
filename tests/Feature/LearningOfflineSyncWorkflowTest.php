@@ -27,7 +27,7 @@ class LearningOfflineSyncWorkflowTest extends TestCase
         [$county, $learner, $reviewer, $enrollment, $lesson, $package] = $this->scenario();
         $payload = $this->payload($package, $lesson);
 
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect()->assertSessionHasNoErrors();
 
         $sync = LearningOfflineSync::query()->sole();
         $this->assertTrue(Str::isUuid($sync->id));
@@ -40,7 +40,7 @@ class LearningOfflineSyncWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $sync->id, 'action' => 'learning.offline-sync.submitted']);
         $this->assertDatabaseCount('learning_progress', 0);
 
-        $this->actingAs($reviewer)->post(route('learning.offline-syncs.decision.store', [$reviewer->currentTeam->slug, $sync]), ['decision' => 'approve', 'rationale' => 'The package checksum, event chronology and learner enrolment were independently reconciled.'])->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs($reviewer)->post(route('learning.offline-syncs.decision.store', [$sync]), ['decision' => 'approve', 'rationale' => 'The package checksum, event chronology and learner enrolment were independently reconciled.'])->assertRedirect()->assertSessionHasNoErrors();
 
         $sync->refresh();
         $progress = LearningProgress::query()->sole();
@@ -63,21 +63,21 @@ class LearningOfflineSyncWorkflowTest extends TestCase
         [, $learner, , $enrollment, $lesson, $package] = $this->scenario();
         $payload = $this->payload($package, $lesson);
 
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
         $this->assertDatabaseCount('learning_offline_syncs', 1);
 
         $collision = $payload;
         $collision['events'][0]['time_spent_seconds'] = 999;
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($collision)])->assertStatus(409);
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($collision)])->assertStatus(409);
         $tampered = $payload;
         $tampered['client_sync_id'] = (string) Str::uuid();
         $tampered['package_manifest_checksum'] = str_repeat('0', 64);
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($tampered)])->assertStatus(409);
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($tampered)])->assertStatus(409);
 
         $sync = LearningOfflineSync::query()->sole();
         $learner->givePermissionTo(ProgrammePermission::ReviewLearning->value);
-        $this->actingAs($learner)->post(route('learning.offline-syncs.decision.store', [$learner->currentTeam->slug, $sync]), ['decision' => 'approve', 'rationale' => 'A learner must never approve their own synchronized learning activity.'])->assertForbidden();
+        $this->actingAs($learner)->post(route('learning.offline-syncs.decision.store', [$sync]), ['decision' => 'approve', 'rationale' => 'A learner must never approve their own synchronized learning activity.'])->assertForbidden();
         $this->assertSame('pending', $sync->refresh()->status);
         $this->assertDatabaseCount('learning_progress', 0);
     }
@@ -86,11 +86,11 @@ class LearningOfflineSyncWorkflowTest extends TestCase
     {
         [, $learner, $reviewer, $enrollment, $lesson, $package] = $this->scenario();
         $payload = $this->payload($package, $lesson, 50, 'in_progress');
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($payload)])->assertRedirect();
         $sync = LearningOfflineSync::query()->sole();
 
-        $this->actingAs($learner)->patch(route('learning.lessons.complete', [$learner->currentTeam->slug, $enrollment, $lesson]), ['time_spent_seconds' => 1800, 'state' => ['source' => 'online']])->assertRedirect();
-        $this->actingAs($reviewer)->post(route('learning.offline-syncs.decision.store', [$reviewer->currentTeam->slug, $sync]), ['decision' => 'approve', 'rationale' => 'Reconcile the retained offline payload against the current official progress snapshot.'])->assertRedirect();
+        $this->actingAs($learner)->patch(route('learning.lessons.complete', [$enrollment, $lesson]), ['time_spent_seconds' => 1800, 'state' => ['source' => 'online']])->assertRedirect();
+        $this->actingAs($reviewer)->post(route('learning.offline-syncs.decision.store', [$sync]), ['decision' => 'approve', 'rationale' => 'Reconcile the retained offline payload against the current official progress snapshot.'])->assertRedirect();
 
         $this->assertSame('conflict', $sync->refresh()->status);
         $progress = LearningProgress::query()->sole();
@@ -109,18 +109,18 @@ class LearningOfflineSyncWorkflowTest extends TestCase
         $otherLesson = LearningLesson::factory()->create(['learning_module_id' => LearningModule::factory()->create(['learning_course_id' => $otherCourse->id])->id, 'content_type' => 'text']);
         $otherPackage = LearningOfflinePackage::factory()->create(['learning_course_id' => $otherCourse->id, 'generated_at' => now()->subHour()]);
 
-        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$learner->currentTeam->slug, $enrollment]), ['sync_file' => $this->jsonFile($this->payload($package, $lesson))])->assertRedirect();
-        $this->actingAs($otherLearner)->post(route('learning.enrollments.offline-syncs.store', [$otherLearner->currentTeam->slug, $otherEnrollment]), ['sync_file' => $this->jsonFile($this->payload($otherPackage, $otherLesson))])->assertRedirect();
+        $this->actingAs($learner)->post(route('learning.enrollments.offline-syncs.store', [$enrollment]), ['sync_file' => $this->jsonFile($this->payload($package, $lesson))])->assertRedirect();
+        $this->actingAs($otherLearner)->post(route('learning.enrollments.offline-syncs.store', [$otherEnrollment]), ['sync_file' => $this->jsonFile($this->payload($otherPackage, $otherLesson))])->assertRedirect();
         $ownSync = LearningOfflineSync::query()->where('submitted_by', $learner->id)->sole();
 
-        $this->actingAs($learner)->get(route('learning.index', [$learner->currentTeam->slug, 'per_page' => 10]))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($learner)->get(route('learning.index', ['per_page' => 10]))->assertOk()->assertInertia(fn ($page) => $page
             ->where('offlineSyncs.total', 1)
             ->where('offlineSyncs.data.0.id', $ownSync->id)
             ->where('offlineSyncs.data.0.county.id', $county->id));
-        $this->actingAs($reviewer)->get(route('learning.index', [$reviewer->currentTeam->slug, 'per_page' => 10]))->assertOk()->assertInertia(fn ($page) => $page->where('offlineSyncs.total', 2));
+        $this->actingAs($reviewer)->get(route('learning.index', ['per_page' => 10]))->assertOk()->assertInertia(fn ($page) => $page->where('offlineSyncs.total', 2));
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($learner)->get(route('workspace.export', [$learner->currentTeam->slug, 'learning-offline-syncs', $format]))->assertOk()->assertDownload();
+            $this->actingAs($learner)->get(route('workspace.export', ['learning-offline-syncs', $format]))->assertOk()->assertDownload();
         }
     }
 

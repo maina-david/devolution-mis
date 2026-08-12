@@ -378,9 +378,9 @@ export default function SecurityGovernance({
     filters,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -520,28 +520,16 @@ export default function SecurityGovernance({
                         </div>
                         {capabilities.manage && (
                             <div className="flex flex-wrap gap-2">
-                                <ThreatForm
-                                    teamSlug={currentTeam.slug}
-                                    users={users}
-                                />
-                                <CampaignForm
-                                    teamSlug={currentTeam.slug}
-                                    users={users}
-                                    roles={roles}
-                                />
+                                <ThreatForm users={users} />
+                                <CampaignForm users={users} roles={roles} />
                                 <DelegationForm
-                                    teamSlug={currentTeam.slug}
                                     users={delegationUsers}
                                     permissions={delegablePermissions}
                                     counties={counties}
                                     catalogue={referenceDataCatalogue}
                                 />
-                                <SecurityIncidentForm
-                                    teamSlug={currentTeam.slug}
-                                    users={users}
-                                />
+                                <SecurityIncidentForm users={users} />
                                 <IdentityLifecycleForm
-                                    teamSlug={currentTeam.slug}
                                     users={identityUsers}
                                     roles={roles}
                                     counties={counties}
@@ -670,7 +658,6 @@ export default function SecurityGovernance({
                                 'identity_page',
                             )}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'identity-lifecycle',
                                 filters,
                             }}
@@ -682,7 +669,6 @@ export default function SecurityGovernance({
                                 return change ? (
                                     <IdentityLifecycleAction
                                         change={change}
-                                        teamSlug={currentTeam.slug}
                                         mayDecide={
                                             capabilities.certify &&
                                             change.status === 'pending'
@@ -701,7 +687,6 @@ export default function SecurityGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <SecurityIncidentRegisterHeader
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                         count={securityIncidents.total}
                     />
@@ -725,7 +710,6 @@ export default function SecurityGovernance({
                                 'incident_page',
                             )}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'security-incidents',
                                 filters,
                             }}
@@ -737,7 +721,6 @@ export default function SecurityGovernance({
                                 return incident ? (
                                     <SecurityIncidentAction
                                         incident={incident}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                         currentUserId={capabilities.userId}
                                     />
@@ -787,10 +770,7 @@ export default function SecurityGovernance({
                                 );
 
                                 return scan ? (
-                                    <SupplyChainScanAction
-                                        scan={scan}
-                                        teamSlug={currentTeam.slug}
-                                    />
+                                    <SupplyChainScanAction scan={scan} />
                                 ) : null;
                             }}
                         />
@@ -804,7 +784,6 @@ export default function SecurityGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <DelegationRegisterHeader
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                         count={delegations.total}
                     />
@@ -827,7 +806,6 @@ export default function SecurityGovernance({
                                 'delegations_page',
                             )}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'access-delegations',
                                 filters,
                             }}
@@ -839,7 +817,6 @@ export default function SecurityGovernance({
                                 return delegation ? (
                                     <DelegationAction
                                         delegation={delegation}
-                                        teamSlug={currentTeam.slug}
                                         capabilities={capabilities}
                                     />
                                 ) : null;
@@ -885,7 +862,6 @@ export default function SecurityGovernance({
                                 return threat ? (
                                     <ThreatAction
                                         threat={threat}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -927,7 +903,6 @@ export default function SecurityGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                         count={accessItems.total}
                     />
@@ -946,7 +921,6 @@ export default function SecurityGovernance({
                             rows={accessRows}
                             pagination={pagination(accessItems, 'access_page')}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'security-governance',
                                 filters,
                             }}
@@ -958,7 +932,6 @@ export default function SecurityGovernance({
                                 return item ? (
                                     <AccessAction
                                         item={item}
-                                        teamSlug={currentTeam.slug}
                                         capabilities={capabilities}
                                     />
                                 ) : null;
@@ -978,12 +951,10 @@ export default function SecurityGovernance({
 }
 
 function IdentityLifecycleForm({
-    teamSlug,
     users,
     roles,
     counties,
 }: {
-    teamSlug: string;
     users: IdentityUser[];
     roles: Option[];
     counties: CountyIdentityValue[];
@@ -998,10 +969,7 @@ function IdentityLifecycleForm({
             icon={RefreshCw}
             size="xl"
         >
-            <Form
-                action={storeIdentityLifecycle(teamSlug)}
-                className="grid gap-5 pt-4"
-            >
+            <Form action={storeIdentityLifecycle()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <SearchableSelect
                         id="identity-event-type"
@@ -1085,11 +1053,9 @@ function IdentityLifecycleForm({
 
 function IdentityLifecycleAction({
     change,
-    teamSlug,
     mayDecide,
 }: {
     change: IdentityLifecycle;
-    teamSlug: string;
     mayDecide: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -1210,7 +1176,6 @@ function IdentityLifecycleAction({
                         {mayDecide && (
                             <Form
                                 action={decideIdentityLifecycle({
-                                    current_team: teamSlug,
                                     identityLifecycleRequest: change.id,
                                 })}
                                 className="grid gap-4 rounded-xl border p-4"
@@ -1238,13 +1203,7 @@ function IdentityLifecycleAction({
     );
 }
 
-function SecurityIncidentForm({
-    teamSlug,
-    users,
-}: {
-    teamSlug: string;
-    users: Option[];
-}) {
+function SecurityIncidentForm({ users }: { users: Option[] }) {
     const [recordType, setRecordType] = useState('live');
 
     return (
@@ -1255,10 +1214,7 @@ function SecurityIncidentForm({
             icon={RadioTower}
             size="xl"
         >
-            <Form
-                action={storeSecurityIncident(teamSlug)}
-                className="grid gap-5 pt-4"
-            >
+            <Form action={storeSecurityIncident()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <SearchableSelect
                         id="security-incident-type"
@@ -1349,12 +1305,10 @@ function SecurityIncidentForm({
 
 function SecurityIncidentAction({
     incident,
-    teamSlug,
     canManage,
     currentUserId,
 }: {
     incident: SecurityIncident;
-    teamSlug: string;
     canManage: boolean;
     currentUserId: string | null;
 }) {
@@ -1434,19 +1388,12 @@ function SecurityIncidentAction({
                         {surface === 'transition' && transition ? (
                             <SecurityIncidentTransitionForm
                                 incident={incident}
-                                teamSlug={teamSlug}
                                 transition={transition}
                             />
                         ) : surface === 'upload' ? (
-                            <SecurityIncidentDocumentForm
-                                incident={incident}
-                                teamSlug={teamSlug}
-                            />
+                            <SecurityIncidentDocumentForm incident={incident} />
                         ) : (
-                            <SecurityIncidentDetails
-                                incident={incident}
-                                teamSlug={teamSlug}
-                            />
+                            <SecurityIncidentDetails incident={incident} />
                         )}
                     </div>
                 </SheetContent>
@@ -1455,13 +1402,7 @@ function SecurityIncidentAction({
     );
 }
 
-function SecurityIncidentDetails({
-    incident,
-    teamSlug,
-}: {
-    incident: SecurityIncident;
-    teamSlug: string;
-}) {
+function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
     return (
         <>
             <dl className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
@@ -1574,7 +1515,6 @@ function SecurityIncidentDetails({
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     href={previewEvidence.url({
-                                                        current_team: teamSlug,
                                                         document: document.id,
                                                     })}
                                                 >
@@ -1585,7 +1525,6 @@ function SecurityIncidentDetails({
                                     <Button variant="outline" size="sm" asChild>
                                         <a
                                             href={downloadEvidence.url({
-                                                current_team: teamSlug,
                                                 document: document.id,
                                             })}
                                         >
@@ -1608,17 +1547,14 @@ function SecurityIncidentDetails({
 
 function SecurityIncidentTransitionForm({
     incident,
-    teamSlug,
     transition,
 }: {
     incident: SecurityIncident;
-    teamSlug: string;
     transition: string;
 }) {
     return (
         <Form
             action={transitionSecurityIncident({
-                current_team: teamSlug,
                 securityIncident: incident.id,
             })}
             className="grid gap-4"
@@ -1675,15 +1611,12 @@ function SecurityIncidentTransitionForm({
 
 function SecurityIncidentDocumentForm({
     incident,
-    teamSlug,
 }: {
     incident: SecurityIncident;
-    teamSlug: string;
 }) {
     return (
         <Form
             action={storeSecurityIncidentDocument({
-                current_team: teamSlug,
                 securityIncident: incident.id,
             })}
             className="grid gap-4"
@@ -1725,13 +1658,7 @@ function SecurityIncidentDocumentForm({
     );
 }
 
-function SupplyChainScanAction({
-    scan,
-    teamSlug,
-}: {
-    scan: SupplyChainScan;
-    teamSlug: string;
-}) {
+function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -1841,7 +1768,6 @@ function SupplyChainScanAction({
                             <Button asChild className="w-full sm:w-fit">
                                 <a
                                     href={downloadSupplyChainArtifact.url([
-                                        teamSlug,
                                         scan.id,
                                     ])}
                                 >
@@ -1869,13 +1795,11 @@ function EvidenceDetail({ label, value }: { label: string; value: string }) {
 }
 
 function DelegationForm({
-    teamSlug,
     users,
     permissions,
     counties,
     catalogue,
 }: {
-    teamSlug: string;
     users: DelegationUser[];
     permissions: Option[];
     counties: CountyIdentityValue[];
@@ -1898,10 +1822,7 @@ function DelegationForm({
                     : 'Publish an effective reference-data catalogue before requesting temporary access.'
             }
         >
-            <Form
-                action={storeDelegation(teamSlug)}
-                className="grid gap-5 pt-4"
-            >
+            <Form action={storeDelegation()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <SearchableSelect
                         id="delegation-beneficiary"
@@ -1981,11 +1902,9 @@ function DelegationForm({
 
 function DelegationAction({
     delegation,
-    teamSlug,
     capabilities,
 }: {
     delegation: AccessDelegation;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<
@@ -2067,7 +1986,6 @@ function DelegationAction({
                         {surface === 'decide' ? (
                             <Form
                                 action={decideDelegation({
-                                    current_team: teamSlug,
                                     accessDelegation: delegation.id,
                                 })}
                                 className="grid gap-4"
@@ -2089,7 +2007,6 @@ function DelegationAction({
                         ) : surface === 'revoke' ? (
                             <Form
                                 action={revokeDelegation({
-                                    current_team: teamSlug,
                                     accessDelegation: delegation.id,
                                 })}
                                 className="grid gap-4"
@@ -2105,7 +2022,6 @@ function DelegationAction({
                         ) : surface === 'review' ? (
                             <Form
                                 action={reviewDelegation({
-                                    current_team: teamSlug,
                                     accessDelegation: delegation.id,
                                 })}
                                 className="grid gap-4"
@@ -2206,11 +2122,9 @@ function DelegationAction({
 
 function ThreatAction({
     threat,
-    teamSlug,
     canManage,
 }: {
     threat: Threat;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [surface, setSurface] = useState<'detail' | 'review' | null>(null);
@@ -2260,10 +2174,7 @@ function ThreatAction({
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
                         {surface === 'review' ? (
-                            <ThreatReviewForm
-                                teamSlug={teamSlug}
-                                threat={threat}
-                            />
+                            <ThreatReviewForm threat={threat} />
                         ) : (
                             <Details
                                 entries={[
@@ -2311,19 +2222,10 @@ function ThreatAction({
     );
 }
 
-function ThreatReviewForm({
-    teamSlug,
-    threat,
-}: {
-    teamSlug: string;
-    threat: Threat;
-}) {
+function ThreatReviewForm({ threat }: { threat: Threat }) {
     return (
         <Form
-            action={reviewThreat({
-                current_team: teamSlug,
-                securityThreat: threat.id,
-            })}
+            action={reviewThreat({ securityThreat: threat.id })}
             className="grid gap-4"
         >
             <p className="rounded-lg border bg-muted/40 p-3 text-sm">
@@ -2464,11 +2366,9 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
 function AccessAction({
     item,
-    teamSlug,
     capabilities,
 }: {
     item: AccessItem;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<
@@ -2539,14 +2439,10 @@ function AccessAction({
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
                         {surface === 'decide' ? (
-                            <AccessDecisionForm
-                                teamSlug={teamSlug}
-                                item={item}
-                            />
+                            <AccessDecisionForm item={item} />
                         ) : surface === 'reinstate' ? (
                             <Form
                                 action={reinstate({
-                                    current_team: teamSlug,
                                     accessReviewItem: item.id,
                                 })}
                                 className="grid gap-4"
@@ -2638,21 +2534,12 @@ function AccessAction({
     );
 }
 
-function AccessDecisionForm({
-    teamSlug,
-    item,
-}: {
-    teamSlug: string;
-    item: AccessItem;
-}) {
+function AccessDecisionForm({ item }: { item: AccessItem }) {
     const [decision, setDecision] = useState('');
 
     return (
         <Form
-            action={decide({
-                current_team: teamSlug,
-                accessReviewItem: item.id,
-            })}
+            action={decide({ accessReviewItem: item.id })}
             className="grid gap-4"
         >
             <p className="rounded-lg border bg-muted/40 p-3 text-sm">
@@ -2689,13 +2576,7 @@ function AccessDecisionForm({
     );
 }
 
-function ThreatForm({
-    teamSlug,
-    users,
-}: {
-    teamSlug: string;
-    users: Option[];
-}) {
+function ThreatForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title="Register threat scenario"
@@ -2704,7 +2585,7 @@ function ThreatForm({
             icon={Plus}
             size="xl"
         >
-            <Form action={storeThreat(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeThreat()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field name="reference" label="Threat reference" />
                     <Field name="title" label="Threat title" />
@@ -2767,15 +2648,7 @@ function ThreatForm({
     );
 }
 
-function CampaignForm({
-    teamSlug,
-    users,
-    roles,
-}: {
-    teamSlug: string;
-    users: Option[];
-    roles: Option[];
-}) {
+function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
     return (
         <FormSheet
             title="Launch access certification"
@@ -2784,7 +2657,7 @@ function CampaignForm({
             icon={Fingerprint}
             size="xl"
         >
-            <Form action={launchCampaign(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={launchCampaign()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field name="reference" label="Campaign reference" />
                     <Field name="name" label="Campaign name" />
@@ -2827,11 +2700,9 @@ function CampaignForm({
 }
 
 function RegisterHeader({
-    teamSlug,
     filters,
     count,
 }: {
-    teamSlug: string;
     filters: Record<string, string | undefined>;
     count: number;
 }) {
@@ -2850,7 +2721,6 @@ function RegisterHeader({
                             href={
                                 exportMethod(
                                     {
-                                        current_team: teamSlug,
                                         workspace: 'security-governance',
                                         format,
                                     },
@@ -2868,11 +2738,9 @@ function RegisterHeader({
 }
 
 function SecurityIncidentRegisterHeader({
-    teamSlug,
     filters,
     count,
 }: {
-    teamSlug: string;
     filters: Record<string, string | undefined>;
     count: number;
 }) {
@@ -2893,11 +2761,7 @@ function SecurityIncidentRegisterHeader({
                         <a
                             href={
                                 exportMethod(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'security-incidents',
-                                        format,
-                                    },
+                                    { workspace: 'security-incidents', format },
                                     { query: filters },
                                 ).url
                             }
@@ -2912,11 +2776,9 @@ function SecurityIncidentRegisterHeader({
 }
 
 function DelegationRegisterHeader({
-    teamSlug,
     filters,
     count,
 }: {
-    teamSlug: string;
     filters: Record<string, string | undefined>;
     count: number;
 }) {
@@ -2937,11 +2799,7 @@ function DelegationRegisterHeader({
                         <a
                             href={
                                 exportMethod(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'access-delegations',
-                                        format,
-                                    },
+                                    { workspace: 'access-delegations', format },
                                     { query: filters },
                                 ).url
                             }

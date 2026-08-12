@@ -16,7 +16,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->uuid('user_activity_session_id')->nullable();
-            $table->uuid('team_id')->nullable();
             $table->string('route_name');
             $table->text('path');
             $table->string('page_title');
@@ -26,7 +25,6 @@ return new class extends Migration
             $table->timestampsTz();
             $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
             $table->foreign('user_activity_session_id')->references('id')->on('user_activity_sessions')->restrictOnDelete();
-            $table->foreign('team_id')->references('id')->on('teams')->nullOnDelete();
             $table->index(['user_id', 'viewed_at']);
             $table->index(['user_activity_session_id', 'viewed_at']);
         });

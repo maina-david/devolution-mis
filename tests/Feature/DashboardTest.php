@@ -14,8 +14,21 @@ class DashboardTest extends TestCase
 
     public function test_guests_are_redirected_to_the_login_page(): void
     {
-        $this->get(route('dashboard', ['current_team' => 'unavailable-workspace']))
+        $this->get(route('dashboard'))
             ->assertRedirect(route('login'));
+    }
+
+    public function test_personal_workspace_slugs_are_not_valid_dashboard_routes(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get('/samuel-mutuas-workspace-019ff430/dashboard')
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->get('/dashboard')
+            ->assertOk();
     }
 
     public function test_authenticated_users_can_visit_the_dashboard_without_invitation_props(): void
@@ -41,7 +54,7 @@ class DashboardTest extends TestCase
         $countyOfficial = User::factory()->countyOfficial()->create(['county_id' => $county->id]);
         $platformAdmin = User::factory()->platformAdmin()->create(['county_id' => $county->id]);
 
-        $this->actingAs($countyOfficial)->get(route('dashboard', $countyOfficial->currentTeam->slug))
+        $this->actingAs($countyOfficial)->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.user.county_identity.kind', 'county')
@@ -49,7 +62,7 @@ class DashboardTest extends TestCase
                 ->where('auth.user.county_identity.name', 'Kisumu')
                 ->where('auth.user.county_identity.logoUrl', '/images/counties/kisumu.webp'));
 
-        $this->actingAs($platformAdmin)->get(route('dashboard', $platformAdmin->currentTeam->slug))
+        $this->actingAs($platformAdmin)->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.user.county_identity', null));

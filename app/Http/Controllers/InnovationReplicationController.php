@@ -70,21 +70,21 @@ class InnovationReplicationController extends Controller
         return back()->with('success', "Replication {$replication->reference} created.");
     }
 
-    public function update(UpdateInnovationReplicationRequest $request, string $currentTeam, InnovationReplication $replication, UpdateInnovationReplication $action): RedirectResponse
+    public function update(UpdateInnovationReplicationRequest $request, InnovationReplication $replication, UpdateInnovationReplication $action): RedirectResponse
     {
         $action->handle($replication, $this->user($request), $request->validated());
 
         return back()->with('success', 'Replication workflow updated.');
     }
 
-    public function verify(VerifyInnovationReplicationRequest $request, string $currentTeam, InnovationReplication $replication, VerifyInnovationReplication $action): RedirectResponse
+    public function verify(VerifyInnovationReplicationRequest $request, InnovationReplication $replication, VerifyInnovationReplication $action): RedirectResponse
     {
         $action->handle($replication, $this->user($request), $request->validated());
 
         return back()->with('success', 'Independent adoption decision recorded.');
     }
 
-    public function export(WorkspaceIndexRequest $request, string $currentTeam, string $format): Response
+    public function export(WorkspaceIndexRequest $request, string $format): Response
     {
         Gate::authorize(ProgrammePermission::ViewKnowledge->value);
         abort_unless(in_array($format, ['csv', 'xlsx', 'json', 'pdf'], true), 404);

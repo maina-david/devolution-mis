@@ -66,7 +66,7 @@ class AccessControlController extends Controller
         ]);
     }
 
-    public function updateRole(UpdateRolePermissionsRequest $request, string $currentTeam, string $role, AuditLogger $auditLogger): RedirectResponse
+    public function updateRole(UpdateRolePermissionsRequest $request, string $role, AuditLogger $auditLogger): RedirectResponse
     {
         $actor = $this->user($request);
         $roleModel = Role::query()->where('name', $role)->firstOrFail();
@@ -88,7 +88,7 @@ class AccessControlController extends Controller
         return back();
     }
 
-    public function updateUser(UpdateUserDirectPermissionsRequest $request, string $currentTeam, User $programmeUser, AuditLogger $auditLogger): RedirectResponse
+    public function updateUser(UpdateUserDirectPermissionsRequest $request, User $programmeUser, AuditLogger $auditLogger): RedirectResponse
     {
         $actor = $this->user($request);
         $before = $programmeUser->getDirectPermissions()->pluck('name')->sort()->values()->all();

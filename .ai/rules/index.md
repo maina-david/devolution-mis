@@ -19,6 +19,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | routes/**,resources/js/** | .ai/rules/js.md |
 | app/{Actions,Models,Http/Controllers,Http/Requests}/**/*Learning*.php,database/migrations/*learning_offline_package*,resources/js/pages/learning/**,tests/Feature/LearningOfflinePackageTest.php | .ai/rules/learning-feature.md |
 | app/{Actions,Models,Services,Http/Controllers}/**,database/migrations/**,tests/Feature/** | .ai/rules/migrations-feature.md |
+| {routes/**,app/Http/Responses/**,app/Models/User.php,database/migrations/**,resources/js/**,tests/**} | .ai/rules/migrations-js.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*{ServiceDesk,SupportTicket}*.php,resources/js/pages/support-desk/**,database/migrations/*service_desk*,database/migrations/*support_ticket*,database/seeders/ServiceDeskPolicySeeder.php | .ai/rules/migrations-migrations-seeders.md |
 | database/migrations/**,database/seeders/** | .ai/rules/migrations-seeders.md |
 | app/Actions/StartWorkflow.php,app/Actions/TransitionWorkflow.php,app/Services/WorkflowRuleEvaluator.php,app/Services/WorkflowSlaMonitor.php,app/Models/WorkflowInstance.php,app/Models/WorkflowTransition.php,database/migrations/*workflow_instances*,database/migrations/*workflow_transitions* | .ai/rules/migrations.md |

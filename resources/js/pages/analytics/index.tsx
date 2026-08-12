@@ -162,9 +162,9 @@ export default function AnalyticsReporting({
     catalogue,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -218,12 +218,10 @@ export default function AnalyticsReporting({
                         {capabilities.manage && (
                             <div className="flex flex-wrap gap-2">
                                 <DashboardForm
-                                    team={currentTeam.slug}
                                     options={options}
                                     catalogue={catalogue}
                                 />
                                 <ScheduleForm
-                                    team={currentTeam.slug}
                                     options={options}
                                     catalogue={catalogue}
                                 />
@@ -286,7 +284,6 @@ export default function AnalyticsReporting({
                         <DashboardPanel
                             key={dashboard.id}
                             dashboard={dashboard}
-                            team={currentTeam.slug}
                             options={options}
                             capabilities={capabilities}
                         />
@@ -315,7 +312,6 @@ export default function AnalyticsReporting({
                                 <ScheduleCard
                                     key={schedule.id}
                                     schedule={schedule}
-                                    team={currentTeam.slug}
                                     capabilities={capabilities}
                                 />
                             ))}
@@ -360,10 +356,7 @@ export default function AnalyticsReporting({
                                     );
 
                                     return report ? (
-                                        <RunAction
-                                            report={report}
-                                            team={currentTeam.slug}
-                                        />
+                                        <RunAction report={report} />
                                     ) : null;
                                 }}
                             />
@@ -383,12 +376,10 @@ export default function AnalyticsReporting({
 
 function DashboardPanel({
     dashboard,
-    team,
     options,
     capabilities,
 }: {
     dashboard: Dashboard;
-    team: string;
     options: Props['options'];
     capabilities: Props['capabilities'];
 }) {
@@ -404,7 +395,6 @@ function DashboardPanel({
                         {dashboard.county && (
                             <Link
                                 href={countyShow({
-                                    current_team: team,
                                     county: dashboard.county.id,
                                 })}
                             >
@@ -437,7 +427,6 @@ function DashboardPanel({
                 <div className="flex gap-2">
                     {capabilities.manage && dashboard.status === 'draft' && (
                         <WidgetForm
-                            team={team}
                             dashboard={dashboard}
                             metrics={options.metrics}
                         />
@@ -449,7 +438,6 @@ function DashboardPanel({
                                 onClick={() =>
                                     router.patch(
                                         publish.url({
-                                            current_team: team,
                                             dashboard: dashboard.id,
                                         }),
                                     )
@@ -462,14 +450,14 @@ function DashboardPanel({
             </div>
             <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
                 {dashboard.widgets.map((widget) => (
-                    <WidgetCard key={widget.id} widget={widget} team={team} />
+                    <WidgetCard key={widget.id} widget={widget} />
                 ))}
             </div>
         </section>
     );
 }
 
-function WidgetCard({ widget, team }: { widget: Widget; team: string }) {
+function WidgetCard({ widget }: { widget: Widget }) {
     return (
         <Card
             className={
@@ -511,10 +499,7 @@ function WidgetCard({ widget, team }: { widget: Widget; team: string }) {
                         {widget.measurement.series.map((entry) => (
                             <Link
                                 key={entry.county.id}
-                                href={countyShow({
-                                    current_team: team,
-                                    county: entry.county.id,
-                                })}
+                                href={countyShow({ county: entry.county.id })}
                                 className="flex items-center justify-between rounded-lg border p-2 hover:bg-muted/50"
                             >
                                 <CountyIdentity county={entry.county} compact />
@@ -536,11 +521,9 @@ function WidgetCard({ widget, team }: { widget: Widget; team: string }) {
 }
 
 function DashboardForm({
-    team,
     options,
     catalogue,
 }: {
-    team: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -558,7 +541,7 @@ function DashboardForm({
                     : undefined
             }
         >
-            <Form action={storeDashboard(team)} className="grid gap-5 pt-4">
+            <Form action={storeDashboard()} className="grid gap-5 pt-4">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -649,11 +632,9 @@ function DashboardForm({
 }
 
 function WidgetForm({
-    team,
     dashboard,
     metrics,
 }: {
-    team: string;
     dashboard: Dashboard;
     metrics: Option[];
 }) {
@@ -668,10 +649,7 @@ function WidgetForm({
             icon={BarChart3}
         >
             <Form
-                action={storeWidget({
-                    current_team: team,
-                    dashboard: dashboard.id,
-                })}
+                action={storeWidget({ dashboard: dashboard.id })}
                 className="grid gap-4 pt-4"
             >
                 <Field name="title" label="Widget title" />
@@ -719,11 +697,9 @@ function WidgetForm({
 }
 
 function ScheduleForm({
-    team,
     options,
     catalogue,
 }: {
-    team: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -745,7 +721,7 @@ function ScheduleForm({
                       : undefined
             }
         >
-            <Form action={storeSchedule(team)} className="grid gap-5 pt-4">
+            <Form action={storeSchedule()} className="grid gap-5 pt-4">
                 {({ processing, errors }) => (
                     <>
                         <input
@@ -827,11 +803,9 @@ function ScheduleForm({
 
 function ScheduleCard({
     schedule,
-    team,
     capabilities,
 }: {
     schedule: ReportSchedule;
-    team: string;
     capabilities: Props['capabilities'];
 }) {
     return (
@@ -873,7 +847,6 @@ function ScheduleCard({
                                     onSelect={() =>
                                         router.patch(
                                             activate.url({
-                                                current_team: team,
                                                 schedule: schedule.id,
                                             }),
                                         )
@@ -887,10 +860,7 @@ function ScheduleCard({
                                 <DropdownMenuItem
                                     onSelect={() =>
                                         router.post(
-                                            run.url({
-                                                current_team: team,
-                                                schedule: schedule.id,
-                                            }),
+                                            run.url({ schedule: schedule.id }),
                                         )
                                     }
                                 >
@@ -911,12 +881,7 @@ function ScheduleCard({
                     </Badge>
                 </div>
                 {schedule.county ? (
-                    <Link
-                        href={countyShow({
-                            current_team: team,
-                            county: schedule.county.id,
-                        })}
-                    >
+                    <Link href={countyShow({ county: schedule.county.id })}>
                         <CountyIdentity county={schedule.county} compact />
                     </Link>
                 ) : (
@@ -935,7 +900,7 @@ function ScheduleCard({
     );
 }
 
-function RunAction({ report, team }: { report: ReportRun; team: string }) {
+function RunAction({ report }: { report: ReportRun }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -956,12 +921,7 @@ function RunAction({ report, team }: { report: ReportRun; team: string }) {
                     </DropdownMenuItem>
                     {report.status === 'completed' && (
                         <DropdownMenuItem asChild>
-                            <a
-                                href={download.url({
-                                    current_team: team,
-                                    run: report.id,
-                                })}
-                            >
+                            <a href={download.url({ run: report.id })}>
                                 <Download /> Download verified artifact
                             </a>
                         </DropdownMenuItem>

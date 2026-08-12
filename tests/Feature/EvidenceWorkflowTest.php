@@ -25,7 +25,7 @@ class EvidenceWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
         Notification::fake();
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Annual Development Plan 2025/26',
             'category' => 'ADP',
             'source_type' => 'digital',
@@ -47,7 +47,7 @@ class EvidenceWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
         Notification::fake();
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Scanned public participation register',
             'category' => 'Public participation',
             'source_type' => 'scanned',
@@ -59,7 +59,7 @@ class EvidenceWorkflowTest extends TestCase
         $this->assertSame('image/jpeg', $document->mime_type);
         Storage::disk('local')->assertExists($document->path);
         $this->actingAs($official)
-            ->get(route('evidence.preview', [$official->currentTeam->slug, $document]))
+            ->get(route('evidence.preview', [$document]))
             ->assertOk()
             ->assertHeader('Content-Type', 'image/jpeg');
     }
@@ -74,9 +74,9 @@ class EvidenceWorkflowTest extends TestCase
         $locked = Assessment::factory()->create(['county_id' => $home->id, 'status' => AssessmentStatus::Approved]);
         $payload = ['title' => 'Evidence', 'category' => 'ADP', 'source_type' => 'digital', 'document' => UploadedFile::fake()->create('evidence.pdf', 100, 'application/pdf')];
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $hidden]), $payload)->assertForbidden();
+        $this->actingAs($official)->post(route('evidence.store', [$hidden]), $payload)->assertForbidden();
         $payload['document'] = UploadedFile::fake()->create('locked.pdf', 100, 'application/pdf');
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $locked]), $payload)->assertStatus(409);
+        $this->actingAs($official)->post(route('evidence.store', [$locked]), $payload)->assertStatus(409);
         $this->assertSame(0, AssessmentDocument::count());
     }
 
@@ -92,8 +92,8 @@ class EvidenceWorkflowTest extends TestCase
         $hidden = AssessmentDocument::factory()->create(['assessment_id' => $otherAssessment->id, 'county_id' => $other->id, 'verification_status' => 'pending']);
         Notification::fake();
 
-        $this->actingAs($assessor)->patch(route('evidence.verify', [$assessor->currentTeam->slug, $document]), ['status' => 'verified'])->assertRedirect();
-        $this->actingAs($assessor)->patch(route('evidence.verify', [$assessor->currentTeam->slug, $hidden]), ['status' => 'rejected'])->assertForbidden();
+        $this->actingAs($assessor)->patch(route('evidence.verify', [$document]), ['status' => 'verified'])->assertRedirect();
+        $this->actingAs($assessor)->patch(route('evidence.verify', [$hidden]), ['status' => 'rejected'])->assertForbidden();
 
         $this->assertSame('verified', $document->fresh()?->verification_status);
         $this->assertSame('pending', $hidden->fresh()?->verification_status);
@@ -106,7 +106,7 @@ class EvidenceWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id]);
         $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id]);
 
-        $this->actingAs($official)->patch(route('evidence.verify', [$official->currentTeam->slug, $document]), ['status' => 'verified'])->assertForbidden();
+        $this->actingAs($official)->patch(route('evidence.verify', [$document]), ['status' => 'verified'])->assertForbidden();
     }
 
     public function test_authorized_users_can_download_evidence_only_in_their_county_scope(): void
@@ -133,11 +133,11 @@ class EvidenceWorkflowTest extends TestCase
         $hidden->update(['content_checksum' => hash('sha256', 'hidden evidence')]);
 
         $this->actingAs($official)
-            ->get(route('evidence.download', [$official->currentTeam->slug, $visible]))
+            ->get(route('evidence.download', [$visible]))
             ->assertOk()
             ->assertDownload();
         $this->actingAs($official)
-            ->get(route('evidence.download', [$official->currentTeam->slug, $hidden]))
+            ->get(route('evidence.download', [$hidden]))
             ->assertForbidden();
     }
 }

@@ -17,12 +17,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { supersede } from '@/routes/monitoring-evaluation/indicators';
 
 export default function IndicatorSupersessionSheet({
-    teamSlug,
     indicator,
     open,
     onOpenChange,
 }: {
-    teamSlug: string;
     indicator: IndicatorDefinitionItem | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -41,10 +39,7 @@ export default function IndicatorSupersessionSheet({
                 </SheetHeader>
                 {indicator && (
                     <Form
-                        {...supersede.form({
-                            current_team: teamSlug,
-                            indicator: indicator.id,
-                        })}
+                        {...supersede.form({ indicator: indicator.id })}
                         className="flex flex-col gap-4 px-4 pb-8"
                         onSuccess={() => onOpenChange(false)}
                     >

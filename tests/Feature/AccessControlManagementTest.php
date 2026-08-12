@@ -25,7 +25,7 @@ class AccessControlManagementTest extends TestCase
         $target->givePermissionTo(ProgrammePermission::ViewGrants->value);
 
         $this->actingAs($admin)
-            ->get(route('access-control.index', $admin->currentTeam->slug))
+            ->get(route('access-control.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('access-control/index')
@@ -41,7 +41,7 @@ class AccessControlManagementTest extends TestCase
         $role = Role::query()->where('name', UserRole::CountyOfficial->value)->firstOrFail();
         $permissions = [ProgrammePermission::ViewDashboard->value, ProgrammePermission::ViewCountyData->value, ProgrammePermission::ViewProjects->value];
 
-        $this->actingAs($admin)->patch(route('access-control.roles.update', [$admin->currentTeam->slug, $role->name]), [
+        $this->actingAs($admin)->patch(route('access-control.roles.update', [$role->name]), [
             'permissions' => $permissions,
             'reason' => 'Approved least-privilege baseline update for county delivery users.',
         ])->assertRedirect();
@@ -51,7 +51,7 @@ class AccessControlManagementTest extends TestCase
         $this->assertSame($role->id, $event->subject_id);
         $this->assertEqualsCanonicalizing($permissions, $event->metadata['after']);
 
-        $this->actingAs($admin)->patch(route('access-control.roles.update', [$admin->currentTeam->slug, UserRole::PlatformAdmin->value]), [
+        $this->actingAs($admin)->patch(route('access-control.roles.update', [UserRole::PlatformAdmin->value]), [
             'permissions' => [ProgrammePermission::ViewDashboard->value],
             'reason' => 'Attempt to remove recovery controls must be rejected by policy.',
         ])->assertSessionHasErrors('permissions');
@@ -65,7 +65,7 @@ class AccessControlManagementTest extends TestCase
         $target = User::factory()->assessor()->create();
         $direct = [ProgrammePermission::ViewGrants->value, ProgrammePermission::ViewNationalReports->value];
 
-        $this->actingAs($admin)->patch(route('access-control.user-permissions.update', [$admin->currentTeam->slug, $target]), [
+        $this->actingAs($admin)->patch(route('access-control.user-permissions.update', [$target]), [
             'permissions' => $direct,
             'reason' => 'Time-bounded reporting support approved by the accountable programme owner.',
         ])->assertRedirect();
@@ -82,13 +82,13 @@ class AccessControlManagementTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $countyAdmin = User::factory()->countyAdmin(County::factory()->create())->create();
 
-        $this->actingAs($admin)->patch(route('access-control.user-permissions.update', [$admin->currentTeam->slug, $admin]), [
+        $this->actingAs($admin)->patch(route('access-control.user-permissions.update', [$admin]), [
             'permissions' => [ProgrammePermission::ManageOperations->value],
             'reason' => 'Self-service privilege escalation must not be accepted by the platform.',
         ])->assertSessionHasErrors('permissions');
 
         $this->actingAs($countyAdmin)
-            ->get(route('access-control.index', $countyAdmin->currentTeam->slug))
+            ->get(route('access-control.index'))
             ->assertForbidden();
     }
 
@@ -100,7 +100,7 @@ class AccessControlManagementTest extends TestCase
         $this->assertStringContainsString('flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8', $source);
         $this->assertStringContainsString('authenticated-page-header', $source);
         $this->assertStringContainsString('Identity and access governance', $source);
-        $this->assertStringContainsString('index(props.currentTeam.slug)', $source);
+        $this->assertStringContainsString('index()', $source);
         $this->assertStringNotContainsString("href: '#'", $source);
     }
 }

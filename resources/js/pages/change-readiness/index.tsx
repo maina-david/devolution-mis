@@ -158,9 +158,9 @@ export default function ChangeReadiness({
     capabilities,
     catalogue,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -182,9 +182,7 @@ export default function ChangeReadiness({
         cells: [
             cohort.code,
             cohort.wave.code,
-            cohort.county
-                ? countyCell(cohort.county, currentTeam.slug)
-                : 'National',
+            cohort.county ? countyCell(cohort.county) : 'National',
             humanize(cohort.audienceRole),
             `${cohort.participantCount}/${cohort.seatCapacity}`,
             cohort.completedCount,
@@ -222,12 +220,10 @@ export default function ChangeReadiness({
                         {capabilities.manage && (
                             <div className="flex flex-wrap gap-2">
                                 <WaveForm
-                                    team={currentTeam.slug}
                                     counties={options.counties}
                                     catalogue={catalogue}
                                 />
                                 <CohortForm
-                                    team={currentTeam.slug}
                                     waves={waves}
                                     counties={options.counties}
                                     users={options.users}
@@ -292,7 +288,6 @@ export default function ChangeReadiness({
                         <WaveCard
                             key={wave.id}
                             wave={wave}
-                            team={currentTeam.slug}
                             canApprove={capabilities.approve}
                         />
                     ))}
@@ -304,11 +299,7 @@ export default function ChangeReadiness({
                     )}
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
-                    <RegisterHeader
-                        team={currentTeam.slug}
-                        filters={filters}
-                        total={cohorts.total}
-                    />
+                    <RegisterHeader filters={filters} total={cohorts.total} />
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
@@ -331,7 +322,6 @@ export default function ChangeReadiness({
                                 return cohort ? (
                                     <CohortAction
                                         cohort={cohort}
-                                        team={currentTeam.slug}
                                         counties={options.counties}
                                         users={options.users}
                                         canManage={capabilities.manage}
@@ -353,15 +343,7 @@ export default function ChangeReadiness({
     );
 }
 
-function WaveCard({
-    wave,
-    team,
-    canApprove,
-}: {
-    wave: Wave;
-    team: string;
-    canApprove: boolean;
-}) {
+function WaveCard({ wave, canApprove }: { wave: Wave; canApprove: boolean }) {
     const [open, setOpen] = useState(false);
     const progress = wave.plannedParticipants
         ? Math.min(
@@ -422,14 +404,9 @@ function WaveCard({
                                 size="sm"
                                 asChild
                             >
-                                <Link
-                                    href={countyShow({
-                                        current_team: team,
-                                        county: county.id,
-                                    })}
-                                >
+                                <Link href={countyShow({ county: county.id })}>
                                     <CountyIdentity
-                                        county={countyCell(county, team)}
+                                        county={countyCell(county)}
                                         compact
                                     />
                                 </Link>
@@ -487,10 +464,7 @@ function WaveCard({
                         />
                         {canApprove && wave.status !== 'approved' && (
                             <Form
-                                action={approveWave({
-                                    current_team: team,
-                                    wave: wave.id,
-                                })}
+                                action={approveWave({ wave: wave.id })}
                                 className="grid gap-3 rounded-lg border p-4"
                             >
                                 {({ errors, processing }) => (
@@ -523,14 +497,12 @@ function WaveCard({
 
 function CohortAction({
     cohort,
-    team,
     counties,
     users,
     canManage,
     canAssess,
 }: {
     cohort: Cohort;
-    team: string;
     counties: County[];
     users: Option[];
     canManage: boolean;
@@ -636,7 +608,7 @@ function CohortAction({
                             </>
                         ) : surface === 'enroll' ? (
                             <Form
-                                action={storeParticipant(team)}
+                                action={storeParticipant()}
                                 className="grid gap-4"
                             >
                                 <input
@@ -689,7 +661,6 @@ function CohortAction({
                                 {participant && (
                                     <Form
                                         action={assessParticipant({
-                                            current_team: team,
                                             participant: participant.id,
                                         })}
                                         className="grid gap-4"
@@ -738,11 +709,9 @@ function CohortAction({
 }
 
 function WaveForm({
-    team,
     counties,
     catalogue,
 }: {
-    team: string;
     counties: County[];
     catalogue: Props['catalogue'];
 }) {
@@ -760,7 +729,7 @@ function WaveForm({
                     : undefined
             }
         >
-            <Form action={storeWave(team)} className="grid gap-4 pt-4">
+            <Form action={storeWave()} className="grid gap-4 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -819,14 +788,12 @@ function WaveForm({
     );
 }
 function CohortForm({
-    team,
     waves,
     counties,
     users,
     roles,
     catalogue,
 }: {
-    team: string;
     waves: Wave[];
     counties: County[];
     users: Option[];
@@ -850,7 +817,7 @@ function CohortForm({
                     : undefined
             }
         >
-            <Form action={storeCohort(team)} className="grid gap-4 pt-4">
+            <Form action={storeCohort()} className="grid gap-4 pt-4">
                 <SearchableSelect
                     id="cohort-wave"
                     name="rollout_wave_id"
@@ -947,11 +914,9 @@ function CohortForm({
     );
 }
 function RegisterHeader({
-    team,
     filters,
     total,
 }: {
-    team: string;
     filters: Props['filters'];
     total: number;
 }) {
@@ -974,11 +939,7 @@ function RegisterHeader({
                         <DropdownMenuItem key={format} asChild>
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: team,
-                                        workspace: 'change-readiness',
-                                        format,
-                                    },
+                                    { workspace: 'change-readiness', format },
                                     { query: filters },
                                 )}
                             >
@@ -1090,14 +1051,14 @@ function Detail({ label, value }: { label: string; value: string }) {
         </div>
     );
 }
-function countyCell(county: County, team: string) {
+function countyCell(county: County) {
     return {
         kind: 'county' as const,
         id: county.id,
         name: county.name,
         code: county.code,
         logoUrl: county.logoUrl,
-        href: countyShow.url({ current_team: team, county: county.id }),
+        href: countyShow.url({ county: county.id }),
     };
 }
 function option(id: string) {

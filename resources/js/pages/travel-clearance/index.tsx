@@ -172,9 +172,9 @@ export default function TravelClearance({
     options,
     analytics,
 }: Props) {
-    const { currentTeam, auth } = usePage().props;
+    const { routeContext, auth } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -219,10 +219,7 @@ export default function TravelClearance({
                             </p>
                         </div>
                         {capabilities.submit && (
-                            <TravelRequestForm
-                                teamSlug={currentTeam.slug}
-                                options={options}
-                            />
+                            <TravelRequestForm options={options} />
                         )}
                     </div>
                 </section>
@@ -347,8 +344,6 @@ export default function TravelClearance({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'travel-clearance',
                                                             format,
@@ -384,7 +379,6 @@ export default function TravelClearance({
                             rows={rows}
                             pagination={pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'travel-clearance',
                                 filters,
                             }}
@@ -396,7 +390,6 @@ export default function TravelClearance({
                                 return request ? (
                                     <TravelRequestActions
                                         request={request}
-                                        teamSlug={currentTeam.slug}
                                         currentUserId={auth.user.id}
                                         capabilities={capabilities}
                                     />
@@ -476,13 +469,7 @@ function formatMoney(value: number, currency: string): string {
     return `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 }
 
-function TravelRequestForm({
-    teamSlug,
-    options,
-}: {
-    teamSlug: string;
-    options: Props['options'];
-}) {
+function TravelRequestForm({ options }: { options: Props['options'] }) {
     const [segments, setSegments] = useState([0]);
 
     return (
@@ -493,7 +480,7 @@ function TravelRequestForm({
             icon={Plus}
             size="xl"
         >
-            <Form action={store(teamSlug)} className="grid gap-6 pt-4">
+            <Form action={store()} className="grid gap-6 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -756,12 +743,10 @@ function TravelRequestForm({
 
 function TravelRequestActions({
     request,
-    teamSlug,
     currentUserId,
     capabilities,
 }: {
     request: TravelRequest;
-    teamSlug: string;
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
@@ -861,12 +846,10 @@ function TravelRequestActions({
                         {surface === 'details' ? (
                             <TravelDetails
                                 request={request}
-                                teamSlug={teamSlug}
                                 currentUserId={currentUserId}
                             />
                         ) : surface ? (
                             <TransitionForm
-                                teamSlug={teamSlug}
                                 request={request}
                                 transitionName={surface}
                             />
@@ -879,11 +862,9 @@ function TravelRequestActions({
 }
 
 function TransitionForm({
-    teamSlug,
     request,
     transitionName,
 }: {
-    teamSlug: string;
     request: TravelRequest;
     transitionName: string;
 }) {
@@ -891,10 +872,7 @@ function TransitionForm({
 
     return (
         <Form
-            action={transition({
-                current_team: teamSlug,
-                travelRequest: request.id,
-            })}
+            action={transition({ travelRequest: request.id })}
             className="grid gap-4 pt-4"
         >
             {({ errors, processing }) => (
@@ -945,11 +923,9 @@ function TransitionForm({
 
 function TravelDetails({
     request,
-    teamSlug,
     currentUserId,
 }: {
     request: TravelRequest;
-    teamSlug: string;
     currentUserId: string;
 }) {
     return (
@@ -1030,7 +1006,6 @@ function TravelDetails({
                                 <Button asChild variant="outline" size="sm">
                                     <a
                                         href={previewEvidence.url({
-                                            current_team: teamSlug,
                                             document: document.id,
                                         })}
                                         target="_blank"
@@ -1042,7 +1017,6 @@ function TravelDetails({
                                 <Button asChild variant="outline" size="sm">
                                     <a
                                         href={downloadEvidence.url({
-                                            current_team: teamSlug,
                                             document: document.id,
                                         })}
                                     >
@@ -1068,7 +1042,6 @@ function TravelDetails({
                             <CardContent>
                                 <Form
                                     action={storeTravelDocument({
-                                        current_team: teamSlug,
                                         travelRequest: request.id,
                                     })}
                                     resetOnSuccess

@@ -24,7 +24,7 @@ class AuditTrailTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
         Notification::fake();
 
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $assessment]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessments.submit', [$assessment]))->assertRedirect();
 
         $event = AuditEvent::query()->sole();
         $this->assertSame('assessment.submitted', $event->action);
@@ -44,8 +44,8 @@ class AuditTrailTest extends TestCase
         $second = Assessment::factory()->create(['county_id' => $county->id, 'cycle' => '2025/26 ACPA', 'status' => AssessmentStatus::EvidenceCollection]);
         Notification::fake();
 
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $first]))->assertRedirect();
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $second]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessments.submit', [$first]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessments.submit', [$second]))->assertRedirect();
 
         [$firstEvent, $secondEvent] = AuditEvent::query()->orderBy('occurred_at')->orderBy('id')->get()->all();
         $this->assertSame($firstEvent->event_hash, $secondEvent->previous_hash);
@@ -63,7 +63,7 @@ class AuditTrailTest extends TestCase
         AuditEvent::factory()->create(['county_id' => $assigned->id, 'action' => 'visible.event']);
         AuditEvent::factory()->create(['county_id' => $hidden->id, 'action' => 'hidden.event']);
 
-        $this->actingAs($assessor)->get(route('audit.index', $assessor->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($assessor)->get(route('audit.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('workspace.rows', 1)
             ->where('workspace.rows.0.cells.0', 'visible.event')
         );

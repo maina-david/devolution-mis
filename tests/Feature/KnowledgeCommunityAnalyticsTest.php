@@ -35,7 +35,7 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         KnowledgeDiscussionSubscription::factory()->create(['knowledge_discussion_id' => $homeDiscussion->id, 'user_id' => $homeAuthor->id, 'subscribed_at' => '2026-07-10']);
         KnowledgeCommunityReport::factory()->create(['knowledge_post_id' => $homePost->id, 'county_id' => $home->id, 'reported_by' => $countyAdmin->id, 'status' => 'resolved', 'resolution' => 'The visible contribution was verified and retained.', 'post_action' => 'keep_visible', 'decided_by' => $nationalAdmin->id, 'decided_at' => '2026-07-15', 'created_at' => '2026-07-14']);
 
-        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index', $countyAdmin->currentTeam->slug))
+        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index'))
             ->assertOk()
             ->assertDontSee('Private moderation evidence must not leak')
             ->assertInertia(fn (Assert $page) => $page
@@ -50,7 +50,7 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
                 ->has('report.discussions.rows', 2)
             );
 
-        $this->actingAs($nationalAdmin)->get(route('knowledge.community-analytics.index', $nationalAdmin->currentTeam->slug))
+        $this->actingAs($nationalAdmin)->get(route('knowledge.community-analytics.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('report.summary.discussions', 3)
@@ -58,8 +58,8 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
                 ->has('report.counties.rows', 2)
             );
 
-        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index', [$countyAdmin->currentTeam->slug, 'county_id' => $other->id]))->assertForbidden();
-        $this->actingAs($ordinaryParticipant)->get(route('knowledge.community-analytics.index', $ordinaryParticipant->currentTeam->slug))->assertForbidden();
+        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index', ['county_id' => $other->id]))->assertForbidden();
+        $this->actingAs($ordinaryParticipant)->get(route('knowledge.community-analytics.index'))->assertForbidden();
     }
 
     public function test_filters_pagination_exports_and_audit_share_the_governed_analytics_scope(): void
@@ -74,7 +74,7 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         KnowledgePost::factory()->create(['knowledge_discussion_id' => $otherDiscussion->id, 'posted_at' => '2026-06-12']);
 
         $filters = ['county_id' => $county->id, 'status' => 'open', 'search' => 'participation', 'from' => '2026-06-01', 'to' => '2026-06-30', 'per_page' => 10];
-        $this->actingAs($admin)->get(route('knowledge.community-analytics.index', [$admin->currentTeam->slug, ...$filters]))
+        $this->actingAs($admin)->get(route('knowledge.community-analytics.index', [...$filters]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('filters.county_id', $county->id)
@@ -87,10 +87,10 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
             );
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($admin)->get(route('knowledge.community-analytics.export', [$admin->currentTeam->slug, $format, ...$filters]))->assertOk()->assertDownload();
+            $this->actingAs($admin)->get(route('knowledge.community-analytics.export', [$format, ...$filters]))->assertOk()->assertDownload();
         }
 
-        $json = $this->actingAs($admin)->get(route('knowledge.community-analytics.export', [$admin->currentTeam->slug, 'json', ...$filters]));
+        $json = $this->actingAs($admin)->get(route('knowledge.community-analytics.export', ['json', ...$filters]));
         $content = $json->streamedContent();
         $this->assertStringContainsString('County public participation', $content);
         $this->assertStringNotContainsString('Unrelated procurement practice', $content);
@@ -105,7 +105,7 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         KnowledgeDiscussion::factory()->create(['county_id' => $other->id, 'title' => 'Busia practice exchange']);
 
         $countyAdmin = User::factory()->countyAdmin($home)->create();
-        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index', $countyAdmin->currentTeam->slug))
+        $this->actingAs($countyAdmin)->get(route('knowledge.community-analytics.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('report.summary.discussions', 1)
@@ -122,7 +122,7 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         $nationalUsers = [$assessor, $partner, $topManagement, User::factory()->devolutionAdmin()->create(), User::factory()->platformAdmin()->create()];
 
         foreach ($nationalUsers as $user) {
-            $this->actingAs($user)->get(route('knowledge.community-analytics.index', $user->currentTeam->slug))
+            $this->actingAs($user)->get(route('knowledge.community-analytics.index'))
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('report.summary.discussions', 2)
@@ -131,6 +131,6 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         }
 
         $countyOfficial = User::factory()->countyOfficial($home)->create();
-        $this->actingAs($countyOfficial)->get(route('knowledge.community-analytics.index', $countyOfficial->currentTeam->slug))->assertForbidden();
+        $this->actingAs($countyOfficial)->get(route('knowledge.community-analytics.index'))->assertForbidden();
     }
 }

@@ -74,9 +74,9 @@ export default function CountyShow({
     capabilities,
     cycles,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -110,7 +110,7 @@ export default function CountyShow({
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <Button variant="secondary" size="sm" asChild>
-                        <Link href={countiesIndex(currentTeam.slug)}>
+                        <Link href={countiesIndex()}>
                             <ArrowLeftIcon data-icon="inline-start" />
                             All counties
                         </Link>
@@ -193,7 +193,6 @@ export default function CountyShow({
                         <AssessmentRowAction
                             assessmentId={row.id}
                             status={row.status}
-                            teamSlug={currentTeam.slug}
                             capabilities={capabilities}
                         />
                     )}
@@ -203,7 +202,6 @@ export default function CountyShow({
                     data={documents}
                     renderActions={(row) => (
                         <EvidenceRowAction
-                            teamSlug={currentTeam.slug}
                             documentId={row.id}
                             status={row.status}
                             canVerify={Boolean(capabilities.verify)}
@@ -220,7 +218,6 @@ export default function CountyShow({
                         capabilities.manageGrants
                             ? (row) => (
                                   <GrantRowAction
-                                      teamSlug={currentTeam.slug}
                                       grantId={row.id}
                                       status={row.status}
                                       meta={row.meta}

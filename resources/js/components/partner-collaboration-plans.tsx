@@ -85,7 +85,6 @@ export type CollaborationPlan = {
 };
 
 export default function PartnerCollaborationPlans({
-    teamSlug,
     plans,
     partners,
     counties,
@@ -95,7 +94,6 @@ export default function PartnerCollaborationPlans({
     canManage,
     filters,
 }: {
-    teamSlug: string;
     plans: CollaborationPlan[];
     partners: Option[];
     counties: Option[];
@@ -140,11 +138,7 @@ export default function PartnerCollaborationPlans({
                         >
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'partner-actions',
-                                        format,
-                                    },
+                                    { workspace: 'partner-actions', format },
                                     { query: filters },
                                 )}
                             >
@@ -153,9 +147,7 @@ export default function PartnerCollaborationPlans({
                             </a>
                         </Button>
                     ))}
-                    {canManage && (
-                        <CreatePlan teamSlug={teamSlug} partners={partners} />
-                    )}
+                    {canManage && <CreatePlan partners={partners} />}
                 </div>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -193,7 +185,6 @@ export default function PartnerCollaborationPlans({
                                 <div className="flex flex-wrap gap-2">
                                     {plan.canSubmit && (
                                         <TransitionPlan
-                                            teamSlug={teamSlug}
                                             plan={plan}
                                             transition="submit"
                                         />
@@ -201,12 +192,10 @@ export default function PartnerCollaborationPlans({
                                     {plan.canApprove && (
                                         <>
                                             <TransitionPlan
-                                                teamSlug={teamSlug}
                                                 plan={plan}
                                                 transition="approve"
                                             />
                                             <TransitionPlan
-                                                teamSlug={teamSlug}
                                                 plan={plan}
                                                 transition="reject"
                                             />
@@ -214,7 +203,6 @@ export default function PartnerCollaborationPlans({
                                     )}
                                     {plan.canAddAction && (
                                         <CreateAction
-                                            teamSlug={teamSlug}
                                             plan={plan}
                                             counties={counties}
                                             users={actionUsers}
@@ -224,7 +212,6 @@ export default function PartnerCollaborationPlans({
                                     )}
                                     {plan.canComplete && (
                                         <TransitionPlan
-                                            teamSlug={teamSlug}
                                             plan={plan}
                                             transition="complete"
                                         />
@@ -286,15 +273,11 @@ export default function PartnerCollaborationPlans({
                                         <div className="flex gap-2">
                                             {action.canUpload && (
                                                 <UploadEvidence
-                                                    teamSlug={teamSlug}
                                                     action={action}
                                                 />
                                             )}
                                             {action.canUpdate && (
-                                                <SubmitUpdate
-                                                    teamSlug={teamSlug}
-                                                    action={action}
-                                                />
+                                                <SubmitUpdate action={action} />
                                             )}
                                         </div>
                                         <div className="flex flex-wrap gap-2">
@@ -317,8 +300,6 @@ export default function PartnerCollaborationPlans({
                                                             <a
                                                                 href={preview.url(
                                                                     {
-                                                                        current_team:
-                                                                            teamSlug,
                                                                         document:
                                                                             document.id,
                                                                     },
@@ -338,8 +319,6 @@ export default function PartnerCollaborationPlans({
                                                             <a
                                                                 href={download.url(
                                                                     {
-                                                                        current_team:
-                                                                            teamSlug,
                                                                         document:
                                                                             document.id,
                                                                     },
@@ -385,7 +364,6 @@ export default function PartnerCollaborationPlans({
                                                 </div>
                                                 {update.canVerify && (
                                                     <VerifyUpdate
-                                                        teamSlug={teamSlug}
                                                         update={update}
                                                     />
                                                 )}
@@ -402,23 +380,14 @@ export default function PartnerCollaborationPlans({
     );
 }
 
-function CreatePlan({
-    teamSlug,
-    partners,
-}: {
-    teamSlug: string;
-    partners: Option[];
-}) {
+function CreatePlan({ partners }: { partners: Option[] }) {
     return (
         <FormSheet
             title="Create collaboration plan"
             triggerLabel="Create plan"
             description="Create a time-bound plan for independent approval."
         >
-            <Form
-                {...storeCollaborationPlan.form({ current_team: teamSlug })}
-                className="grid gap-4"
-            >
+            <Form {...storeCollaborationPlan.form({})} className="grid gap-4">
                 <SearchableSelect
                     id="plan-partner"
                     name="partner_profile_id"
@@ -445,11 +414,9 @@ function CreatePlan({
     );
 }
 function TransitionPlan({
-    teamSlug,
     plan,
     transition,
 }: {
-    teamSlug: string;
     plan: CollaborationPlan;
     transition: string;
 }) {
@@ -460,10 +427,7 @@ function TransitionPlan({
             description="Record an attributable plan lifecycle decision."
         >
             <Form
-                {...transitionCollaborationPlan.form({
-                    current_team: teamSlug,
-                    plan: plan.id,
-                })}
+                {...transitionCollaborationPlan.form({ plan: plan.id })}
                 className="grid gap-4"
             >
                 <input type="hidden" name="transition" value={transition} />
@@ -480,14 +444,12 @@ function TransitionPlan({
     );
 }
 function CreateAction({
-    teamSlug,
     plan,
     counties,
     users,
     organizations,
     catalogue,
 }: {
-    teamSlug: string;
     plan: CollaborationPlan;
     counties: Option[];
     users: Option[];
@@ -511,10 +473,7 @@ function CreateAction({
             }
         >
             <Form
-                {...storeCollaborationAction.form({
-                    current_team: teamSlug,
-                    plan: plan.id,
-                })}
+                {...storeCollaborationAction.form({ plan: plan.id })}
                 className="grid gap-4"
             >
                 <SearchableSelect
@@ -559,13 +518,7 @@ function CreateAction({
         </FormSheet>
     );
 }
-function UploadEvidence({
-    teamSlug,
-    action,
-}: {
-    teamSlug: string;
-    action: CollaborationAction;
-}) {
+function UploadEvidence({ action }: { action: CollaborationAction }) {
     return (
         <FormSheet
             title="Upload action evidence"
@@ -573,10 +526,7 @@ function UploadEvidence({
             description="Attach a scanned or born-digital implementation record."
         >
             <Form
-                {...storePartnerCollaborationAction.form({
-                    current_team: teamSlug,
-                    action: action.id,
-                })}
+                {...storePartnerCollaborationAction.form({ action: action.id })}
                 className="grid gap-4"
             >
                 <Label>
@@ -612,13 +562,7 @@ function UploadEvidence({
         </FormSheet>
     );
 }
-function SubmitUpdate({
-    teamSlug,
-    action,
-}: {
-    teamSlug: string;
-    action: CollaborationAction;
-}) {
+function SubmitUpdate({ action }: { action: CollaborationAction }) {
     return (
         <FormSheet
             title="Submit action progress"
@@ -626,10 +570,7 @@ function SubmitUpdate({
             description="Completion requires clean evidence and independent verification."
         >
             <Form
-                {...storeCollaborationActionUpdate.form({
-                    current_team: teamSlug,
-                    action: action.id,
-                })}
+                {...storeCollaborationActionUpdate.form({ action: action.id })}
                 className="grid gap-4"
             >
                 <Label>
@@ -652,13 +593,7 @@ function SubmitUpdate({
         </FormSheet>
     );
 }
-function VerifyUpdate({
-    teamSlug,
-    update,
-}: {
-    teamSlug: string;
-    update: ActionUpdate;
-}) {
+function VerifyUpdate({ update }: { update: ActionUpdate }) {
     return (
         <FormSheet
             title="Verify action progress"
@@ -666,10 +601,7 @@ function VerifyUpdate({
             description="Record an independent immutable verification decision."
         >
             <Form
-                {...verifyCollaborationActionUpdate.form({
-                    current_team: teamSlug,
-                    update: update.id,
-                })}
+                {...verifyCollaborationActionUpdate.form({ update: update.id })}
                 className="grid gap-4"
             >
                 <SearchableSelect

@@ -100,9 +100,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             'SDD-REGISTRY-EXCEPTIONS',
         );
 
-        $response = $this->actingAs($submitter)->get(route('data-migrations.exceptions.download', [
-            $submitter->currentTeam->slug,
-            $batch,
+        $response = $this->actingAs($submitter)->get(route('data-migrations.exceptions.download', [$batch,
         ]));
 
         $response->assertOk()->assertDownload("{$batch->reference}-row-exceptions.csv");
@@ -129,7 +127,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             'SDD-REGISTRY-2026-01',
         );
 
-        $route = route('data-migrations.exceptions.download', [$submitter->currentTeam->slug, $batch]);
+        $route = route('data-migrations.exceptions.download', [$batch]);
         $this->actingAs($countyUser)->get($route)->assertForbidden();
         $this->actingAs($submitter)->get($route)->assertNotFound();
     }
@@ -180,7 +178,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             'action' => 'reference.release.submitted',
         ]);
         $this->actingAs($applier)
-            ->get(route('data-migrations.index', $applier->currentTeam->slug))
+            ->get(route('data-migrations.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('data-migrations/index')
                 ->where('batches.data', function ($batches) use ($programmeBatch, $releases): bool {
@@ -197,17 +195,17 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $administrator = User::factory()->platformAdmin()->create();
 
         $this->actingAs($administrator)
-            ->get(route('data-migrations.templates.show', [$administrator->currentTeam->slug, 'programmes']))
+            ->get(route('data-migrations.templates.show', ['programmes']))
             ->assertOk()
             ->assertDownload('programmes-bulk-import-template.csv');
 
         $this->actingAs($administrator)
-            ->get(route('data-migrations.templates.show', [$administrator->currentTeam->slug, 'programme_county_coverages']))
+            ->get(route('data-migrations.templates.show', ['programme_county_coverages']))
             ->assertOk()
             ->assertDownload('programme_county_coverages-bulk-import-template.csv');
 
         $this->actingAs($administrator)
-            ->get(route('data-migrations.templates.show', [$administrator->currentTeam->slug, 'unsupported']))
+            ->get(route('data-migrations.templates.show', ['unsupported']))
             ->assertNotFound();
     }
 
@@ -356,16 +354,14 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $administrator = User::factory()->platformAdmin()->create();
 
         $this->actingAs($administrator)
-            ->get(route('data-migrations.templates.show', [
-                $administrator->currentTeam->slug,
-                'organizations',
+            ->get(route('data-migrations.templates.show', ['organizations',
                 'format' => 'xlsx',
             ]))
             ->assertOk()
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
             ->assertDownload('organizations-bulk-import-template.xlsx');
 
-        $this->actingAs($administrator)->post(route('data-migrations.reference-data.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('data-migrations.reference-data.store'), [
             'file' => $this->xlsx('organizations', [
                 ['COG', 'Council of Governors', 'national', '', 'info@cog.go.ke', 'active'],
             ]),
@@ -456,7 +452,6 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
         $this->assertSame('assessor', $assessor->programmeRole()->value);
         $this->assertEqualsCanonicalizing($counties->pluck('id')->all(), $assessor->assignedCounties()->pluck('counties.id')->all());
         $this->assertNotSame('', $official->password);
-        $this->assertNotNull($official->currentTeam);
         $this->assertSame('applied', $batch->fresh()->status);
         $this->assertDatabaseCount('reference_data_releases', 0);
     }

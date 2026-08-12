@@ -72,7 +72,7 @@ class DepartmentalPerformanceController extends Controller
         return back()->with('success', 'Weighted performance plan created.');
     }
 
-    public function transition(TransitionPerformancePlanRequest $request, string $currentTeam, PerformancePlan $performancePlan, TransitionPerformancePlan $transitionPerformancePlan): RedirectResponse
+    public function transition(TransitionPerformancePlanRequest $request, PerformancePlan $performancePlan, TransitionPerformancePlan $transitionPerformancePlan): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePlans($user)->whereKey($performancePlan)->exists(), 403);
@@ -81,7 +81,7 @@ class DepartmentalPerformanceController extends Controller
         return back()->with('success', 'Performance lifecycle updated.');
     }
 
-    public function requestGoalAmendment(StorePerformanceGoalAmendmentRequest $request, string $currentTeam, PerformancePlan $performancePlan, PerformanceGoal $performanceGoal, RequestPerformanceGoalAmendment $requestAmendment): RedirectResponse
+    public function requestGoalAmendment(StorePerformanceGoalAmendmentRequest $request, PerformancePlan $performancePlan, PerformanceGoal $performanceGoal, RequestPerformanceGoalAmendment $requestAmendment): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePlans($user)->whereKey($performancePlan)->exists(), 403);
@@ -90,7 +90,7 @@ class DepartmentalPerformanceController extends Controller
         return back()->with('success', 'Goal amendment submitted for independent decision.');
     }
 
-    public function decideGoalAmendment(DecidePerformanceGoalAmendmentRequest $request, string $currentTeam, PerformancePlan $performancePlan, PerformanceGoalAmendment $performanceGoalAmendment, DecidePerformanceGoalAmendment $decideAmendment): RedirectResponse
+    public function decideGoalAmendment(DecidePerformanceGoalAmendmentRequest $request, PerformancePlan $performancePlan, PerformanceGoalAmendment $performanceGoalAmendment, DecidePerformanceGoalAmendment $decideAmendment): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePlans($user)->whereKey($performancePlan)->exists(), 403);

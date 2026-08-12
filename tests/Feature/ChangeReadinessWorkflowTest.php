@@ -27,29 +27,29 @@ class ChangeReadinessWorkflowTest extends TestCase
         $participantUser = User::factory()->countyOfficial($county)->create();
         $release = $this->publishedReferenceRelease([$county], $author);
 
-        $this->actingAs($author)->post(route('change-readiness.waves.store', $author->currentTeam->slug), $this->wavePayload([$county->id], 1))->assertRedirect();
+        $this->actingAs($author)->post(route('change-readiness.waves.store'), $this->wavePayload([$county->id], 1))->assertRedirect();
         $wave = RolloutWave::query()->sole();
         $this->assertTrue(Str::isUuid($wave->id));
         $this->assertSame('planning', $wave->status);
         $this->assertSame($release->id, $wave->reference_data_release_id);
         $this->assertSame([$county->id], $wave->counties()->pluck('counties.id')->all());
 
-        $this->actingAs($author)->post(route('change-readiness.cohorts.store', $author->currentTeam->slug), $this->cohortPayload($wave, $county, $trainer))->assertRedirect();
+        $this->actingAs($author)->post(route('change-readiness.cohorts.store'), $this->cohortPayload($wave, $county, $trainer))->assertRedirect();
         $cohort = TrainingCohort::query()->sole();
         $this->assertSame($release->id, $cohort->reference_data_release_id);
-        $this->actingAs($author)->post(route('change-readiness.participants.store', $author->currentTeam->slug), ['training_cohort_id' => $cohort->id, 'user_id' => $participantUser->id, 'county_id' => $county->id, 'participant_reference' => 'TRN-2026-0001', 'role_title' => 'County M&E officer'])->assertRedirect();
+        $this->actingAs($author)->post(route('change-readiness.participants.store'), ['training_cohort_id' => $cohort->id, 'user_id' => $participantUser->id, 'county_id' => $county->id, 'participant_reference' => 'TRN-2026-0001', 'role_title' => 'County M&E officer'])->assertRedirect();
         $participant = TrainingParticipant::query()->sole();
         $this->assertNull($participant->completed_at);
 
-        $this->actingAs($approver)->patch(route('change-readiness.waves.approve', [$approver->currentTeam->slug, $wave]), ['readiness_notes' => 'Attempt before competency completion evidence has been recorded.'])->assertSessionHasErrors('status');
-        $this->actingAs($trainer)->post(route('change-readiness.assessments.store', [$trainer->currentTeam->slug, $participant]), ['assessment_type' => 'post_training', 'score' => 82, 'attended_hours' => 7, 'feedback' => 'Participant demonstrated the required operational workflow and county reporting competency.', 'evidence_references' => ['ATTENDANCE-001', 'PRACTICAL-001']])->assertRedirect();
+        $this->actingAs($approver)->patch(route('change-readiness.waves.approve', [$wave]), ['readiness_notes' => 'Attempt before competency completion evidence has been recorded.'])->assertSessionHasErrors('status');
+        $this->actingAs($trainer)->post(route('change-readiness.assessments.store', [$participant]), ['assessment_type' => 'post_training', 'score' => 82, 'attended_hours' => 7, 'feedback' => 'Participant demonstrated the required operational workflow and county reporting competency.', 'evidence_references' => ['ATTENDANCE-001', 'PRACTICAL-001']])->assertRedirect();
         $this->assertSame('competent', $participant->refresh()->competency_status);
         $this->assertNotNull($participant->completed_at);
         $this->assertDatabaseCount('training_assessments', 1);
         $this->assertSame('competent', TrainingAssessment::query()->sole()->outcome);
 
-        $this->actingAs($author)->patch(route('change-readiness.waves.approve', [$author->currentTeam->slug, $wave]), ['readiness_notes' => 'Author attempts to approve their own readiness plan after completion evidence exists.'])->assertForbidden();
-        $this->actingAs($approver)->patch(route('change-readiness.waves.approve', [$approver->currentTeam->slug, $wave]), ['readiness_notes' => 'Training, competency, help-desk rehearsal and approved material evidence were independently reviewed.'])->assertRedirect();
+        $this->actingAs($author)->patch(route('change-readiness.waves.approve', [$wave]), ['readiness_notes' => 'Author attempts to approve their own readiness plan after completion evidence exists.'])->assertForbidden();
+        $this->actingAs($approver)->patch(route('change-readiness.waves.approve', [$wave]), ['readiness_notes' => 'Training, competency, help-desk rehearsal and approved material evidence were independently reviewed.'])->assertRedirect();
         $this->assertSame('approved', $wave->refresh()->status);
         $this->assertSame($approver->id, $wave->approved_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $wave->id, 'action' => 'change-readiness.wave.approved']);
@@ -62,22 +62,22 @@ class ChangeReadinessWorkflowTest extends TestCase
         $admin = User::factory()->devolutionAdmin()->create();
         $trainer = User::factory()->platformAdmin()->create();
         $this->publishedReferenceRelease([$county, $other], $admin);
-        $this->actingAs($admin)->post(route('change-readiness.waves.store', $admin->currentTeam->slug), $this->wavePayload([$county->id], 1))->assertRedirect();
+        $this->actingAs($admin)->post(route('change-readiness.waves.store'), $this->wavePayload([$county->id], 1))->assertRedirect();
         $wave = RolloutWave::query()->sole();
         $invalid = $this->cohortPayload($wave, $other, $trainer);
-        $this->actingAs($admin)->post(route('change-readiness.cohorts.store', $admin->currentTeam->slug), $invalid)->assertSessionHasErrors('county_id');
-        $this->actingAs($admin)->post(route('change-readiness.cohorts.store', $admin->currentTeam->slug), $this->cohortPayload($wave, $county, $trainer))->assertRedirect();
+        $this->actingAs($admin)->post(route('change-readiness.cohorts.store'), $invalid)->assertSessionHasErrors('county_id');
+        $this->actingAs($admin)->post(route('change-readiness.cohorts.store'), $this->cohortPayload($wave, $county, $trainer))->assertRedirect();
         $cohort = TrainingCohort::query()->sole();
-        $this->actingAs($admin)->post(route('change-readiness.participants.store', $admin->currentTeam->slug), ['training_cohort_id' => $cohort->id, 'county_id' => $other->id, 'participant_reference' => 'WRONG-COUNTY', 'role_title' => 'Officer'])->assertSessionHasErrors('county_id');
-        $this->actingAs($admin)->post(route('change-readiness.participants.store', $admin->currentTeam->slug), ['training_cohort_id' => $cohort->id, 'county_id' => $county->id, 'participant_reference' => 'SEAT-001', 'role_title' => 'Officer'])->assertRedirect();
-        $this->actingAs($admin)->post(route('change-readiness.participants.store', $admin->currentTeam->slug), ['training_cohort_id' => $cohort->id, 'county_id' => $county->id, 'participant_reference' => 'SEAT-002', 'role_title' => 'Officer'])->assertSessionHasErrors('training_cohort_id');
+        $this->actingAs($admin)->post(route('change-readiness.participants.store'), ['training_cohort_id' => $cohort->id, 'county_id' => $other->id, 'participant_reference' => 'WRONG-COUNTY', 'role_title' => 'Officer'])->assertSessionHasErrors('county_id');
+        $this->actingAs($admin)->post(route('change-readiness.participants.store'), ['training_cohort_id' => $cohort->id, 'county_id' => $county->id, 'participant_reference' => 'SEAT-001', 'role_title' => 'Officer'])->assertRedirect();
+        $this->actingAs($admin)->post(route('change-readiness.participants.store'), ['training_cohort_id' => $cohort->id, 'county_id' => $county->id, 'participant_reference' => 'SEAT-002', 'role_title' => 'Officer'])->assertSessionHasErrors('training_cohort_id');
 
         $countyViewer = User::factory()->countyOfficial($county)->create();
         $otherViewer = User::factory()->countyOfficial($other)->create();
-        $this->actingAs($countyViewer)->get(route('change-readiness.index', $countyViewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('cohorts.total', 1));
-        $this->actingAs($otherViewer)->get(route('change-readiness.index', $otherViewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('cohorts.total', 0)->where('waves', []));
+        $this->actingAs($countyViewer)->get(route('change-readiness.index'))->assertOk()->assertInertia(fn ($page) => $page->where('cohorts.total', 1));
+        $this->actingAs($otherViewer)->get(route('change-readiness.index'))->assertOk()->assertInertia(fn ($page) => $page->where('cohorts.total', 0)->where('waves', []));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($countyViewer)->get(route('workspace.export', [$countyViewer->currentTeam->slug, 'change-readiness', $format]))->assertOk()->assertDownload();
+            $this->actingAs($countyViewer)->get(route('workspace.export', ['change-readiness', $format]))->assertOk()->assertDownload();
         }
     }
 
@@ -87,12 +87,12 @@ class ChangeReadinessWorkflowTest extends TestCase
         $admin = User::factory()->devolutionAdmin()->create();
         $payload = $this->wavePayload([$county->id], 10);
 
-        $this->actingAs($admin)->post(route('change-readiness.waves.store', $admin->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($admin)->post(route('change-readiness.waves.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('rollout_waves', 0);
 
         $snapshot = ['counties' => [], 'organizations' => [], 'sectors' => [], 'programmes' => []];
         ReferenceDataRelease::factory()->create(['approved_by' => $admin->id, 'status' => 'published', 'snapshot' => $snapshot, 'checksum' => app(CanonicalJson::class)->checksum($snapshot), 'effective_from' => now()->subMinute(), 'published_at' => now()]);
-        $this->actingAs($admin)->post(route('change-readiness.waves.store', $admin->currentTeam->slug), $payload)->assertSessionHasErrors('county_ids');
+        $this->actingAs($admin)->post(route('change-readiness.waves.store'), $payload)->assertSessionHasErrors('county_ids');
         $this->assertDatabaseCount('rollout_waves', 0);
     }
 

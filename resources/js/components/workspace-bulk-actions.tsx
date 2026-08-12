@@ -36,12 +36,10 @@ import { bulkDestroy } from '@/routes/programme-users';
 import { exportMethod } from '@/routes/workspace';
 
 export function AssessmentBulkActions({
-    teamSlug,
     rows,
     capabilities,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     capabilities: Record<string, boolean>;
     clearSelection: () => void;
@@ -60,7 +58,6 @@ export function AssessmentBulkActions({
 
     return (
         <AssessmentTransitionSheet
-            teamSlug={teamSlug}
             rows={rows}
             transition={canSubmit ? 'submit' : 'review'}
             clearSelection={clearSelection}
@@ -69,12 +66,10 @@ export function AssessmentBulkActions({
 }
 
 function AssessmentTransitionSheet({
-    teamSlug,
     rows,
     transition,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     transition: 'submit' | 'review';
     clearSelection: () => void;
@@ -103,7 +98,7 @@ function AssessmentTransitionSheet({
                     </SheetDescription>
                 </SheetHeader>
                 <Form
-                    {...bulkTransition.form(teamSlug)}
+                    {...bulkTransition.form()}
                     className="flex flex-col gap-4 px-4 pb-6"
                     onSuccess={() => {
                         setOpen(false);
@@ -141,13 +136,11 @@ function AssessmentTransitionSheet({
 }
 
 export function WorkspaceBulkExportActions({
-    teamSlug,
     workspace,
     rows,
     filters,
     selectionMode = 'selected',
 }: {
-    teamSlug: string;
     workspace: string;
     rows: WorkspaceRow[];
     filters: Record<string, string | undefined>;
@@ -175,11 +168,7 @@ export function WorkspaceBulkExportActions({
                         <DropdownMenuItem key={format} asChild>
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace,
-                                        format,
-                                    },
+                                    { workspace, format },
                                     { query },
                                 )}
                             >
@@ -194,24 +183,20 @@ export function WorkspaceBulkExportActions({
 }
 
 export function EvidenceBulkActions({
-    teamSlug,
     rows,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     clearSelection: () => void;
 }) {
     return (
         <div className="flex flex-wrap gap-2">
             <EvidenceDecisionSheet
-                teamSlug={teamSlug}
                 rows={rows}
                 status="verified"
                 clearSelection={clearSelection}
             />
             <EvidenceDecisionSheet
-                teamSlug={teamSlug}
                 rows={rows}
                 status="rejected"
                 clearSelection={clearSelection}
@@ -221,12 +206,10 @@ export function EvidenceBulkActions({
 }
 
 function EvidenceDecisionSheet({
-    teamSlug,
     rows,
     status,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     status: 'verified' | 'rejected';
     clearSelection: () => void;
@@ -259,7 +242,7 @@ function EvidenceDecisionSheet({
                     </SheetDescription>
                 </SheetHeader>
                 <Form
-                    {...bulkVerification.form(teamSlug)}
+                    {...bulkVerification.form()}
                     className="flex flex-col gap-4 px-4 pb-6"
                     onSuccess={() => {
                         setOpen(false);
@@ -296,11 +279,9 @@ function EvidenceDecisionSheet({
 }
 
 export function ProgrammeUserBulkActions({
-    teamSlug,
     rows,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     clearSelection: () => void;
 }) {
@@ -327,7 +308,7 @@ export function ProgrammeUserBulkActions({
                     </SheetDescription>
                 </SheetHeader>
                 <Form
-                    {...bulkDestroy.form(teamSlug)}
+                    {...bulkDestroy.form()}
                     className="flex flex-col gap-4 px-4 pb-6"
                     onSuccess={() => {
                         setOpen(false);
@@ -361,7 +342,6 @@ export function ProgrammeUserBulkActions({
 }
 
 export function CitizenCaseBulkTriageActions({
-    teamSlug,
     rows,
     users,
     organizations,
@@ -370,7 +350,6 @@ export function CitizenCaseBulkTriageActions({
     selection,
     clearSelection,
 }: {
-    teamSlug: string;
     rows: WorkspaceRow[];
     users: Array<{ id: string; name: string }>;
     organizations: Array<{ id: string; name: string }>;
@@ -402,7 +381,7 @@ export function CitizenCaseBulkTriageActions({
                     </SheetDescription>
                 </SheetHeader>
                 <Form
-                    {...bulkTriage.form(teamSlug)}
+                    {...bulkTriage.form()}
                     className="flex flex-col gap-4 px-4 pb-6"
                     onSuccess={() => {
                         setOpen(false);

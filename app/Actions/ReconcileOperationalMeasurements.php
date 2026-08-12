@@ -162,20 +162,13 @@ class ReconcileOperationalMeasurements
     {
         User::permission(ProgrammePermission::ManageOperations->value)
             ->whereNull('access_revoked_at')
-            ->whereNotNull('current_team_id')
-            ->with('currentTeam:id,slug')
             ->get()
             ->each(function (User $user) use ($alert, $event): void {
-                $team = $user->currentTeam;
-                if (! $team) {
-                    return;
-                }
-
                 Notification::send($user, new ProgrammeAlert(
                     $event === 'opened' ? 'Operational threshold breached' : 'Operational service recovered',
                     Str::headline($alert->metric)." is {$alert->status} at {$alert->latest_value} {$alert->unit}.",
                     'operations',
-                    route('operations.index', $team->slug),
+                    route('operations.index'),
                 ));
             });
     }

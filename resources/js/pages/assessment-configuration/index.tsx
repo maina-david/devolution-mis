@@ -1,4 +1,4 @@
-import { Form, Head, router, usePage } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { ClipboardList, FileJson2, Gauge, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -191,7 +191,7 @@ function baselineConfiguration() {
     };
 }
 
-function ScorecardForm({ teamSlug }: { teamSlug: string }) {
+function ScorecardForm() {
     return (
         <FormSheet
             title="New scorecard"
@@ -200,7 +200,7 @@ function ScorecardForm({ teamSlug }: { teamSlug: string }) {
             icon={ClipboardList}
         >
             <Form
-                {...storeScorecard.form(teamSlug)}
+                {...storeScorecard.form()}
                 resetOnSuccess
                 className="grid gap-4 pt-4 sm:grid-cols-2"
             >
@@ -238,13 +238,7 @@ function ScorecardForm({ teamSlug }: { teamSlug: string }) {
     );
 }
 
-function CycleForm({
-    teamSlug,
-    versions,
-}: {
-    teamSlug: string;
-    versions: Props['publishedVersions'];
-}) {
+function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
     return (
         <FormSheet
             title="New assessment cycle"
@@ -260,7 +254,7 @@ function CycleForm({
             }
         >
             <Form
-                {...storeCycle.form(teamSlug)}
+                {...storeCycle.form()}
                 resetOnSuccess
                 className="grid gap-4 pt-4 sm:grid-cols-2"
             >
@@ -325,13 +319,7 @@ function CycleForm({
     );
 }
 
-function VersionComposer({
-    scorecardId,
-    teamSlug,
-}: {
-    scorecardId: string;
-    teamSlug: string;
-}) {
+function VersionComposer({ scorecardId }: { scorecardId: string }) {
     const [configuration, setConfiguration] = useState(() =>
         JSON.stringify(baselineConfiguration(), null, 2),
     );
@@ -343,7 +331,7 @@ function VersionComposer({
         try {
             const payload = JSON.parse(configuration);
             setError(null);
-            router.post(storeVersion.url([teamSlug, scorecardId]), payload, {
+            router.post(storeVersion.url([scorecardId]), payload, {
                 preserveScroll: true,
             });
         } catch {
@@ -442,13 +430,11 @@ export default function AssessmentConfiguration({
     cycles,
     publishedVersions,
 }: Props) {
-    const teamSlug = usePage().props.currentTeam!.slug;
-
     function search(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
         router.get(
-            index.url(teamSlug),
+            index.url(),
             { search: data.get('search')?.toString() ?? '' },
             { preserveState: true },
         );
@@ -473,11 +459,8 @@ export default function AssessmentConfiguration({
                 </section>
 
                 <div className="flex flex-wrap gap-3">
-                    <ScorecardForm teamSlug={teamSlug} />
-                    <CycleForm
-                        teamSlug={teamSlug}
-                        versions={publishedVersions}
-                    />
+                    <ScorecardForm />
+                    <CycleForm versions={publishedVersions} />
                 </div>
 
                 <form onSubmit={search} className="flex max-w-xl gap-2">
@@ -537,7 +520,6 @@ export default function AssessmentConfiguration({
                                                     onClick={() =>
                                                         router.patch(
                                                             publish.url([
-                                                                teamSlug,
                                                                 scorecard.id,
                                                                 version.id,
                                                             ]),
@@ -560,7 +542,6 @@ export default function AssessmentConfiguration({
                                 ) && (
                                     <VersionComposer
                                         scorecardId={scorecard.id}
-                                        teamSlug={teamSlug}
                                     />
                                 )}
                             </CardContent>

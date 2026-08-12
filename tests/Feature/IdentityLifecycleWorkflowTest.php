@@ -108,19 +108,19 @@ class IdentityLifecycleWorkflowTest extends TestCase
         $target = User::factory()->assessor()->create();
         $payload = $this->payload($target, 'leaver');
 
-        $this->actingAs($countyUser)->post(route('security-governance.identity-lifecycle.store', $countyUser->currentTeam->slug), $payload)->assertForbidden();
-        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store', $requester->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($countyUser)->post(route('security-governance.identity-lifecycle.store'), $payload)->assertForbidden();
+        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store'), $payload)->assertRedirect();
         $request = IdentityLifecycleRequest::query()->sole();
-        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store', $requester->currentTeam->slug), $payload)->assertSessionHasErrors('source_event_id');
-        $this->actingAs($requester)->patch(route('security-governance.identity-lifecycle.decide', [$requester->currentTeam->slug, $request]), ['decision' => 'approve', 'rationale' => 'The source event has been independently matched to the authoritative workforce record.'])->assertForbidden();
-        $this->actingAs($decider)->patch(route('security-governance.identity-lifecycle.decide', [$decider->currentTeam->slug, $request]), ['decision' => 'approve', 'rationale' => 'The source event has been independently matched to the authoritative workforce record.'])->assertRedirect();
-        $this->actingAs($decider)->get(route('security-governance.index', $decider->currentTeam->slug))->assertInertia(fn (Assert $page) => $page->component('security-governance/index')->has('identityLifecycle.data', 1)->where('identityLifecycle.data.0.sourceEventId', $payload['source_event_id'])->where('identityLifecycle.data.0.status', 'applied')->where('capabilities.certify', true));
+        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store'), $payload)->assertSessionHasErrors('source_event_id');
+        $this->actingAs($requester)->patch(route('security-governance.identity-lifecycle.decide', [$request]), ['decision' => 'approve', 'rationale' => 'The source event has been independently matched to the authoritative workforce record.'])->assertForbidden();
+        $this->actingAs($decider)->patch(route('security-governance.identity-lifecycle.decide', [$request]), ['decision' => 'approve', 'rationale' => 'The source event has been independently matched to the authoritative workforce record.'])->assertRedirect();
+        $this->actingAs($decider)->get(route('security-governance.index'))->assertInertia(fn (Assert $page) => $page->component('security-governance/index')->has('identityLifecycle.data', 1)->where('identityLifecycle.data.0.sourceEventId', $payload['source_event_id'])->where('identityLifecycle.data.0.status', 'applied')->where('capabilities.certify', true));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($decider)->get(route('workspace.export', [$decider->currentTeam->slug, 'identity-lifecycle', $format]))->assertOk()->assertDownload();
+            $this->actingAs($decider)->get(route('workspace.export', ['identity-lifecycle', $format]))->assertOk()->assertDownload();
         }
 
         $invalidMover = $this->payload(User::factory()->assessor()->create(), 'mover', 'county-admin');
-        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store', $requester->currentTeam->slug), $invalidMover)->assertSessionHasErrors('proposed_home_county_id');
+        $this->actingAs($requester)->post(route('security-governance.identity-lifecycle.store'), $invalidMover)->assertSessionHasErrors('proposed_home_county_id');
     }
 
     public function test_future_effective_approval_is_applied_once_by_an_authorized_service_identity(): void

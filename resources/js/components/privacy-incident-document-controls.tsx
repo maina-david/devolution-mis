@@ -20,13 +20,11 @@ import { store } from '@/routes/data-governance/privacy-incidents/documents';
 import { download, preview } from '@/routes/evidence';
 
 export default function PrivacyIncidentDocumentControls({
-    teamSlug,
     incidentId,
     status,
     documents,
     canUpload,
 }: {
-    teamSlug: string;
     incidentId: string;
     status: string;
     documents: WorkspaceDocument[];
@@ -38,11 +36,7 @@ export default function PrivacyIncidentDocumentControls({
     return (
         <div className="flex flex-wrap gap-2">
             {canUpload && status !== 'closed' && (
-                <UploadRecord
-                    teamSlug={teamSlug}
-                    incidentId={incidentId}
-                    status={status}
-                />
+                <UploadRecord incidentId={incidentId} status={status} />
             )}
             <Sheet>
                 <SheetTrigger asChild>
@@ -115,7 +109,6 @@ export default function PrivacyIncidentDocumentControls({
                                         >
                                             <a
                                                 href={download.url({
-                                                    current_team: teamSlug,
                                                     document: document.id,
                                                 })}
                                             >
@@ -145,10 +138,7 @@ export default function PrivacyIncidentDocumentControls({
                     {previewDocument && (
                         <iframe
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
                     )}
@@ -159,11 +149,9 @@ export default function PrivacyIncidentDocumentControls({
 }
 
 function UploadRecord({
-    teamSlug,
     incidentId,
     status,
 }: {
-    teamSlug: string;
     incidentId: string;
     status: string;
 }) {
@@ -185,10 +173,7 @@ function UploadRecord({
             description="Add a private scanned or born-digital breach record."
         >
             <Form
-                {...store.form({
-                    current_team: teamSlug,
-                    privacyIncident: incidentId,
-                })}
+                {...store.form({ privacyIncident: incidentId })}
                 resetOnSuccess
                 className="grid gap-4"
             >

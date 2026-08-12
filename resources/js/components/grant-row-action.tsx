@@ -21,12 +21,10 @@ import {
 import { update } from '@/routes/grants';
 
 export default function GrantRowAction({
-    teamSlug,
     grantId,
     meta,
     status,
 }: {
-    teamSlug: string;
     grantId: string;
     meta?: Record<string, string | null>;
     status?: string;
@@ -61,10 +59,7 @@ export default function GrantRowAction({
                         </SheetDescription>
                     </SheetHeader>
                     <Form
-                        {...update.form({
-                            current_team: teamSlug,
-                            grant: grantId,
-                        })}
+                        {...update.form({ grant: grantId })}
                         className="grid gap-4 px-4 pb-8"
                         onSuccess={() => setOpen(false)}
                     >

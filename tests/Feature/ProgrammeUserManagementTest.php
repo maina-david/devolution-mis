@@ -7,6 +7,7 @@ use App\Models\County;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ProgrammeUserManagementTest extends TestCase
@@ -20,7 +21,7 @@ class ProgrammeUserManagementTest extends TestCase
         $admin = User::factory()->countyAdmin($home)->create();
         Notification::fake();
 
-        $this->actingAs($admin)->post(route('programme-users.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('programme-users.store'), [
             'name' => 'New County Officer',
             'email' => 'new.official@county.go.ke',
             'role' => UserRole::CountyOfficial->value,
@@ -30,9 +31,9 @@ class ProgrammeUserManagementTest extends TestCase
         $created = User::query()->where('email', 'new.official@county.go.ke')->firstOrFail();
         $this->assertSame(UserRole::CountyOfficial, $created->programmeRole());
         $this->assertSame($home->id, $created->county_id);
-        $this->assertNotNull($created->currentTeam);
+        $this->assertFalse(Schema::hasTable('teams'));
 
-        $this->actingAs($admin)->post(route('programme-users.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('programme-users.store'), [
             'name' => 'Outside Officer',
             'email' => 'outside@county.go.ke',
             'role' => UserRole::CountyOfficial->value,
@@ -45,7 +46,7 @@ class ProgrammeUserManagementTest extends TestCase
         $county = County::factory()->create();
         $admin = User::factory()->countyAdmin($county)->create();
 
-        $this->actingAs($admin)->post(route('programme-users.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('programme-users.store'), [
             'name' => 'Unauthorized Admin',
             'email' => 'elevated@county.go.ke',
             'role' => UserRole::DevolutionAdmin->value,
@@ -58,7 +59,7 @@ class ProgrammeUserManagementTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         Notification::fake();
 
-        $this->actingAs($admin)->post(route('programme-users.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('programme-users.store'), [
             'name' => 'Independent Verifier',
             'email' => 'verifier@idmis.go.ke',
             'role' => UserRole::Assessor->value,
@@ -77,8 +78,8 @@ class ProgrammeUserManagementTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $otherAdmin = User::factory()->countyAdmin($county)->create();
 
-        $this->actingAs($admin)->delete(route('programme-users.destroy', [$admin->currentTeam->slug, $official]))->assertRedirect();
-        $this->actingAs($admin)->delete(route('programme-users.destroy', [$admin->currentTeam->slug, $otherAdmin]))->assertForbidden();
+        $this->actingAs($admin)->delete(route('programme-users.destroy', [$official]))->assertRedirect();
+        $this->actingAs($admin)->delete(route('programme-users.destroy', [$otherAdmin]))->assertForbidden();
 
         $this->assertSoftDeleted($official);
         $this->assertNotSoftDeleted($otherAdmin);
@@ -88,7 +89,7 @@ class ProgrammeUserManagementTest extends TestCase
     {
         $admin = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($admin)->delete(route('programme-users.destroy', [$admin->currentTeam->slug, $admin]))->assertStatus(409);
+        $this->actingAs($admin)->delete(route('programme-users.destroy', [$admin]))->assertStatus(409);
         $this->assertNotSoftDeleted($admin);
     }
 }

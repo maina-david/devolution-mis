@@ -81,7 +81,7 @@ class AssessmentConfigurationController extends Controller
         return $this->success('Assessment scorecard created.');
     }
 
-    public function storeVersion(StoreAssessmentScorecardVersionRequest $request, string $currentTeam, AssessmentScorecard $assessmentScorecard, CreateAssessmentScorecardVersion $createVersion, AuditLogger $auditLogger): RedirectResponse
+    public function storeVersion(StoreAssessmentScorecardVersionRequest $request, AssessmentScorecard $assessmentScorecard, CreateAssessmentScorecardVersion $createVersion, AuditLogger $auditLogger): RedirectResponse
     {
         $version = $createVersion->handle($assessmentScorecard, $request->validated());
         $this->audit($request, $auditLogger, $version, 'assessment.scorecard.version.created', "Assessment scorecard version {$version->version} drafted.");
@@ -89,7 +89,7 @@ class AssessmentConfigurationController extends Controller
         return $this->success("Scorecard version {$version->version} created as a draft.");
     }
 
-    public function publishVersion(Request $request, string $currentTeam, AssessmentScorecard $assessmentScorecard, AssessmentScorecardVersion $scorecardVersion, PublishAssessmentScorecardVersion $publishVersion, AuditLogger $auditLogger): RedirectResponse
+    public function publishVersion(Request $request, AssessmentScorecard $assessmentScorecard, AssessmentScorecardVersion $scorecardVersion, PublishAssessmentScorecardVersion $publishVersion, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageAssessmentConfiguration->value);
         abort_unless($scorecardVersion->assessment_scorecard_id === $assessmentScorecard->id, 404);

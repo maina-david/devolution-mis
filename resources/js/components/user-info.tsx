@@ -1,18 +1,16 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useInitials } from '@/hooks/use-initials';
-import type { Team, User } from '@/types';
+import type { User } from '@/types';
 
 export function UserInfo({
     user,
     showEmail = false,
     showRole = false,
-    team = null,
 }: {
     user: User;
     showEmail?: boolean;
     showRole?: boolean;
-    team?: Team | null;
 }) {
     const getInitials = useInitials();
     const showAvatar = Boolean(user.avatar && user.avatar !== '');
@@ -37,12 +35,7 @@ export function UserInfo({
                         {user.role_label}
                     </Badge>
                 ) : null}
-                {team ? (
-                    <span className="truncate text-xs text-muted-foreground">
-                        {team.name}
-                    </span>
-                ) : null}
-                {!team && showEmail ? (
+                {showEmail ? (
                     <span className="truncate text-xs text-muted-foreground">
                         {user.email}
                     </span>

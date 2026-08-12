@@ -39,7 +39,7 @@ class LearningAnalyticsTest extends TestCase
         $this->enrollment($course, $other, 'completed', 100, 96);
         LearningCertificate::factory()->create(['learning_enrollment_id' => $completed->id]);
 
-        $this->actingAs($homeAdmin)->get(route('learning.analytics.index', $homeAdmin->currentTeam->slug))
+        $this->actingAs($homeAdmin)->get(route('learning.analytics.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('learning/analytics')
@@ -54,9 +54,9 @@ class LearningAnalyticsTest extends TestCase
                 ->has('report.counties.rows', 1)
             );
 
-        $this->actingAs($homeAdmin)->get(route('learning.analytics.index', [$homeAdmin->currentTeam->slug, 'county_id' => $other->id]))->assertForbidden();
+        $this->actingAs($homeAdmin)->get(route('learning.analytics.index', ['county_id' => $other->id]))->assertForbidden();
 
-        $this->actingAs($national)->get(route('learning.analytics.index', $national->currentTeam->slug))
+        $this->actingAs($national)->get(route('learning.analytics.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('report.summary.enrollments', 3)
@@ -75,7 +75,7 @@ class LearningAnalyticsTest extends TestCase
         $this->enrollment($otherCourse, $county, 'in_progress', 25, null, '2026-08-01');
 
         $filters = ['course_id' => $course->id, 'from' => '2026-07-01', 'to' => '2026-07-31', 'status' => 'completed'];
-        $this->actingAs($admin)->get(route('learning.analytics.index', [$admin->currentTeam->slug, ...$filters]))
+        $this->actingAs($admin)->get(route('learning.analytics.index', [...$filters]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('report.summary.suppressed', true)
@@ -85,11 +85,11 @@ class LearningAnalyticsTest extends TestCase
             );
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($admin)->get(route('learning.analytics.export', [$admin->currentTeam->slug, $format, ...$filters]))->assertOk()->assertDownload();
+            $this->actingAs($admin)->get(route('learning.analytics.export', [$format, ...$filters]))->assertOk()->assertDownload();
         }
         $this->assertDatabaseHas('audit_events', ['actor_id' => $admin->id, 'action' => 'learning.analytics.exported']);
         auth()->logout();
-        $this->get(route('learning.analytics.index', $admin->currentTeam->slug))->assertRedirect(route('login'));
+        $this->get(route('learning.analytics.index'))->assertRedirect(route('login'));
     }
 
     public function test_small_cells_are_suppressed_in_the_page_and_every_export_source(): void
@@ -103,7 +103,7 @@ class LearningAnalyticsTest extends TestCase
             $this->enrollment($course, $county, 'completed', 100, $score);
         }
 
-        $this->actingAs($admin)->get(route('learning.analytics.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('learning.analytics.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('report.privacy.minimumCellSize', 5)
@@ -123,19 +123,19 @@ class LearningAnalyticsTest extends TestCase
         $this->assertNull($rows[0]['enrollments']);
         $this->assertNull($rows[0]['average_score']);
 
-        $csv = $this->actingAs($admin)->get(route('learning.analytics.export', [$admin->currentTeam->slug, 'csv']));
+        $csv = $this->actingAs($admin)->get(route('learning.analytics.export', ['csv']));
         $csv->assertOk()->assertDownload();
         $csvContent = $csv->streamedContent();
         $this->assertStringContainsString('Suppressed (<5)', $csvContent);
         $this->assertStringNotContainsString('97.25', $csvContent);
 
-        $json = $this->actingAs($admin)->get(route('learning.analytics.export', [$admin->currentTeam->slug, 'json']));
+        $json = $this->actingAs($admin)->get(route('learning.analytics.export', ['json']));
         $json->assertOk()->assertDownload();
         $jsonContent = $json->streamedContent();
         $this->assertStringContainsString('"suppressed": true', $jsonContent);
         $this->assertStringNotContainsString('97.25', $jsonContent);
 
-        $xlsx = $this->actingAs($admin)->get(route('learning.analytics.export', [$admin->currentTeam->slug, 'xlsx']));
+        $xlsx = $this->actingAs($admin)->get(route('learning.analytics.export', ['xlsx']));
         $xlsx->assertOk()->assertDownload();
         $this->assertInstanceOf(BinaryFileResponse::class, $xlsx->baseResponse);
         $archive = new ZipArchive;
@@ -147,7 +147,7 @@ class LearningAnalyticsTest extends TestCase
         $this->assertStringContainsString('Suppressed (&lt;5)', $xlsxContent);
         $this->assertStringNotContainsString('97.25', $xlsxContent);
 
-        $pdf = $this->actingAs($admin)->get(route('learning.analytics.export', [$admin->currentTeam->slug, 'pdf']));
+        $pdf = $this->actingAs($admin)->get(route('learning.analytics.export', ['pdf']));
         $pdf->assertOk()->assertDownload();
         $this->assertStringNotContainsString('97.25', $pdf->getContent());
     }
@@ -162,7 +162,7 @@ class LearningAnalyticsTest extends TestCase
         $hiddenItem = KnowledgeItem::factory()->create(['reference' => 'KM-HIDDEN-002', 'status' => 'published', 'county_id' => $other->id]);
         $course->knowledgeItems()->attach([$nationalItem->id, $hiddenItem->id]);
 
-        $this->actingAs($learner)->get(route('learning.index', $learner->currentTeam->slug))
+        $this->actingAs($learner)->get(route('learning.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('courses.data.0.knowledgeRecommendations.0.reference', 'KM-GUIDE-001')

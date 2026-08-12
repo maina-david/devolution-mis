@@ -22,7 +22,7 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
         [$classroom, $facilitator, $firstEnrollment, $secondEnrollment] = $this->classroomWithRoster(capacity: 1);
         $payload = $this->presentPayload($classroom, $firstEnrollment, 'teams-event-001');
 
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $payload)->assertRedirect();
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $payload)->assertRedirect();
         $attendance = VirtualClassroomAttendance::query()->sole();
         $this->assertTrue(Str::isUuid($attendance->id));
         $this->assertSame('present', $attendance->attendance_status);
@@ -30,7 +30,7 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
         $this->assertSame(64, mb_strlen($attendance->payload_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $attendance->id, 'action' => 'learning.classroom_attendance_recorded']);
 
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $payload)->assertRedirect();
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $payload)->assertRedirect();
         $this->assertDatabaseCount('virtual_classroom_attendances', 1);
         $this->assertSame(1, AuditEvent::query()
             ->where('subject_id', $attendance->id)
@@ -38,13 +38,13 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
             ->count());
 
         $conflictingEvent = [...$payload, 'attendance_status' => 'absent', 'joined_at' => null, 'left_at' => null];
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $conflictingEvent)->assertStatus(409);
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $conflictingEvent)->assertStatus(409);
 
         $capacityPayload = $this->presentPayload($classroom, $secondEnrollment, 'teams-event-002');
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $capacityPayload)->assertStatus(409);
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $capacityPayload)->assertStatus(409);
 
         $misclassified = [...$capacityPayload, 'attendance_status' => 'partial', 'provider_event_id' => 'teams-event-003'];
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $misclassified)->assertSessionHasErrors('attendance_status');
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $misclassified)->assertSessionHasErrors('attendance_status');
     }
 
     public function test_roster_filters_county_scope_and_all_authorized_exports_are_enforced(): void
@@ -53,40 +53,40 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
         $manager = User::factory()->devolutionAdmin()->create();
         $outsider = User::factory()->countyOfficial(County::factory()->create())->create();
 
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $this->presentPayload($classroom, $enrollment, 'teams-event-filter'))->assertRedirect();
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $this->presentPayload($classroom, $enrollment, 'teams-event-filter'))->assertRedirect();
 
-        $this->actingAs($facilitator)->get(route('learning.classrooms.show', [$facilitator->currentTeam->slug, $classroom, 'status' => 'present', 'search' => $enrollment->user->name]))
+        $this->actingAs($facilitator)->get(route('learning.classrooms.show', [$classroom, 'status' => 'present', 'search' => $enrollment->user->name]))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->component('learning/classrooms/show')->where('roster.pagination.total', 1)->where('roster.rows.0.status', 'present')->where('roster.rows.0.cells.1.name', $enrollment->county->name));
-        $this->actingAs($outsider)->get(route('learning.classrooms.show', [$outsider->currentTeam->slug, $classroom]))->assertForbidden();
-        $this->actingAs($enrollment->user)->get(route('learning.classrooms.show', [$enrollment->user->currentTeam->slug, $classroom]))->assertForbidden();
-        $this->actingAs($manager)->get(route('learning.classrooms.show', [$manager->currentTeam->slug, $classroom]))->assertOk();
+        $this->actingAs($outsider)->get(route('learning.classrooms.show', [$classroom]))->assertForbidden();
+        $this->actingAs($enrollment->user)->get(route('learning.classrooms.show', $classroom))->assertForbidden();
+        $this->actingAs($manager)->get(route('learning.classrooms.show', [$classroom]))->assertOk();
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($facilitator)->get(route('workspace.export', [$facilitator->currentTeam->slug, 'learning-attendance', $format, 'classroom_id' => $classroom->id]))->assertOk()->assertDownload();
+            $this->actingAs($facilitator)->get(route('workspace.export', ['learning-attendance', $format, 'classroom_id' => $classroom->id]))->assertOk()->assertDownload();
         }
-        $this->actingAs($outsider)->get(route('workspace.export', [$outsider->currentTeam->slug, 'learning-attendance', 'csv', 'classroom_id' => $classroom->id]))->assertForbidden();
+        $this->actingAs($outsider)->get(route('workspace.export', ['learning-attendance', 'csv', 'classroom_id' => $classroom->id]))->assertForbidden();
     }
 
     public function test_attendance_amendments_require_attribution_and_invalid_rosters_or_future_sessions_are_rejected(): void
     {
         [$classroom, $facilitator, $enrollment] = $this->classroomWithRoster();
         $manual = [...$this->presentPayload($classroom, $enrollment), 'source' => 'manual', 'provider_event_id' => null];
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $manual)->assertRedirect();
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $manual)->assertRedirect();
 
         $absent = ['learning_enrollment_id' => $enrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'];
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), $absent)->assertStatus(422);
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), [...$absent, 'notes' => 'Provider log confirmed that the learner did not join.'])->assertRedirect();
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), $absent)->assertStatus(422);
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), [...$absent, 'notes' => 'Provider log confirmed that the learner did not join.'])->assertRedirect();
         $attendance = VirtualClassroomAttendance::query()->sole();
         $this->assertSame('absent', $attendance->attendance_status);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $attendance->id, 'action' => 'learning.classroom_attendance_amended']);
 
         $otherCourse = LearningCourse::factory()->create(['status' => 'published']);
         $otherEnrollment = LearningEnrollment::factory()->create(['learning_course_id' => $otherCourse->id]);
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $classroom]), ['learning_enrollment_id' => $otherEnrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'])->assertStatus(409);
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$classroom]), ['learning_enrollment_id' => $otherEnrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'])->assertStatus(409);
 
         $futureClassroom = VirtualClassroom::factory()->create(['learning_course_id' => $classroom->learning_course_id, 'facilitator_id' => $facilitator->id, 'starts_at' => now()->addDay(), 'ends_at' => now()->addDay()->addHours(2)]);
-        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$facilitator->currentTeam->slug, $futureClassroom]), ['learning_enrollment_id' => $enrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'])->assertStatus(409);
+        $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$futureClassroom]), ['learning_enrollment_id' => $enrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'])->assertStatus(409);
     }
 
     /** @return array{VirtualClassroom, User, LearningEnrollment, LearningEnrollment} */

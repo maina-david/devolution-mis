@@ -48,7 +48,6 @@ export type EvaluationItem = {
 };
 
 export default function ProgrammeEvaluationPanel({
-    teamSlug,
     programmes,
     counties,
     evaluations,
@@ -56,7 +55,6 @@ export default function ProgrammeEvaluationPanel({
     canApprove,
     filters,
 }: {
-    teamSlug: string;
     programmes: Option[];
     counties: Option[];
     evaluations: EvaluationItem[];
@@ -97,7 +95,6 @@ export default function ProgrammeEvaluationPanel({
                                     <a
                                         href={exportMethod.url(
                                             {
-                                                current_team: teamSlug,
                                                 workspace:
                                                     'programme-evaluations',
                                                 format,
@@ -123,7 +120,7 @@ export default function ProgrammeEvaluationPanel({
                         description="Register a baseline, midline, endline, process or impact study with governed scope and terms of reference."
                     >
                         <Form
-                            {...store.form({ current_team: teamSlug })}
+                            {...store.form({})}
                             className="grid gap-4 md:grid-cols-2"
                             resetOnSuccess
                         >
@@ -283,7 +280,6 @@ export default function ProgrammeEvaluationPanel({
                                 <TableCell>
                                     <div className="flex flex-wrap justify-end gap-2">
                                         <ProgrammeEvaluationDocumentControls
-                                            teamSlug={teamSlug}
                                             evaluationId={item.id}
                                             status={item.status}
                                             documents={item.documents}
@@ -298,7 +294,6 @@ export default function ProgrammeEvaluationPanel({
                                         {item.status === 'planned' &&
                                             canManage && (
                                                 <EvaluationTransition
-                                                    teamSlug={teamSlug}
                                                     evaluationId={item.id}
                                                     name="start"
                                                     label="Start evaluation"
@@ -314,7 +309,6 @@ export default function ProgrammeEvaluationPanel({
                                         {item.status === 'in_progress' &&
                                             canManage && (
                                                 <EvaluationTransition
-                                                    teamSlug={teamSlug}
                                                     evaluationId={item.id}
                                                     name="submit_review"
                                                     label="Submit for review"
@@ -331,13 +325,11 @@ export default function ProgrammeEvaluationPanel({
                                             canApprove && (
                                                 <>
                                                     <EvaluationTransition
-                                                        teamSlug={teamSlug}
                                                         evaluationId={item.id}
                                                         name="approve"
                                                         label="Approve"
                                                     />
                                                     <EvaluationTransition
-                                                        teamSlug={teamSlug}
                                                         evaluationId={item.id}
                                                         name="return"
                                                         label="Return"
@@ -356,14 +348,12 @@ export default function ProgrammeEvaluationPanel({
 }
 
 function EvaluationTransition({
-    teamSlug,
     evaluationId,
     name,
     label,
     disabled = false,
     disabledReason,
 }: {
-    teamSlug: string;
     evaluationId: string;
     name: string;
     label: string;
@@ -384,10 +374,7 @@ function EvaluationTransition({
             size="md"
         >
             <Form
-                {...transition.form({
-                    current_team: teamSlug,
-                    evaluation: evaluationId,
-                })}
+                {...transition.form({ evaluation: evaluationId })}
                 className="grid gap-4"
             >
                 {({ processing, errors }) => (

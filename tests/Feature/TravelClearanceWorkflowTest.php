@@ -40,7 +40,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $payload = $this->validRequest($county);
         $payload['organization_id'] = $organization->id;
         $payload['sector_id'] = $sector->id;
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)->assertRedirect();
         $travelRequest = TravelRequest::query()->with('itineraries')->sole();
         $this->assertTrue(Str::isUuid($travelRequest->id));
         $this->assertCount(2, $travelRequest->itineraries);
@@ -52,29 +52,29 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
 
-        $this->actingAs($requester)->get(route('travel-clearance.index', $requester->currentTeam->slug))
+        $this->actingAs($requester)->get(route('travel-clearance.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('requests.data.0.referenceRelease', "v{$release->version} · {$release->effective_from?->toDateString()}")
                 ->where('requests.data.0.referenceChecksum', $release->checksum));
         foreach (['json', 'csv'] as $format) {
-            $export = $this->actingAs($requester)->get(route('workspace.export', [$requester->currentTeam->slug, 'travel-clearance', $format]))
+            $export = $this->actingAs($requester)->get(route('workspace.export', ['travel-clearance', $format]))
                 ->assertOk()
                 ->streamedContent();
             $this->assertStringContainsString('Reference release', $export);
             $this->assertStringContainsString("v{$release->version}", $export);
             $this->assertStringContainsString($release->checksum, $export);
         }
-        $this->actingAs($requester)->get(route('workspace.export', [$requester->currentTeam->slug, 'travel-clearance', 'xlsx']))->assertOk()->assertDownload();
-        $this->actingAs($requester)->get(route('workspace.export', [$requester->currentTeam->slug, 'travel-clearance', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->actingAs($requester)->get(route('workspace.export', ['travel-clearance', 'xlsx']))->assertOk()->assertDownload();
+        $this->actingAs($requester)->get(route('workspace.export', ['travel-clearance', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
 
-        $this->actingAs($requester)->patch(route('travel-clearance.transition', [$requester->currentTeam->slug, $travelRequest]), ['transition' => 'submit', 'rationale' => 'Complete official itinerary submitted.'])->assertRedirect();
+        $this->actingAs($requester)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'submit', 'rationale' => 'Complete official itinerary submitted.'])->assertRedirect();
         $this->assertSame('manager_review', $travelRequest->refresh()->status);
-        $this->actingAs($manager)->patch(route('travel-clearance.transition', [$manager->currentTeam->slug, $travelRequest]), ['transition' => 'manager_approve', 'rationale' => 'Travel is necessary and work-plan aligned.', 'approved_cost' => 72000])->assertRedirect();
+        $this->actingAs($manager)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'manager_approve', 'rationale' => 'Travel is necessary and work-plan aligned.', 'approved_cost' => 72000])->assertRedirect();
         $this->assertSame('finance_review', $travelRequest->refresh()->status);
 
-        $this->actingAs($manager)->patch(route('travel-clearance.transition', [$manager->currentTeam->slug, $travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Attempted self-clearance.', 'finance_commitment_reference' => 'IFMIS-INVALID'])->assertForbidden();
-        $this->actingAs($finance)->patch(route('travel-clearance.transition', [$finance->currentTeam->slug, $travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Budget and commitment independently reconciled.', 'approved_cost' => 70000, 'finance_commitment_reference' => 'IFMIS-COMMIT-2026-001'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Attempted self-clearance.', 'finance_commitment_reference' => 'IFMIS-INVALID'])->assertForbidden();
+        $this->actingAs($finance)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Budget and commitment independently reconciled.', 'approved_cost' => 70000, 'finance_commitment_reference' => 'IFMIS-COMMIT-2026-001'])->assertRedirect();
 
         $travelRequest->refresh();
         $this->assertSame('approved', $travelRequest->status);
@@ -97,15 +97,15 @@ class TravelClearanceWorkflowTest extends TestCase
         $payload['organization_id'] = $organization->id;
         $payload['sector_id'] = $sector->id;
 
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('travel_requests', 0);
 
         $this->publishedReferenceRelease([$county], [$sector], [], $approver);
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $payload)->assertSessionHasErrors('organization_id');
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)->assertSessionHasErrors('organization_id');
         $this->assertDatabaseCount('travel_requests', 0);
 
         $release = $this->publishedReferenceRelease([$county], [$sector], [$organization], $approver);
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)->assertRedirect();
         $this->assertSame($release->id, TravelRequest::query()->sole()->reference_data_release_id);
     }
 
@@ -118,7 +118,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$home, $outside], [], [], $approver);
         $this->seed(TravelWorkflowSeeder::class);
 
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $this->validRequest($outside))->assertForbidden();
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $this->validRequest($outside))->assertForbidden();
         $this->assertDatabaseCount('travel_requests', 0);
     }
 
@@ -131,7 +131,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $payload['estimated_cost'] = 100;
         $payload['itineraries'][0]['departs_at'] = today()->addDay()->setTime(8, 0)->toIso8601String();
 
-        $this->actingAs($requester)->post(route('travel-clearance.store', $requester->currentTeam->slug), $payload)
+        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)
             ->assertSessionHasErrors(['estimated_cost', 'itineraries.0.departs_at']);
         $this->assertDatabaseCount('travel_requests', 0);
     }
@@ -144,12 +144,12 @@ class TravelClearanceWorkflowTest extends TestCase
         $visible = TravelRequest::factory()->create(['requester_id' => $user->id, 'created_by' => $user->id, 'county_id' => $home->id, 'reference' => 'TRV-VISIBLE']);
         $hidden = TravelRequest::factory()->create(['county_id' => $other->id, 'reference' => 'TRV-HIDDEN']);
 
-        $this->actingAs($user)->get(route('travel-clearance.index', $user->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($user)->get(route('travel-clearance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('travel-clearance/index')->where('requests.total', 1)->where('requests.data.0.id', $visible->id));
-        $content = $this->actingAs($user)->get(route('workspace.export', [$user->currentTeam->slug, 'travel-clearance', 'json']))->assertOk()->streamedContent();
+        $content = $this->actingAs($user)->get(route('workspace.export', ['travel-clearance', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('TRV-VISIBLE', $content);
         $this->assertStringNotContainsString('TRV-HIDDEN', $content);
-        $this->actingAs($user)->patch(route('travel-clearance.transition', [$user->currentTeam->slug, $hidden]), ['transition' => 'cancel', 'rationale' => 'Cross-county mutation attempt.'])->assertForbidden();
+        $this->actingAs($user)->patch(route('travel-clearance.transition', [$hidden]), ['transition' => 'cancel', 'rationale' => 'Cross-county mutation attempt.'])->assertForbidden();
     }
 
     public function test_authorized_register_exports_all_required_formats(): void
@@ -160,7 +160,7 @@ class TravelClearanceWorkflowTest extends TestCase
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($user)
-                ->get(route('workspace.export', [$user->currentTeam->slug, 'travel-clearance', $format]))
+                ->get(route('workspace.export', ['travel-clearance', $format]))
                 ->assertOk()
                 ->assertDownload();
         }
@@ -196,7 +196,7 @@ class TravelClearanceWorkflowTest extends TestCase
             'decided_at' => now(),
         ]);
 
-        $this->actingAs($user)->get(route('travel-clearance.index', [$user->currentTeam->slug, 'status' => 'approved']))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($user)->get(route('travel-clearance.index', ['status' => 'approved']))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('analytics.summary.total', 1)
             ->where('analytics.summary.approved', 1)
             ->where('analytics.summary.averageTurnaroundHours', 12)
@@ -241,7 +241,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $outsider = User::factory()->countyOfficial($otherCounty)->create();
         $travelRequest = TravelRequest::factory()->create(['requester_id' => $requester->id, 'created_by' => $requester->id, 'county_id' => $county->id, 'status' => 'draft']);
 
-        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$requester->currentTeam->slug, $travelRequest]), [
+        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$travelRequest]), [
             'title' => 'Signed travel authorization',
             'category' => 'Authorization',
             'source_type' => 'scanned',
@@ -257,12 +257,12 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->assertNotNull($link->document->currentVersion);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $link->document->id, 'action' => 'document.linked_uploaded']);
 
-        $this->actingAs($requester)->get(route('evidence.preview', [$requester->currentTeam->slug, $link->document]))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
-        $this->actingAs($requester)->get(route('evidence.index', $requester->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->has('workspace.rows', 1)->where('workspace.rows.0.id', $link->document->id));
-        $this->actingAs($outsider)->get(route('evidence.preview', [$outsider->currentTeam->slug, $link->document]))->assertForbidden();
+        $this->actingAs($requester)->get(route('evidence.preview', [$link->document]))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->actingAs($requester)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('workspace.rows', 1)->where('workspace.rows.0.id', $link->document->id));
+        $this->actingAs($outsider)->get(route('evidence.preview', [$link->document]))->assertForbidden();
 
         $travelRequest->update(['status' => 'manager_review']);
-        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$requester->currentTeam->slug, $travelRequest]), ['title' => 'Late document', 'category' => 'Authorization', 'source_type' => 'digital', 'document' => UploadedFile::fake()->create('late.pdf', 10, 'application/pdf')])->assertStatus(409);
+        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$travelRequest]), ['title' => 'Late document', 'category' => 'Authorization', 'source_type' => 'digital', 'document' => UploadedFile::fake()->create('late.pdf', 10, 'application/pdf')])->assertStatus(409);
         $this->assertDatabaseCount('document_links', 1);
     }
 
@@ -276,7 +276,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $nationalViewer = User::factory()->devolutionAdmin()->create();
         $travelRequest = TravelRequest::factory()->create(['requester_id' => $requester->id, 'created_by' => $requester->id, 'county_id' => null, 'status' => 'draft']);
 
-        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$requester->currentTeam->slug, $travelRequest]), [
+        $this->actingAs($requester)->post(route('travel-clearance.documents.store', [$travelRequest]), [
             'title' => 'National mission brief',
             'category' => 'Authorization',
             'source_type' => 'digital',
@@ -285,12 +285,12 @@ class TravelClearanceWorkflowTest extends TestCase
 
         $document = DocumentLink::query()->with('document')->sole()->document;
         $this->assertNull($document->county_id);
-        $this->actingAs($requester)->get(route('evidence.index', $requester->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($requester)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('workspace.pagination.total', 1)
             ->where('workspace.rows.0.cells.1', 'National'));
-        $this->actingAs($nationalViewer)->get(route('evidence.preview', [$nationalViewer->currentTeam->slug, $document]))->assertOk();
-        $this->actingAs($outsider)->get(route('evidence.preview', [$outsider->currentTeam->slug, $document]))->assertForbidden();
-        $this->actingAs($outsider)->get(route('evidence.index', $outsider->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($nationalViewer)->get(route('evidence.preview', [$document]))->assertOk();
+        $this->actingAs($outsider)->get(route('evidence.preview', [$document]))->assertForbidden();
+        $this->actingAs($outsider)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('workspace.pagination.total', 0));
     }
 

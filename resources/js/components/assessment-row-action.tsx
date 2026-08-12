@@ -6,20 +6,15 @@ import { approve, review, score, submit } from '@/routes/assessments';
 type Props = {
     assessmentId: string;
     status?: string;
-    teamSlug: string;
     capabilities: Record<string, boolean>;
 };
 
 export default function AssessmentRowAction({
     assessmentId,
     status,
-    teamSlug,
     capabilities,
 }: Props) {
-    const routeArguments = {
-        current_team: teamSlug,
-        assessment: assessmentId,
-    };
+    const routeArguments = { assessment: assessmentId };
 
     if (
         capabilities.submit &&

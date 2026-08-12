@@ -32,12 +32,12 @@ class BusinessCalendarWorkflowTest extends TestCase
         $publisher = User::factory()->platformAdmin()->create();
         $operator = User::factory()->countyAdmin()->create();
 
-        $this->actingAs($author)->post(route('business-calendars.store', $author->currentTeam->slug), $this->calendarPayload())->assertRedirect();
+        $this->actingAs($author)->post(route('business-calendars.store'), $this->calendarPayload())->assertRedirect();
         $calendar = BusinessCalendar::query()->sole();
         $this->assertTrue(Str::isUuid($calendar->id));
-        $this->actingAs($author)->post(route('business-calendars.holidays.store', [$author->currentTeam->slug, $calendar]), ['holiday_date' => '2026-12-25', 'name' => 'Christmas Day', 'category' => 'public_holiday', 'source_reference' => 'Public Holidays Act and Kenya Gazette'])->assertRedirect();
-        $this->actingAs($author)->patch(route('business-calendars.publish', [$author->currentTeam->slug, $calendar]))->assertForbidden();
-        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$publisher->currentTeam->slug, $calendar]))->assertRedirect();
+        $this->actingAs($author)->post(route('business-calendars.holidays.store', [$calendar]), ['holiday_date' => '2026-12-25', 'name' => 'Christmas Day', 'category' => 'public_holiday', 'source_reference' => 'Public Holidays Act and Kenya Gazette'])->assertRedirect();
+        $this->actingAs($author)->patch(route('business-calendars.publish', [$calendar]))->assertForbidden();
+        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$calendar]))->assertRedirect();
         $this->assertSame('published', $calendar->refresh()->status);
         $this->assertSame(64, mb_strlen((string) $calendar->checksum));
 
@@ -60,10 +60,10 @@ class BusinessCalendarWorkflowTest extends TestCase
         $author = User::factory()->devolutionAdmin()->create();
         $publisher = User::factory()->platformAdmin()->create();
         $calendar = BusinessCalendar::factory()->create(['created_by' => $author->id, 'effective_from' => '2026-01-01']);
-        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$publisher->currentTeam->slug, $calendar]))->assertRedirect();
-        $this->actingAs($author)->post(route('business-calendars.holidays.store', [$author->currentTeam->slug, $calendar]), ['holiday_date' => '2026-10-20', 'name' => 'Mashujaa Day', 'category' => 'public_holiday', 'source_reference' => 'Public Holidays Act'])->assertStatus(409);
+        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$calendar]))->assertRedirect();
+        $this->actingAs($author)->post(route('business-calendars.holidays.store', [$calendar]), ['holiday_date' => '2026-10-20', 'name' => 'Mashujaa Day', 'category' => 'public_holiday', 'source_reference' => 'Public Holidays Act'])->assertStatus(409);
         $overlap = BusinessCalendar::factory()->create(['code' => $calendar->code, 'version' => 2, 'created_by' => $author->id, 'effective_from' => '2026-06-01']);
-        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$publisher->currentTeam->slug, $overlap]))->assertStatus(409);
+        $this->actingAs($publisher)->patch(route('business-calendars.publish', [$overlap]))->assertStatus(409);
         $this->assertSame('draft', $overlap->refresh()->status);
         try {
             BusinessCalendar::query()->whereKey($calendar)->update(['name' => 'Mutated calendar']);
@@ -78,11 +78,11 @@ class BusinessCalendarWorkflowTest extends TestCase
         $admin = User::factory()->devolutionAdmin()->create();
         $calendar = BusinessCalendar::factory()->create(['created_by' => $admin->id]);
         $holiday = BusinessCalendarHoliday::factory()->create(['business_calendar_id' => $calendar->id, 'created_by' => $admin->id]);
-        $this->actingAs($admin)->get(route('workflows.index', $admin->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->component('workflows/index')->has('calendars', 1)->where('calendars.0.id', $calendar->id)->where('calendars.0.holidays.0.sourceReference', $holiday->source_reference));
+        $this->actingAs($admin)->get(route('workflows.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('workflows/index')->has('calendars', 1)->where('calendars.0.id', $calendar->id)->where('calendars.0.holidays.0.sourceReference', $holiday->source_reference));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($admin)->get(route('workspace.export', [$admin->currentTeam->slug, 'business-calendars', $format]))->assertOk()->assertDownload();
+            $this->actingAs($admin)->get(route('workspace.export', ['business-calendars', $format]))->assertOk()->assertDownload();
         }
-        $this->actingAs($admin)->delete(route('business-calendars.holidays.destroy', [$admin->currentTeam->slug, $calendar, $holiday]))->assertRedirect();
+        $this->actingAs($admin)->delete(route('business-calendars.holidays.destroy', [$calendar, $holiday]))->assertRedirect();
         $this->assertSoftDeleted($holiday);
     }
 

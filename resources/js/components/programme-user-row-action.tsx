@@ -4,11 +4,9 @@ import { Button } from '@/components/ui/button';
 import { destroy } from '@/routes/programme-users';
 
 export default function ProgrammeUserRowAction({
-    teamSlug,
     userId,
     isCurrentUser,
 }: {
-    teamSlug: string;
     userId: string;
     isCurrentUser: boolean;
 }) {
@@ -19,9 +17,7 @@ export default function ProgrammeUserRowAction({
     }
 
     return (
-        <Form
-            {...destroy.form({ current_team: teamSlug, programmeUser: userId })}
-        >
+        <Form {...destroy.form({ programmeUser: userId })}>
             {({ processing }) => (
                 <Button
                     type="submit"

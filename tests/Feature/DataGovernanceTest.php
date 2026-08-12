@@ -27,22 +27,22 @@ class DataGovernanceTest extends TestCase
         $retentionReviewer = User::factory()->platformAdmin()->create();
         $countyUser = User::factory()->countyAdmin()->create();
 
-        $this->actingAs($countyUser)->get(route('data-governance.index', $countyUser->currentTeam->slug))->assertForbidden();
-        $this->actingAs($manager)->post(route('data-governance.assets.store', $manager->currentTeam->slug), $this->assetPayload($owner, $steward))->assertRedirect();
+        $this->actingAs($countyUser)->get(route('data-governance.index'))->assertForbidden();
+        $this->actingAs($manager)->post(route('data-governance.assets.store'), $this->assetPayload($owner, $steward))->assertRedirect();
         $asset = DataAsset::query()->sole();
         $this->assertTrue(Str::isUuid($asset->id));
         $this->assertSame(['name', 'official_email', 'employee_reference'], $asset->personal_data_categories);
         $this->assertSame(['postgresql', 'private_object_storage'], $asset->storage_locations);
 
-        $this->actingAs($manager)->post(route('data-governance.retention-schedules.store', $manager->currentTeam->slug), $this->retentionPayload())->assertRedirect();
+        $this->actingAs($manager)->post(route('data-governance.retention-schedules.store'), $this->retentionPayload())->assertRedirect();
         $schedule = RetentionSchedule::query()->sole();
         $approval = RetentionScheduleApproval::query()->sole();
         $this->assertTrue(Str::isUuid($schedule->id));
         $this->assertTrue(Str::isUuid($approval->id));
         $this->assertSame('submitted', $schedule->status);
         $this->assertSame($manager->id, $approval->submitted_by);
-        $this->actingAs($manager)->patch(route('data-governance.retention-schedules.review', [$manager->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'The submitting officer cannot approve this schedule.'])->assertForbidden();
-        $this->actingAs($retentionReviewer)->patch(route('data-governance.retention-schedules.review', [$retentionReviewer->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'The retention trigger, authority, hold rule and disposition have been independently reviewed.'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('data-governance.retention-schedules.review', [$schedule]), ['decision' => 'approved', 'decision_reason' => 'The submitting officer cannot approve this schedule.'])->assertForbidden();
+        $this->actingAs($retentionReviewer)->patch(route('data-governance.retention-schedules.review', [$schedule]), ['decision' => 'approved', 'decision_reason' => 'The retention trigger, authority, hold rule and disposition have been independently reviewed.'])->assertRedirect();
         $this->assertSame('approved', $schedule->refresh()->status);
         $this->assertSame($retentionReviewer->id, $schedule->approved_by);
         $this->assertSame('approved', $approval->refresh()->status);
@@ -50,7 +50,7 @@ class DataGovernanceTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $asset->id, 'action' => 'privacy.data-asset.registered']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $approval->id, 'action' => 'privacy.retention-schedule.submitted']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $approval->id, 'action' => 'privacy.retention-schedule.approved']);
-        $this->actingAs($retentionReviewer)->get(route('data-governance.index', $retentionReviewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($retentionReviewer)->get(route('data-governance.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('retentionSchedules.0.status', 'approved')
             ->where('retentionSchedules.0.submission.submitter', $manager->name)
             ->where('retentionSchedules.0.submission.reviewer', $retentionReviewer->name)
@@ -63,16 +63,16 @@ class DataGovernanceTest extends TestCase
     {
         $submitter = User::factory()->devolutionAdmin()->create();
         $reviewer = User::factory()->platformAdmin()->create();
-        $this->actingAs($submitter)->post(route('data-governance.retention-schedules.store', $submitter->currentTeam->slug), $this->retentionPayload())->assertRedirect();
+        $this->actingAs($submitter)->post(route('data-governance.retention-schedules.store'), $this->retentionPayload())->assertRedirect();
         $schedule = RetentionSchedule::query()->sole();
         $approval = RetentionScheduleApproval::query()->sole();
         $asset = DataAsset::factory()->create();
-        $this->actingAs($submitter)->post(route('data-governance.processing-activities.store', $submitter->currentTeam->slug), $this->processingPayload($asset, $schedule))->assertSessionHasErrors('retention_schedule_id');
+        $this->actingAs($submitter)->post(route('data-governance.processing-activities.store'), $this->processingPayload($asset, $schedule))->assertSessionHasErrors('retention_schedule_id');
 
         $schedule->update(['retention_months' => 96]);
-        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$reviewer->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'This changed schedule must fail its submission checksum.'])->assertStatus(409);
+        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$schedule]), ['decision' => 'approved', 'decision_reason' => 'This changed schedule must fail its submission checksum.'])->assertStatus(409);
         $schedule->update(['retention_months' => 84]);
-        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$reviewer->currentTeam->slug, $schedule]), ['decision' => 'rejected', 'decision_reason' => 'The records authority reference remains a draft and is not sufficient for approval.'])->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$schedule]), ['decision' => 'rejected', 'decision_reason' => 'The records authority reference remains a draft and is not sufficient for approval.'])->assertRedirect();
         $this->assertSame('rejected', $schedule->refresh()->status);
         $this->assertSame('rejected', $approval->refresh()->status);
 
@@ -120,14 +120,14 @@ class DataGovernanceTest extends TestCase
         $asset = DataAsset::factory()->create(['contains_sensitive_personal_data' => true]);
         $schedule = RetentionSchedule::factory()->create(['status' => 'approved']);
 
-        $this->actingAs($submitter)->post(route('data-governance.processing-activities.store', $submitter->currentTeam->slug), $this->processingPayload($asset, $schedule))->assertRedirect();
+        $this->actingAs($submitter)->post(route('data-governance.processing-activities.store'), $this->processingPayload($asset, $schedule))->assertRedirect();
         $activity = ProcessingActivity::query()->sole();
         $this->assertSame('submitted', $activity->status);
         $this->assertTrue(Str::isUuid($activity->id));
-        $this->actingAs($submitter)->patch(route('data-governance.processing-activities.review', [$submitter->currentTeam->slug, $activity]), ['decision' => 'approved', 'review_note' => 'The submitter must not approve this processing activity.'])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$reviewer->currentTeam->slug, $activity]), ['decision' => 'approved', 'review_note' => 'Sensitive processing has not completed the mandatory DPIA review.'])->assertStatus(409);
+        $this->actingAs($submitter)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'The submitter must not approve this processing activity.'])->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'Sensitive processing has not completed the mandatory DPIA review.'])->assertStatus(409);
         $activity->update(['dpia_status' => 'completed', 'dpia_reference' => 'DPIA-IDMIS-2026-001']);
-        $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$reviewer->currentTeam->slug, $activity]), ['decision' => 'approved', 'review_note' => 'DPIA, retention, transfer and technical safeguards have been independently reviewed.'])->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'DPIA, retention, transfer and technical safeguards have been independently reviewed.'])->assertRedirect();
         $this->assertSame('approved', $activity->refresh()->status);
         $this->assertSame($reviewer->id, $activity->reviewed_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $activity->id, 'action' => 'privacy.processing-activity.reviewed']);
@@ -139,7 +139,7 @@ class DataGovernanceTest extends TestCase
         $decisionMaker = User::factory()->platformAdmin()->create();
         $viewer = User::factory()->topManagement()->create();
 
-        $this->actingAs($identityVerifier)->post(route('data-governance.data-subject-requests.store', $identityVerifier->currentTeam->slug), ['assigned_to' => $decisionMaker->id, 'request_type' => 'access', 'requester_name' => 'Protected Citizen', 'requester_contact' => 'citizen@example.test', 'contact_channel' => 'email', 'scope' => 'All personal information connected to citizen feedback reference CFM-2026-001.', 'received_at' => now()->subHour()->toIso8601String()])->assertRedirect();
+        $this->actingAs($identityVerifier)->post(route('data-governance.data-subject-requests.store'), ['assigned_to' => $decisionMaker->id, 'request_type' => 'access', 'requester_name' => 'Protected Citizen', 'requester_contact' => 'citizen@example.test', 'contact_channel' => 'email', 'scope' => 'All personal information connected to citizen feedback reference CFM-2026-001.', 'received_at' => now()->subHour()->toIso8601String()])->assertRedirect();
         $privacyRequest = DataSubjectRequest::query()->sole();
         $this->assertTrue(Str::isUuid($privacyRequest->id));
         $this->assertSame('Protected Citizen', $privacyRequest->requester_name);
@@ -147,23 +147,23 @@ class DataGovernanceTest extends TestCase
         $this->assertStringNotContainsString('Protected Citizen', (string) $raw?->requester_name);
         $this->assertStringNotContainsString('citizen@example.test', (string) $raw?->requester_contact);
 
-        $this->actingAs($identityVerifier)->patch(route('data-governance.data-subject-requests.advance', [$identityVerifier->currentTeam->slug, $privacyRequest]), ['transition' => 'verify_identity', 'identity_evidence_reference' => 'IDV-SEALED-2026-001'])->assertRedirect();
-        $this->actingAs($decisionMaker)->patch(route('data-governance.data-subject-requests.advance', [$decisionMaker->currentTeam->slug, $privacyRequest]), ['transition' => 'start_review'])->assertRedirect();
+        $this->actingAs($identityVerifier)->patch(route('data-governance.data-subject-requests.advance', [$privacyRequest]), ['transition' => 'verify_identity', 'identity_evidence_reference' => 'IDV-SEALED-2026-001'])->assertRedirect();
+        $this->actingAs($decisionMaker)->patch(route('data-governance.data-subject-requests.advance', [$privacyRequest]), ['transition' => 'start_review'])->assertRedirect();
         $decision = ['transition' => 'complete', 'decision' => 'A protected export was supplied through the approved response channel.', 'decision_reason' => 'Identity and scope were verified and no lawful restriction prevented access.', 'response_evidence_reference' => 'DSR-RESPONSE-2026-001'];
-        $this->actingAs($identityVerifier)->patch(route('data-governance.data-subject-requests.advance', [$identityVerifier->currentTeam->slug, $privacyRequest]), $decision)->assertForbidden();
-        $this->actingAs($decisionMaker)->patch(route('data-governance.data-subject-requests.advance', [$decisionMaker->currentTeam->slug, $privacyRequest]), $decision)->assertRedirect();
+        $this->actingAs($identityVerifier)->patch(route('data-governance.data-subject-requests.advance', [$privacyRequest]), $decision)->assertForbidden();
+        $this->actingAs($decisionMaker)->patch(route('data-governance.data-subject-requests.advance', [$privacyRequest]), $decision)->assertRedirect();
         $this->assertSame('completed', $privacyRequest->refresh()->status);
         $this->assertSame($decisionMaker->id, $privacyRequest->decided_by);
 
         ProcessingActivity::factory()->create();
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $response = $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'data-governance', $format]));
+            $response = $this->actingAs($viewer)->get(route('workspace.export', ['data-governance', $format]));
             $response->assertOk()->assertDownload();
             if ($format === 'json') {
                 $this->assertStringNotContainsString('Protected Citizen', $response->streamedContent());
             }
         }
-        $this->actingAs($viewer)->get(route('data-governance.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('capabilities.manage', false)->where('dataSubjectRequests.data.0.requesterContact', 'Restricted'));
+        $this->actingAs($viewer)->get(route('data-governance.index'))->assertOk()->assertInertia(fn ($page) => $page->where('capabilities.manage', false)->where('dataSubjectRequests.data.0.requesterContact', 'Restricted'));
     }
 
     /** @return array<string, mixed> */

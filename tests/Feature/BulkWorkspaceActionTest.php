@@ -25,7 +25,7 @@ class BulkWorkspaceActionTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $targets = User::factory()->count(2)->create();
 
-        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy'), [
             'ids' => $targets->pluck('id')->all(),
         ])->assertRedirect();
 
@@ -48,7 +48,7 @@ class BulkWorkspaceActionTest extends TestCase
                 'status' => AssessmentStatus::EvidenceCollection,
             ]);
 
-        $this->actingAs($admin)->patch(route('assessments.bulk-transition', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
             'ids' => $assessments->pluck('id')->all(),
             'transition' => 'submit',
         ])->assertRedirect();
@@ -67,13 +67,13 @@ class BulkWorkspaceActionTest extends TestCase
         $submitted = Assessment::factory()->create(['county_id' => $county->id, 'cycle' => '2026/27 ACPA', 'status' => AssessmentStatus::Submitted]);
         $outside = Assessment::factory()->create(['county_id' => $otherCounty->id, 'status' => AssessmentStatus::Draft]);
 
-        $this->actingAs($admin)->patch(route('assessments.bulk-transition', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
             'ids' => [$draft->id, $submitted->id],
             'transition' => 'submit',
         ])->assertStatus(409);
         $this->assertSame(AssessmentStatus::Draft, $draft->fresh()->status);
 
-        $this->actingAs($admin)->patch(route('assessments.bulk-transition', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
             'ids' => [$draft->id, $outside->id],
             'transition' => 'submit',
         ])->assertForbidden();
@@ -94,7 +94,7 @@ class BulkWorkspaceActionTest extends TestCase
                 'status' => AssessmentStatus::Submitted,
             ]);
 
-        $this->actingAs($assessor)->patch(route('assessments.bulk-transition', $assessor->currentTeam->slug), [
+        $this->actingAs($assessor)->patch(route('assessments.bulk-transition'), [
             'ids' => $assessments->pluck('id')->all(),
             'transition' => 'review',
         ])->assertRedirect();
@@ -111,7 +111,7 @@ class BulkWorkspaceActionTest extends TestCase
         $allowed = User::factory()->countyOfficial($home)->create();
         $forbidden = User::factory()->countyOfficial($other)->create();
 
-        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy'), [
             'ids' => [$allowed->id, $forbidden->id],
         ])->assertForbidden();
 
@@ -134,7 +134,7 @@ class BulkWorkspaceActionTest extends TestCase
             'verification_status' => 'pending',
         ]);
 
-        $this->actingAs($assessor)->patch(route('evidence.bulk-verification', $assessor->currentTeam->slug), [
+        $this->actingAs($assessor)->patch(route('evidence.bulk-verification'), [
             'ids' => $documents->pluck('id')->all(),
             'status' => 'verified',
         ])->assertRedirect();
@@ -155,7 +155,7 @@ class BulkWorkspaceActionTest extends TestCase
         $allowed = AssessmentDocument::factory()->create(['assessment_id' => $allowedAssessment->id, 'county_id' => $county->id, 'scan_status' => 'clean', 'verification_status' => 'pending']);
         $forbidden = AssessmentDocument::factory()->create(['assessment_id' => $otherAssessment->id, 'county_id' => $other->id, 'scan_status' => 'clean', 'verification_status' => 'pending']);
 
-        $this->actingAs($assessor)->patch(route('evidence.bulk-verification', $assessor->currentTeam->slug), [
+        $this->actingAs($assessor)->patch(route('evidence.bulk-verification'), [
             'ids' => [$allowed->id, $forbidden->id],
             'status' => 'verified',
         ])->assertForbidden();
@@ -163,7 +163,7 @@ class BulkWorkspaceActionTest extends TestCase
         $this->assertSame('pending', $allowed->fresh()->verification_status);
 
         $quarantined = AssessmentDocument::factory()->create(['assessment_id' => $allowedAssessment->id, 'county_id' => $county->id, 'scan_status' => 'quarantined', 'verification_status' => 'pending']);
-        $this->actingAs($assessor)->patch(route('evidence.bulk-verification', $assessor->currentTeam->slug), [
+        $this->actingAs($assessor)->patch(route('evidence.bulk-verification'), [
             'ids' => [$allowed->id, $quarantined->id],
             'status' => 'verified',
         ])->assertStatus(409);
@@ -176,7 +176,7 @@ class BulkWorkspaceActionTest extends TestCase
     {
         $admin = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->delete(route('programme-users.bulk-destroy'), [
             'ids' => ['not-a-uuid', 'not-a-uuid'],
         ])->assertSessionHasErrors(['ids.0', 'ids.1']);
     }
@@ -192,7 +192,7 @@ class BulkWorkspaceActionTest extends TestCase
         $this->seed(CitizenCaseWorkflowSeeder::class);
         $cases = CitizenCase::factory()->count(2)->create(['county_id' => $county->id]);
 
-        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage', $manager->currentTeam->slug), [
+        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage'), [
             'ids' => $cases->pluck('id')->all(),
             'assigned_to' => $handler->id,
             'priority' => 'high',
@@ -224,13 +224,13 @@ class BulkWorkspaceActionTest extends TestCase
             'triage_note' => 'Common routing was reviewed before attempting the governed bulk assignment.',
         ];
 
-        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage', $manager->currentTeam->slug), [
+        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage'), [
             ...$payload,
             'ids' => [$received->id, $alreadyTriaged->id],
         ])->assertStatus(409);
         $this->assertSame('received', $received->fresh()->status);
 
-        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage', $manager->currentTeam->slug), [
+        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage'), [
             ...$payload,
             'ids' => [$received->id, $outside->id],
         ])->assertForbidden();
@@ -256,7 +256,7 @@ class BulkWorkspaceActionTest extends TestCase
             'category' => 'road-maintenance',
         ]);
 
-        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage', $manager->currentTeam->slug), [
+        $this->actingAs($manager)->patch(route('citizen-cases.bulk-triage'), [
             'selection_mode' => 'filtered',
             'search' => 'water-service-filtered-bulk',
             'assigned_to' => $handler->id,

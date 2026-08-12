@@ -20,7 +20,6 @@ import { store } from '@/routes/departmental-performance/plans/documents';
 import { download, preview } from '@/routes/evidence';
 
 type Props = {
-    teamSlug: string;
     planId: string;
     status: string;
     documents: WorkspaceDocument[];
@@ -105,8 +104,6 @@ export default function PerformancePlanDocumentControls(props: Props) {
                                         >
                                             <a
                                                 href={download.url({
-                                                    current_team:
-                                                        props.teamSlug,
                                                     document: document.id,
                                                 })}
                                             >
@@ -137,10 +134,7 @@ export default function PerformancePlanDocumentControls(props: Props) {
                     {previewDocument && (
                         <iframe
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: props.teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
                     )}
@@ -169,10 +163,7 @@ function UploadRecord(props: Props) {
             description="Add a private scanned or born-digital performance record."
         >
             <Form
-                {...store.form({
-                    current_team: props.teamSlug,
-                    performancePlan: props.planId,
-                })}
+                {...store.form({ performancePlan: props.planId })}
                 resetOnSuccess
                 className="grid gap-4"
             >

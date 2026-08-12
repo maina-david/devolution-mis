@@ -97,7 +97,7 @@ export default function ProgrammeWorkspace({
     cycles = [],
 }: Props) {
     const page = usePage();
-    const { auth, currentTeam } = page.props;
+    const { auth, routeContext } = page.props;
     const enabledCapabilities = Object.entries(capabilities).filter(
         ([, enabled]) => enabled,
     );
@@ -118,14 +118,13 @@ export default function ProgrammeWorkspace({
                 capabilities.configure,
             ));
     const renderActions =
-        hasActions && currentTeam
+        hasActions && routeContext
             ? (row: WorkspaceRow) => {
                   if (workspaceType === 'assessments') {
                       return (
                           <AssessmentRowAction
                               assessmentId={row.id}
                               status={row.status}
-                              teamSlug={currentTeam.slug}
                               capabilities={capabilities}
                           />
                       );
@@ -134,7 +133,6 @@ export default function ProgrammeWorkspace({
                   if (workspaceType === 'evidence' && capabilities.download) {
                       return (
                           <EvidenceRowAction
-                              teamSlug={currentTeam.slug}
                               documentId={row.id}
                               status={row.status}
                               canVerify={Boolean(capabilities.verify)}
@@ -153,7 +151,6 @@ export default function ProgrammeWorkspace({
                   ) {
                       return (
                           <AuditAssuranceRowAction
-                              teamSlug={currentTeam.slug}
                               runId={row.id}
                               status={row.status}
                               meta={row.meta}
@@ -164,7 +161,6 @@ export default function ProgrammeWorkspace({
                   if (workspaceType === 'grants' && capabilities.manage) {
                       return (
                           <GrantRowAction
-                              teamSlug={currentTeam.slug}
                               grantId={row.id}
                               meta={row.meta}
                               status={row.status}
@@ -175,7 +171,6 @@ export default function ProgrammeWorkspace({
                   if (workspaceType === 'users' && capabilities.manage) {
                       return (
                           <ProgrammeUserRowAction
-                              teamSlug={currentTeam.slug}
                               userId={row.id}
                               isCurrentUser={row.id === auth.user.id}
                           />
@@ -185,7 +180,6 @@ export default function ProgrammeWorkspace({
                   if (workspaceType === 'platform' && capabilities.configure) {
                       return (
                           <PlatformSettingRowAction
-                              teamSlug={currentTeam.slug}
                               settingId={row.id}
                               value={row.meta?.value}
                           />
@@ -229,29 +223,23 @@ export default function ProgrammeWorkspace({
 
                 {workspaceType === 'evidence' &&
                     capabilities.upload &&
-                    currentTeam && (
+                    routeContext && (
                         <EvidenceUploadForm
-                            teamSlug={currentTeam.slug}
                             assessments={workspace.assessmentOptions ?? []}
                         />
                     )}
                 {workspaceType === 'users' &&
                     capabilities.manage &&
-                    currentTeam &&
+                    routeContext &&
                     workspace.accessOptions && (
                         <div className="flex flex-wrap items-center gap-2">
                             <ProgrammeUserAccessForm
-                                teamSlug={currentTeam.slug}
                                 roles={workspace.accessOptions.roles}
                                 counties={workspace.accessOptions.counties}
                             />
                             {capabilities.bulkImport && (
                                 <Button variant="outline" asChild>
-                                    <Link
-                                        href={dataImportsIndex(
-                                            currentTeam.slug,
-                                        )}
-                                    >
+                                    <Link href={dataImportsIndex()}>
                                         <FileUp data-icon="inline-start" />
                                         Bulk upload users
                                     </Link>
@@ -261,9 +249,7 @@ export default function ProgrammeWorkspace({
                     )}
                 {workspaceType === 'audit-assurance' &&
                     capabilities.run &&
-                    currentTeam && (
-                        <AuditAssuranceRunControl teamSlug={currentTeam.slug} />
-                    )}
+                    routeContext && <AuditAssuranceRunControl />}
 
                 <DateRangeFilter
                     initialFrom={filters.from}
@@ -302,30 +288,28 @@ export default function ProgrammeWorkspace({
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            {workspaceType === 'assessments' && currentTeam && (
-                                <>
-                                    {capabilities.create &&
-                                        workspace.assessmentCreationOptions && (
-                                            <AssessmentCreateForm
-                                                teamSlug={currentTeam.slug}
-                                                options={
-                                                    workspace.assessmentCreationOptions
-                                                }
-                                            />
-                                        )}
-                                    <Button variant="outline" asChild>
-                                        <Link
-                                            href={assessmentAnalytics.url(
-                                                currentTeam.slug,
+                            {workspaceType === 'assessments' &&
+                                routeContext && (
+                                    <>
+                                        {capabilities.create &&
+                                            workspace.assessmentCreationOptions && (
+                                                <AssessmentCreateForm
+                                                    options={
+                                                        workspace.assessmentCreationOptions
+                                                    }
+                                                />
                                             )}
-                                        >
-                                            <ChartNoAxesCombined data-icon="inline-start" />
-                                            Compare results
-                                        </Link>
-                                    </Button>
-                                </>
-                            )}
-                            {currentTeam && (
+                                        <Button variant="outline" asChild>
+                                            <Link
+                                                href={assessmentAnalytics.url()}
+                                            >
+                                                <ChartNoAxesCombined data-icon="inline-start" />
+                                                Compare results
+                                            </Link>
+                                        </Button>
+                                    </>
+                                )}
+                            {routeContext && (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline">
@@ -344,8 +328,6 @@ export default function ProgrammeWorkspace({
                                                         <a
                                                             href={exportMethod.url(
                                                                 {
-                                                                    current_team:
-                                                                        currentTeam.slug,
                                                                     workspace:
                                                                         workspaceType,
                                                                     format,
@@ -377,9 +359,8 @@ export default function ProgrammeWorkspace({
                             rows={workspace.rows}
                             pagination={workspace.pagination}
                             bulkExport={
-                                currentTeam
+                                routeContext
                                     ? {
-                                          teamSlug: currentTeam.slug,
                                           workspace: workspaceType,
                                           filters,
                                       }
@@ -402,15 +383,12 @@ export default function ProgrammeWorkspace({
                                     : undefined
                             }
                             renderBulkActions={
-                                currentTeam
+                                routeContext
                                     ? (selectedRows, clearSelection) => (
                                           <>
                                               {workspaceType ===
                                                   'assessments' && (
                                                   <AssessmentBulkActions
-                                                      teamSlug={
-                                                          currentTeam.slug
-                                                      }
                                                       rows={selectedRows}
                                                       capabilities={
                                                           capabilities
@@ -423,9 +401,6 @@ export default function ProgrammeWorkspace({
                                               {workspaceType === 'evidence' &&
                                                   capabilities.verify && (
                                                       <EvidenceBulkActions
-                                                          teamSlug={
-                                                              currentTeam.slug
-                                                          }
                                                           rows={selectedRows}
                                                           clearSelection={
                                                               clearSelection
@@ -435,9 +410,6 @@ export default function ProgrammeWorkspace({
                                               {workspaceType === 'users' &&
                                                   capabilities.manage && (
                                                       <ProgrammeUserBulkActions
-                                                          teamSlug={
-                                                              currentTeam.slug
-                                                          }
                                                           rows={selectedRows}
                                                           clearSelection={
                                                               clearSelection
@@ -454,13 +426,11 @@ export default function ProgrammeWorkspace({
                                     : undefined
                             }
                             getRowHref={
-                                currentTeam
+                                routeContext
                                     ? (row) => {
                                           if (workspaceType === 'assessments') {
                                               return preserveDrilldownFilters(
                                                   showAssessment.url({
-                                                      current_team:
-                                                          currentTeam.slug,
                                                       assessment: row.id,
                                                   }),
                                                   page.url,
@@ -473,8 +443,6 @@ export default function ProgrammeWorkspace({
                                           ) {
                                               return preserveDrilldownFilters(
                                                   showCounty.url({
-                                                      current_team:
-                                                          currentTeam.slug,
                                                       county: row.meta.countyId,
                                                   }),
                                                   page.url,
@@ -484,8 +452,6 @@ export default function ProgrammeWorkspace({
                                           if (workspaceType === 'users') {
                                               return preserveDrilldownFilters(
                                                   showProgrammeUser.url({
-                                                      current_team:
-                                                          currentTeam.slug,
                                                       programmeUser: row.id,
                                                   }),
                                                   page.url,

@@ -70,7 +70,7 @@ class WorkflowDefinitionController extends Controller
         ]);
     }
 
-    public function simulate(SimulateWorkflowRequest $request, string $currentTeam, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, WorkflowSimulator $simulator): JsonResponse
+    public function simulate(SimulateWorkflowRequest $request, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, WorkflowSimulator $simulator): JsonResponse
     {
         abort_unless($workflowVersion->workflow_definition_id === $workflowDefinition->id, 404);
 
@@ -88,7 +88,7 @@ class WorkflowDefinitionController extends Controller
         return $this->success('Workflow definition created.');
     }
 
-    public function storeVersion(StoreWorkflowVersionRequest $request, string $currentTeam, WorkflowDefinition $workflowDefinition, AuditLogger $auditLogger): RedirectResponse
+    public function storeVersion(StoreWorkflowVersionRequest $request, WorkflowDefinition $workflowDefinition, AuditLogger $auditLogger): RedirectResponse
     {
         $version = DB::transaction(function () use ($request, $workflowDefinition): WorkflowVersion {
             $lockedDefinition = WorkflowDefinition::query()->lockForUpdate()->findOrFail($workflowDefinition->id);
@@ -104,7 +104,7 @@ class WorkflowDefinitionController extends Controller
         return $this->success("Workflow version {$version->version} created as a draft.");
     }
 
-    public function updateVersion(UpdateWorkflowVersionRequest $request, string $currentTeam, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, AuditLogger $auditLogger): RedirectResponse
+    public function updateVersion(UpdateWorkflowVersionRequest $request, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, AuditLogger $auditLogger): RedirectResponse
     {
         abort_unless($workflowVersion->workflow_definition_id === $workflowDefinition->id, 404);
         $workflowVersion->update([...$request->validated(), 'checksum' => null]);
@@ -113,7 +113,7 @@ class WorkflowDefinitionController extends Controller
         return $this->success('Draft workflow version updated.');
     }
 
-    public function publish(Request $request, string $currentTeam, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, PublishWorkflowVersion $publishWorkflowVersion, AuditLogger $auditLogger): RedirectResponse
+    public function publish(Request $request, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, PublishWorkflowVersion $publishWorkflowVersion, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageWorkflows->value);
         abort_unless($workflowVersion->workflow_definition_id === $workflowDefinition->id, 404);
@@ -125,7 +125,7 @@ class WorkflowDefinitionController extends Controller
         return $this->success("Workflow version {$published->version} published.");
     }
 
-    public function destroyVersion(Request $request, string $currentTeam, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, AuditLogger $auditLogger): RedirectResponse
+    public function destroyVersion(Request $request, WorkflowDefinition $workflowDefinition, WorkflowVersion $workflowVersion, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageWorkflows->value);
         abort_unless($workflowVersion->workflow_definition_id === $workflowDefinition->id, 404);

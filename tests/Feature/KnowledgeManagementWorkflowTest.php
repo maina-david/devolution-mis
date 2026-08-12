@@ -33,7 +33,7 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $this->seed(KnowledgeWorkflowSeeder::class);
         $release = $this->publishedReferenceRelease([$county], [$sector], $author);
 
-        $this->actingAs($author)->post(route('knowledge.items.store', $author->currentTeam->slug), $this->itemPayload(['county_id' => $county->id, 'sector_id' => $sector->id, 'course_ids' => [$course->id]]))->assertRedirect();
+        $this->actingAs($author)->post(route('knowledge.items.store'), $this->itemPayload(['county_id' => $county->id, 'sector_id' => $sector->id, 'course_ids' => [$course->id]]))->assertRedirect();
         $item = KnowledgeItem::query()->with('courses', 'workflowInstance.transitions')->sole();
         $this->assertTrue(Str::isUuid($item->id));
         $this->assertSame(['citizen participation', 'planning'], $item->tags);
@@ -41,21 +41,21 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $this->assertSame($release->id, $item->reference_data_release_id);
         $this->assertSame('draft', $item->status);
 
-        $this->actingAs($author)->patch(route('knowledge.items.transition', [$author->currentTeam->slug, $item]), ['transition' => 'submit_review', 'rationale' => 'Evidence, provenance, and learning links are ready for editorial review.'])->assertRedirect();
-        $this->actingAs($author)->patch(route('knowledge.items.transition', [$author->currentTeam->slug, $item]), ['transition' => 'publish', 'rationale' => 'Attempted self-publication.'])->assertForbidden();
-        $this->actingAs($curator)->patch(route('knowledge.items.transition', [$curator->currentTeam->slug, $item]), ['transition' => 'publish', 'rationale' => 'Independent editorial, accessibility, and provenance review passed.'])->assertRedirect();
+        $this->actingAs($author)->patch(route('knowledge.items.transition', [$item]), ['transition' => 'submit_review', 'rationale' => 'Evidence, provenance, and learning links are ready for editorial review.'])->assertRedirect();
+        $this->actingAs($author)->patch(route('knowledge.items.transition', [$item]), ['transition' => 'publish', 'rationale' => 'Attempted self-publication.'])->assertForbidden();
+        $this->actingAs($curator)->patch(route('knowledge.items.transition', [$item]), ['transition' => 'publish', 'rationale' => 'Independent editorial, accessibility, and provenance review passed.'])->assertRedirect();
         $this->assertSame('published', $item->refresh()->status);
         $this->assertNotNull($item->published_on);
         $this->assertNotNull($item->review_due_at);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $item->id, 'action' => 'knowledge.item.transitioned']);
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($author)->get(route('workspace.export', [$author->currentTeam->slug, 'knowledge', $format]))->assertOk()->assertDownload();
+            $this->actingAs($author)->get(route('workspace.export', ['knowledge', $format]))->assertOk()->assertDownload();
         }
-        $csv = $this->actingAs($author)->get(route('workspace.export', [$author->currentTeam->slug, 'knowledge', 'csv']))->streamedContent();
+        $csv = $this->actingAs($author)->get(route('workspace.export', ['knowledge', 'csv']))->streamedContent();
         $this->assertStringContainsString('Reference release', $csv);
         $this->assertStringContainsString($release->checksum, $csv);
-        $this->actingAs($author)->get(route('knowledge.index', $author->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($author)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('catalogue.available', true)
             ->where('items.data.0.referenceData.version', $release->version)
             ->where('items.data.0.referenceData.checksum', $release->checksum));
@@ -68,16 +68,16 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $participant = User::factory()->countyOfficial(County::factory()->create())->create();
         $this->seed(KnowledgeWorkflowSeeder::class);
         $this->publishedReferenceRelease([], [], $author);
-        $this->actingAs($author)->post(route('knowledge.items.store', $author->currentTeam->slug), $this->itemPayload())->assertRedirect();
+        $this->actingAs($author)->post(route('knowledge.items.store'), $this->itemPayload())->assertRedirect();
         $item = KnowledgeItem::query()->sole();
-        $this->actingAs($author)->patch(route('knowledge.items.transition', [$author->currentTeam->slug, $item]), ['transition' => 'submit_review', 'rationale' => 'Ready for editorial review.'])->assertRedirect();
-        $this->actingAs($curator)->patch(route('knowledge.items.transition', [$curator->currentTeam->slug, $item]), ['transition' => 'publish', 'rationale' => 'Approved for national learning.'])->assertRedirect();
+        $this->actingAs($author)->patch(route('knowledge.items.transition', [$item]), ['transition' => 'submit_review', 'rationale' => 'Ready for editorial review.'])->assertRedirect();
+        $this->actingAs($curator)->patch(route('knowledge.items.transition', [$item]), ['transition' => 'publish', 'rationale' => 'Approved for national learning.'])->assertRedirect();
 
-        $this->actingAs($participant)->post(route('knowledge.discussions.store', $participant->currentTeam->slug), ['knowledge_item_id' => $item->id, 'title' => 'Making public participation inclusive', 'prompt' => 'Which tested approaches improve inclusion under constrained connectivity?', 'visibility' => 'national'])->assertRedirect();
+        $this->actingAs($participant)->post(route('knowledge.discussions.store'), ['knowledge_item_id' => $item->id, 'title' => 'Making public participation inclusive', 'prompt' => 'Which tested approaches improve inclusion under constrained connectivity?', 'visibility' => 'national'])->assertRedirect();
         $discussion = KnowledgeDiscussion::query()->sole();
-        $this->actingAs($participant)->post(route('knowledge.posts.store', [$participant->currentTeam->slug, $discussion]), ['body' => 'Ward-level offline toolkits and structured feedback loops improved participation.'])->assertRedirect();
+        $this->actingAs($participant)->post(route('knowledge.posts.store', [$discussion]), ['body' => 'Ward-level offline toolkits and structured feedback loops improved participation.'])->assertRedirect();
         $this->assertDatabaseHas('knowledge_posts', ['knowledge_discussion_id' => $discussion->id, 'author_id' => $participant->id, 'is_moderated' => false]);
-        $this->actingAs($participant)->get(route('knowledge.index', $participant->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('items.total', 1)->where('items.data.0.discussions.0.posts.0.author', $participant->name));
+        $this->actingAs($participant)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('items.total', 1)->where('items.data.0.discussions.0.posts.0.author', $participant->name));
     }
 
     public function test_innovation_incubation_and_county_visibility_enforce_portfolio_scope_and_separation_of_duties(): void
@@ -88,10 +88,10 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $this->seed(KnowledgeWorkflowSeeder::class);
         $this->publishedReferenceRelease([$county], [], $submitter);
 
-        $this->actingAs($submitter)->post(route('knowledge.innovations.store', $submitter->currentTeam->slug), ['county_id' => $county->id, 'title' => 'Offline ward participation capture', 'problem_statement' => 'Low-connectivity wards cannot reliably submit participation records.', 'proposed_solution' => 'An offline-first signed capture workflow with deferred synchronization.', 'expected_impact' => 'Higher inclusion and complete provenance for ward submissions.', 'maturity_level' => 'prototype', 'incubation_support' => 'Security review and three-county pilot.', 'evidence_reference' => 'https://innovation.example.test/prototypes/offline-capture'])->assertRedirect();
+        $this->actingAs($submitter)->post(route('knowledge.innovations.store'), ['county_id' => $county->id, 'title' => 'Offline ward participation capture', 'problem_statement' => 'Low-connectivity wards cannot reliably submit participation records.', 'proposed_solution' => 'An offline-first signed capture workflow with deferred synchronization.', 'expected_impact' => 'Higher inclusion and complete provenance for ward submissions.', 'maturity_level' => 'prototype', 'incubation_support' => 'Security review and three-county pilot.', 'evidence_reference' => 'https://innovation.example.test/prototypes/offline-capture'])->assertRedirect();
         $innovation = DevolutionInnovation::query()->sole();
-        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$submitter->currentTeam->slug, $innovation]), ['transition' => 'submit', 'rationale' => 'Prototype and expected impact documented.'])->assertRedirect();
-        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$submitter->currentTeam->slug, $innovation]), ['transition' => 'accept_incubation', 'rationale' => 'Attempted self-approval.'])->assertForbidden();
+        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'submit', 'rationale' => 'Prototype and expected impact documented.'])->assertRedirect();
+        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'Attempted self-approval.'])->assertForbidden();
     }
 
     public function test_ranked_search_prioritizes_titles_and_discovers_linked_ocr_text(): void
@@ -105,11 +105,11 @@ class KnowledgeManagementWorkflowTest extends TestCase
         DocumentExtraction::factory()->create(['document_version_id' => $version->id, 'extracted_text' => 'Ward committees documented indigenous resilience practices through a scanned field report.']);
         $ocrMatch = KnowledgeItem::factory()->create(['author_id' => $user->id, 'status' => 'published', 'assessment_document_id' => $document->id, 'title' => 'County field report', 'summary' => 'Digitized programme evidence.', 'content_body' => null]);
 
-        $this->actingAs($user)->get(route('knowledge.index', [$user->currentTeam->slug, 'search' => 'participatory budgeting']))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($user)->get(route('knowledge.index', ['search' => 'participatory budgeting']))->assertOk()->assertInertia(fn ($page) => $page
             ->where('items.total', 2)
             ->where('items.data.0.id', $titleMatch->id));
 
-        $this->actingAs($user)->get(route('knowledge.index', [$user->currentTeam->slug, 'search' => 'indigenous resilience']))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($user)->get(route('knowledge.index', ['search' => 'indigenous resilience']))->assertOk()->assertInertia(fn ($page) => $page
             ->where('items.total', 1)
             ->where('items.data.0.id', $ocrMatch->id)
             ->where('items.data.0.searchExcerpt', 'Ward committees documented indigenous resilience practices through a scanned field report.'));
@@ -120,14 +120,14 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $author = User::factory()->devolutionAdmin()->create();
         $this->seed(KnowledgeWorkflowSeeder::class);
 
-        $this->actingAs($author)->post(route('knowledge.items.store', $author->currentTeam->slug), $this->itemPayload())->assertStatus(409);
-        $this->actingAs($author)->post(route('knowledge.innovations.store', $author->currentTeam->slug), $this->innovationPayload())->assertStatus(409);
+        $this->actingAs($author)->post(route('knowledge.items.store'), $this->itemPayload())->assertStatus(409);
+        $this->actingAs($author)->post(route('knowledge.innovations.store'), $this->innovationPayload())->assertStatus(409);
         $this->assertDatabaseCount('knowledge_items', 0);
-        $this->actingAs($author)->get(route('knowledge.index', $author->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('catalogue.available', false));
+        $this->actingAs($author)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('catalogue.available', false));
 
         $this->publishedReferenceRelease([], [], $author, str_repeat('0', 64));
-        $this->actingAs($author)->post(route('knowledge.items.store', $author->currentTeam->slug), $this->itemPayload())->assertStatus(409);
-        $this->actingAs($author)->post(route('knowledge.innovations.store', $author->currentTeam->slug), $this->innovationPayload())->assertStatus(409);
+        $this->actingAs($author)->post(route('knowledge.items.store'), $this->itemPayload())->assertStatus(409);
+        $this->actingAs($author)->post(route('knowledge.innovations.store'), $this->innovationPayload())->assertStatus(409);
         $this->assertDatabaseCount('knowledge_items', 0);
     }
 
@@ -140,13 +140,13 @@ class KnowledgeManagementWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$outside], [], $contributor);
 
         $this->actingAs($contributor)
-            ->post(route('knowledge.items.store', $contributor->currentTeam->slug), $this->itemPayload(['county_id' => $outside->id, 'visibility' => 'county']))
+            ->post(route('knowledge.items.store'), $this->itemPayload(['county_id' => $outside->id, 'visibility' => 'county']))
             ->assertForbidden();
         $this->actingAs($contributor)
-            ->post(route('knowledge.innovations.store', $contributor->currentTeam->slug), $this->innovationPayload(['county_id' => $outside->id]))
+            ->post(route('knowledge.innovations.store'), $this->innovationPayload(['county_id' => $outside->id]))
             ->assertForbidden();
         $this->assertDatabaseCount('knowledge_items', 0);
-        $this->actingAs($contributor)->get(route('knowledge.index', $contributor->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($contributor)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('catalogue.available', true)
             ->has('options.counties', 0));
     }

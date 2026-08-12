@@ -108,7 +108,7 @@ class HistoricalDataMigrationController extends Controller
         return $this->success('Bulk import staged and validated. Review every reported exception before approval.');
     }
 
-    public function template(Request $request, string $currentTeam, string $datasetType): BinaryFileResponse|StreamedResponse
+    public function template(Request $request, string $datasetType): BinaryFileResponse|StreamedResponse
     {
         $this->authorizeView();
         $headers = StageReferenceDataImport::HEADERS[$datasetType]
@@ -143,7 +143,7 @@ class HistoricalDataMigrationController extends Controller
         }, "{$datasetType}-bulk-import-template.csv", ['Content-Type' => 'text/csv']);
     }
 
-    public function review(ReviewHistoricalDataMigrationRequest $request, string $currentTeam, DataMigrationBatch $dataMigrationBatch, ReviewHistoricalDataMigration $review): RedirectResponse
+    public function review(ReviewHistoricalDataMigrationRequest $request, DataMigrationBatch $dataMigrationBatch, ReviewHistoricalDataMigration $review): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -153,7 +153,7 @@ class HistoricalDataMigrationController extends Controller
         return $this->success('Historical migration review decision recorded.');
     }
 
-    public function apply(ApplyHistoricalDataMigrationRequest $request, string $currentTeam, DataMigrationBatch $dataMigrationBatch, ApplyHistoricalDataMigration $apply): RedirectResponse
+    public function apply(ApplyHistoricalDataMigrationRequest $request, DataMigrationBatch $dataMigrationBatch, ApplyHistoricalDataMigration $apply): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -162,7 +162,7 @@ class HistoricalDataMigrationController extends Controller
         return $this->success('Historical records applied to the immutable provenance register.');
     }
 
-    public function download(string $currentTeam, DataMigrationBatch $dataMigrationBatch): StreamedResponse
+    public function download(DataMigrationBatch $dataMigrationBatch): StreamedResponse
     {
         $this->authorizeView();
         abort_unless(Storage::disk('local')->exists($dataMigrationBatch->path), 404, 'The retained source file is unavailable.');
@@ -171,7 +171,7 @@ class HistoricalDataMigrationController extends Controller
         return Storage::disk('local')->download($dataMigrationBatch->path, $dataMigrationBatch->original_name, ['Content-Type' => $dataMigrationBatch->mime_type]);
     }
 
-    public function downloadExceptions(string $currentTeam, DataMigrationBatch $dataMigrationBatch): StreamedResponse
+    public function downloadExceptions(DataMigrationBatch $dataMigrationBatch): StreamedResponse
     {
         $this->authorizeView();
         abort_if($dataMigrationBatch->invalid_rows === 0, 404, 'This migration batch has no validation exceptions.');

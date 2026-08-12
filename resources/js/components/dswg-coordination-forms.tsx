@@ -23,7 +23,6 @@ export type DswgOption = {
     title?: string;
 };
 type Props = {
-    teamSlug: string;
     workingGroups: DswgOption[];
     counties: DswgOption[];
     sectors: DswgOption[];
@@ -41,7 +40,7 @@ export default function DswgCoordinationForms(props: Props) {
     );
 }
 
-function MeetingSeriesForm({ teamSlug, workingGroups, users }: Props) {
+function MeetingSeriesForm({ workingGroups, users }: Props) {
     return (
         <FormSheet
             title="Create a recurring meeting series"
@@ -50,7 +49,7 @@ function MeetingSeriesForm({ teamSlug, workingGroups, users }: Props) {
             description="Generate an idempotent rolling schedule with governed workflows and tracked invitations."
         >
             <Form
-                action={storeMeetingSeries(teamSlug)}
+                action={storeMeetingSeries()}
                 className="grid gap-4"
                 resetOnSuccess
             >
@@ -201,13 +200,7 @@ function MeetingSeriesForm({ teamSlug, workingGroups, users }: Props) {
     );
 }
 
-function WorkingGroupForm({
-    teamSlug,
-    counties,
-    sectors,
-    organizations,
-    users,
-}: Props) {
+function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
     return (
         <FormSheet
             title="Establish a working group"
@@ -216,7 +209,7 @@ function WorkingGroupForm({
             description="Define mandate, secretariat, membership, county reach and sector coverage."
         >
             <Form
-                action={storeWorkingGroup(teamSlug)}
+                action={storeWorkingGroup()}
                 className="grid gap-4"
                 resetOnSuccess
             >
@@ -304,7 +297,7 @@ function WorkingGroupForm({
     );
 }
 
-function MeetingForm({ teamSlug, workingGroups, users }: Props) {
+function MeetingForm({ workingGroups, users }: Props) {
     return (
         <FormSheet
             title="Schedule a meeting"
@@ -312,11 +305,7 @@ function MeetingForm({ teamSlug, workingGroups, users }: Props) {
             icon={CalendarPlus}
             description="Start the governed meeting lifecycle and send tracked invitations."
         >
-            <Form
-                action={storeMeeting(teamSlug)}
-                className="grid gap-4"
-                resetOnSuccess
-            >
+            <Form action={storeMeeting()} className="grid gap-4" resetOnSuccess>
                 {({ errors, processing }) => (
                     <>
                         <Field

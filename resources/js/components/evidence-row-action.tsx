@@ -160,7 +160,6 @@ type EvidenceMeta = {
 };
 
 export default function EvidenceRowAction({
-    teamSlug,
     documentId,
     status,
     canVerify,
@@ -168,7 +167,6 @@ export default function EvidenceRowAction({
     canManageRecords,
     meta = {},
 }: {
-    teamSlug: string;
     documentId: string;
     status?: string;
     canVerify: boolean;
@@ -179,7 +177,7 @@ export default function EvidenceRowAction({
     const [activeSheet, setActiveSheet] = useState<'preview' | 'manage' | null>(
         null,
     );
-    const args = { current_team: teamSlug, document: documentId };
+    const args = { document: documentId };
     const versions = meta.versions ?? [];
     const legalHolds = meta.legalHolds ?? [];
     const dispositions = meta.dispositions ?? [];
@@ -897,7 +895,7 @@ function DispositionControls({
     retentionUntil,
     recordStatus,
 }: {
-    args: { current_team: string; document: string };
+    args: { document: string };
     documentId: string;
     dispositions: DocumentDisposition[];
     canManageRecords: boolean;
@@ -1014,7 +1012,7 @@ function DispositionRecord({
     disposition,
     canManageRecords,
 }: {
-    args: { current_team: string; document: string };
+    args: { document: string };
     disposition: DocumentDisposition;
     canManageRecords: boolean;
 }) {

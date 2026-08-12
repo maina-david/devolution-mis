@@ -29,8 +29,8 @@ class SecurityIncidentWorkflowTest extends TestCase
         $countyUser = User::factory()->countyAdmin()->create();
         $detectedAt = now()->subMinutes(5)->startOfMinute();
 
-        $this->actingAs($countyUser)->post(route('security-governance.incidents.store', $countyUser->currentTeam->slug), $this->exercisePayload($lead, $detectedAt))->assertForbidden();
-        $this->actingAs($reporter)->post(route('security-governance.incidents.store', $reporter->currentTeam->slug), $this->exercisePayload($lead, $detectedAt))->assertRedirect();
+        $this->actingAs($countyUser)->post(route('security-governance.incidents.store'), $this->exercisePayload($lead, $detectedAt))->assertForbidden();
+        $this->actingAs($reporter)->post(route('security-governance.incidents.store'), $this->exercisePayload($lead, $detectedAt))->assertRedirect();
         $incident = SecurityIncident::query()->sole();
 
         $this->assertTrue(Str::isUuid($incident->id));
@@ -42,21 +42,21 @@ class SecurityIncidentWorkflowTest extends TestCase
         $this->assertStringNotContainsString('simulated privileged credential', (string) SecurityIncident::query()->toBase()->where('id', $incident->id)->value('summary'));
         $this->assertSame('detect', $incident->events()->sole()->transition);
 
-        $this->actingAs($reporter)->patch(route('security-governance.incidents.transition', [$reporter->currentTeam->slug, $incident]), $this->transition('acknowledge'))->assertForbidden();
-        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$lead->currentTeam->slug, $incident]), $this->transition('acknowledge'))->assertRedirect();
-        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$lead->currentTeam->slug, $incident]), $this->transition('contain'))->assertRedirect();
-        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$lead->currentTeam->slug, $incident]), $this->transition('eradicate', 'DMS-SEC-ERADICATE-001'))->assertRedirect();
-        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$lead->currentTeam->slug, $incident]), $this->transition('recover', 'MONITORING-RECOVERY-001'))->assertRedirect();
+        $this->actingAs($reporter)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('acknowledge'))->assertForbidden();
+        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('acknowledge'))->assertRedirect();
+        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('contain'))->assertRedirect();
+        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('eradicate', 'DMS-SEC-ERADICATE-001'))->assertRedirect();
+        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('recover', 'MONITORING-RECOVERY-001'))->assertRedirect();
         $this->assertSame('recovered', $incident->refresh()->status);
 
         $closure = [...$this->transition('close'), 'root_cause' => 'The exercise found that a stale privileged credential could remain active beyond an approved role change.', 'corrective_actions' => 'Reconciled privileged identities, revoked the test credential and assigned automated joiner mover leaver control actions.', 'lessons_learned' => 'The playbook must identify the identity authority, session revocation owner and evidence custodian before containment.', 'exercise_outcome' => 'partially_effective', 'next_exercise_due_at' => now()->addMonths(6)->toIso8601String()];
-        $this->actingAs($closer)->patch(route('security-governance.incidents.transition', [$closer->currentTeam->slug, $incident]), $closure)->assertStatus(409);
-        $this->actingAs($lead)->post(route('security-governance.incidents.documents.store', [$lead->currentTeam->slug, $incident]), ['record_purpose' => 'closure', 'title' => 'Credential compromise exercise closure pack', 'category' => 'Security incident evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->create('exercise-closure.pdf', 32, 'application/pdf')])->assertRedirect();
+        $this->actingAs($closer)->patch(route('security-governance.incidents.transition', [$incident]), $closure)->assertStatus(409);
+        $this->actingAs($lead)->post(route('security-governance.incidents.documents.store', [$incident]), ['record_purpose' => 'closure', 'title' => 'Credential compromise exercise closure pack', 'category' => 'Security incident evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->create('exercise-closure.pdf', 32, 'application/pdf')])->assertRedirect();
         $document = AssessmentDocument::query()->sole();
         $this->assertSame('clean', $document->scan_status);
-        $this->actingAs($closer)->get(route('evidence.preview', [$closer->currentTeam->slug, $document]))->assertOk();
-        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$lead->currentTeam->slug, $incident]), $closure)->assertForbidden();
-        $this->actingAs($closer)->patch(route('security-governance.incidents.transition', [$closer->currentTeam->slug, $incident]), $closure)->assertRedirect();
+        $this->actingAs($closer)->get(route('evidence.preview', [$document]))->assertOk();
+        $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $closure)->assertForbidden();
+        $this->actingAs($closer)->patch(route('security-governance.incidents.transition', [$incident]), $closure)->assertRedirect();
 
         $incident->refresh();
         $this->assertSame('closed', $incident->status);
@@ -64,9 +64,9 @@ class SecurityIncidentWorkflowTest extends TestCase
         $this->assertSame('partially_effective', $incident->exercise_outcome);
         $this->assertCount(6, $incident->events);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'security.incident.close']);
-        $this->actingAs($reporter)->get(route('security-governance.index', $reporter->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('securityIncidents.total', 1)->where('securityIncidents.data.0.documents.0.id', $document->id)->where('securityIncidents.data.0.events.5.transition', 'close'));
+        $this->actingAs($reporter)->get(route('security-governance.index'))->assertOk()->assertInertia(fn ($page) => $page->where('securityIncidents.total', 1)->where('securityIncidents.data.0.documents.0.id', $document->id)->where('securityIncidents.data.0.events.5.transition', 'close'));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($reporter)->get(route('workspace.export', [$reporter->currentTeam->slug, 'security-incidents', $format]))->assertDownload();
+            $this->actingAs($reporter)->get(route('workspace.export', ['security-incidents', $format]))->assertDownload();
         }
 
         $event = SecurityIncidentEvent::query()->latest('occurred_at')->firstOrFail();

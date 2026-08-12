@@ -12,12 +12,10 @@ import { store } from '@/routes/monitoring-evaluation/indicators';
 type Option = { id: string; name: string };
 
 export default function IndicatorDefinitionForm({
-    teamSlug,
     sectors,
     programmes,
     catalogue,
 }: {
-    teamSlug: string;
     sectors: Option[];
     programmes: Option[];
     catalogue: { available: boolean };
@@ -37,7 +35,7 @@ export default function IndicatorDefinitionForm({
             }
         >
             <Form
-                {...store.form({ current_team: teamSlug })}
+                {...store.form({})}
                 className="grid gap-4 md:grid-cols-2"
                 resetOnSuccess
             >

@@ -105,7 +105,6 @@ export default function AssessmentAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
-    const teamSlug = usePage().props.currentTeam!.slug;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -133,7 +132,7 @@ export default function AssessmentAnalytics({
             <Head title="Assessment comparative analytics" />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
-                    <Link href={assessmentIndex.url(teamSlug)}>
+                    <Link href={assessmentIndex.url()}>
                         <ArrowLeft data-icon="inline-start" />
                         Assessments
                     </Link>
@@ -152,12 +151,11 @@ export default function AssessmentAnalytics({
                         </div>
                         <div className="flex flex-wrap gap-2">
                             <AssessmentAnalyticsFilters
-                                teamSlug={teamSlug}
                                 filters={filters}
                                 cycles={report.options.cycles}
                                 counties={report.options.counties}
                             />
-                            <ExportMenu teamSlug={teamSlug} query={query} />
+                            <ExportMenu query={query} />
                         </div>
                     </div>
                 </section>
@@ -274,8 +272,6 @@ export default function AssessmentAnalytics({
                                                         <Link
                                                             href={preserveDrilldownFilters(
                                                                 show.url({
-                                                                    current_team:
-                                                                        teamSlug,
                                                                     assessment:
                                                                         result.assessmentId,
                                                                 }),
@@ -336,10 +332,7 @@ export default function AssessmentAnalytics({
                                     pagination={report.rankings.pagination}
                                     getRowHref={(row) =>
                                         preserveDrilldownFilters(
-                                            show.url({
-                                                current_team: teamSlug,
-                                                assessment: row.id,
-                                            }),
+                                            show.url({ assessment: row.id }),
                                             page.url,
                                         )
                                     }
@@ -365,13 +358,7 @@ function Summary({ label, value }: { label: string; value: string | number }) {
         </Card>
     );
 }
-function ExportMenu({
-    teamSlug,
-    query,
-}: {
-    teamSlug: string;
-    query: Record<string, string | undefined>;
-}) {
+function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -384,12 +371,7 @@ function ExportMenu({
                 <DropdownMenuGroup>
                     {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                         <DropdownMenuItem key={format} asChild>
-                            <a
-                                href={exportMethod.url(
-                                    { current_team: teamSlug, format },
-                                    { query },
-                                )}
-                            >
+                            <a href={exportMethod.url({ format }, { query })}>
                                 <TrendingUp aria-hidden="true" />
                                 {format.toUpperCase()}
                             </a>

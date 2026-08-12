@@ -71,19 +71,17 @@ type Plan = {
 };
 
 export default function AssessmentCorrectivePlans({
-    teamSlug,
     assessmentId,
     plans,
     options,
     capabilities,
 }: {
-    teamSlug: string;
     assessmentId: string;
     plans: Plan[];
     options: { sources: Option[]; evidence: Option[]; owners: Option[] };
     capabilities: Record<string, boolean>;
 }) {
-    const base = { current_team: teamSlug, assessment: assessmentId };
+    const base = { assessment: assessmentId };
 
     return (
         <Card>
@@ -126,7 +124,7 @@ function CreatePlanSheet({
     base,
     options,
 }: {
-    base: { current_team: string; assessment: string };
+    base: { assessment: string };
     options: { sources: Option[]; owners: Option[] };
 }) {
     const [source, setSource] = useState('');
@@ -268,7 +266,7 @@ function PlanCard({
     evidence,
     capabilities,
 }: {
-    base: { current_team: string; assessment: string };
+    base: { assessment: string };
     plan: Plan;
     evidence: Option[];
     capabilities: Record<string, boolean>;
@@ -394,7 +392,7 @@ function UpdateSheet({
     action,
     evidence,
 }: {
-    base: { current_team: string; assessment: string; plan: string };
+    base: { assessment: string; plan: string };
     action: Action;
     evidence: Option[];
 }) {
@@ -441,7 +439,7 @@ function VerifySheet({
     action,
     update,
 }: {
-    base: { current_team: string; assessment: string; plan: string };
+    base: { assessment: string; plan: string };
     action: Action;
     update: Update;
 }) {

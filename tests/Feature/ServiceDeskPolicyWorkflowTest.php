@@ -35,7 +35,7 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $this->publishedReferenceRelease($county, $publisher);
 
         $this->actingAs($author)
-            ->post(route('support-desk.policies.store', $author->currentTeam->slug), $this->policyPayload($calendar, $author, $publisher))
+            ->post(route('support-desk.policies.store'), $this->policyPayload($calendar, $author, $publisher))
             ->assertRedirect();
 
         $policy = ServiceDeskPolicy::query()->sole();
@@ -43,13 +43,13 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $this->assertSame('draft', $policy->status);
         $this->assertSame(2, $policy->rosterMembers()->count());
         $this->actingAs($author)
-            ->patch(route('support-desk.policies.publish', [$author->currentTeam->slug, $policy]), [
+            ->patch(route('support-desk.policies.publish', [$policy]), [
                 'authority_status' => 'approved',
                 'approval_reference' => 'SDD-ICT-SERVICE-COMMITTEE-2026-08',
             ])
             ->assertForbidden();
         $this->actingAs($publisher)
-            ->patch(route('support-desk.policies.publish', [$publisher->currentTeam->slug, $policy]), [
+            ->patch(route('support-desk.policies.publish', [$policy]), [
                 'authority_status' => 'approved',
                 'approval_reference' => 'SDD-ICT-SERVICE-COMMITTEE-2026-08',
             ])
@@ -62,7 +62,7 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $policy->id, 'action' => 'support.policy.published']);
 
         $this->actingAs($requester)
-            ->post(route('support-desk.store', $requester->currentTeam->slug), [
+            ->post(route('support-desk.store'), [
                 'county_id' => $county->id,
                 'category' => 'incident',
                 'priority' => 'high',
@@ -78,7 +78,7 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $this->assertSame('2026-08-17T11:00:00+03:00', $ticket->first_response_due_at->setTimezone('Africa/Nairobi')->toIso8601String());
         $this->assertSame('2026-08-18T14:00:00+03:00', $ticket->resolution_due_at->setTimezone('Africa/Nairobi')->toIso8601String());
         $this->actingAs($author)
-            ->get(route('support-desk.index', $author->currentTeam->slug))
+            ->get(route('support-desk.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('effectiveServicePolicy.id', $policy->id)
@@ -88,11 +88,11 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($author)
-                ->get(route('workspace.export', [$author->currentTeam->slug, 'service-desk-policies', $format]))
+                ->get(route('workspace.export', ['service-desk-policies', $format]))
                 ->assertDownload();
         }
         $this->actingAs($author)
-            ->getJson(route('search.global', [$author->currentTeam->slug, 'q' => 'IDMIS-SUPPORT']))
+            ->getJson(route('search.global', ['q' => 'IDMIS-SUPPORT']))
             ->assertOk()
             ->assertJsonFragment(['category' => 'Service policies', 'id' => $policy->id]);
 
@@ -110,10 +110,10 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $this->publishedReferenceRelease($county, $publisher);
 
         $this->actingAs($requester)
-            ->post(route('support-desk.policies.store', $requester->currentTeam->slug), $this->policyPayload($calendar, $author, $publisher))
+            ->post(route('support-desk.policies.store'), $this->policyPayload($calendar, $author, $publisher))
             ->assertForbidden();
         $this->actingAs($requester)
-            ->post(route('support-desk.store', $requester->currentTeam->slug), [
+            ->post(route('support-desk.store'), [
                 'county_id' => $county->id,
                 'category' => 'incident',
                 'priority' => 'critical',
@@ -127,11 +127,11 @@ class ServiceDeskPolicyWorkflowTest extends TestCase
         $invalidPayload = $this->policyPayload($calendar, $author, $publisher);
         $invalidPayload['roster'][1]['tier'] = 2;
         $this->actingAs($author)
-            ->post(route('support-desk.policies.store', $author->currentTeam->slug), $invalidPayload)
+            ->post(route('support-desk.policies.store'), $invalidPayload)
             ->assertRedirect();
         $policy = ServiceDeskPolicy::query()->sole();
         $this->actingAs($publisher)
-            ->patch(route('support-desk.policies.publish', [$publisher->currentTeam->slug, $policy]), [
+            ->patch(route('support-desk.policies.publish', [$policy]), [
                 'authority_status' => 'provisional',
                 'approval_reference' => null,
             ])

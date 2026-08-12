@@ -287,9 +287,9 @@ export default function KnowledgeManagement({
     catalogue,
     options,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -372,18 +372,15 @@ export default function KnowledgeManagement({
                         {capabilities.contribute && (
                             <div className="flex flex-wrap gap-2">
                                 <DiscussionForm
-                                    teamSlug={currentTeam.slug}
                                     items={items.data}
                                     counties={options.counties}
                                 />
                                 <InnovationForm
-                                    teamSlug={currentTeam.slug}
                                     counties={options.counties}
                                     sectors={options.sectors}
                                     catalogue={catalogue}
                                 />
                                 <ItemForm
-                                    teamSlug={currentTeam.slug}
                                     options={options}
                                     catalogue={catalogue}
                                 />
@@ -434,14 +431,12 @@ export default function KnowledgeManagement({
                 <RepositoryTable
                     items={items}
                     rows={itemRows}
-                    teamSlug={currentTeam.slug}
                     capabilities={capabilities}
                     filters={filters}
                 />
                 <InnovationTable
                     innovations={innovations}
                     rows={innovationRows}
-                    teamSlug={currentTeam.slug}
                     capabilities={capabilities}
                     filters={filters}
                     options={options}
@@ -449,7 +444,6 @@ export default function KnowledgeManagement({
                 <ModerationQueue
                     reports={reports}
                     rows={reportRows}
-                    teamSlug={currentTeam.slug}
                     capabilities={capabilities}
                     filters={filters}
                 />
@@ -461,13 +455,11 @@ export default function KnowledgeManagement({
 function RepositoryTable({
     items,
     rows,
-    teamSlug,
     capabilities,
     filters,
 }: {
     items: PageSet<KnowledgeItem>;
     rows: WorkspaceRow[];
-    teamSlug: string;
     capabilities: Props['capabilities'];
     filters: Props['filters'];
 }) {
@@ -478,7 +470,6 @@ function RepositoryTable({
             <TableHeader
                 title="Curated repository"
                 description={`${items.total.toLocaleString()} authorized resources`}
-                teamSlug={teamSlug}
                 filters={filters}
             />
             {rows.length ? (
@@ -499,7 +490,6 @@ function RepositoryTable({
                     rows={rows}
                     pagination={pagination}
                     bulkExport={{
-                        teamSlug,
                         workspace: 'knowledge',
                         filters,
                     }}
@@ -511,7 +501,6 @@ function RepositoryTable({
                         return item ? (
                             <ItemActions
                                 item={item}
-                                teamSlug={teamSlug}
                                 capabilities={capabilities}
                             />
                         ) : null;
@@ -531,14 +520,12 @@ function RepositoryTable({
 function InnovationTable({
     innovations,
     rows,
-    teamSlug,
     capabilities,
     filters,
     options,
 }: {
     innovations: PageSet<Innovation>;
     rows: WorkspaceRow[];
-    teamSlug: string;
     capabilities: Props['capabilities'];
     filters: Props['filters'];
     options: Props['options'];
@@ -565,7 +552,6 @@ function InnovationTable({
                                 <a
                                     href={exportMethod.url(
                                         {
-                                            current_team: teamSlug,
                                             workspace: 'knowledge-innovations',
                                             format,
                                         },
@@ -599,7 +585,6 @@ function InnovationTable({
                         pageName: 'innovation_page',
                     }}
                     bulkExport={{
-                        teamSlug,
                         workspace: 'knowledge-innovations',
                         filters,
                     }}
@@ -611,7 +596,6 @@ function InnovationTable({
                         return innovation ? (
                             <InnovationActions
                                 innovation={innovation}
-                                teamSlug={teamSlug}
                                 capabilities={capabilities}
                                 options={options}
                             />
@@ -632,13 +616,11 @@ function InnovationTable({
 function ModerationQueue({
     reports,
     rows,
-    teamSlug,
     capabilities,
     filters,
 }: {
     reports: PageSet<CommunityReport>;
     rows: WorkspaceRow[];
-    teamSlug: string;
     capabilities: Props['capabilities'];
     filters: Props['filters'];
 }) {
@@ -671,7 +653,6 @@ function ModerationQueue({
                                 <a
                                     href={exportMethod.url(
                                         {
-                                            current_team: teamSlug,
                                             workspace: 'knowledge-moderation',
                                             format,
                                         },
@@ -724,7 +705,6 @@ function ModerationQueue({
                             pageName: 'report_page',
                         }}
                         bulkExport={{
-                            teamSlug,
                             workspace: 'knowledge-moderation',
                             filters: {
                                 ...filters,
@@ -740,7 +720,6 @@ function ModerationQueue({
                             return report ? (
                                 <CommunityReportActions
                                     report={report}
-                                    teamSlug={teamSlug}
                                     capabilities={capabilities}
                                 />
                             ) : null;
@@ -760,11 +739,9 @@ function ModerationQueue({
 
 function CommunityReportActions({
     report,
-    teamSlug,
     capabilities,
 }: {
     report: CommunityReport;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<string | null>(null);
@@ -867,7 +844,6 @@ function CommunityReportActions({
                         ) : surface ? (
                             <Form
                                 action={transitionCommunityReport({
-                                    current_team: teamSlug,
                                     report: report.id,
                                 })}
                                 className="grid gap-4"
@@ -929,12 +905,10 @@ function CommunityReportActions({
 function TableHeader({
     title,
     description,
-    teamSlug,
     filters,
 }: {
     title: string;
     description: string;
-    teamSlug: string;
     filters: Props['filters'];
 }) {
     return (
@@ -954,11 +928,7 @@ function TableHeader({
                         <DropdownMenuItem key={format} asChild>
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'knowledge',
-                                        format,
-                                    },
+                                    { workspace: 'knowledge', format },
                                     { query: filters },
                                 )}
                             >
@@ -973,11 +943,9 @@ function TableHeader({
 }
 
 function ItemForm({
-    teamSlug,
     options,
     catalogue,
 }: {
-    teamSlug: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -995,7 +963,7 @@ function ItemForm({
             icon={Plus}
             size="xl"
         >
-            <Form action={storeItem(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeItem()} className="grid gap-5 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -1091,11 +1059,9 @@ function ItemForm({
 }
 
 function DiscussionForm({
-    teamSlug,
     items,
     counties,
 }: {
-    teamSlug: string;
     items: KnowledgeItem[];
     counties: CountyIdentityValue[];
 }) {
@@ -1106,10 +1072,7 @@ function DiscussionForm({
             triggerLabel="New discussion"
             icon={MessageSquare}
         >
-            <Form
-                action={storeDiscussion(teamSlug)}
-                className="grid gap-4 pt-4"
-            >
+            <Form action={storeDiscussion()} className="grid gap-4 pt-4">
                 {({ processing }) => (
                     <>
                         <Field name="title" label="Discussion title" />
@@ -1151,12 +1114,10 @@ function DiscussionForm({
 }
 
 function InnovationForm({
-    teamSlug,
     counties,
     sectors,
     catalogue,
 }: {
-    teamSlug: string;
     counties: CountyIdentityValue[];
     sectors: Option[];
     catalogue: Props['catalogue'];
@@ -1175,10 +1136,7 @@ function InnovationForm({
             icon={Lightbulb}
             size="xl"
         >
-            <Form
-                action={storeInnovation(teamSlug)}
-                className="grid gap-4 pt-4"
-            >
+            <Form action={storeInnovation()} className="grid gap-4 pt-4">
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -1244,11 +1202,9 @@ function InnovationForm({
 
 function ItemActions({
     item,
-    teamSlug,
     capabilities,
 }: {
     item: KnowledgeItem;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<string | null>(null);
@@ -1306,15 +1262,11 @@ function ItemActions({
                         {surface === 'details' ? (
                             <ItemDetails
                                 item={item}
-                                teamSlug={teamSlug}
                                 capabilities={capabilities}
                             />
                         ) : surface ? (
                             <Form
-                                action={transitionItem({
-                                    current_team: teamSlug,
-                                    item: item.id,
-                                })}
+                                action={transitionItem({ item: item.id })}
                                 className="grid gap-4 pt-4"
                             >
                                 <input
@@ -1340,11 +1292,9 @@ function ItemActions({
 
 function ItemDetails({
     item,
-    teamSlug,
     capabilities,
 }: {
     item: KnowledgeItem;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     return (
@@ -1382,7 +1332,6 @@ function ItemDetails({
                     <Button asChild variant="outline">
                         <a
                             href={previewEvidence.url({
-                                current_team: teamSlug,
                                 document: item.document.id,
                             })}
                             target="_blank"
@@ -1426,10 +1375,7 @@ function ItemDetails({
                             <CardTitle className="text-base">
                                 {discussion.title}
                             </CardTitle>
-                            <DiscussionSubscription
-                                teamSlug={teamSlug}
-                                discussion={discussion}
-                            />
+                            <DiscussionSubscription discussion={discussion} />
                         </div>
                         <p className="text-sm text-muted-foreground">
                             {discussion.prompt}
@@ -1467,14 +1413,13 @@ function ItemDetails({
                                 </div>
                                 {(post.canReport || capabilities.curate) && (
                                     <PostActions
-                                        teamSlug={teamSlug}
                                         post={post}
                                         canModerate={capabilities.curate}
                                     />
                                 )}
                             </div>
                         ))}
-                        <PostForm teamSlug={teamSlug} discussion={discussion} />
+                        <PostForm discussion={discussion} />
                     </CardContent>
                 </Card>
             ))}
@@ -1482,13 +1427,7 @@ function ItemDetails({
     );
 }
 
-function DiscussionSubscription({
-    teamSlug,
-    discussion,
-}: {
-    teamSlug: string;
-    discussion: Discussion;
-}) {
+function DiscussionSubscription({ discussion }: { discussion: Discussion }) {
     return (
         <FormSheet
             title="Discussion notifications"
@@ -1498,7 +1437,6 @@ function DiscussionSubscription({
         >
             <Form
                 action={updateDiscussionSubscription({
-                    current_team: teamSlug,
                     discussion: discussion.id,
                 })}
                 className="grid gap-4 pt-4"
@@ -1533,11 +1471,9 @@ function DiscussionSubscription({
 }
 
 function PostActions({
-    teamSlug,
     post,
     canModerate,
 }: {
-    teamSlug: string;
     post: Discussion['posts'][number];
     canModerate: boolean;
 }) {
@@ -1596,10 +1532,7 @@ function PostActions({
                     </SheetHeader>
                     {surface === 'report' ? (
                         <Form
-                            action={storeCommunityReport({
-                                current_team: teamSlug,
-                                post: post.id,
-                            })}
+                            action={storeCommunityReport({ post: post.id })}
                             className="grid gap-4 px-4 pt-4 pb-8"
                             onSuccess={() => setSurface(null)}
                         >
@@ -1644,10 +1577,7 @@ function PostActions({
                         </Form>
                     ) : surface === 'moderate' ? (
                         <Form
-                            action={moderatePost({
-                                current_team: teamSlug,
-                                post: post.id,
-                            })}
+                            action={moderatePost({ post: post.id })}
                             className="grid gap-4 px-4 pt-4 pb-8"
                             onSuccess={() => setSurface(null)}
                         >
@@ -1677,13 +1607,7 @@ function PostActions({
     );
 }
 
-function PostForm({
-    teamSlug,
-    discussion,
-}: {
-    teamSlug: string;
-    discussion: Discussion;
-}) {
+function PostForm({ discussion }: { discussion: Discussion }) {
     return (
         <FormSheet
             title={`Contribute to ${discussion.title}`}
@@ -1692,10 +1616,7 @@ function PostForm({
             icon={MessageSquare}
         >
             <Form
-                action={storePost({
-                    current_team: teamSlug,
-                    discussion: discussion.id,
-                })}
+                action={storePost({ discussion: discussion.id })}
                 className="grid gap-4 pt-4"
             >
                 <TextField name="body" label="Contribution" />
@@ -1707,12 +1628,10 @@ function PostForm({
 
 function InnovationActions({
     innovation,
-    teamSlug,
     capabilities,
     options,
 }: {
     innovation: Innovation;
-    teamSlug: string;
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
@@ -1973,7 +1892,6 @@ function InnovationActions({
                                                         key={milestone.id}
                                                         innovation={innovation}
                                                         milestone={milestone}
-                                                        teamSlug={teamSlug}
                                                         capabilities={
                                                             capabilities
                                                         }
@@ -1993,7 +1911,6 @@ function InnovationActions({
                         ) : surface === 'panel' ? (
                             <Form
                                 action={storePanelReview({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                 })}
                                 className="grid gap-4"
@@ -2059,7 +1976,6 @@ function InnovationActions({
                         ) : surface === 'funding' ? (
                             <Form
                                 action={storeFundingDecision({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                 })}
                                 className="grid gap-4"
@@ -2129,7 +2045,6 @@ function InnovationActions({
                         ) : surface === 'milestone' ? (
                             <Form
                                 action={storeMilestone({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                 })}
                                 className="grid gap-4"
@@ -2189,7 +2104,6 @@ function InnovationActions({
                         ) : surface ? (
                             <Form
                                 action={transitionInnovation({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                 })}
                                 className="grid gap-4"
@@ -2228,13 +2142,11 @@ function InnovationActions({
 function MilestoneCard({
     innovation,
     milestone,
-    teamSlug,
     capabilities,
     options,
 }: {
     innovation: Innovation;
     milestone: Innovation['milestones'][number];
-    teamSlug: string;
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
@@ -2314,7 +2226,6 @@ function MilestoneCard({
                     <Button variant="outline" size="sm" asChild>
                         <a
                             href={previewEvidence.url({
-                                current_team: teamSlug,
                                 document: milestone.document.id,
                             })}
                             target="_blank"
@@ -2344,7 +2255,6 @@ function MilestoneCard({
                         {surface === 'update' ? (
                             <Form
                                 action={updateMilestone({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                     milestone: milestone.id,
                                 })}
@@ -2402,7 +2312,6 @@ function MilestoneCard({
                         ) : surface === 'verify' ? (
                             <Form
                                 action={verifyMilestone({
-                                    current_team: teamSlug,
                                     innovation: innovation.id,
                                     milestone: milestone.id,
                                 })}

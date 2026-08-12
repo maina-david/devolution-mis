@@ -134,14 +134,14 @@ class SecurityGovernanceController extends Controller
         return back()->with('success', 'Security incident or exercise entered into the governed response process.');
     }
 
-    public function transitionIncident(TransitionSecurityIncidentRequest $request, string $currentTeam, SecurityIncident $securityIncident, TransitionSecurityIncident $action): RedirectResponse
+    public function transitionIncident(TransitionSecurityIncidentRequest $request, SecurityIncident $securityIncident, TransitionSecurityIncident $action): RedirectResponse
     {
         $action->handle($securityIncident, $this->user($request), $request->validated());
 
         return back()->with('success', 'Security incident transition and immutable evidence recorded.');
     }
 
-    public function downloadSupplyChainArtifact(Request $request, string $currentTeam, SupplyChainScan $supplyChainScan): StreamedResponse
+    public function downloadSupplyChainArtifact(Request $request, SupplyChainScan $supplyChainScan): StreamedResponse
     {
         Gate::authorize(ProgrammePermission::ViewSecurityGovernance->value);
         abort_unless($supplyChainScan->path !== null && $supplyChainScan->artifact_checksum !== null, 404);
@@ -170,7 +170,7 @@ class SecurityGovernanceController extends Controller
         return back()->with('success', 'Threat submitted for independent review.');
     }
 
-    public function reviewThreat(ReviewSecurityThreatRequest $request, string $currentTeam, SecurityThreat $securityThreat, ReviewSecurityThreat $action): RedirectResponse
+    public function reviewThreat(ReviewSecurityThreatRequest $request, SecurityThreat $securityThreat, ReviewSecurityThreat $action): RedirectResponse
     {
         $action->handle($securityThreat, $this->user($request), ['decision' => (string) $request->validated('decision'), 'treatment_status' => (string) $request->validated('treatment_status'), 'residual_likelihood' => (int) $request->validated('residual_likelihood'), 'residual_impact' => (int) $request->validated('residual_impact'), 'risk_acceptance_reference' => $request->validated('risk_acceptance_reference'), 'review_note' => (string) $request->validated('review_note'), 'evidence_references' => $request->validated('evidence_references')]);
 
@@ -185,14 +185,14 @@ class SecurityGovernanceController extends Controller
         return back()->with('success', 'Access certification campaign launched.');
     }
 
-    public function decideAccess(DecideAccessReviewItemRequest $request, string $currentTeam, AccessReviewItem $accessReviewItem, DecideAccessReviewItem $action): RedirectResponse
+    public function decideAccess(DecideAccessReviewItemRequest $request, AccessReviewItem $accessReviewItem, DecideAccessReviewItem $action): RedirectResponse
     {
         $action->handle($accessReviewItem, $this->user($request), ['decision' => (string) $request->validated('decision'), 'rationale' => (string) $request->validated('rationale'), 'remediation_action' => $request->validated('remediation_action'), 'remediation_due_at' => $request->validated('remediation_due_at')]);
 
         return back()->with('success', 'Access certification decision recorded.');
     }
 
-    public function reinstateAccess(ReinstateUserAccessRequest $request, string $currentTeam, AccessReviewItem $accessReviewItem, ReinstateUserAccess $action): RedirectResponse
+    public function reinstateAccess(ReinstateUserAccessRequest $request, AccessReviewItem $accessReviewItem, ReinstateUserAccess $action): RedirectResponse
     {
         $action->handle($accessReviewItem, $this->user($request), ['rationale' => (string) $request->validated('rationale'), 'approval_reference' => (string) $request->validated('approval_reference')]);
 
@@ -206,21 +206,21 @@ class SecurityGovernanceController extends Controller
         return back()->with('success', 'Temporary access submitted for independent approval.');
     }
 
-    public function decideDelegation(DecideAccessDelegationRequest $request, string $currentTeam, AccessDelegation $accessDelegation, DecideAccessDelegation $action): RedirectResponse
+    public function decideDelegation(DecideAccessDelegationRequest $request, AccessDelegation $accessDelegation, DecideAccessDelegation $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), ['decision' => (string) $request->validated('decision'), 'decision_rationale' => (string) $request->validated('decision_rationale')]);
 
         return back()->with('success', 'Temporary-access decision recorded.');
     }
 
-    public function revokeDelegation(RevokeAccessDelegationRequest $request, string $currentTeam, AccessDelegation $accessDelegation, RevokeAccessDelegation $action): RedirectResponse
+    public function revokeDelegation(RevokeAccessDelegationRequest $request, AccessDelegation $accessDelegation, RevokeAccessDelegation $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), (string) $request->validated('revocation_reason'));
 
         return back()->with('success', 'Temporary access revoked immediately.');
     }
 
-    public function reviewEmergencyAccess(ReviewEmergencyAccessRequest $request, string $currentTeam, AccessDelegation $accessDelegation, ReviewEmergencyAccess $action): RedirectResponse
+    public function reviewEmergencyAccess(ReviewEmergencyAccessRequest $request, AccessDelegation $accessDelegation, ReviewEmergencyAccess $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), ['post_use_outcome' => (string) $request->validated('post_use_outcome'), 'post_use_findings' => (string) $request->validated('post_use_findings')]);
 

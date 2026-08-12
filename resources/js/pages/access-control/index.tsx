@@ -1,4 +1,4 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { Ellipsis, KeyRound, Pencil, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
 import TableEmptyState from '@/components/table-empty-state';
@@ -79,13 +79,12 @@ export default function AccessControl({
     };
     filters: { search: string; per_page: number };
 }) {
-    const teamSlug = usePage().props.currentTeam!.slug;
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
     const search = (value: string) => {
         router.get(
-            index.url(teamSlug),
+            index.url(),
             { search: value, per_page: filters.per_page },
             { preserveState: true, replace: true },
         );
@@ -319,10 +318,7 @@ export default function AccessControl({
                 description="Select the complete inherited permission set for this role."
                 action={
                     selectedRole
-                        ? updateRole.form({
-                              current_team: teamSlug,
-                              role: selectedRole.name,
-                          })
+                        ? updateRole.form({ role: selectedRole.name })
                         : undefined
                 }
                 permissions={permissions}
@@ -340,7 +336,6 @@ export default function AccessControl({
                 action={
                     selectedUser
                         ? updateUserPermissions.form({
-                              current_team: teamSlug,
                               programmeUser: selectedUser.id,
                           })
                         : undefined
@@ -498,11 +493,13 @@ function humanize(value: string): string {
         .replace(/\b\w/gu, (letter) => letter.toUpperCase());
 }
 
-AccessControl.layout = (props: { currentTeam?: { slug: string } | null }) => ({
+AccessControl.layout = (props: {
+    routeContext?: { key: any; slug: any } | null;
+}) => ({
     breadcrumbs: [
         {
             title: 'Roles & permissions',
-            href: props.currentTeam ? index(props.currentTeam.slug) : '/',
+            href: props.routeContext ? index() : '/',
         },
     ],
 });

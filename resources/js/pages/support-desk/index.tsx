@@ -248,12 +248,12 @@ export default function SupportDesk({
     policyOptions,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
         null,
     );
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -283,7 +283,6 @@ export default function SupportDesk({
                         </div>
                         {capabilities.submit && (
                             <CreateTicketSheet
-                                teamSlug={currentTeam.slug}
                                 counties={options.counties}
                                 national={capabilities.national}
                                 intakeAvailable={
@@ -296,7 +295,6 @@ export default function SupportDesk({
                 </section>
 
                 <ServicePolicyRegister
-                    teamSlug={currentTeam.slug}
                     policies={servicePolicies}
                     options={policyOptions}
                     capabilities={capabilities}
@@ -369,7 +367,6 @@ export default function SupportDesk({
                             rows={workspace.rows}
                             pagination={workspace.pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'support-desk',
                                 filters,
                             }}
@@ -386,7 +383,6 @@ export default function SupportDesk({
             </main>
 
             <TicketSheet
-                teamSlug={currentTeam.slug}
                 ticket={selectedTicket}
                 open={Boolean(selectedTicket)}
                 onOpenChange={(open) => !open && setSelectedTicketId(null)}
@@ -419,13 +415,11 @@ const priorityDefaults: Record<
 };
 
 function ServicePolicyRegister({
-    teamSlug,
     policies,
     options,
     capabilities,
     effectivePolicyId,
 }: {
-    teamSlug: string;
     policies: ServicePolicy[];
     options: Props['policyOptions'];
     capabilities: Props['capabilities'];
@@ -444,11 +438,8 @@ function ServicePolicyRegister({
                 </div>
                 {capabilities.configurePolicy && (
                     <div className="flex flex-wrap gap-2">
-                        <PolicyExportMenu teamSlug={teamSlug} />
-                        <CreateServicePolicySheet
-                            teamSlug={teamSlug}
-                            options={options}
-                        />
+                        <PolicyExportMenu />
+                        <CreateServicePolicySheet options={options} />
                     </div>
                 )}
             </CardHeader>
@@ -493,7 +484,6 @@ function ServicePolicyRegister({
                             {policy.status === 'draft' &&
                                 capabilities.publishPolicy && (
                                     <PublishServicePolicySheet
-                                        teamSlug={teamSlug}
                                         policy={policy}
                                     />
                                 )}
@@ -546,7 +536,7 @@ function ServicePolicyRegister({
     );
 }
 
-function PolicyExportMenu({ teamSlug }: { teamSlug: string }) {
+function PolicyExportMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -563,7 +553,6 @@ function PolicyExportMenu({ teamSlug }: { teamSlug: string }) {
                             <Link
                                 href={
                                     exportWorkspace({
-                                        current_team: teamSlug,
                                         workspace: 'service-desk-policies',
                                         format,
                                     }).url
@@ -580,10 +569,8 @@ function PolicyExportMenu({ teamSlug }: { teamSlug: string }) {
 }
 
 function CreateServicePolicySheet({
-    teamSlug,
     options,
 }: {
-    teamSlug: string;
     options: Props['policyOptions'];
 }) {
     const [effectiveFrom, setEffectiveFrom] = useState('');
@@ -604,7 +591,7 @@ function CreateServicePolicySheet({
                     : undefined
             }
         >
-            <Form {...storePolicy.form(teamSlug)} resetOnSuccess>
+            <Form {...storePolicy.form()} resetOnSuccess>
                 {({ errors, processing }) => (
                     <FieldGroup>
                         <div className="grid gap-5 sm:grid-cols-2">
@@ -846,13 +833,7 @@ function CreateServicePolicySheet({
     );
 }
 
-function PublishServicePolicySheet({
-    teamSlug,
-    policy,
-}: {
-    teamSlug: string;
-    policy: ServicePolicy;
-}) {
+function PublishServicePolicySheet({ policy }: { policy: ServicePolicy }) {
     const [authorityStatus, setAuthorityStatus] = useState('provisional');
 
     return (
@@ -862,12 +843,7 @@ function PublishServicePolicySheet({
             triggerLabel="Review publication"
             icon={ClipboardCheck}
         >
-            <Form
-                {...publishPolicy.form({
-                    current_team: teamSlug,
-                    serviceDeskPolicy: policy.id,
-                })}
-            >
+            <Form {...publishPolicy.form({ serviceDeskPolicy: policy.id })}>
                 {({ errors, processing }) => (
                     <FieldGroup>
                         <SearchableSelect
@@ -972,12 +948,10 @@ function PolicyNumberInput({
 }
 
 function CreateTicketSheet({
-    teamSlug,
     counties,
     national,
     intakeAvailable,
 }: {
-    teamSlug: string;
     counties: CountyIdentityValue[];
     national: boolean;
     intakeAvailable: boolean;
@@ -995,7 +969,7 @@ function CreateTicketSheet({
                     : 'A checksum-valid reference catalogue and effective service-desk policy are required.'
             }
         >
-            <Form {...store.form(teamSlug)} resetOnSuccess>
+            <Form {...store.form()} resetOnSuccess>
                 {({ errors, processing }) => (
                     <FieldGroup>
                         {national && (
@@ -1144,14 +1118,12 @@ function TicketMenu({
 }
 
 function TicketSheet({
-    teamSlug,
     ticket,
     open,
     onOpenChange,
     assignees,
     capabilities,
 }: {
-    teamSlug: string;
     ticket: TicketDetail | undefined;
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -1220,7 +1192,6 @@ function TicketSheet({
                             >
                                 <Form
                                     {...assign.form({
-                                        current_team: teamSlug,
                                         supportTicket: ticket.id,
                                     })}
                                 >
@@ -1259,7 +1230,6 @@ function TicketSheet({
                             description="All status changes are scope checked and appended to the immutable activity ledger."
                         >
                             <TransitionForm
-                                teamSlug={teamSlug}
                                 ticket={ticket}
                                 options={transitionOptions}
                             />
@@ -1271,10 +1241,7 @@ function TicketSheet({
                             title="Upload support record"
                             description="Scanned and born-digital records are privately stored, malware scanned, checksummed and sent for OCR when supported."
                         >
-                            <DocumentUploadForm
-                                teamSlug={teamSlug}
-                                ticket={ticket}
-                            />
+                            <DocumentUploadForm ticket={ticket} />
                         </ActionCard>
                     )}
 
@@ -1331,7 +1298,6 @@ function TicketSheet({
                                             >
                                                 <a
                                                     href={preview.url({
-                                                        current_team: teamSlug,
                                                         document: document.id,
                                                     })}
                                                     target="_blank"
@@ -1348,7 +1314,6 @@ function TicketSheet({
                                             >
                                                 <a
                                                     href={download.url({
-                                                        current_team: teamSlug,
                                                         document: document.id,
                                                     })}
                                                 >
@@ -1480,11 +1445,9 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
 }
 
 function TransitionForm({
-    teamSlug,
     ticket,
     options,
 }: {
-    teamSlug: string;
     ticket: TicketDetail;
     options: SearchableSelectOption[];
 }) {
@@ -1493,12 +1456,7 @@ function TransitionForm({
     );
 
     return (
-        <Form
-            {...transition.form({
-                current_team: teamSlug,
-                supportTicket: ticket.id,
-            })}
-        >
+        <Form {...transition.form({ supportTicket: ticket.id })}>
             {({ errors, processing }) => (
                 <FieldGroup>
                     <SearchableSelect
@@ -1544,19 +1502,10 @@ function TransitionForm({
     );
 }
 
-function DocumentUploadForm({
-    teamSlug,
-    ticket,
-}: {
-    teamSlug: string;
-    ticket: TicketDetail;
-}) {
+function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
     return (
         <Form
-            {...storeSupportTicket.form({
-                current_team: teamSlug,
-                supportTicket: ticket.id,
-            })}
+            {...storeSupportTicket.form({ supportTicket: ticket.id })}
             resetOnSuccess
         >
             {({ errors, processing, progress }) => (

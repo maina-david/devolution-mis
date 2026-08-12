@@ -97,10 +97,8 @@ export type PartnerContribution = {
 };
 
 export default function PartnerContributionRegister({
-    teamSlug,
     contributions,
 }: {
-    teamSlug: string;
     contributions: PartnerContribution[];
 }) {
     const [detail, setDetail] = useState<PartnerContribution | null>(null);
@@ -227,8 +225,6 @@ export default function PartnerContributionRegister({
                                                                 <Form
                                                                     action={storePartnerContribution(
                                                                         {
-                                                                            current_team:
-                                                                                teamSlug,
                                                                             contribution:
                                                                                 item.id,
                                                                         },
@@ -285,8 +281,6 @@ export default function PartnerContributionRegister({
                                                                 <Form
                                                                     action={reconcileContribution(
                                                                         {
-                                                                            current_team:
-                                                                                teamSlug,
                                                                             contribution:
                                                                                 item.id,
                                                                         },
@@ -459,7 +453,6 @@ export default function PartnerContributionRegister({
                                             >
                                                 <a
                                                     href={download.url({
-                                                        current_team: teamSlug,
                                                         document: document.id,
                                                     })}
                                                     aria-label={`Download ${document.title}`}
@@ -520,10 +513,7 @@ export default function PartnerContributionRegister({
                         <iframe
                             className="h-[calc(100vh-8rem)] w-full border-0"
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                         />
                     )}
                 </SheetContent>

@@ -113,11 +113,11 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $indicator = IndicatorDefinition::factory()->draft()->create(['created_by' => $author->id]);
 
         $this->actingAs($author)
-            ->patch(route('monitoring-evaluation.indicators.approve', [$author->currentTeam->slug, $indicator]))
+            ->patch(route('monitoring-evaluation.indicators.approve', [$indicator]))
             ->assertSessionHasErrors('indicator');
 
         $this->actingAs($approver)
-            ->patch(route('monitoring-evaluation.indicators.approve', [$approver->currentTeam->slug, $indicator]))
+            ->patch(route('monitoring-evaluation.indicators.approve', [$indicator]))
             ->assertRedirect();
 
         $indicator->refresh();
@@ -171,10 +171,10 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $successor = app(SupersedeIndicatorDefinition::class)->handle($author, $indicator, $this->supersessionPayload());
 
         $this->actingAs($author)
-            ->patch(route('monitoring-evaluation.indicators.approve', [$author->currentTeam->slug, $successor]))
+            ->patch(route('monitoring-evaluation.indicators.approve', [$successor]))
             ->assertSessionHasErrors('indicator');
         $this->actingAs($approver)
-            ->patch(route('monitoring-evaluation.indicators.approve', [$approver->currentTeam->slug, $successor]))
+            ->patch(route('monitoring-evaluation.indicators.approve', [$successor]))
             ->assertRedirect();
 
         $this->assertSame('approved', $successor->refresh()->status);
@@ -199,11 +199,11 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $programme = Programme::factory()->create(['sector_id' => $sector->id]);
         $payload = ['code' => 'M07-CATALOGUE-01', 'name' => 'Catalogue governed indicator', 'description' => 'A governed results-chain indicator definition.', 'sector_id' => $sector->id, 'programme_id' => $programme->id, 'results_level' => 'outcome', 'unit_of_measure' => 'percent', 'value_type' => 'percentage', 'direction' => 'increase', 'frequency' => 'quarterly', 'data_source' => 'Verified programme records', 'verification_method' => 'Independent source review'];
 
-        $this->actingAs($author)->post(route('monitoring-evaluation.indicators.store', $author->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($author)->post(route('monitoring-evaluation.indicators.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('indicator_definitions', 0);
 
         $release = $this->publishedReferenceRelease([], [$programme], $author, [$sector]);
-        $this->actingAs($author)->post(route('monitoring-evaluation.indicators.store', $author->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($author)->post(route('monitoring-evaluation.indicators.store'), $payload)->assertRedirect();
         $indicator = IndicatorDefinition::query()->sole();
         $this->assertSame($release->id, $indicator->reference_data_release_id);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $indicator->id, 'action' => 'indicator.definition.created']);
@@ -215,7 +215,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $indicator = IndicatorDefinition::factory()->create();
 
         $this->actingAs($countyUser)
-            ->post(route('monitoring-evaluation.indicators.supersede', [$countyUser->currentTeam->slug, $indicator]), $this->supersessionPayload())
+            ->post(route('monitoring-evaluation.indicators.supersede', [$indicator]), $this->supersessionPayload())
             ->assertForbidden();
     }
 
@@ -231,9 +231,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         ProgrammeEvaluation::factory()->create(['county_id' => $homeCounty->id, 'title' => 'Visible county evaluation']);
         ProgrammeEvaluation::factory()->create(['county_id' => $otherCounty->id, 'title' => 'Hidden county evaluation']);
         ProgrammeEvaluation::factory()->create(['county_id' => null, 'title' => 'National evaluation']);
-        $team = $user->currentTeam;
-
-        $this->actingAs($user)->get(route('monitoring-evaluation.index', $team->slug))
+        $this->actingAs($user)->get(route('monitoring-evaluation.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('monitoring-evaluation/index')
@@ -294,7 +292,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->assertCount(2, $results['performance']['trends'][0]['points']);
         $this->assertSame($county->id, $results['performance']['rows'][0]['county']['id']);
 
-        $export = $this->actingAs($user)->get(route('workspace.export', [$user->currentTeam->slug, 'monitoring-performance', 'csv']))
+        $export = $this->actingAs($user)->get(route('workspace.export', ['monitoring-performance', 'csv']))
             ->assertOk()
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $exported = $export->streamedContent();
@@ -302,9 +300,9 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->assertStringContainsString(',100,80,20,25,125,met', $exported);
         $this->assertStringNotContainsString('999', $exported);
         foreach (['xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($user)->get(route('workspace.export', [$user->currentTeam->slug, 'monitoring-performance', $format]))->assertOk()->assertDownload();
+            $this->actingAs($user)->get(route('workspace.export', ['monitoring-performance', $format]))->assertOk()->assertDownload();
         }
-        $this->actingAs($user)->get(route('workspace.export', [$user->currentTeam->slug, 'monitoring-performance', 'csv', 'county_id' => $otherCounty->id]))->assertForbidden();
+        $this->actingAs($user)->get(route('workspace.export', ['monitoring-performance', 'csv', 'county_id' => $otherCounty->id]))->assertForbidden();
     }
 
     public function test_programme_evaluation_requires_clean_repository_records_and_independent_approval(): void
@@ -318,7 +316,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $release = $this->publishedReferenceRelease([$county], [$programme], $administrator);
         $this->seed(ProgrammeEvaluationWorkflowSeeder::class);
 
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store'), [
             'county_id' => $county->id, 'programme_id' => $programme->id, 'code' => 'EVAL-2026-01', 'title' => 'County service-delivery outcome evaluation', 'evaluation_type' => 'impact',
             'period_start' => '2025-01-01', 'period_end' => '2026-06-30',
             'terms_of_reference' => 'Assess attributable service-delivery outcomes using the approved mixed-method evaluation framework.',
@@ -333,33 +331,33 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $event = AuditEvent::query()->where('subject_id', $evaluation->id)->where('action', 'programme.evaluation.created')->sole();
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
-        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'start', 'comment' => 'Attempt to start without an approved repository terms-of-reference record.',
         ])->assertSessionHasErrors('transition');
 
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$evaluation]), [
             'record_purpose' => 'terms_of_reference', 'title' => 'Signed evaluation terms of reference', 'category' => 'Terms of reference', 'source_type' => 'scanned',
             'document' => UploadedFile::fake()->create('evaluation-tor.pdf', 20, 'application/pdf'),
         ])->assertRedirect();
-        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'start', 'comment' => 'Signed terms of reference validated and evaluation fieldwork authorized.',
         ])->assertRedirect();
         $this->assertSame('in_progress', $evaluation->refresh()->status);
-        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'submit_review', 'comment' => 'Attempt review submission without a retained evaluation report.',
         ])->assertSessionHasErrors('transition');
 
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$evaluation]), [
             'record_purpose' => 'evaluation_report', 'title' => 'Final impact evaluation report', 'category' => 'Evaluation report', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('impact-evaluation.pdf', 30, 'application/pdf'),
         ])->assertRedirect();
-        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'submit_review', 'comment' => 'Final report submitted for independent methodological and evidence review.',
         ])->assertRedirect();
-        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($administrator)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'approve', 'comment' => 'The submitting officer must not approve the same evaluation report.',
         ])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('monitoring-evaluation.evaluations.transition', [$reviewer->currentTeam->slug, $evaluation]), [
+        $this->actingAs($reviewer)->patch(route('monitoring-evaluation.evaluations.transition', [$evaluation]), [
             'transition' => 'approve', 'comment' => 'Methodology, analysis, findings and repository evidence independently verified.',
         ])->assertRedirect();
         $this->assertSame('approved', $evaluation->refresh()->status);
@@ -371,25 +369,25 @@ class MonitoringEvaluationWorkflowTest extends TestCase
             $this->assertSame('clean', $link->document->scan_status);
             Storage::disk('local')->assertExists($link->document->path);
         });
-        $this->actingAs($reviewer)->get(route('monitoring-evaluation.index', $reviewer->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($reviewer)->get(route('monitoring-evaluation.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('options.evaluations.0.documents', 2)
             ->where('options.evaluations.0.referenceRelease', "v{$release->version} · {$release->effective_from?->toDateString()}")
             ->where('options.evaluations.0.referenceChecksum', $release->checksum));
         foreach (['json', 'csv'] as $format) {
-            $content = $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'programme-evaluations', $format]))
+            $content = $this->actingAs($reviewer)->get(route('workspace.export', ['programme-evaluations', $format]))
                 ->assertOk()
                 ->streamedContent();
             $this->assertStringContainsString('Reference release', $content);
             $this->assertStringContainsString("v{$release->version}", $content);
             $this->assertStringContainsString($release->checksum, $content);
         }
-        $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'programme-evaluations', 'xlsx']))->assertOk()->assertDownload();
-        $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'programme-evaluations', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
-        $this->actingAs($reviewer)->get(route('evidence.preview', [$reviewer->currentTeam->slug, $links->first()->document]))->assertOk();
+        $this->actingAs($reviewer)->get(route('workspace.export', ['programme-evaluations', 'xlsx']))->assertOk()->assertDownload();
+        $this->actingAs($reviewer)->get(route('workspace.export', ['programme-evaluations', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->actingAs($reviewer)->get(route('evidence.preview', [$links->first()->document]))->assertOk();
         $outside = User::factory()->countyAdmin(County::factory()->create())->create();
-        $this->actingAs($outside)->get(route('evidence.preview', [$outside->currentTeam->slug, $links->first()->document]))->assertForbidden();
-        $this->actingAs($reviewer)->get(route('evidence.index', $reviewer->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->where('workspace.pagination.total', 2));
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$administrator->currentTeam->slug, $evaluation]), [
+        $this->actingAs($outside)->get(route('evidence.preview', [$links->first()->document]))->assertForbidden();
+        $this->actingAs($reviewer)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('workspace.pagination.total', 2));
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.documents.store', [$evaluation]), [
             'record_purpose' => 'supporting', 'title' => 'Late supporting record', 'category' => 'Supporting', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
@@ -403,15 +401,15 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->seed(ProgrammeEvaluationWorkflowSeeder::class);
         $payload = $this->evaluationPayload($county, $programme);
 
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store', $administrator->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('programme_evaluations', 0);
 
         $this->publishedReferenceRelease([$county], [], $administrator);
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store', $administrator->currentTeam->slug), $payload)->assertSessionHasErrors('programme_id');
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store'), $payload)->assertSessionHasErrors('programme_id');
         $this->assertDatabaseCount('programme_evaluations', 0);
 
         $release = $this->publishedReferenceRelease([$county], [$programme], $administrator);
-        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store', $administrator->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($administrator)->post(route('monitoring-evaluation.evaluations.store'), $payload)->assertRedirect();
         $this->assertSame($release->id, ProgrammeEvaluation::query()->sole()->reference_data_release_id);
     }
 

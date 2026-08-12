@@ -23,7 +23,7 @@ class ReferenceDataManagementTest extends TestCase
         $admin = User::factory()->devolutionAdmin()->create();
         $county = County::factory()->create(['name' => 'Mombasa', 'logo_path' => '/images/counties/mombasa.webp']);
 
-        $this->actingAs($admin)->post(route('reference-data.organizations.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('reference-data.organizations.store'), [
             'code' => 'SDD',
             'name' => 'State Department for Devolution',
             'type' => 'county',
@@ -32,7 +32,7 @@ class ReferenceDataManagementTest extends TestCase
         ])->assertRedirect();
         $organization = Organization::query()->sole();
 
-        $this->actingAs($admin)->post(route('reference-data.sectors.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('reference-data.sectors.store'), [
             'code' => 'GOV',
             'name' => 'Governance',
             'description' => 'Devolution governance and coordination.',
@@ -40,7 +40,7 @@ class ReferenceDataManagementTest extends TestCase
         ])->assertRedirect();
         $sector = Sector::query()->sole();
 
-        $this->actingAs($admin)->post(route('reference-data.programmes.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('reference-data.programmes.store'), [
             'code' => 'KDSP-II',
             'name' => 'Second Kenya Devolution Support Program',
             'lead_organization_id' => $organization->id,
@@ -56,7 +56,7 @@ class ReferenceDataManagementTest extends TestCase
         $this->assertSame($organization->id, $programme->lead_organization_id);
         $this->assertSame($sector->id, $programme->sector_id);
 
-        $this->actingAs($admin)->get(route('reference-data.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('reference-data.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('reference-data/index')
@@ -73,21 +73,21 @@ class ReferenceDataManagementTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $programme = Programme::factory()->create();
 
-        $this->actingAs($official)->get(route('reference-data.index', $official->currentTeam->slug))->assertForbidden();
-        $this->actingAs($official)->post(route('reference-data.sectors.store', $official->currentTeam->slug), [])->assertForbidden();
+        $this->actingAs($official)->get(route('reference-data.index'))->assertForbidden();
+        $this->actingAs($official)->post(route('reference-data.sectors.store'), [])->assertForbidden();
 
         $this->actingAs($admin)
-            ->delete(route('reference-data.organizations.destroy', [$admin->currentTeam->slug, $programme->leadOrganization]))
+            ->delete(route('reference-data.organizations.destroy', [$programme->leadOrganization]))
             ->assertStatus(409);
         $this->actingAs($admin)
-            ->delete(route('reference-data.sectors.destroy', [$admin->currentTeam->slug, $programme->sector]))
+            ->delete(route('reference-data.sectors.destroy', [$programme->sector]))
             ->assertStatus(409);
 
         $this->assertNotSoftDeleted($programme->leadOrganization);
         $this->assertNotSoftDeleted($programme->sector);
 
         $this->actingAs($admin)
-            ->delete(route('reference-data.programmes.destroy', [$admin->currentTeam->slug, $programme]))
+            ->delete(route('reference-data.programmes.destroy', [$programme]))
             ->assertRedirect();
 
         $this->assertSoftDeleted($programme);
@@ -98,7 +98,7 @@ class ReferenceDataManagementTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $root = Sector::factory()->create(['code' => 'SOC', 'name' => 'Social services']);
 
-        $this->actingAs($admin)->post(route('reference-data.sectors.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('reference-data.sectors.store'), [
             'parent_sector_id' => $root->id,
             'code' => 'HLT',
             'name' => 'Health services',
@@ -109,7 +109,7 @@ class ReferenceDataManagementTest extends TestCase
         $child = Sector::query()->where('code', 'HLT')->sole();
         $this->assertSame($root->id, $child->parent_sector_id);
 
-        $this->actingAs($admin)->patch(route('reference-data.sectors.update', [$admin->currentTeam->slug, $root]), [
+        $this->actingAs($admin)->patch(route('reference-data.sectors.update', [$root]), [
             'parent_sector_id' => $child->id,
             'code' => $root->code,
             'name' => $root->name,
@@ -118,7 +118,7 @@ class ReferenceDataManagementTest extends TestCase
         ])->assertSessionHasErrors('parent_sector_id');
 
         $this->actingAs($admin)
-            ->delete(route('reference-data.sectors.destroy', [$admin->currentTeam->slug, $root]))
+            ->delete(route('reference-data.sectors.destroy', [$root]))
             ->assertStatus(409);
 
         if ($this->getConnection()->getDriverName() === 'pgsql') {
@@ -133,7 +133,7 @@ class ReferenceDataManagementTest extends TestCase
         $root = Sector::factory()->create(['code' => 'ECON', 'name' => 'Economic services']);
         $child = Sector::factory()->create(['parent_sector_id' => $root->id, 'code' => 'AGR', 'name' => 'Agriculture']);
 
-        $this->actingAs($admin)->get(route('reference-data.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('reference-data.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('sectors.data', fn ($sectors): bool => collect($sectors)->contains(
@@ -142,7 +142,7 @@ class ReferenceDataManagementTest extends TestCase
                         && $sector['parent']['code'] === 'ECON',
                 )));
 
-        $this->actingAs($admin)->post(route('reference-data.releases.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('reference-data.releases.store'), [
             'change_summary' => 'Publish governed sector hierarchy lineage.',
         ])->assertRedirect();
 
@@ -159,7 +159,7 @@ class ReferenceDataManagementTest extends TestCase
         $official = User::factory()->countyOfficial()->create();
         Sector::factory()->create(['code' => 'GOV', 'name' => 'Governance']);
 
-        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value'), [
             'resource' => 'sectors',
             'field' => 'code',
             'value' => 'GOV',
@@ -168,7 +168,7 @@ class ReferenceDataManagementTest extends TestCase
             'message' => 'Code is already in use.',
         ]);
 
-        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value'), [
             'resource' => 'sectors',
             'field' => 'code',
             'value' => 'PFM',
@@ -177,13 +177,13 @@ class ReferenceDataManagementTest extends TestCase
             'message' => 'Code is available.',
         ]);
 
-        $this->actingAs($admin)->postJson(route('reference-data.unique-value', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->postJson(route('reference-data.unique-value'), [
             'resource' => 'users',
             'field' => 'email',
             'value' => 'hidden@example.test',
         ])->assertUnprocessable();
 
-        $this->actingAs($official)->postJson(route('reference-data.unique-value', $official->currentTeam->slug), [
+        $this->actingAs($official)->postJson(route('reference-data.unique-value'), [
             'resource' => 'sectors',
             'field' => 'code',
             'value' => 'GOV',
@@ -205,7 +205,7 @@ class ReferenceDataManagementTest extends TestCase
         $submitter = User::factory()->platformAdmin()->create();
         $publisher = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($submitter)->post(route('reference-data.releases.store', $submitter->currentTeam->slug), [
+        $this->actingAs($submitter)->post(route('reference-data.releases.store'), [
             'change_summary' => 'Initial governed catalogue snapshot for controlled downstream exchange.',
         ])->assertRedirect();
 
@@ -219,8 +219,8 @@ class ReferenceDataManagementTest extends TestCase
         $this->assertSame(64, Str::length($release->checksum));
 
         $publishPayload = ['approval_reference' => 'SDD-MDM-APPROVAL-001', 'effective_from' => '2026-08-15'];
-        $this->actingAs($submitter)->patch(route('reference-data.releases.publish', [$submitter->currentTeam->slug, $release]), $publishPayload)->assertForbidden();
-        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$publisher->currentTeam->slug, $release]), $publishPayload)->assertRedirect();
+        $this->actingAs($submitter)->patch(route('reference-data.releases.publish', [$release]), $publishPayload)->assertForbidden();
+        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$release]), $publishPayload)->assertRedirect();
 
         $release->refresh();
         $this->assertSame('published', $release->status);
@@ -228,12 +228,12 @@ class ReferenceDataManagementTest extends TestCase
         $this->assertSame('2026-08-15', $release->effective_from?->toDateString());
         $this->assertDatabaseHas('audit_events', ['subject_id' => $release->id, 'action' => 'reference.release.submitted']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $release->id, 'action' => 'reference.release.published']);
-        $this->actingAs($publisher)->get(route('reference-data.index', $publisher->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($publisher)->get(route('reference-data.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('releases.0.version', 1)
             ->where('releases.0.status', 'published')
             ->where('releases.0.counts.counties', 2)
             ->where('capabilities.approve', true));
-        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$publisher->currentTeam->slug, $release]), $publishPayload)->assertStatus(409);
+        $this->actingAs($publisher)->patch(route('reference-data.releases.publish', [$release]), $publishPayload)->assertStatus(409);
     }
 
     public function test_published_reference_catalogue_snapshot_is_database_immutable(): void

@@ -45,11 +45,9 @@ export type PartnerOperationalAlert = {
 };
 
 export default function PartnerOperationalAlerts({
-    teamSlug,
     alerts,
     canResolve,
 }: {
-    teamSlug: string;
     alerts: PartnerOperationalAlert[];
     canResolve: boolean;
 }) {
@@ -143,10 +141,7 @@ export default function PartnerOperationalAlerts({
                                 </TableCell>
                                 <TableCell>
                                     {canResolve && alert.status === 'open' && (
-                                        <AlertActions
-                                            teamSlug={teamSlug}
-                                            alert={alert}
-                                        />
+                                        <AlertActions alert={alert} />
                                     )}
                                 </TableCell>
                             </TableRow>
@@ -173,13 +168,7 @@ function AlertHeader() {
     );
 }
 
-function AlertActions({
-    teamSlug,
-    alert,
-}: {
-    teamSlug: string;
-    alert: PartnerOperationalAlert;
-}) {
+function AlertActions({ alert }: { alert: PartnerOperationalAlert }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -200,7 +189,6 @@ function AlertActions({
                     >
                         <Form
                             {...resolveOperationalAlert.form({
-                                current_team: teamSlug,
                                 alert: alert.id,
                             })}
                             className="grid gap-4"

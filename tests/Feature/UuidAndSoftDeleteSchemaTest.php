@@ -56,7 +56,6 @@ use App\Models\RolloutWave;
 use App\Models\Sector;
 use App\Models\ServiceDeskPolicy;
 use App\Models\ServiceDeskRosterMember;
-use App\Models\Team;
 use App\Models\TrainingAssessment;
 use App\Models\TrainingCohort;
 use App\Models\TrainingParticipant;
@@ -97,7 +96,6 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             Assessment::class,
             AssessmentDocument::class,
             CountyGrant::class,
-            Team::class,
             Role::class,
             Permission::class,
             DatabaseNotification::class,
@@ -278,7 +276,7 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
         $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id]);
         $grant = CountyGrant::factory()->create(['county_id' => $county->id]);
 
-        foreach ([$county, $user, $assessment, $document, $grant, $user->currentTeam] as $model) {
+        foreach ([$county, $user, $assessment, $document, $grant] as $model) {
             $this->assertTrue(Str::isUuid($model->getKey()));
             $this->assertSame('7', $model->getKey()[14]);
         }

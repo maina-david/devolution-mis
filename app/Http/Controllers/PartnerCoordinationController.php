@@ -250,7 +250,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Collaboration plan created as a governed draft.');
     }
 
-    public function transitionCollaborationPlan(TransitionPartnerCollaborationPlanRequest $request, string $currentTeam, PartnerCollaborationPlan $plan, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
+    public function transitionCollaborationPlan(TransitionPartnerCollaborationPlanRequest $request, PartnerCollaborationPlan $plan, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($plan->partner_profile_id)->exists(), 403);
@@ -275,7 +275,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Collaboration plan transition recorded.');
     }
 
-    public function storeCollaborationAction(StorePartnerCollaborationActionRequest $request, string $currentTeam, PartnerCollaborationPlan $plan, CreatePartnerCollaborationAction $createAction, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeCollaborationAction(StorePartnerCollaborationActionRequest $request, PartnerCollaborationPlan $plan, CreatePartnerCollaborationAction $createAction, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($plan->partner_profile_id)->exists(), 403);
@@ -284,7 +284,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Accountable collaboration action created.');
     }
 
-    public function storeCollaborationActionUpdate(StorePartnerCollaborationActionUpdateRequest $request, string $currentTeam, PartnerCollaborationAction $action, RecordPartnerCollaborationActionUpdate $recordUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeCollaborationActionUpdate(StorePartnerCollaborationActionUpdateRequest $request, PartnerCollaborationAction $action, RecordPartnerCollaborationActionUpdate $recordUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($countyScope->query($user)->whereKey($action->county_id)->exists(), 403);
@@ -293,7 +293,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Progress submitted for independent verification.');
     }
 
-    public function verifyCollaborationActionUpdate(VerifyPartnerCollaborationActionUpdateRequest $request, string $currentTeam, PartnerCollaborationActionUpdate $update, VerifyPartnerCollaborationActionUpdate $verifyUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function verifyCollaborationActionUpdate(VerifyPartnerCollaborationActionUpdateRequest $request, PartnerCollaborationActionUpdate $update, VerifyPartnerCollaborationActionUpdate $verifyUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($countyScope->query($user)->whereKey($update->action->county_id)->exists(), 403);
@@ -302,7 +302,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Progress verification decision retained.');
     }
 
-    public function transitionAgreement(TransitionPartnerAgreementRequest $request, string $currentTeam, PartnerAgreement $agreement, TransitionPartnerAgreement $transitionAgreement, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function transitionAgreement(TransitionPartnerAgreementRequest $request, PartnerAgreement $agreement, TransitionPartnerAgreement $transitionAgreement, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($agreement->partner_profile_id)->exists(), 403);
@@ -311,7 +311,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Agreement workflow decision recorded.');
     }
 
-    public function storeAgreementChange(StorePartnerAgreementChangeRequest $request, string $currentTeam, PartnerAgreement $agreement, CreatePartnerAgreementChange $createChange, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeAgreementChange(StorePartnerAgreementChangeRequest $request, PartnerAgreement $agreement, CreatePartnerAgreementChange $createChange, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($agreement->partner_profile_id)->exists(), 403);
@@ -320,7 +320,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Agreement change request retained for evidence and independent decision.');
     }
 
-    public function decideAgreementChange(DecidePartnerAgreementChangeRequest $request, string $currentTeam, PartnerAgreementChangeRequest $changeRequest, DecidePartnerAgreementChange $decideChange, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function decideAgreementChange(DecidePartnerAgreementChangeRequest $request, PartnerAgreementChangeRequest $changeRequest, DecidePartnerAgreementChange $decideChange, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($changeRequest->agreement->partner_profile_id)->exists(), 403);
@@ -359,7 +359,7 @@ class PartnerCoordinationController extends Controller
         return $this->success("Collaboration analysis completed with {$alerts->count()} matched pair(s).");
     }
 
-    public function reconcileContribution(ReconcilePartnerContributionRequest $request, string $currentTeam, PartnerContribution $contribution, ReconcilePartnerContribution $reconcileContribution, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function reconcileContribution(ReconcilePartnerContributionRequest $request, PartnerContribution $contribution, ReconcilePartnerContribution $reconcileContribution, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($contribution->partner_profile_id)->exists(), 403);
@@ -369,7 +369,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Contribution reconciliation decision retained with its evidence checksum.');
     }
 
-    public function resolveAlert(ResolvePartnerCollaborationAlertRequest $request, string $currentTeam, PartnerCollaborationAlert $alert, AuditLogger $auditLogger): RedirectResponse
+    public function resolveAlert(ResolvePartnerCollaborationAlertRequest $request, PartnerCollaborationAlert $alert, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $alert->update([
@@ -382,7 +382,7 @@ class PartnerCoordinationController extends Controller
         return $this->success('Collaboration alert decision recorded.');
     }
 
-    public function resolveOperationalAlert(ResolvePartnerOperationalAlertRequest $request, string $currentTeam, PartnerOperationalAlert $alert, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function resolveOperationalAlert(ResolvePartnerOperationalAlertRequest $request, PartnerOperationalAlert $alert, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($this->visiblePartners($user, $countyScope)->whereKey($alert->partner_profile_id)->exists(), 403);

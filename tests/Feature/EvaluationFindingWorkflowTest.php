@@ -69,7 +69,7 @@ class EvaluationFindingWorkflowTest extends TestCase
         $otherEvaluation = ProgrammeEvaluation::factory()->create(['county_id' => $otherCounty->id, 'status' => 'approved', 'approved_by' => User::factory()->assessor()->create()->id, 'approved_at' => now()]);
         $this->finding($otherEvaluation, $issuer, $otherOwner, 'HIDDEN-FINDING');
 
-        $this->actingAs($owner)->get(route('monitoring-evaluation.index', $owner->currentTeam->slug))
+        $this->actingAs($owner)->get(route('monitoring-evaluation.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('options.findings', 1)

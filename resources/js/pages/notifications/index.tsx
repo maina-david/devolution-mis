@@ -32,9 +32,9 @@ export default function NotificationIndex({
     pagination: { currentPage: number; lastPage: number; total: number };
     filters: { from?: string; to?: string; search?: string };
 }) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -61,7 +61,7 @@ export default function NotificationIndex({
                         </p>
                     </div>
                     {unread > 0 && (
-                        <Form {...readAll.form(currentTeam.slug)}>
+                        <Form {...readAll.form()}>
                             {({ processing }) => (
                                 <Button
                                     type="submit"
@@ -158,8 +158,6 @@ export default function NotificationIndex({
                                         {!notification.readAt && (
                                             <Form
                                                 {...read.form({
-                                                    current_team:
-                                                        currentTeam.slug,
                                                     notification:
                                                         notification.id,
                                                 })}

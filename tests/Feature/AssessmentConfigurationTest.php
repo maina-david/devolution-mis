@@ -80,7 +80,7 @@ class AssessmentConfigurationTest extends TestCase
     public function test_administrator_can_publish_fourteen_function_scorecard_and_create_cycle(): void
     {
         $admin = User::factory()->devolutionAdmin()->create();
-        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.store'), [
             'code' => 'DPA',
             'name' => 'Devolution Performance Assessment',
             'description' => 'National and county performance scorecard.',
@@ -88,18 +88,18 @@ class AssessmentConfigurationTest extends TestCase
         ])->assertRedirect();
         $scorecard = AssessmentScorecard::query()->sole();
 
-        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$admin->currentTeam->slug, $scorecard]), $this->versionPayload())->assertRedirect();
+        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$scorecard]), $this->versionPayload())->assertRedirect();
         $version = AssessmentScorecardVersion::query()->sole();
         $this->assertSame(14, $version->functions()->count());
         $this->assertSame(14, AssessmentCriterion::query()->count());
 
-        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$admin->currentTeam->slug, $scorecard, $version]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$scorecard, $version]))->assertRedirect();
         $version->refresh();
         $this->assertSame('published', $version->status);
         $this->assertSame(64, Str::length((string) $version->checksum));
         $this->assertSame($admin->id, $version->published_by);
 
-        $this->actingAs($admin)->post(route('assessment-configuration.cycles.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('assessment-configuration.cycles.store'), [
             'code' => 'ACPA-2026-27',
             'name' => 'ACPA 2026/27',
             'assessment_scorecard_version_id' => $version->id,
@@ -115,7 +115,7 @@ class AssessmentConfigurationTest extends TestCase
         $this->assertSame($version->id, $cycle->assessment_scorecard_version_id);
         $this->assertSame(4, AuditEvent::query()->count());
 
-        $this->actingAs($admin)->get(route('assessment-configuration.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('assessment-configuration.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assessment-configuration/index')
@@ -128,7 +128,7 @@ class AssessmentConfigurationTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $scorecard = AssessmentScorecard::factory()->create();
 
-        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$admin->currentTeam->slug, $scorecard]), $this->versionPayload(13))
+        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$scorecard]), $this->versionPayload(13))
             ->assertSessionHasErrors('functions');
         $this->assertDatabaseCount('assessment_scorecard_versions', 0);
     }
@@ -141,9 +141,9 @@ class AssessmentConfigurationTest extends TestCase
 
         $admin = User::factory()->devolutionAdmin()->create();
         $scorecard = AssessmentScorecard::factory()->create();
-        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$admin->currentTeam->slug, $scorecard]), $this->versionPayload())->assertRedirect();
+        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$scorecard]), $this->versionPayload())->assertRedirect();
         $version = AssessmentScorecardVersion::query()->sole();
-        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$admin->currentTeam->slug, $scorecard, $version]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$scorecard, $version]))->assertRedirect();
 
         $this->expectException(QueryException::class);
         $version->update(['calculation_method' => 'weighted_sum']);
@@ -180,9 +180,9 @@ class AssessmentConfigurationTest extends TestCase
 
         $admin = User::factory()->devolutionAdmin()->create();
         $scorecard = AssessmentScorecard::factory()->create();
-        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$admin->currentTeam->slug, $scorecard]), $this->versionPayload())->assertRedirect();
+        $this->actingAs($admin)->post(route('assessment-configuration.scorecards.versions.store', [$scorecard]), $this->versionPayload())->assertRedirect();
         $version = AssessmentScorecardVersion::query()->sole();
-        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$admin->currentTeam->slug, $scorecard, $version]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessment-configuration.scorecards.versions.publish', [$scorecard, $version]))->assertRedirect();
 
         return [$version->refresh(), $admin];
     }
@@ -191,7 +191,7 @@ class AssessmentConfigurationTest extends TestCase
     {
         $official = User::factory()->countyOfficial()->create();
 
-        $this->actingAs($official)->get(route('assessment-configuration.index', $official->currentTeam->slug))->assertForbidden();
-        $this->actingAs($official)->post(route('assessment-configuration.scorecards.store', $official->currentTeam->slug), [])->assertForbidden();
+        $this->actingAs($official)->get(route('assessment-configuration.index'))->assertForbidden();
+        $this->actingAs($official)->post(route('assessment-configuration.scorecards.store'), [])->assertForbidden();
     }
 }

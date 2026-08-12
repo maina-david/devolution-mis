@@ -31,7 +31,7 @@ class BusinessCalendarController extends Controller
         return back()->with('success', 'Business calendar draft created.');
     }
 
-    public function storeHoliday(StoreBusinessCalendarHolidayRequest $request, string $currentTeam, BusinessCalendar $businessCalendar, AuditLogger $auditLogger): RedirectResponse
+    public function storeHoliday(StoreBusinessCalendarHolidayRequest $request, BusinessCalendar $businessCalendar, AuditLogger $auditLogger): RedirectResponse
     {
         abort_unless($businessCalendar->status === 'draft', 409, 'Published calendars are immutable. Create a new version to amend holidays.');
         $user = $this->user($request);
@@ -41,7 +41,7 @@ class BusinessCalendarController extends Controller
         return back()->with('success', 'Calendar exception added.');
     }
 
-    public function destroyHoliday(Request $request, string $currentTeam, BusinessCalendar $businessCalendar, BusinessCalendarHoliday $businessCalendarHoliday, AuditLogger $auditLogger): RedirectResponse
+    public function destroyHoliday(Request $request, BusinessCalendar $businessCalendar, BusinessCalendarHoliday $businessCalendarHoliday, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageWorkflows->value);
         abort_unless($businessCalendarHoliday->business_calendar_id === $businessCalendar->id, 404);
@@ -53,7 +53,7 @@ class BusinessCalendarController extends Controller
         return back()->with('success', 'Draft calendar exception removed.');
     }
 
-    public function publish(Request $request, string $currentTeam, BusinessCalendar $businessCalendar, PublishBusinessCalendar $action): RedirectResponse
+    public function publish(Request $request, BusinessCalendar $businessCalendar, PublishBusinessCalendar $action): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageWorkflows->value);
         $action->handle($businessCalendar, $this->user($request));

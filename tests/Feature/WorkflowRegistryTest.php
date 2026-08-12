@@ -34,7 +34,7 @@ class WorkflowRegistryTest extends TestCase
     {
         $admin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($admin)->post(route('workflows.store', $admin->currentTeam->slug), [
+        $this->actingAs($admin)->post(route('workflows.store'), [
             'code' => 'ACPA-ASSESSMENT',
             'name' => 'Annual County Performance Assessment',
             'module' => 'performance-assessment',
@@ -43,12 +43,12 @@ class WorkflowRegistryTest extends TestCase
         ])->assertRedirect();
 
         $workflow = WorkflowDefinition::query()->sole();
-        $this->actingAs($admin)->post(route('workflows.versions.store', [$admin->currentTeam->slug, $workflow]), [
+        $this->actingAs($admin)->post(route('workflows.versions.store', [$workflow]), [
             'configuration' => $this->configuration(),
         ])->assertRedirect();
 
         $version = WorkflowVersion::query()->sole();
-        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$admin->currentTeam->slug, $workflow, $version]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$workflow, $version]))->assertRedirect();
 
         $version->refresh();
         $this->assertTrue(Str::isUuid($workflow->id));
@@ -62,7 +62,7 @@ class WorkflowRegistryTest extends TestCase
             ->whereIn('action', ['workflow.definition.created', 'workflow.version.created', 'workflow.version.published'])
             ->count());
 
-        $this->actingAs($admin)->get(route('workflows.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('workflows.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('workflows/index')
@@ -76,10 +76,10 @@ class WorkflowRegistryTest extends TestCase
         $workflow = WorkflowDefinition::factory()->create();
         $first = WorkflowVersion::factory()->create(['workflow_definition_id' => $workflow->id, 'configuration' => $this->configuration()]);
 
-        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$admin->currentTeam->slug, $workflow, $first]))->assertRedirect();
-        $this->actingAs($admin)->post(route('workflows.versions.store', [$admin->currentTeam->slug, $workflow]), ['configuration' => $this->configuration('completed')])->assertRedirect();
+        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$workflow, $first]))->assertRedirect();
+        $this->actingAs($admin)->post(route('workflows.versions.store', [$workflow]), ['configuration' => $this->configuration('completed')])->assertRedirect();
         $second = WorkflowVersion::query()->where('version', 2)->sole();
-        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$admin->currentTeam->slug, $workflow, $second]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$workflow, $second]))->assertRedirect();
 
         $this->assertSame('retired', $first->refresh()->status);
         $this->assertNotNull($first->effective_to);
@@ -94,12 +94,12 @@ class WorkflowRegistryTest extends TestCase
         $configuration = $this->configuration();
         $configuration['transitions'][0]['to'] = 'undeclared';
 
-        $this->actingAs($admin)->post(route('workflows.versions.store', [$admin->currentTeam->slug, $workflow]), ['configuration' => $configuration])
+        $this->actingAs($admin)->post(route('workflows.versions.store', [$workflow]), ['configuration' => $configuration])
             ->assertSessionHasErrors('configuration.transitions.0.to');
         $this->assertDatabaseCount('workflow_versions', 0);
 
-        $this->actingAs($official)->get(route('workflows.index', $official->currentTeam->slug))->assertForbidden();
-        $this->actingAs($official)->post(route('workflows.store', $official->currentTeam->slug), [])->assertForbidden();
+        $this->actingAs($official)->get(route('workflows.index'))->assertForbidden();
+        $this->actingAs($official)->post(route('workflows.store'), [])->assertForbidden();
     }
 
     public function test_database_prevents_released_versions_from_being_changed_or_deleted(): void
@@ -111,7 +111,7 @@ class WorkflowRegistryTest extends TestCase
         $admin = User::factory()->platformAdmin()->create();
         $workflow = WorkflowDefinition::factory()->create();
         $version = WorkflowVersion::factory()->create(['workflow_definition_id' => $workflow->id, 'configuration' => $this->configuration()]);
-        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$admin->currentTeam->slug, $workflow, $version]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('workflows.versions.publish', [$workflow, $version]))->assertRedirect();
 
         try {
             WorkflowVersion::query()->whereKey($version->id)->update(['configuration' => $this->configuration('changed')]);

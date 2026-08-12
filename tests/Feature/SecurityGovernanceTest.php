@@ -21,15 +21,15 @@ class SecurityGovernanceTest extends TestCase
         $author = User::factory()->devolutionAdmin()->create();
         $reviewer = User::factory()->platformAdmin()->create();
         $countyUser = User::factory()->countyAdmin()->create();
-        $this->actingAs($countyUser)->get(route('security-governance.index', $countyUser->currentTeam->slug))->assertForbidden();
-        $this->actingAs($author)->post(route('security-governance.threats.store', $author->currentTeam->slug), $this->threatPayload($reviewer))->assertRedirect();
+        $this->actingAs($countyUser)->get(route('security-governance.index'))->assertForbidden();
+        $this->actingAs($author)->post(route('security-governance.threats.store'), $this->threatPayload($reviewer))->assertRedirect();
         $threat = SecurityThreat::query()->sole();
         $this->assertTrue(Str::isUuid($threat->id));
         $this->assertSame(20, $threat->inherent_risk_score);
         $this->assertSame(['login', 'privileged_exports', 'integration_credentials'], $threat->entry_points);
         $review = ['decision' => 'accepted', 'treatment_status' => 'mitigated', 'residual_likelihood' => 2, 'residual_impact' => 4, 'review_note' => 'MFA, certification, export auditing and source-owner secret controls reduce likelihood while residual disclosure impact remains material.', 'evidence_references' => 'SEC-TEST-001, ACCESS-TEST-001'];
-        $this->actingAs($author)->patch(route('security-governance.threats.review', [$author->currentTeam->slug, $threat]), $review)->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('security-governance.threats.review', [$reviewer->currentTeam->slug, $threat]), $review)->assertRedirect();
+        $this->actingAs($author)->patch(route('security-governance.threats.review', [$threat]), $review)->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('security-governance.threats.review', [$threat]), $review)->assertRedirect();
         $this->assertSame('accepted', $threat->refresh()->status);
         $this->assertSame(8, $threat->residual_risk_score);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $threat->id, 'action' => 'security.threat.reviewed']);
@@ -42,7 +42,7 @@ class SecurityGovernanceTest extends TestCase
         $launcher = User::factory()->devolutionAdmin()->create();
         $reviewer = User::factory()->platformAdmin()->withTwoFactor()->create();
         $target = User::factory()->countyAdmin()->create();
-        $this->actingAs($launcher)->post(route('security-governance.access-reviews.store', $launcher->currentTeam->slug), $this->campaignPayload($reviewer, ['county-admin']))->assertRedirect();
+        $this->actingAs($launcher)->post(route('security-governance.access-reviews.store'), $this->campaignPayload($reviewer, ['county-admin']))->assertRedirect();
         $campaign = AccessReviewCampaign::query()->sole();
         $item = AccessReviewItem::query()->sole();
         $this->assertTrue(Str::isUuid($campaign->id));
@@ -50,9 +50,9 @@ class SecurityGovernanceTest extends TestCase
         $this->assertSame('county-admin', $item->role_name);
         $this->assertFalse($item->mfa_enabled);
         $decision = ['decision' => 'retain', 'rationale' => 'County administration access remains necessary for the assigned county and current duties.'];
-        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$reviewer->currentTeam->slug, $item]), $decision)->assertStatus(409);
+        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$item]), $decision)->assertStatus(409);
         $target->forceFill(['two_factor_secret' => encrypt('test-secret'), 'two_factor_recovery_codes' => encrypt(json_encode(['test-code'], JSON_THROW_ON_ERROR)), 'two_factor_confirmed_at' => now()])->save();
-        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$reviewer->currentTeam->slug, $item]), $decision)->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$item]), $decision)->assertRedirect();
         $this->assertSame('retain', $item->refresh()->decision);
         $this->assertSame('completed', $campaign->refresh()->status);
         $this->assertSame(64, strlen((string) $campaign->evidence_checksum));
@@ -75,22 +75,22 @@ class SecurityGovernanceTest extends TestCase
             ['id' => Str::random(40), 'user_id' => $target->id, 'ip_address' => '127.0.0.1', 'user_agent' => 'Security test', 'payload' => '', 'last_activity' => now()->timestamp],
             ['id' => Str::random(40), 'user_id' => $target->id, 'ip_address' => '127.0.0.1', 'user_agent' => 'Security test second session', 'payload' => '', 'last_activity' => now()->subMinute()->timestamp],
         ]);
-        $this->actingAs($launcher)->post(route('security-governance.access-reviews.store', $launcher->currentTeam->slug), $this->campaignPayload($reviewer, ['county-admin']))->assertRedirect();
+        $this->actingAs($launcher)->post(route('security-governance.access-reviews.store'), $this->campaignPayload($reviewer, ['county-admin']))->assertRedirect();
         $item = AccessReviewItem::query()->sole();
         $this->assertSame('county', $item->assigned_county_snapshot[0]['kind']);
         $this->assertSame('/images/counties/mombasa.webp', $item->assigned_county_snapshot[0]['logoUrl']);
         $this->assertSame('The National Treasury – Bajeti Yetu', $item->assigned_county_snapshot[0]['logoSourceAuthority']);
-        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$reviewer->currentTeam->slug, $item]), ['decision' => 'revoke', 'rationale' => 'The access owner confirmed that the county administration assignment has ended and access is no longer required.'])->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.decide', [$item]), ['decision' => 'revoke', 'rationale' => 'The access owner confirmed that the county administration assignment has ended and access is no longer required.'])->assertRedirect();
         $this->assertNotNull($target->refresh()->access_revoked_at);
         $this->assertSame(0, $target->roles()->count());
         $this->assertSame(0, $target->assignedCounties()->count());
         $this->assertSame(2, $item->refresh()->sessions_revoked);
         $this->assertSame(0, DB::table((string) config('session.table'))->where('user_id', $target->id)->count());
-        $this->actingAs($target)->get(route('dashboard', $target->currentTeam->slug))->assertRedirect(route('login'));
+        $this->actingAs($target)->get(route('dashboard'))->assertRedirect(route('login'));
 
         $reinstatement = ['rationale' => 'The county access owner supplied a renewed assignment and the security remediation review confirmed strong authentication remains active.', 'approval_reference' => 'ACCESS-REINSTATE-2026-001'];
-        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.reinstate', [$reviewer->currentTeam->slug, $item]), $reinstatement)->assertForbidden();
-        $this->actingAs($launcher)->patch(route('security-governance.access-review-items.reinstate', [$launcher->currentTeam->slug, $item]), $reinstatement)->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('security-governance.access-review-items.reinstate', [$item]), $reinstatement)->assertForbidden();
+        $this->actingAs($launcher)->patch(route('security-governance.access-review-items.reinstate', [$item]), $reinstatement)->assertRedirect();
         $this->assertNull($target->refresh()->access_revoked_at);
         $this->assertSame('county-admin', $target->programmeRole()->value);
         $this->assertTrue($target->assignedCounties()->whereKey($county)->exists());
@@ -99,7 +99,7 @@ class SecurityGovernanceTest extends TestCase
 
         $viewer = User::factory()->topManagement()->create();
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'security-governance', $format]))->assertOk()->assertDownload();
+            $this->actingAs($viewer)->get(route('workspace.export', ['security-governance', $format]))->assertOk()->assertDownload();
         }
     }
 

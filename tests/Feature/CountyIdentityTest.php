@@ -46,7 +46,7 @@ class CountyIdentityTest extends TestCase
         $admin = User::factory()->countyAdmin($county)->create();
 
         $this->actingAs($admin)
-            ->get(route('counties.index', $admin->currentTeam->slug))
+            ->get(route('counties.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('workspace.rows.0.cells.0.kind', 'county')
@@ -58,7 +58,7 @@ class CountyIdentityTest extends TestCase
                 ->where('workspace.rows.0.cells.0.logoVerifiedAt', '2026-08-10'));
 
         $json = $this->actingAs($admin)
-            ->get(route('workspace.export', [$admin->currentTeam->slug, 'counties', 'json']))
+            ->get(route('workspace.export', ['counties', 'json']))
             ->assertOk()
             ->assertDownload()
             ->streamedContent();
@@ -70,7 +70,7 @@ class CountyIdentityTest extends TestCase
         $this->assertSame('2026-08-10', $payload['rows'][0][0]['logoVerifiedAt']);
 
         $pdf = $this->actingAs($admin)
-            ->get(route('workspace.export', [$admin->currentTeam->slug, 'counties', 'pdf']))
+            ->get(route('workspace.export', ['counties', 'pdf']))
             ->assertOk()
             ->assertDownload()
             ->assertHeader('Content-Type', 'application/pdf');

@@ -34,7 +34,7 @@ class LearningOfflinePackageTest extends TestCase
     {
         [$course, $manager, , $manual, $document] = $this->publishedCourseWithDownloadableAsset();
 
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertRedirect()->assertSessionHasNoErrors();
 
         $package = LearningOfflinePackage::query()->sole();
         $this->assertTrue(Str::isUuid($package->id));
@@ -71,19 +71,19 @@ class LearningOfflinePackageTest extends TestCase
     public function test_only_enrolled_in_scope_learner_or_governance_user_can_download_and_tamper_fails_closed(): void
     {
         [$course, $manager, $county] = $this->publishedCourseWithDownloadableAsset();
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertRedirect();
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertRedirect();
         $package = LearningOfflinePackage::query()->sole();
         $learner = User::factory()->countyOfficial($county)->create();
         $otherLearner = User::factory()->countyOfficial(County::factory()->create())->create();
 
-        $this->actingAs($learner)->get(route('learning.offline-packages.download', [$learner->currentTeam->slug, $package]))->assertForbidden();
+        $this->actingAs($learner)->get(route('learning.offline-packages.download', [$package]))->assertForbidden();
         LearningEnrollment::factory()->create(['learning_course_id' => $course->id, 'user_id' => $learner->id, 'enrolled_by' => $learner->id]);
         LearningEnrollment::factory()->create(['learning_course_id' => $course->id, 'user_id' => $otherLearner->id, 'enrolled_by' => $otherLearner->id]);
-        $this->actingAs($learner)->get(route('learning.offline-packages.download', [$learner->currentTeam->slug, $package]))->assertOk()->assertDownload($package->original_name);
-        $this->actingAs($otherLearner)->get(route('learning.offline-packages.download', [$otherLearner->currentTeam->slug, $package]))->assertForbidden();
+        $this->actingAs($learner)->get(route('learning.offline-packages.download', [$package]))->assertOk()->assertDownload($package->original_name);
+        $this->actingAs($otherLearner)->get(route('learning.offline-packages.download', [$package]))->assertForbidden();
 
         Storage::disk('local')->put((string) $package->path, 'tampered archive');
-        $this->actingAs($manager)->get(route('learning.offline-packages.download', [$manager->currentTeam->slug, $package]))->assertStatus(409);
+        $this->actingAs($manager)->get(route('learning.offline-packages.download', [$package]))->assertStatus(409);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $package->id, 'action' => 'learning.offline-package.downloaded', 'actor_id' => $learner->id]);
     }
 
@@ -91,20 +91,20 @@ class LearningOfflinePackageTest extends TestCase
     {
         [$course, $manager, , , $document] = $this->publishedCourseWithDownloadableAsset();
         $course->update(['status' => 'draft']);
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertStatus(409);
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertStatus(409);
         $this->assertDatabaseCount('learning_offline_packages', 0);
 
         $course->update(['status' => 'published']);
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertRedirect();
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertRedirect();
         $readyPackage = LearningOfflinePackage::query()->where('status', 'ready')->sole();
         Storage::disk('local')->put($document->currentVersion->path, 'altered evidence');
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertSessionHasErrors('package');
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertSessionHasErrors('package');
         $package = LearningOfflinePackage::query()->where('status', 'failed')->sole();
         $this->assertSame(2, $package->package_version);
         $this->assertSame('failed', $package->status);
         $this->assertNotNull($package->failed_at);
         $this->assertStringContainsString('integrity verification', (string) $package->failure_message);
-        $this->actingAs($manager)->get(route('learning.index', $manager->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($manager)->get(route('learning.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('courses.data.0.offlinePackage.id', $readyPackage->id)
             ->where('courses.data.0.offlinePackageAttempt.version', 2)
             ->where('courses.data.0.offlinePackageAttempt.status', 'failed'));
@@ -113,16 +113,16 @@ class LearningOfflinePackageTest extends TestCase
     public function test_learning_workspace_and_exports_expose_latest_package_evidence(): void
     {
         [$course, $manager] = $this->publishedCourseWithDownloadableAsset();
-        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$manager->currentTeam->slug, $course]))->assertRedirect();
+        $this->actingAs($manager)->post(route('learning.courses.offline-packages.store', [$course]))->assertRedirect();
         $package = LearningOfflinePackage::query()->sole();
 
-        $this->actingAs($manager)->get(route('learning.index', $manager->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($manager)->get(route('learning.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('courses.data.0.offlinePackage.id', $package->id)
             ->where('courses.data.0.offlinePackage.version', 1)
             ->where('courses.data.0.offlinePackage.canDownload', true));
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'learning', $format]))->assertOk()->assertDownload();
+            $this->actingAs($manager)->get(route('workspace.export', ['learning', $format]))->assertOk()->assertDownload();
         }
     }
 

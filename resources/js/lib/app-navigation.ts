@@ -73,7 +73,6 @@ const visible = (items: Candidate[]): NavItem[] =>
     items.filter((item) => item.visible !== false);
 
 export function appNavigationGroups(
-    teamSlug: string,
     permissions: string[],
 ): AppNavigationGroup[] {
     const can = (permission: string): boolean =>
@@ -84,7 +83,7 @@ export function appNavigationGroups(
             title: 'Dashboard',
             icon: LayoutGrid,
             showChildren: false,
-            items: [{ title: 'Dashboard', href: dashboard(teamSlug) }],
+            items: [{ title: 'Dashboard', href: dashboard() }],
         },
         {
             title: 'County services',
@@ -110,37 +109,37 @@ export function appNavigationGroups(
             items: visible([
                 {
                     title: 'Counties',
-                    href: countiesIndex(teamSlug),
+                    href: countiesIndex(),
                     visible: can('county-data:view'),
                 },
                 {
                     title: 'Citizen cases',
-                    href: citizenCasesIndex(teamSlug),
+                    href: citizenCasesIndex(),
                     visible: can('citizen-cases:view'),
                 },
                 {
                     title: 'Assessments',
-                    href: assessmentsIndex(teamSlug),
+                    href: assessmentsIndex(),
                     visible: can('county-data:view'),
                 },
                 {
                     title: 'Evidence repository',
-                    href: evidenceIndex(teamSlug),
+                    href: evidenceIndex(),
                     visible: can('county-data:view'),
                 },
                 {
                     title: 'Grants',
-                    href: grantsIndex(teamSlug),
+                    href: grantsIndex(),
                     visible: can('grants:view'),
                 },
                 {
                     title: 'Exchequer tracking',
-                    href: exchequerIndex(teamSlug),
+                    href: exchequerIndex(),
                     visible: can('grants:view'),
                 },
                 {
                     title: 'Travel clearance',
-                    href: travelClearanceIndex(teamSlug),
+                    href: travelClearanceIndex(),
                     visible: can('travel-clearance:view'),
                 },
             ]),
@@ -165,27 +164,27 @@ export function appNavigationGroups(
             items: visible([
                 {
                     title: 'Projects',
-                    href: projectsIndex(teamSlug),
+                    href: projectsIndex(),
                     visible: can('projects:view'),
                 },
                 {
                     title: 'Partners',
-                    href: partnersIndex(teamSlug),
+                    href: partnersIndex(),
                     visible: can('partner-coordination:view'),
                 },
                 {
                     title: 'Sector working groups',
-                    href: dswgIndex(teamSlug),
+                    href: dswgIndex(),
                     visible: can('dswg:view'),
                 },
                 {
                     title: 'IGR resolutions',
-                    href: igrResolutionsIndex(teamSlug),
+                    href: igrResolutionsIndex(),
                     visible: can('igr-resolutions:view'),
                 },
                 {
                     title: 'Monitoring & evaluation',
-                    href: monitoringEvaluationIndex(teamSlug),
+                    href: monitoringEvaluationIndex(),
                     visible: can('monitoring-evaluation:view'),
                 },
             ]),
@@ -206,22 +205,22 @@ export function appNavigationGroups(
             items: visible([
                 {
                     title: 'Analytics',
-                    href: analyticsIndex(teamSlug),
+                    href: analyticsIndex(),
                     visible: can('analytics:view'),
                 },
                 {
                     title: 'Assessment analytics',
-                    href: assessmentAnalyticsIndex(teamSlug),
+                    href: assessmentAnalyticsIndex(),
                     visible: can('county-data:view'),
                 },
                 {
                     title: 'Reports',
-                    href: reportsIndex(teamSlug),
+                    href: reportsIndex(),
                     visible: can('national-reports:view'),
                 },
                 {
                     title: 'Departmental performance',
-                    href: departmentalPerformanceIndex(teamSlug),
+                    href: departmentalPerformanceIndex(),
                     visible: can('departmental-performance:view'),
                 },
             ]),
@@ -251,37 +250,37 @@ export function appNavigationGroups(
             items: visible([
                 {
                     title: 'E-Learning',
-                    href: learningIndex(teamSlug),
+                    href: learningIndex(),
                     visible: can('learning:view'),
                 },
                 {
                     title: 'Learning analytics',
-                    href: learningAnalyticsIndex(teamSlug),
+                    href: learningAnalyticsIndex(),
                     visible: can('learning:view'),
                 },
                 {
                     title: 'Knowledge management',
-                    href: knowledgeIndex(teamSlug),
+                    href: knowledgeIndex(),
                     visible: can('knowledge:view'),
                 },
                 {
                     title: 'Community health',
-                    href: knowledgeCommunityAnalyticsIndex(teamSlug),
+                    href: knowledgeCommunityAnalyticsIndex(),
                     visible: can('knowledge-analytics:view'),
                 },
                 {
                     title: 'Innovation replication',
-                    href: innovationReplicationsIndex(teamSlug),
+                    href: innovationReplicationsIndex(),
                     visible: can('knowledge:view'),
                 },
                 {
                     title: 'Rollout & training',
-                    href: changeReadinessIndex(teamSlug),
+                    href: changeReadinessIndex(),
                     visible: can('change-readiness:view'),
                 },
                 {
                     title: 'Service desk',
-                    href: supportDeskIndex(teamSlug),
+                    href: supportDeskIndex(),
                     visible: can('support-desk:view'),
                 },
             ]),
@@ -323,23 +322,23 @@ export function appNavigationGroups(
             items: visible([
                 {
                     title: 'User access',
-                    href: usersIndex(teamSlug),
+                    href: usersIndex(),
                     visible:
                         can('county-users:manage') || can('user-access:manage'),
                 },
                 {
                     title: 'Roles & permissions',
-                    href: accessControlIndex(teamSlug),
+                    href: accessControlIndex(),
                     visible: can('user-access:manage'),
                 },
                 {
                     title: 'Audit trail',
-                    href: auditIndex(teamSlug),
+                    href: auditIndex(),
                     visible: can('audit-trail:view'),
                 },
                 {
                     title: 'Audit assurance',
-                    href: auditAssuranceIndex(teamSlug),
+                    href: auditAssuranceIndex(),
                     visible:
                         can('audit-trail:view') &&
                         (can('security-governance:manage') ||
@@ -347,17 +346,17 @@ export function appNavigationGroups(
                 },
                 {
                     title: 'User activity',
-                    href: userActivityIndex(teamSlug),
+                    href: userActivityIndex(),
                     visible: can('user-activity:view'),
                 },
                 {
                     title: 'Reference data',
-                    href: referenceDataIndex(teamSlug),
+                    href: referenceDataIndex(),
                     visible: can('reference-data:manage'),
                 },
                 {
                     title: 'Historical migrations',
-                    href: dataMigrationsIndex(teamSlug),
+                    href: dataMigrationsIndex(),
                     visible:
                         can('reference-data:manage') ||
                         can('reference-data:approve') ||
@@ -365,37 +364,37 @@ export function appNavigationGroups(
                 },
                 {
                     title: 'Workflow registry',
-                    href: workflowsIndex(teamSlug),
+                    href: workflowsIndex(),
                     visible: can('workflows:manage'),
                 },
                 {
                     title: 'Assessment setup',
-                    href: assessmentConfigurationIndex(teamSlug),
+                    href: assessmentConfigurationIndex(),
                     visible: can('assessment-configuration:manage'),
                 },
                 {
                     title: 'Integrations',
-                    href: integrationsIndex(teamSlug),
+                    href: integrationsIndex(),
                     visible: can('integrations:view'),
                 },
                 {
                     title: 'Operations',
-                    href: operationsIndex(teamSlug),
+                    href: operationsIndex(),
                     visible: can('operations:view'),
                 },
                 {
                     title: 'Data governance',
-                    href: dataGovernanceIndex(teamSlug),
+                    href: dataGovernanceIndex(),
                     visible: can('data-governance:view'),
                 },
                 {
                     title: 'Security governance',
-                    href: securityGovernanceIndex(teamSlug),
+                    href: securityGovernanceIndex(),
                     visible: can('security-governance:view'),
                 },
                 {
                     title: 'Platform controls',
-                    href: platformIndex(teamSlug),
+                    href: platformIndex(),
                     visible: can('platform:configure'),
                 },
             ]),

@@ -256,22 +256,22 @@ export default function ProjectShow({
         counties: Array<{ id: string; name: string; logoUrl?: string | null }>;
     };
 }) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
     const [previewDocument, setPreviewDocument] =
         useState<ProjectDocument | null>(null);
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
-    const args = { current_team: currentTeam.slug, project: project.id };
+    const args = { project: project.id };
 
     return (
         <>
             <Head title={project.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button asChild variant="ghost" className="w-fit">
-                    <a href={index.url(currentTeam.slug)}>
+                    <a href={index.url()}>
                         <ArrowLeft aria-hidden="true" />
                         Projects
                     </a>
@@ -559,8 +559,6 @@ export default function ProjectShow({
                                                     <a
                                                         href={downloadEvidence.url(
                                                             {
-                                                                current_team:
-                                                                    currentTeam.slug,
                                                                 document:
                                                                     document.id,
                                                             },
@@ -610,7 +608,6 @@ export default function ProjectShow({
                                 <iframe
                                     title={`Preview of ${previewDocument.title}`}
                                     src={previewEvidence.url({
-                                        current_team: currentTeam.slug,
                                         document: previewDocument.id,
                                     })}
                                     className="h-[72vh] w-full rounded-lg border bg-muted"
@@ -618,7 +615,6 @@ export default function ProjectShow({
                                 <Button asChild variant="outline">
                                     <a
                                         href={downloadEvidence.url({
-                                            current_team: currentTeam.slug,
                                             document: previewDocument.id,
                                         })}
                                     >
@@ -817,7 +813,6 @@ export default function ProjectShow({
                 )}
                 {capabilities.submitUpdates && (
                     <ProjectProgressForm
-                        teamSlug={currentTeam.slug}
                         projectId={project.id}
                         indicators={resultOptions.indicators}
                         counties={resultOptions.counties}
@@ -1113,7 +1108,7 @@ function ProjectSchedule({
     milestones: Entity[];
     baselines: ScheduleBaseline[];
     analysis: ScheduleAnalysis | null;
-    args: { current_team: string; project: string };
+    args: { project: string };
     canManage: boolean;
     canReview: boolean;
     locked: boolean;
@@ -1466,7 +1461,7 @@ function ProjectResourcePlan({
     milestones: Entity[];
     analysis: EarnedValueAnalysis;
     projectCurrency: string;
-    args: { current_team: string; project: string };
+    args: { project: string };
     canManage: boolean;
     locked: boolean;
 }) {
@@ -1936,7 +1931,7 @@ function Register({
     primary: string;
     secondary: string;
     kind: RegisterKind;
-    args: { current_team: string; project: string };
+    args: { project: string };
     canManage: boolean;
     locked: boolean;
     milestoneOptions?: Entity[];
@@ -1986,7 +1981,7 @@ function RegisterRow({
     primary: string;
     secondary: string;
     kind: RegisterKind;
-    args: { current_team: string; project: string };
+    args: { project: string };
     canManage: boolean;
     locked: boolean;
     milestoneOptions: Entity[];
@@ -2058,7 +2053,7 @@ function RegisterEditForm({
 }: {
     item: Entity;
     kind: RegisterKind;
-    args: { current_team: string; project: string };
+    args: { project: string };
     milestoneOptions: Entity[];
 }) {
     const route =

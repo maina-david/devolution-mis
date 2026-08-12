@@ -25,7 +25,7 @@ type SearchResult = {
 };
 
 export function GlobalSearchDialog() {
-    const { auth, currentTeam } = usePage().props;
+    const { auth, routeContext } = usePage().props;
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -33,18 +33,15 @@ export function GlobalSearchDialog() {
     const [failed, setFailed] = useState(false);
     const pages = useMemo(
         () =>
-            currentTeam
-                ? appNavigationGroups(
-                      currentTeam.slug,
-                      auth.user.permissions,
-                  ).flatMap((group) =>
+            routeContext
+                ? appNavigationGroups(auth.user.permissions).flatMap((group) =>
                       group.items.map((item) => ({
                           ...item,
                           group: group.title,
                       })),
                   )
                 : [],
-        [auth.user.permissions, currentTeam],
+        [auth.user.permissions, routeContext],
     );
     const matchingPages = pages.filter((item) =>
         `${item.title} ${item.group}`
@@ -72,7 +69,7 @@ export function GlobalSearchDialog() {
     }, []);
 
     useEffect(() => {
-        if (!open || !currentTeam || query.trim().length < 2) {
+        if (!open || !routeContext || query.trim().length < 2) {
             return;
         }
 
@@ -83,7 +80,7 @@ export function GlobalSearchDialog() {
 
             try {
                 const response = await fetch(
-                    GlobalSearchController.url(currentTeam.slug, {
+                    GlobalSearchController.url({
                         query: { q: query.trim() },
                     }),
                     {
@@ -118,7 +115,7 @@ export function GlobalSearchDialog() {
             window.clearTimeout(timeout);
             controller.abort();
         };
-    }, [currentTeam, open, query]);
+    }, [routeContext, open, query]);
 
     const visit = (url: string) => {
         setOpen(false);

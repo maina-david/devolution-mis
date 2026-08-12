@@ -88,14 +88,14 @@ class OperationsController extends Controller
         return back()->with('success', 'Deployment record created for independent validation.');
     }
 
-    public function validateRelease(ValidateReleaseRequest $request, string $currentTeam, ReleaseRecord $release, ValidateRelease $action): RedirectResponse
+    public function validateRelease(ValidateReleaseRequest $request, ReleaseRecord $release, ValidateRelease $action): RedirectResponse
     {
         $action->handle($release, $this->user($request), $request->validated('evidence'));
 
         return back()->with('success', 'Release independently validated.');
     }
 
-    public function rollbackRelease(RollbackReleaseRequest $request, string $currentTeam, ReleaseRecord $release, RollbackRelease $action): RedirectResponse
+    public function rollbackRelease(RollbackReleaseRequest $request, ReleaseRecord $release, RollbackRelease $action): RedirectResponse
     {
         $rollbackToVersion = $request->validated('rollback_to_version');
         $reason = $request->validated('reason');
@@ -113,7 +113,7 @@ class OperationsController extends Controller
         return back()->with('success', 'Database backup queued.');
     }
 
-    public function verifyBackup(Request $request, string $currentTeam, OperationalBackup $backup): RedirectResponse
+    public function verifyBackup(Request $request, OperationalBackup $backup): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageOperations->value);
         VerifyOperationalBackupJob::dispatch($backup->id, $this->user($request)->id, true);
@@ -121,14 +121,14 @@ class OperationsController extends Controller
         return back()->with('success', 'Isolated restore verification queued.');
     }
 
-    public function retryFailedJob(RetryFailedQueueJobRequest $request, string $currentTeam, string $failedJobUuid, RetryFailedQueueJob $action): RedirectResponse
+    public function retryFailedJob(RetryFailedQueueJobRequest $request, string $failedJobUuid, RetryFailedQueueJob $action): RedirectResponse
     {
         $attempt = $action->handle($failedJobUuid, $this->user($request));
 
         return back()->with($attempt->outcome === 'requeued' ? 'success' : 'error', $attempt->outcome === 'requeued' ? 'Failed job requeued with immutable recovery evidence.' : 'Queue provider rejected the recovery request; the failed job remains available.');
     }
 
-    public function acknowledgeAlert(AcknowledgeOperationalAlertRequest $request, string $currentTeam, OperationalAlert $operationalAlert, AcknowledgeOperationalAlert $action): RedirectResponse
+    public function acknowledgeAlert(AcknowledgeOperationalAlertRequest $request, OperationalAlert $operationalAlert, AcknowledgeOperationalAlert $action): RedirectResponse
     {
         $note = $request->validated('note');
         abort_unless(is_string($note), 422);

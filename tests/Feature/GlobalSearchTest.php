@@ -17,9 +17,7 @@ class GlobalSearchTest extends TestCase
         County::factory()->create(['name' => 'Alpha Neighbour', 'code' => 2]);
         $user = User::factory()->countyOfficial($authorizedCounty)->create();
 
-        $response = $this->actingAs($user)->getJson(route('search.global', [
-            'current_team' => $user->currentTeam->slug,
-            'q' => 'Alpha',
+        $response = $this->actingAs($user)->getJson(route('search.global', ['q' => 'Alpha',
         ]));
 
         $response->assertOk()
@@ -32,7 +30,7 @@ class GlobalSearchTest extends TestCase
         $user = User::factory()->devolutionAdmin()->create();
 
         $this->actingAs($user)
-            ->getJson(route('search.global', ['current_team' => $user->currentTeam->slug, 'q' => 'a']))
+            ->getJson(route('search.global', ['q' => 'a']))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('q');
     }
@@ -41,7 +39,7 @@ class GlobalSearchTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->getJson(route('search.global', ['current_team' => $user->currentTeam->slug, 'q' => 'county']))
+        $this->getJson(route('search.global', ['q' => 'county']))
             ->assertUnauthorized();
     }
 }

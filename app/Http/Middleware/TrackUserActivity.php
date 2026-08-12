@@ -37,7 +37,7 @@ class TrackUserActivity
         $action = 'page.viewed';
         $pageTitle = str($routeName)->beforeLast('.')->replace(['-', '.'], ' ')->title()->toString();
         $activitySession = $this->tracker->touchExisting($request, $user, $action, $pageTitle);
-        UserPageView::create(['user_id' => $user->id, 'user_activity_session_id' => $activitySession?->id, 'team_id' => $user->current_team_id, 'route_name' => $routeName, 'path' => '/'.ltrim($request->path(), '/'), 'page_title' => $pageTitle, 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent(), 'viewed_at' => now()]);
+        UserPageView::create(['user_id' => $user->id, 'user_activity_session_id' => $activitySession?->id, 'route_name' => $routeName, 'path' => '/'.ltrim($request->path(), '/'), 'page_title' => $pageTitle, 'ip_address' => $request->ip(), 'user_agent' => $request->userAgent(), 'viewed_at' => now()]);
 
         return $response;
     }

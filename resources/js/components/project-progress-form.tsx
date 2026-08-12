@@ -30,12 +30,10 @@ type ResultRow = {
 };
 
 export default function ProjectProgressForm({
-    teamSlug,
     projectId,
     indicators,
     counties,
 }: {
-    teamSlug: string;
     projectId: string;
     indicators: Indicator[];
     counties: SearchableSelectOption[];
@@ -75,10 +73,7 @@ export default function ProjectProgressForm({
             description="Submit portfolio progress and optional indicator results. Indicator results enter the M&E quality queue only after independent project verification."
         >
             <Form
-                {...storeProgress.form({
-                    current_team: teamSlug,
-                    project: projectId,
-                })}
+                {...storeProgress.form({ project: projectId })}
                 className="flex flex-col gap-5"
                 resetOnSuccess
                 onSuccess={() => setResults([])}

@@ -127,7 +127,6 @@ type Props = {
 
 export default function InnovationReplications(props: Props) {
     const page = usePage();
-    const teamSlug = page.props.currentTeam!.slug;
     const rows: WorkspaceRow[] = props.replications.data.map((replication) => ({
         id: replication.id,
         status: replication.status,
@@ -147,10 +146,7 @@ export default function InnovationReplications(props: Props) {
             replication.status,
         ],
         href: preserveDrilldownFilters(
-            showCounty.url({
-                current_team: teamSlug,
-                county: replication.targetCounty.id,
-            }),
+            showCounty.url({ county: replication.targetCounty.id }),
             page.url,
         ),
     }));
@@ -184,12 +180,11 @@ export default function InnovationReplications(props: Props) {
                         <div className="flex flex-wrap gap-2">
                             {props.capabilities.manage && (
                                 <CreateReplicationSheet
-                                    teamSlug={teamSlug}
                                     options={props.options}
                                     catalogue={props.catalogue}
                                 />
                             )}
-                            <ExportMenu teamSlug={teamSlug} query={query} />
+                            <ExportMenu query={query} />
                         </div>
                     </div>
                 </section>
@@ -292,7 +287,6 @@ export default function InnovationReplications(props: Props) {
                                     return (
                                         <ReplicationActions
                                             replication={replication}
-                                            teamSlug={teamSlug}
                                             capabilities={props.capabilities}
                                         />
                                     );
@@ -307,11 +301,9 @@ export default function InnovationReplications(props: Props) {
 }
 
 function CreateReplicationSheet({
-    teamSlug,
     options,
     catalogue,
 }: {
-    teamSlug: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -333,11 +325,7 @@ function CreateReplicationSheet({
                       : undefined
             }
         >
-            <Form
-                {...store.form(teamSlug)}
-                className="grid gap-4 pt-4"
-                resetOnSuccess
-            >
+            <Form {...store.form()} className="grid gap-4 pt-4" resetOnSuccess>
                 {({ errors, processing }) => (
                     <>
                         <SearchableSelect
@@ -410,11 +398,9 @@ function CreateReplicationSheet({
 
 function ReplicationActions({
     replication,
-    teamSlug,
     capabilities,
 }: {
     replication: Replication;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<
@@ -497,30 +483,20 @@ function ReplicationActions({
                     </SheetHeader>
                     <div className="flex flex-col gap-5 px-4 pb-8">
                         {surface === 'view' && (
-                            <ReplicationDetail
-                                replication={replication}
-                                teamSlug={teamSlug}
-                            />
+                            <ReplicationDetail replication={replication} />
                         )}
                         {surface === 'transition' && (
                             <TransitionForm
                                 replication={replication}
-                                teamSlug={teamSlug}
                                 canManage={capabilities.manage}
                                 canContribute={capabilities.contribute}
                             />
                         )}
                         {surface === 'evidence' && (
-                            <EvidenceForm
-                                replication={replication}
-                                teamSlug={teamSlug}
-                            />
+                            <EvidenceForm replication={replication} />
                         )}
                         {surface === 'verify' && (
-                            <VerificationForm
-                                replication={replication}
-                                teamSlug={teamSlug}
-                            />
+                            <VerificationForm replication={replication} />
                         )}
                     </div>
                 </SheetContent>
@@ -529,13 +505,7 @@ function ReplicationActions({
     );
 }
 
-function ReplicationDetail({
-    replication,
-    teamSlug,
-}: {
-    replication: Replication;
-    teamSlug: string;
-}) {
+function ReplicationDetail({ replication }: { replication: Replication }) {
     return (
         <div className="flex flex-col gap-4 text-sm">
             <div>
@@ -581,7 +551,6 @@ function ReplicationDetail({
                         >
                             <a
                                 href={previewEvidence.url({
-                                    current_team: teamSlug,
                                     document: document.id,
                                 })}
                                 target="_blank"
@@ -600,12 +569,10 @@ function ReplicationDetail({
 
 function TransitionForm({
     replication,
-    teamSlug,
     canManage,
     canContribute,
 }: {
     replication: Replication;
-    teamSlug: string;
     canManage: boolean;
     canContribute: boolean;
 }) {
@@ -627,10 +594,7 @@ function TransitionForm({
 
     return (
         <Form
-            {...update.form({
-                current_team: teamSlug,
-                replication: replication.id,
-            })}
+            {...update.form({ replication: replication.id })}
             className="grid gap-4"
         >
             {({ errors, processing }) => (
@@ -673,19 +637,10 @@ function TransitionForm({
     );
 }
 
-function EvidenceForm({
-    replication,
-    teamSlug,
-}: {
-    replication: Replication;
-    teamSlug: string;
-}) {
+function EvidenceForm({ replication }: { replication: Replication }) {
     return (
         <Form
-            {...storeDocument.form({
-                current_team: teamSlug,
-                replication: replication.id,
-            })}
+            {...storeDocument.form({ replication: replication.id })}
             className="grid gap-4"
             resetOnSuccess
         >
@@ -737,19 +692,10 @@ function EvidenceForm({
     );
 }
 
-function VerificationForm({
-    replication,
-    teamSlug,
-}: {
-    replication: Replication;
-    teamSlug: string;
-}) {
+function VerificationForm({ replication }: { replication: Replication }) {
     return (
         <Form
-            {...verify.form({
-                current_team: teamSlug,
-                replication: replication.id,
-            })}
+            {...verify.form({ replication: replication.id })}
             className="grid gap-4"
         >
             {({ errors, processing }) => (
@@ -865,13 +811,7 @@ function Summary({ label, value }: { label: string; value: number }) {
     );
 }
 
-function ExportMenu({
-    teamSlug,
-    query,
-}: {
-    teamSlug: string;
-    query: Record<string, string | undefined>;
-}) {
+function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -883,12 +823,7 @@ function ExportMenu({
                 <DropdownMenuGroup>
                     {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                         <DropdownMenuItem key={format} asChild>
-                            <a
-                                href={exportMethod.url(
-                                    { current_team: teamSlug, format },
-                                    { query },
-                                )}
-                            >
+                            <a href={exportMethod.url({ format }, { query })}>
                                 {format.toUpperCase()}
                             </a>
                         </DropdownMenuItem>

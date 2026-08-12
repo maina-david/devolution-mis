@@ -42,7 +42,7 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('mouseHoverSession.current', $navMain);
 
         $this->assertStringContainsString('<SidebarFooter', $sidebar);
-        $this->assertStringContainsString('notificationsIndex(teamSlug)', $sidebar);
+        $this->assertStringContainsString('notificationsIndex()', $sidebar);
         $this->assertStringContainsString('page.props.notificationSummary.unread', $sidebar);
         $this->assertStringContainsString('href={profileEdit()}', $sidebar);
         $this->assertStringContainsString("currentUrl.startsWith('/settings')", $sidebar);

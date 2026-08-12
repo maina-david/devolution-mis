@@ -19,12 +19,10 @@ type Indicator = {
 type Option = { id: string; name: string };
 
 export default function IndicatorObservationForm({
-    teamSlug,
     indicators,
     counties,
     programmes,
 }: {
-    teamSlug: string;
     indicators: Indicator[];
     counties: Option[];
     programmes: Option[];
@@ -42,7 +40,7 @@ export default function IndicatorObservationForm({
             description="Every value retains source provenance and enters independent data-quality verification."
         >
             <Form
-                {...store.form({ current_team: teamSlug })}
+                {...store.form({})}
                 className="grid gap-4 md:grid-cols-2"
                 resetOnSuccess
             >

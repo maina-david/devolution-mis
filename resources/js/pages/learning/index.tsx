@@ -283,9 +283,9 @@ export default function Learning({
     catalogue,
     options,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -382,18 +382,15 @@ export default function Learning({
                             {capabilities.manage && (
                                 <>
                                     <CohortForm
-                                        teamSlug={currentTeam.slug}
                                         courses={options.cohortCourses}
                                         instructors={options.instructors}
                                         counties={options.counties}
                                     />
                                     <ClassroomForm
-                                        teamSlug={currentTeam.slug}
                                         courses={courses.data}
                                         facilitators={options.facilitators}
                                     />
                                     <CourseForm
-                                        teamSlug={currentTeam.slug}
                                         sectors={options.sectors}
                                         counties={options.counties}
                                         catalogue={catalogue}
@@ -442,8 +439,6 @@ export default function Learning({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'learning',
                                                             format,
@@ -478,7 +473,6 @@ export default function Learning({
                             rows={rows}
                             pagination={pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'learning',
                                 filters,
                             }}
@@ -490,7 +484,6 @@ export default function Learning({
                                 return course ? (
                                     <CourseActions
                                         course={course}
-                                        teamSlug={currentTeam.slug}
                                         capabilities={capabilities}
                                     />
                                 ) : null;
@@ -530,8 +523,6 @@ export default function Learning({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'learning-cohorts',
                                                             format,
@@ -564,7 +555,6 @@ export default function Learning({
                             rows={cohortRows}
                             pagination={cohortPagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'learning-cohorts',
                                 filters,
                             }}
@@ -576,7 +566,6 @@ export default function Learning({
                                 return cohort ? (
                                     <CohortActions
                                         cohort={cohort}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                         enrollments={options.cohortEnrollments}
                                     />
@@ -619,8 +608,6 @@ export default function Learning({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'learning-offline-syncs',
                                                             format,
@@ -665,7 +652,6 @@ export default function Learning({
                                 return sync ? (
                                     <OfflineSyncActions
                                         sync={sync}
-                                        teamSlug={currentTeam.slug}
                                         canReview={capabilities.review}
                                     />
                                 ) : null;
@@ -685,12 +671,10 @@ export default function Learning({
 }
 
 function CohortForm({
-    teamSlug,
     courses,
     instructors,
     counties,
 }: {
-    teamSlug: string;
     courses: Option[];
     instructors: Option[];
     counties: Option[];
@@ -703,7 +687,7 @@ function CohortForm({
             icon={GraduationCap}
             size="lg"
         >
-            <Form {...storeCohort.form(teamSlug)} className="grid gap-5 pt-4">
+            <Form {...storeCohort.form()} className="grid gap-5 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -790,12 +774,10 @@ function CohortForm({
 
 function CohortActions({
     cohort,
-    teamSlug,
     canManage,
     enrollments,
 }: {
     cohort: Cohort;
-    teamSlug: string;
     canManage: boolean;
     enrollments: Option[];
 }) {
@@ -950,10 +932,7 @@ function CohortActions({
                             </>
                         ) : surface === 'member' ? (
                             <Form
-                                {...addCohortMember.form({
-                                    current_team: teamSlug,
-                                    cohort: cohort.id,
-                                })}
+                                {...addCohortMember.form({ cohort: cohort.id })}
                                 className="grid gap-4"
                             >
                                 {({ errors, processing }) => (
@@ -981,7 +960,6 @@ function CohortActions({
                         ) : surface ? (
                             <Form
                                 {...transitionCohort.form({
-                                    current_team: teamSlug,
                                     cohort: cohort.id,
                                 })}
                                 className="grid gap-4"
@@ -1040,11 +1018,9 @@ function CohortActions({
 
 function OfflineSyncActions({
     sync,
-    teamSlug,
     canReview,
 }: {
     sync: OfflineSync;
-    teamSlug: string;
     canReview: boolean;
 }) {
     const [surface, setSurface] = useState<
@@ -1155,7 +1131,6 @@ function OfflineSyncActions({
                         ) : surface ? (
                             <Form
                                 {...decideOfflineSync.form({
-                                    current_team: teamSlug,
                                     offlineSync: sync.id,
                                 })}
                                 className="grid gap-4"
@@ -1219,12 +1194,10 @@ function OfflineSyncActions({
 }
 
 function CourseForm({
-    teamSlug,
     sectors,
     counties,
     catalogue,
 }: {
-    teamSlug: string;
     sectors: Option[];
     counties: Option[];
     catalogue: {
@@ -1252,7 +1225,7 @@ function CourseForm({
             icon={Plus}
             size="xl"
         >
-            <Form action={storeCourse(teamSlug)} className="grid gap-6 pt-4">
+            <Form action={storeCourse()} className="grid gap-6 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -1511,11 +1484,9 @@ function CourseForm({
 }
 
 function ClassroomForm({
-    teamSlug,
     courses,
     facilitators,
 }: {
-    teamSlug: string;
     courses: Course[];
     facilitators: Option[];
 }) {
@@ -1526,7 +1497,7 @@ function ClassroomForm({
             triggerLabel="Schedule classroom"
             icon={Video}
         >
-            <Form action={storeClassroom(teamSlug)} className="grid gap-4 pt-4">
+            <Form action={storeClassroom()} className="grid gap-4 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <SearchableSelect
@@ -1585,11 +1556,9 @@ function ClassroomForm({
 
 function CourseActions({
     course,
-    teamSlug,
     capabilities,
 }: {
     course: Course;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<string | null>(null);
@@ -1696,7 +1665,6 @@ function CourseActions({
                         {surface === 'details' ? (
                             <CourseDetails
                                 course={course}
-                                teamSlug={teamSlug}
                                 canManageAssets={
                                     capabilities.manage &&
                                     course.status === 'draft'
@@ -1714,12 +1682,10 @@ function CourseActions({
                             <LessonAssetForm
                                 course={course}
                                 lesson={assetLesson}
-                                teamSlug={teamSlug}
                             />
                         ) : surface === 'offline_package' ? (
                             <Form
                                 action={generateOfflinePackage({
-                                    current_team: teamSlug,
                                     course: course.id,
                                 })}
                                 className="grid gap-4 pt-4"
@@ -1752,7 +1718,6 @@ function CourseActions({
                           course.offlinePackage ? (
                             <Form
                                 {...submitOfflineSync.form({
-                                    current_team: teamSlug,
                                     enrollment: course.enrollment.id,
                                 })}
                                 className="grid gap-4 pt-4"
@@ -1805,10 +1770,7 @@ function CourseActions({
                                 )}
                             </Form>
                         ) : surface === 'enroll' ? (
-                            <Form
-                                action={enroll(teamSlug)}
-                                className="grid gap-4 pt-4"
-                            >
+                            <Form action={enroll()} className="grid gap-4 pt-4">
                                 <input
                                     type="hidden"
                                     name="learning_course_id"
@@ -1822,10 +1784,7 @@ function CourseActions({
                             </Form>
                         ) : surface ? (
                             <Form
-                                action={transition({
-                                    current_team: teamSlug,
-                                    course: course.id,
-                                })}
+                                action={transition({ course: course.id })}
                                 className="grid gap-4 pt-4"
                             >
                                 <input
@@ -1851,13 +1810,11 @@ function CourseActions({
 
 function CourseDetails({
     course,
-    teamSlug,
     canManageAssets,
     canAccessAssets,
     onUploadAsset,
 }: {
     course: Course;
-    teamSlug: string;
     canManageAssets: boolean;
     canAccessAssets: boolean;
     onUploadAsset: (lesson: Lesson) => void;
@@ -1920,14 +1877,11 @@ function CourseDetails({
                                 </div>
                                 <Button asChild variant="outline" size="sm">
                                     <Link
-                                        href={knowledgeIndex(
-                                            { current_team: teamSlug },
-                                            {
-                                                query: {
-                                                    search: item.reference,
-                                                },
+                                        href={knowledgeIndex({
+                                            query: {
+                                                search: item.reference,
                                             },
-                                        )}
+                                        })}
                                     >
                                         <BookOpen /> Open resource
                                     </Link>
@@ -1994,7 +1948,6 @@ function CourseDetails({
                             <Button asChild variant="outline" className="w-fit">
                                 <a
                                     href={downloadOfflinePackage.url({
-                                        current_team: teamSlug,
                                         offlinePackage:
                                             course.offlinePackage.id,
                                     })}
@@ -2042,7 +1995,6 @@ function CourseDetails({
                             <Button asChild variant="outline">
                                 <Link
                                     href={showClassroom({
-                                        current_team: teamSlug,
                                         classroom: classroom.id,
                                     })}
                                 >
@@ -2130,8 +2082,6 @@ function CourseDetails({
                                                             <a
                                                                 href={previewEvidence.url(
                                                                     {
-                                                                        current_team:
-                                                                            teamSlug,
                                                                         document:
                                                                             asset.id,
                                                                     },
@@ -2151,8 +2101,6 @@ function CourseDetails({
                                                                 <a
                                                                     href={downloadEvidence.url(
                                                                         {
-                                                                            current_team:
-                                                                                teamSlug,
                                                                             document:
                                                                                 asset.id,
                                                                         },
@@ -2203,7 +2151,6 @@ function CourseDetails({
                                         ) && (
                                             <Form
                                                 action={complete({
-                                                    current_team: teamSlug,
                                                     enrollment: enrollment.id,
                                                     lesson: lesson.id,
                                                 })}
@@ -2239,10 +2186,7 @@ function CourseDetails({
                 quizQuestions.length > 0 &&
                 enrollment.status !== 'completed' && (
                     <Form
-                        action={storeAssessment({
-                            current_team: teamSlug,
-                            enrollment: enrollment.id,
-                        })}
+                        action={storeAssessment({ enrollment: enrollment.id })}
                         className="grid gap-4 rounded-xl border p-4"
                     >
                         <h3 className="font-semibold">Course assessment</h3>
@@ -2264,7 +2208,6 @@ function CourseDetails({
                 <Button asChild>
                     <a
                         href={showCertificate.url({
-                            current_team: teamSlug,
                             certificate: enrollment.certificate.id,
                         })}
                         target="_blank"
@@ -2281,21 +2224,15 @@ function CourseDetails({
 function LessonAssetForm({
     course,
     lesson,
-    teamSlug,
 }: {
     course: Course;
     lesson: Lesson;
-    teamSlug: string;
 }) {
     const isMedia = ['video', 'audio'].includes(lesson.contentType);
 
     return (
         <Form
-            {...storeLessonAsset.form({
-                current_team: teamSlug,
-                course: course.id,
-                lesson: lesson.id,
-            })}
+            {...storeLessonAsset.form({ course: course.id, lesson: lesson.id })}
             className="grid gap-5 pt-4"
             resetOnSuccess
         >

@@ -9,12 +9,10 @@ import { index } from '@/routes/assessments/analytics';
 type Option = { id: string; name: string; logoUrl?: string | null };
 
 export default function AssessmentAnalyticsFilters({
-    teamSlug,
     filters,
     cycles,
     counties,
 }: {
-    teamSlug: string;
     filters: {
         from: string | null;
         to: string | null;
@@ -31,7 +29,7 @@ export default function AssessmentAnalyticsFilters({
             triggerLabel="Filter analysis"
             icon={ListFilter}
         >
-            <Form {...index.form(teamSlug)} className="flex flex-col gap-4">
+            <Form {...index.form()} className="flex flex-col gap-4">
                 {({ processing, errors }) => (
                     <>
                         <DatePickerField
@@ -69,7 +67,7 @@ export default function AssessmentAnalyticsFilters({
                                 Apply filters
                             </Button>
                             <Button type="button" variant="outline" asChild>
-                                <a href={index.url(teamSlug)}>Clear</a>
+                                <a href={index.url()}>Clear</a>
                             </Button>
                         </div>
                     </>

@@ -92,7 +92,6 @@ export default function LearningAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
-    const teamSlug = page.props.currentTeam!.slug;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -172,7 +171,7 @@ export default function LearningAnalytics({
             ),
         ],
         href: preserveDrilldownFilters(
-            showCounty.url({ current_team: teamSlug, county: item.county.id }),
+            showCounty.url({ county: item.county.id }),
             page.url,
         ),
     }));
@@ -182,7 +181,7 @@ export default function LearningAnalytics({
             <Head title="Learning analytics" />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
-                    <Link href={learningIndex.url(teamSlug)}>
+                    <Link href={learningIndex.url()}>
                         <ArrowLeft /> E-Learning
                     </Link>
                 </Button>
@@ -198,7 +197,7 @@ export default function LearningAnalytics({
                                 portfolio.
                             </p>
                         </div>
-                        <ExportMenu teamSlug={teamSlug} query={query} />
+                        <ExportMenu query={query} />
                     </div>
                 </section>
                 <DateRangeFilter
@@ -405,13 +404,7 @@ function Summary({ label, value }: { label: string; value: string | number }) {
     );
 }
 
-function ExportMenu({
-    teamSlug,
-    query,
-}: {
-    teamSlug: string;
-    query: Record<string, string | undefined>;
-}) {
+function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -422,15 +415,7 @@ function ExportMenu({
             <DropdownMenuContent align="end">
                 {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                     <DropdownMenuItem key={format} asChild>
-                        <a
-                            href={exportMethod.url(
-                                {
-                                    current_team: teamSlug,
-                                    format,
-                                },
-                                { query },
-                            )}
-                        >
+                        <a href={exportMethod.url({ format }, { query })}>
                             <GraduationCap /> {format.toUpperCase()}
                         </a>
                     </DropdownMenuItem>

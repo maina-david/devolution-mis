@@ -87,7 +87,7 @@ class ReferenceDataController extends Controller
         return $this->success('Canonical reference-data snapshot submitted for independent publication.');
     }
 
-    public function publishRelease(PublishReferenceDataReleaseRequest $request, string $currentTeam, ReferenceDataRelease $release, PublishReferenceDataRelease $publish): RedirectResponse
+    public function publishRelease(PublishReferenceDataReleaseRequest $request, ReferenceDataRelease $release, PublishReferenceDataRelease $publish): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -106,7 +106,7 @@ class ReferenceDataController extends Controller
         return $this->success('Organization created.');
     }
 
-    public function updateOrganization(UpdateOrganizationRequest $request, string $currentTeam, Organization $organization, AuditLogger $auditLogger): RedirectResponse
+    public function updateOrganization(UpdateOrganizationRequest $request, Organization $organization, AuditLogger $auditLogger): RedirectResponse
     {
         $organization->update($request->validated());
         $this->audit($request, $auditLogger, $organization, 'reference.organization.updated');
@@ -114,7 +114,7 @@ class ReferenceDataController extends Controller
         return $this->success('Organization updated.');
     }
 
-    public function destroyOrganization(Request $request, string $currentTeam, Organization $organization, AuditLogger $auditLogger): RedirectResponse
+    public function destroyOrganization(Request $request, Organization $organization, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
         abort_if($organization->programmes()->exists(), 409, 'Reassign linked programmes before archiving this organization.');
@@ -132,7 +132,7 @@ class ReferenceDataController extends Controller
         return $this->success('Sector created.');
     }
 
-    public function updateSector(UpdateSectorRequest $request, string $currentTeam, Sector $sector, AuditLogger $auditLogger): RedirectResponse
+    public function updateSector(UpdateSectorRequest $request, Sector $sector, AuditLogger $auditLogger): RedirectResponse
     {
         $sector->update($request->validated());
         $this->audit($request, $auditLogger, $sector, 'reference.sector.updated');
@@ -140,7 +140,7 @@ class ReferenceDataController extends Controller
         return $this->success('Sector updated.');
     }
 
-    public function destroySector(Request $request, string $currentTeam, Sector $sector, AuditLogger $auditLogger): RedirectResponse
+    public function destroySector(Request $request, Sector $sector, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
         abort_if($sector->programmes()->exists(), 409, 'Reassign linked programmes before archiving this sector.');
@@ -159,7 +159,7 @@ class ReferenceDataController extends Controller
         return $this->success('Programme created.');
     }
 
-    public function updateProgramme(UpdateProgrammeRequest $request, string $currentTeam, Programme $programme, AuditLogger $auditLogger): RedirectResponse
+    public function updateProgramme(UpdateProgrammeRequest $request, Programme $programme, AuditLogger $auditLogger): RedirectResponse
     {
         $programme->update($request->validated());
         $this->audit($request, $auditLogger, $programme, 'reference.programme.updated');
@@ -167,7 +167,7 @@ class ReferenceDataController extends Controller
         return $this->success('Programme updated.');
     }
 
-    public function destroyProgramme(Request $request, string $currentTeam, Programme $programme, AuditLogger $auditLogger): RedirectResponse
+    public function destroyProgramme(Request $request, Programme $programme, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
         abort_if($programme->countyCoverages()->exists(), 409, 'Archive programme county coverage before archiving this programme.');
@@ -188,7 +188,7 @@ class ReferenceDataController extends Controller
         return $this->success('Programme county coverage created.');
     }
 
-    public function destroyProgrammeCountyCoverage(Request $request, string $currentTeam, ProgrammeCountyCoverage $programmeCountyCoverage, AuditLogger $auditLogger): RedirectResponse
+    public function destroyProgrammeCountyCoverage(Request $request, ProgrammeCountyCoverage $programmeCountyCoverage, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
         /** @var User $user */

@@ -146,7 +146,6 @@ export default function WorkspaceDataTable({
     ) => ReactNode;
     canSelectRow?: (row: WorkspaceRow) => boolean;
     bulkExport?: {
-        teamSlug: string;
         workspace: string;
         filters: Record<string, string | undefined>;
     };
@@ -358,7 +357,6 @@ export default function WorkspaceDataTable({
                             )}
                         {bulkExport && (
                             <WorkspaceBulkExportActions
-                                teamSlug={bulkExport.teamSlug}
                                 workspace={bulkExport.workspace}
                                 rows={selectedRows}
                                 filters={bulkExport.filters}

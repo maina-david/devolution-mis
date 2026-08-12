@@ -136,14 +136,14 @@ class AnalyticsReportingController extends Controller
         return back()->with('success', "Dashboard {$dashboard->code} created as a governed draft.");
     }
 
-    public function storeWidget(StoreAnalyticsWidgetRequest $request, string $currentTeam, AnalyticsDashboard $dashboard, AddAnalyticsWidget $action): RedirectResponse
+    public function storeWidget(StoreAnalyticsWidgetRequest $request, AnalyticsDashboard $dashboard, AddAnalyticsWidget $action): RedirectResponse
     {
         $action->handle($dashboard, $this->user($request), $request->validated());
 
         return back()->with('success', 'Governed analytics widget added.');
     }
 
-    public function publish(PublishAnalyticsDashboardRequest $request, string $currentTeam, AnalyticsDashboard $dashboard, PublishAnalyticsDashboard $action): RedirectResponse
+    public function publish(PublishAnalyticsDashboardRequest $request, AnalyticsDashboard $dashboard, PublishAnalyticsDashboard $action): RedirectResponse
     {
         $action->handle($dashboard, $this->user($request));
 
@@ -157,14 +157,14 @@ class AnalyticsReportingController extends Controller
         return back()->with('success', "Report schedule {$schedule->code} created pending independent activation.");
     }
 
-    public function activate(ActivateReportScheduleRequest $request, string $currentTeam, ReportSchedule $schedule, ActivateReportSchedule $action): RedirectResponse
+    public function activate(ActivateReportScheduleRequest $request, ReportSchedule $schedule, ActivateReportSchedule $action): RedirectResponse
     {
         $action->handle($schedule, $this->user($request));
 
         return back()->with('success', 'Scheduled report independently activated.');
     }
 
-    public function runNow(Request $request, string $currentTeam, ReportSchedule $schedule): RedirectResponse
+    public function runNow(Request $request, ReportSchedule $schedule): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageAnalytics->value);
         abort_unless($schedule->status === 'active', 409, 'Only active schedules can be run.');
@@ -178,7 +178,7 @@ class AnalyticsReportingController extends Controller
         return back()->with('success', 'A private report generation job has been queued.');
     }
 
-    public function download(Request $request, string $currentTeam, ReportRun $run): StreamedResponse
+    public function download(Request $request, ReportRun $run): StreamedResponse
     {
         Gate::authorize(ProgrammePermission::ViewAnalytics->value);
         $run->load('schedule.county');

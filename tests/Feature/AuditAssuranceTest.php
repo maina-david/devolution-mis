@@ -33,7 +33,7 @@ class AuditAssuranceTest extends TestCase
         $manager = User::factory()->platformAdmin()->create();
         app(AuditLogger::class)->record($manager, $manager, 'test.audit-event.recorded', 'Reproducible audit event.', metadata: ['purpose' => 'assurance-test']);
 
-        $this->actingAs($manager)->post(route('audit-assurance.store', $manager->currentTeam->slug))->assertRedirect()->assertSessionHas('success');
+        $this->actingAs($manager)->post(route('audit-assurance.store'))->assertRedirect()->assertSessionHas('success');
 
         $run = AuditAssuranceRun::query()->sole();
         $this->assertTrue(Str::isUuid($run->id));
@@ -62,7 +62,7 @@ class AuditAssuranceTest extends TestCase
         config()->set('audit.active_signing_key', null);
         config()->set('audit.signing_keys', []);
         $legacy = $this->insertAuditEvent(null, hash('sha256', 'legacy'));
-        $this->actingAs($manager)->post(route('audit-assurance.store', $manager->currentTeam->slug))->assertRedirect();
+        $this->actingAs($manager)->post(route('audit-assurance.store'))->assertRedirect();
         $warning = AuditAssuranceRun::query()->sole();
         $this->assertSame('warn', $warning->outcome);
         $this->assertSame(1, $warning->legacy_event_count);
@@ -73,7 +73,7 @@ class AuditAssuranceTest extends TestCase
 
         $previousHash = AuditEvent::query()->latest('occurred_at')->latest('id')->value('event_hash');
         $invalid = $this->insertAuditEvent(2, str_repeat('f', 64), $previousHash);
-        $this->actingAs($manager)->post(route('audit-assurance.store', $manager->currentTeam->slug))->assertRedirect();
+        $this->actingAs($manager)->post(route('audit-assurance.store'))->assertRedirect();
         $failed = AuditAssuranceRun::query()->latest('started_at')->firstOrFail();
         $this->assertSame('fail', $failed->outcome);
         $this->assertGreaterThanOrEqual(1, $failed->mismatch_count);
@@ -82,7 +82,7 @@ class AuditAssuranceTest extends TestCase
         $this->assertSame($invalid->id, collect($manifest['mismatches'])->firstWhere('event_id', $invalid->id)['event_id']);
 
         $this->insertAuditEvent(null, null, $invalid->event_hash);
-        $this->actingAs($manager)->post(route('audit-assurance.store', $manager->currentTeam->slug))->assertRedirect();
+        $this->actingAs($manager)->post(route('audit-assurance.store'))->assertRedirect();
         $missingHash = AuditAssuranceRun::query()->latest('started_at')->firstOrFail();
         $this->assertSame('fail', $missingHash->outcome);
         $this->assertContains('missing_or_malformed_event_hash', $missingHash->finding_codes);
@@ -95,29 +95,29 @@ class AuditAssuranceTest extends TestCase
         $assessor = User::factory()->assessor()->create();
         $countyUser = User::factory()->countyOfficial(County::factory()->create())->create();
         app(AuditLogger::class)->record($manager, $manager, 'test.audit-event.recorded', 'Download assurance event.');
-        $this->actingAs($manager)->post(route('audit-assurance.store', $manager->currentTeam->slug))->assertRedirect();
+        $this->actingAs($manager)->post(route('audit-assurance.store'))->assertRedirect();
         $run = AuditAssuranceRun::query()->sole();
 
-        $this->actingAs($devolutionAdmin)->get(route('audit-assurance.index', $devolutionAdmin->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($devolutionAdmin)->get(route('audit-assurance.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('workspaceType', 'audit-assurance')
             ->where('workspace.rows.0.id', $run->id)
             ->where('workspace.rows.0.meta.artifactChecksum', $run->artifact_checksum)
             ->where('capabilities.run', true));
-        $this->actingAs($assessor)->get(route('audit-assurance.index', $assessor->currentTeam->slug))->assertForbidden();
-        $this->actingAs($countyUser)->get(route('audit-assurance.index', $countyUser->currentTeam->slug))->assertForbidden();
-        $this->actingAs($assessor)->get(route('audit-assurance.download', [$assessor->currentTeam->slug, $run]))->assertForbidden();
-        $this->actingAs($manager)->get(route('audit-assurance.download', [$manager->currentTeam->slug, $run]))->assertOk()->assertDownload("idmis-audit-assurance-{$run->id}.json");
+        $this->actingAs($assessor)->get(route('audit-assurance.index'))->assertForbidden();
+        $this->actingAs($countyUser)->get(route('audit-assurance.index'))->assertForbidden();
+        $this->actingAs($assessor)->get(route('audit-assurance.download', [$run]))->assertForbidden();
+        $this->actingAs($manager)->get(route('audit-assurance.download', [$run]))->assertOk()->assertDownload("idmis-audit-assurance-{$run->id}.json");
 
         config()->set('audit.signing_keys', []);
-        $this->actingAs($manager)->get(route('audit-assurance.download', [$manager->currentTeam->slug, $run]))->assertStatus(409);
+        $this->actingAs($manager)->get(route('audit-assurance.download', [$run]))->assertStatus(409);
         config()->set('audit.signing_keys', ['audit-key-2026-01' => 'testing-audit-assurance-secret']);
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'audit-assurance', $format]))->assertOk()->assertDownload();
+            $this->actingAs($manager)->get(route('workspace.export', ['audit-assurance', $format]))->assertOk()->assertDownload();
         }
 
         Storage::disk('local')->put((string) $run->path, 'tampered assurance evidence');
-        $this->actingAs($manager)->get(route('audit-assurance.download', [$manager->currentTeam->slug, $run]))->assertStatus(409);
+        $this->actingAs($manager)->get(route('audit-assurance.download', [$run]))->assertStatus(409);
         $events = collect(Schedule::events());
         $this->assertTrue($events->contains(fn ($event): bool => $event->description === 'Verify and retain checksum-bound audit-chain assurance evidence'));
         $this->assertSame(0, $this->artisan('audit:assure --user='.$manager->id)->run());

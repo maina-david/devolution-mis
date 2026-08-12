@@ -11,7 +11,7 @@ use Inertia\Inertia;
 
 class GrantController extends Controller
 {
-    public function update(UpdateGrantRequest $request, string $currentTeam, CountyGrant $grant, UpdateCountyGrant $updateGrant): RedirectResponse
+    public function update(UpdateGrantRequest $request, CountyGrant $grant, UpdateCountyGrant $updateGrant): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($grant->county), 403);
         $updateGrant->handle($grant, $request->grantData(), $this->user($request));

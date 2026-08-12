@@ -68,7 +68,7 @@ class ExchequerTrackingController extends Controller
         return back()->with('success', "Exchequer request {$item->request_reference} created.");
     }
 
-    public function recordEvent(RecordExchequerEventRequest $request, string $currentTeam, ExchequerRequest $exchequerRequest, RecordExchequerEvent $action): RedirectResponse
+    public function recordEvent(RecordExchequerEventRequest $request, ExchequerRequest $exchequerRequest, RecordExchequerEvent $action): RedirectResponse
     {
         $action->handle($exchequerRequest, $this->user($request), $request->validated());
 

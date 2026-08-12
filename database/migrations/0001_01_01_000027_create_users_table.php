@@ -23,7 +23,6 @@ return new class extends Migration
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
             $table->timestamp('two_factor_confirmed_at', 0)->nullable();
-            $table->uuid('current_team_id')->nullable();
             $table->timestampTz('access_revoked_at', 0)->nullable();
             $table->uuid('access_revoked_by')->nullable();
             $table->text('access_revocation_reason')->nullable();
@@ -37,11 +36,6 @@ return new class extends Migration
             $table->foreign(['county_id'], 'users_county_id_foreign')
                 ->references(['id'])
                 ->on('counties')
-                ->onDelete('set null')
-                ->onUpdate('no action');
-            $table->foreign(['current_team_id'], 'users_current_team_id_foreign')
-                ->references(['id'])
-                ->on('teams')
                 ->onDelete('set null')
                 ->onUpdate('no action');
         });

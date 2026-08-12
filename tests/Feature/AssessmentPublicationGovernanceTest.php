@@ -88,10 +88,10 @@ class AssessmentPublicationGovernanceTest extends TestCase
         [$assessment, $nationalAdmin] = $this->publishableAssessment(88);
         $countyAdmin = User::factory()->countyAdmin($assessment->county)->create();
 
-        $this->actingAs($countyAdmin)->post(route('assessments.publish', [$countyAdmin->currentTeam->slug, $assessment]))->assertForbidden();
+        $this->actingAs($countyAdmin)->post(route('assessments.publish', [$assessment]))->assertForbidden();
         $this->assertDatabaseCount('assessment_result_publications', 0);
 
-        $this->actingAs($nationalAdmin)->post(route('assessments.publish', [$nationalAdmin->currentTeam->slug, $assessment]))->assertRedirect();
+        $this->actingAs($nationalAdmin)->post(route('assessments.publish', [$assessment]))->assertRedirect();
         $this->assertDatabaseHas('assessment_result_publications', ['assessment_id' => $assessment->id, 'score' => 88]);
     }
 

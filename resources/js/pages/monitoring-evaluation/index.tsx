@@ -88,9 +88,9 @@ export default function MonitoringEvaluationIndex({
     options,
     catalogue,
 }: Props) {
-    const { auth, currentTeam } = usePage().props;
+    const { auth, routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -133,7 +133,6 @@ export default function MonitoringEvaluationIndex({
 
                 {capabilities.manageIndicators && (
                     <IndicatorDefinitionForm
-                        teamSlug={currentTeam.slug}
                         sectors={options.sectors}
                         programmes={options.programmes}
                         catalogue={catalogue}
@@ -141,7 +140,6 @@ export default function MonitoringEvaluationIndex({
                 )}
                 {capabilities.manageIndicators && (
                     <IndicatorDefinitionRegister
-                        teamSlug={currentTeam.slug}
                         definitions={options.definitions}
                         currentUserId={auth.user.id}
                     />
@@ -149,7 +147,6 @@ export default function MonitoringEvaluationIndex({
                 {(capabilities.manageEvaluations ||
                     capabilities.approveEvaluations) && (
                     <ProgrammeEvaluationPanel
-                        teamSlug={currentTeam.slug}
                         programmes={options.programmes}
                         counties={options.counties}
                         evaluations={options.evaluations}
@@ -159,7 +156,6 @@ export default function MonitoringEvaluationIndex({
                     />
                 )}
                 <EvaluationFindingRegister
-                    teamSlug={currentTeam.slug}
                     findings={options.findings}
                     evaluations={options.evaluations.map((evaluation) => ({
                         id: evaluation.id,
@@ -173,7 +169,6 @@ export default function MonitoringEvaluationIndex({
                 />
                 {capabilities.submitData && (
                     <IndicatorObservationForm
-                        teamSlug={currentTeam.slug}
                         indicators={options.indicators}
                         counties={options.counties}
                         programmes={options.programmes}
@@ -205,10 +200,7 @@ export default function MonitoringEvaluationIndex({
                         },
                     ]}
                 />
-                <MonitoringResultsDashboard
-                    teamSlug={currentTeam.slug}
-                    results={results}
-                />
+                <MonitoringResultsDashboard results={results} />
                 <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
                     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
                         <div>
@@ -241,8 +233,6 @@ export default function MonitoringEvaluationIndex({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'monitoring-evaluation',
                                                             format,
@@ -270,8 +260,6 @@ export default function MonitoringEvaluationIndex({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'monitoring-performance',
                                                             format,
@@ -295,7 +283,6 @@ export default function MonitoringEvaluationIndex({
                             rows={workspace.rows}
                             pagination={workspace.pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'monitoring-evaluation',
                                 filters,
                             }}
@@ -303,7 +290,6 @@ export default function MonitoringEvaluationIndex({
                                 capabilities.verifyData
                                     ? (row) => (
                                           <IndicatorVerificationAction
-                                              teamSlug={currentTeam.slug}
                                               observationId={row.id}
                                               status={row.status}
                                           />

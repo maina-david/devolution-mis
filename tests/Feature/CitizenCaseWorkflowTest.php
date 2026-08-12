@@ -50,18 +50,18 @@ class CitizenCaseWorkflowTest extends TestCase
         $this->seed(CitizenCaseWorkflowSeeder::class);
         $case = CitizenCase::factory()->create(['county_id' => $county->id, 'case_type' => 'grievance']);
 
-        $this->actingAs($administrator)->patch(route('citizen-cases.triage', [$administrator->currentTeam->slug, $case]), ['assigned_to' => $handler->id, 'assigned_organization_id' => $organization->id, 'sector_id' => $sector->id, 'priority' => 'high', 'is_sensitive' => false, 'triage_note' => 'Validated jurisdiction and assigned the county service-delivery focal point.'])->assertRedirect();
+        $this->actingAs($administrator)->patch(route('citizen-cases.triage', [$case]), ['assigned_to' => $handler->id, 'assigned_organization_id' => $organization->id, 'sector_id' => $sector->id, 'priority' => 'high', 'is_sensitive' => false, 'triage_note' => 'Validated jurisdiction and assigned the county service-delivery focal point.'])->assertRedirect();
         $this->assertSame('triaged', $case->refresh()->status);
         $this->assertSame($release->id, $case->triage_reference_data_release_id);
         $this->assertSame($organization->id, $case->assigned_organization_id);
         $this->assertSame($sector->id, $case->sector_id);
         $this->assertNotNull($case->workflow_instance_id);
-        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$handler->currentTeam->slug, $case]), ['transition' => 'start', 'comment' => 'County records review and stakeholder consultation started.'])->assertRedirect();
-        $this->actingAs($handler)->post(route('citizen-cases.messages.store', [$handler->currentTeam->slug, $case]), ['body' => 'We have started reviewing the records and will publish the outcome here.', 'visibility' => 'public'])->assertRedirect();
+        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$case]), ['transition' => 'start', 'comment' => 'County records review and stakeholder consultation started.'])->assertRedirect();
+        $this->actingAs($handler)->post(route('citizen-cases.messages.store', [$case]), ['body' => 'We have started reviewing the records and will publish the outcome here.', 'visibility' => 'public'])->assertRedirect();
         $this->assertNotNull($case->refresh()->first_responded_at);
-        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$handler->currentTeam->slug, $case]), ['transition' => 'submit_resolution', 'resolution_summary' => 'The delayed service request was validated, corrected in the county register and assigned a confirmed delivery date.', 'comment' => 'Evidence-backed grievance resolution submitted for independent approval.'])->assertRedirect();
-        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$handler->currentTeam->slug, $case]), ['transition' => 'approve_resolution', 'comment' => 'Self-approval must be rejected by separation of duties.'])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('citizen-cases.transition', [$reviewer->currentTeam->slug, $case]), ['transition' => 'approve_resolution', 'comment' => 'Resolution and supporting case history independently verified.'])->assertRedirect();
+        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$case]), ['transition' => 'submit_resolution', 'resolution_summary' => 'The delayed service request was validated, corrected in the county register and assigned a confirmed delivery date.', 'comment' => 'Evidence-backed grievance resolution submitted for independent approval.'])->assertRedirect();
+        $this->actingAs($handler)->patch(route('citizen-cases.transition', [$case]), ['transition' => 'approve_resolution', 'comment' => 'Self-approval must be rejected by separation of duties.'])->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('citizen-cases.transition', [$case]), ['transition' => 'approve_resolution', 'comment' => 'Resolution and supporting case history independently verified.'])->assertRedirect();
         $this->assertSame('resolved', $case->refresh()->status);
         $this->assertNotNull($case->resolved_at);
     }
@@ -76,13 +76,13 @@ class CitizenCaseWorkflowTest extends TestCase
         $sensitive = CitizenCase::factory()->create(['county_id' => $home->id, 'reference' => 'CFM-SENSITIVE', 'is_sensitive' => true]);
         $hidden = CitizenCase::factory()->create(['county_id' => $other->id, 'reference' => 'CFM-HIDDEN']);
 
-        $this->actingAs($official)->get(route('citizen-cases.index', $official->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->component('citizen-cases/index')->where('workspace.pagination.total', 1)->where('workspace.rows.0.id', $visible->id)->where('workspace.rows.0.cells.5', "v{$release->version} · {$release->effective_from?->toDateString()}")->where('workspace.rows.0.cells.6', $release->checksum)->where('cases.0.county.kind', 'county')->where('cases.0.county.logoUrl', '/images/counties/mombasa.webp')->where('cases.0.intakeReferenceData.checksum', $release->checksum)->where('cases.0.triageReferenceData.checksum', $release->checksum));
-        $content = $this->actingAs($official)->get(route('workspace.export', [$official->currentTeam->slug, 'citizen-cases', 'json']))->assertOk()->streamedContent();
+        $this->actingAs($official)->get(route('citizen-cases.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('citizen-cases/index')->where('workspace.pagination.total', 1)->where('workspace.rows.0.id', $visible->id)->where('workspace.rows.0.cells.5', "v{$release->version} · {$release->effective_from?->toDateString()}")->where('workspace.rows.0.cells.6', $release->checksum)->where('cases.0.county.kind', 'county')->where('cases.0.county.logoUrl', '/images/counties/mombasa.webp')->where('cases.0.intakeReferenceData.checksum', $release->checksum)->where('cases.0.triageReferenceData.checksum', $release->checksum));
+        $content = $this->actingAs($official)->get(route('workspace.export', ['citizen-cases', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('CFM-VISIBLE', $content);
         $this->assertStringContainsString($release->checksum, $content);
         $this->assertStringNotContainsString('CFM-SENSITIVE', $content);
         $this->assertStringNotContainsString('CFM-HIDDEN', $content);
-        $this->actingAs($official)->post(route('citizen-cases.messages.store', [$official->currentTeam->slug, $hidden]), ['body' => 'Attempted cross-county response.', 'visibility' => 'public'])->assertForbidden();
+        $this->actingAs($official)->post(route('citizen-cases.messages.store', [$hidden]), ['body' => 'Attempted cross-county response.', 'visibility' => 'public'])->assertForbidden();
         $this->assertModelExists($sensitive);
         $this->assertModelExists($hidden);
     }

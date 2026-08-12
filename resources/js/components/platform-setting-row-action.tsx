@@ -4,17 +4,15 @@ import { Input } from '@/components/ui/input';
 import { update } from '@/routes/platform-settings';
 
 export default function PlatformSettingRowAction({
-    teamSlug,
     settingId,
     value,
 }: {
-    teamSlug: string;
     settingId: string;
     value?: string | null;
 }) {
     return (
         <Form
-            {...update.form({ current_team: teamSlug, setting: settingId })}
+            {...update.form({ setting: settingId })}
             className="ml-auto flex w-64 gap-2"
         >
             {({ processing }) => (

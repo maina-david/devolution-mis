@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Team;
 use App\Models\User;
 use App\Models\UserActivitySession;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,12 +20,11 @@ class UserActivitySessionFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'team_id' => Team::factory(),
             'session_fingerprint' => hash('sha256', fake()->uuid()),
             'ip_address' => fake()->ipv4(),
             'user_agent' => fake()->userAgent(),
             'current_route' => 'dashboard',
-            'current_path' => '/workspace/dashboard',
+            'current_path' => '/dashboard',
             'current_page_title' => 'Dashboard',
             'last_method' => 'GET',
             'last_action' => 'page.viewed',

@@ -13,9 +13,9 @@ const navigationLink =
     'inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
 export function PublicSiteHeader() {
-    const { auth, currentTeam, localization } = usePage().props;
+    const { auth, routeContext, localization } = usePage().props;
     const { copy } = localization;
-    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : login();
+    const dashboardUrl = routeContext ? dashboard() : login();
 
     return (
         <header className="sticky top-0 isolate z-40 border-b bg-background">

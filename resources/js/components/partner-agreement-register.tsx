@@ -89,12 +89,10 @@ export type PartnerAgreement = {
 };
 
 export default function PartnerAgreementRegister({
-    teamSlug,
     agreements,
     canManage,
     canApprove,
 }: {
-    teamSlug: string;
     agreements: PartnerAgreement[];
     canManage: boolean;
     canApprove: boolean;
@@ -153,14 +151,12 @@ export default function PartnerAgreementRegister({
                             <div className="flex flex-wrap gap-2">
                                 {agreement.canUpload && (
                                     <UploadAgreementDocument
-                                        teamSlug={teamSlug}
                                         agreement={agreement}
                                     />
                                 )}
                                 {canManage &&
                                     agreement.workflowState === 'draft' && (
                                         <SubmitAgreement
-                                            teamSlug={teamSlug}
                                             agreement={agreement}
                                         />
                                     )}
@@ -168,13 +164,11 @@ export default function PartnerAgreementRegister({
                                     agreement.workflowState ===
                                         'pending_approval' && (
                                         <AgreementDecision
-                                            teamSlug={teamSlug}
                                             agreement={agreement}
                                         />
                                     )}
                                 {agreement.canRequestChange && (
                                     <RequestAgreementChange
-                                        teamSlug={teamSlug}
                                         agreement={agreement}
                                     />
                                 )}
@@ -231,8 +225,6 @@ export default function PartnerAgreementRegister({
                                                 >
                                                     <a
                                                         href={download.url({
-                                                            current_team:
-                                                                teamSlug,
                                                             document:
                                                                 document.id,
                                                         })}
@@ -283,13 +275,11 @@ export default function PartnerAgreementRegister({
                                         <div className="flex flex-wrap gap-2">
                                             {change.canUpload && (
                                                 <UploadAgreementChangeEvidence
-                                                    teamSlug={teamSlug}
                                                     change={change}
                                                 />
                                             )}
                                             {change.canDecide && (
                                                 <DecideAgreementChange
-                                                    teamSlug={teamSlug}
                                                     change={change}
                                                 />
                                             )}
@@ -306,8 +296,6 @@ export default function PartnerAgreementRegister({
                                                             <a
                                                                 href={download.url(
                                                                     {
-                                                                        current_team:
-                                                                            teamSlug,
                                                                         document:
                                                                             document.id,
                                                                     },
@@ -349,10 +337,7 @@ export default function PartnerAgreementRegister({
                     {previewDocument && (
                         <iframe
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
                     )}
@@ -363,10 +348,8 @@ export default function PartnerAgreementRegister({
 }
 
 function RequestAgreementChange({
-    teamSlug,
     agreement,
 }: {
-    teamSlug: string;
     agreement: PartnerAgreement;
 }) {
     return (
@@ -376,10 +359,7 @@ function RequestAgreementChange({
             description="Propose an amendment, renewal, suspension or termination without rewriting the approved agreement."
         >
             <Form
-                {...storeAgreementChange.form({
-                    current_team: teamSlug,
-                    agreement: agreement.id,
-                })}
+                {...storeAgreementChange.form({ agreement: agreement.id })}
                 className="grid gap-4"
                 resetOnSuccess
             >
@@ -460,10 +440,8 @@ function RequestAgreementChange({
 }
 
 function UploadAgreementChangeEvidence({
-    teamSlug,
     change,
 }: {
-    teamSlug: string;
     change: AgreementChange;
 }) {
     return (
@@ -474,7 +452,6 @@ function UploadAgreementChangeEvidence({
         >
             <Form
                 {...storePartnerAgreementChange.form({
-                    current_team: teamSlug,
                     changeRequest: change.id,
                 })}
                 className="grid gap-4"
@@ -506,13 +483,7 @@ function UploadAgreementChangeEvidence({
     );
 }
 
-function DecideAgreementChange({
-    teamSlug,
-    change,
-}: {
-    teamSlug: string;
-    change: AgreementChange;
-}) {
+function DecideAgreementChange({ change }: { change: AgreementChange }) {
     return (
         <FormSheet
             title="Decide agreement change"
@@ -520,10 +491,7 @@ function DecideAgreementChange({
             description="An independent approver reviews the clean evidence and records an immutable decision."
         >
             <Form
-                {...decideAgreementChange.form({
-                    current_team: teamSlug,
-                    changeRequest: change.id,
-                })}
+                {...decideAgreementChange.form({ changeRequest: change.id })}
                 className="grid gap-4"
             >
                 <SearchableSelect
@@ -546,10 +514,8 @@ function DecideAgreementChange({
 }
 
 function UploadAgreementDocument({
-    teamSlug,
     agreement,
 }: {
-    teamSlug: string;
     agreement: PartnerAgreement;
 }) {
     return (
@@ -560,10 +526,7 @@ function UploadAgreementDocument({
             description="Add a privately stored scanned or born-digital copy. Files are checksum-bound and security scanned."
         >
             <Form
-                {...storeDocument.form({
-                    current_team: teamSlug,
-                    agreement: agreement.id,
-                })}
+                {...storeDocument.form({ agreement: agreement.id })}
                 resetOnSuccess
                 className="grid gap-4"
             >
@@ -658,13 +621,7 @@ function UploadAgreementDocument({
     );
 }
 
-function AgreementDecision({
-    teamSlug,
-    agreement,
-}: {
-    teamSlug: string;
-    agreement: PartnerAgreement;
-}) {
+function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
     return (
         <FormSheet
             title="Review agreement"
@@ -672,10 +629,7 @@ function AgreementDecision({
             description="Approve or reject this independently submitted agreement. The submitter cannot make this decision."
         >
             <Form
-                {...transition.form({
-                    current_team: teamSlug,
-                    agreement: agreement.id,
-                })}
+                {...transition.form({ agreement: agreement.id })}
                 className="grid gap-4"
             >
                 {({ errors, processing }) => (
@@ -725,13 +679,7 @@ function AgreementDecision({
     );
 }
 
-function SubmitAgreement({
-    teamSlug,
-    agreement,
-}: {
-    teamSlug: string;
-    agreement: PartnerAgreement;
-}) {
+function SubmitAgreement({ agreement }: { agreement: PartnerAgreement }) {
     const hasDocument = agreement.documents.length > 0;
 
     return (
@@ -741,10 +689,7 @@ function SubmitAgreement({
             description="Confirm the repository record is complete. Submission locks further uploads and sends the agreement for an independent decision."
         >
             <Form
-                {...transition.form({
-                    current_team: teamSlug,
-                    agreement: agreement.id,
-                })}
+                {...transition.form({ agreement: agreement.id })}
                 className="grid gap-4"
             >
                 {({ processing }) => (

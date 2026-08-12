@@ -31,7 +31,7 @@ class IntegrationExchangeDeliveryTest extends TestCase
             ->push(['error' => 'temporarily unavailable'], 503)
             ->push(['accepted' => true, 'remote_reference' => 'REMOTE-001'], 202);
 
-        $this->actingAs($actor)->post(route('integrations.exchanges.dispatch', [$actor->currentTeam->slug, $contract]), $this->payload('DELIVERY-RETRY-001'))->assertRedirect();
+        $this->actingAs($actor)->post(route('integrations.exchanges.dispatch', [$contract]), $this->payload('DELIVERY-RETRY-001'))->assertRedirect();
         $exchange = IntegrationExchange::query()->where('idempotency_key', 'DELIVERY-RETRY-001')->sole();
         $this->assertSame('retry_scheduled', $exchange->status);
         $this->assertSame(1, $exchange->attempt_count);
@@ -80,33 +80,33 @@ class IntegrationExchangeDeliveryTest extends TestCase
             ->push(['error' => 'invalid source record'], 400)
             ->push(['accepted' => true], 202);
 
-        $this->actingAs($actor)->post(route('integrations.exchanges.dispatch', [$actor->currentTeam->slug, $contract]), [...$this->payload('DELIVERY-DEAD-001'), 'county_id' => $county->id])->assertRedirect();
+        $this->actingAs($actor)->post(route('integrations.exchanges.dispatch', [$contract]), [...$this->payload('DELIVERY-DEAD-001'), 'county_id' => $county->id])->assertRedirect();
         $exchange = IntegrationExchange::query()->where('idempotency_key', 'DELIVERY-DEAD-001')->sole();
         $this->assertSame('dead_lettered', $exchange->status);
         $this->assertNull($exchange->next_attempt_at);
         $this->assertDatabaseHas('integration_exchange_attempts', ['integration_exchange_id' => $exchange->id, 'attempt_number' => 1, 'outcome' => 'dead_lettered', 'http_status' => 400, 'retryable' => false]);
 
-        $this->actingAs($outsideManager)->post(route('integrations.exchanges.retry', [$outsideManager->currentTeam->slug, $exchange]))->assertForbidden();
+        $this->actingAs($outsideManager)->post(route('integrations.exchanges.retry', [$exchange]))->assertForbidden();
         $this->assertSame(1, $exchange->refresh()->attempt_count);
-        $this->actingAs($actor)->post(route('integrations.exchanges.retry', [$actor->currentTeam->slug, $exchange]))->assertRedirect();
+        $this->actingAs($actor)->post(route('integrations.exchanges.retry', [$exchange]))->assertRedirect();
         $this->assertSame('succeeded', $exchange->refresh()->status);
         $this->assertDatabaseHas('integration_exchange_attempts', ['integration_exchange_id' => $exchange->id, 'attempt_number' => 2, 'trigger_source' => 'manual_retry', 'outcome' => 'succeeded']);
         Http::assertSentCount(2);
 
         config()->set('inertia.ssr.enabled', false);
-        $this->actingAs($actor)->get(route('integrations.index', $actor->currentTeam->slug))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+        $this->actingAs($actor)->get(route('integrations.index'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('exchanges.data.0.id', $exchange->id)
             ->where('exchanges.data.0.attemptHistory.0.outcome', 'dead_lettered')
             ->where('exchanges.data.0.attemptHistory.1.trigger', 'manual_retry')
             ->where('exchanges.data.0.attemptHistory.1.outcome', 'succeeded'));
         foreach (['csv', 'json'] as $format) {
-            $content = $this->actingAs($actor)->get(route('workspace.export', [$actor->currentTeam->slug, 'integrations', $format]))->assertOk()->streamedContent();
+            $content = $this->actingAs($actor)->get(route('workspace.export', ['integrations', $format]))->assertOk()->streamedContent();
             $this->assertStringContainsString('Latest attempt outcome', $content);
             $this->assertStringContainsString('succeeded', $content);
         }
-        $this->actingAs($actor)->get(route('workspace.export', [$actor->currentTeam->slug, 'integrations', 'xlsx']))->assertOk()->assertDownload();
-        $this->actingAs($actor)->get(route('workspace.export', [$actor->currentTeam->slug, 'integrations', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
-        $outsideExport = $this->actingAs($outsideManager)->get(route('workspace.export', [$outsideManager->currentTeam->slug, 'integrations', 'json']))->assertOk()->streamedContent();
+        $this->actingAs($actor)->get(route('workspace.export', ['integrations', 'xlsx']))->assertOk()->assertDownload();
+        $this->actingAs($actor)->get(route('workspace.export', ['integrations', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
+        $outsideExport = $this->actingAs($outsideManager)->get(route('workspace.export', ['integrations', 'json']))->assertOk()->streamedContent();
         $this->assertStringNotContainsString('DELIVERY-DEAD-001', $outsideExport);
     }
 

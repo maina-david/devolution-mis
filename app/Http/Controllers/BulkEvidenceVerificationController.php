@@ -15,7 +15,7 @@ class BulkEvidenceVerificationController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(BulkEvidenceVerificationRequest $request, string $currentTeam, VerifyAssessmentEvidence $verify): RedirectResponse
+    public function __invoke(BulkEvidenceVerificationRequest $request, VerifyAssessmentEvidence $verify): RedirectResponse
     {
         /** @var User $actor */
         $actor = $request->user();

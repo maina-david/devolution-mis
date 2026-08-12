@@ -20,7 +20,6 @@ import { download, preview } from '@/routes/evidence';
 import { store } from '@/routes/igr-resolutions/documents';
 
 type Props = {
-    teamSlug: string;
     resolutionId: string;
     status: string;
     documents: WorkspaceDocument[];
@@ -104,8 +103,6 @@ export default function IgrDocumentControls(props: Props) {
                                         >
                                             <a
                                                 href={download.url({
-                                                    current_team:
-                                                        props.teamSlug,
                                                     document: document.id,
                                                 })}
                                             >
@@ -136,10 +133,7 @@ export default function IgrDocumentControls(props: Props) {
                     {previewDocument && (
                         <iframe
                             title={`Preview ${previewDocument.title}`}
-                            src={preview.url({
-                                current_team: props.teamSlug,
-                                document: previewDocument.id,
-                            })}
+                            src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
                     )}
@@ -174,10 +168,7 @@ function UploadRecord(props: Props) {
             description="Add a private scanned or born-digital resolution or implementation record."
         >
             <Form
-                {...store.form({
-                    current_team: props.teamSlug,
-                    resolution: props.resolutionId,
-                })}
+                {...store.form({ resolution: props.resolutionId })}
                 resetOnSuccess
                 className="grid gap-4"
             >

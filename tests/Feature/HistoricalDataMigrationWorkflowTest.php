@@ -88,7 +88,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         $county = County::factory()->create(['code' => 1]);
         $submitter = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($submitter)->post(route('data-migrations.store', $submitter->currentTeam->slug), [
+        $this->actingAs($submitter)->post(route('data-migrations.store'), [
             'file' => $this->xlsx([
                 [1, new \DateTimeImmutable('2019-12-31'), 'PFM-KRA', 'Public financial management KRA score', 72.25, '', 'percent', 'ACPA-2019-FINAL'],
             ]),
@@ -166,9 +166,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
             'submitted_by' => $administrator->id,
         ]);
 
-        $this->actingAs($administrator)->get(route('data-migrations.index', [
-            'current_team' => $administrator->currentTeam->slug,
-            'type' => 'acpa_scores',
+        $this->actingAs($administrator)->get(route('data-migrations.index', ['type' => 'acpa_scores',
             'status' => 'validated',
             'search' => 'ACPA',
         ]))->assertOk()->assertInertia(fn (Assert $page) => $page
@@ -178,7 +176,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
             ->where('capabilities.stage', true));
 
         $this->actingAs($countyUser)
-            ->get(route('data-migrations.index', $countyUser->currentTeam->slug))
+            ->get(route('data-migrations.index'))
             ->assertForbidden();
     }
 
@@ -190,7 +188,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         $reviewer = User::factory()->platformAdmin()->create();
         $applier = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($submitter)->post(route('data-migrations.store', $submitter->currentTeam->slug), [
+        $this->actingAs($submitter)->post(route('data-migrations.store'), [
             'file' => $this->csv([['001', '2018', 'ACPA-OVERALL', 'Annual county performance assessment score', '67.5', '', 'percent', 'ACPA-2018-FINAL']]),
             'dataset_type' => 'acpa_scores',
             'source_name' => 'Independent ACPA verification register',
@@ -200,21 +198,21 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         ])->assertRedirect();
         $batch = DataMigrationBatch::query()->sole();
 
-        $this->actingAs($submitter)->patch(route('data-migrations.review', [$submitter->currentTeam->slug, $batch]), [
+        $this->actingAs($submitter)->patch(route('data-migrations.review', [$batch]), [
             'decision' => 'approve',
             'notes' => 'The submitter cannot independently approve this batch.',
         ])->assertForbidden();
 
-        $this->actingAs($reviewer)->patch(route('data-migrations.review', [$reviewer->currentTeam->slug, $batch]), [
+        $this->actingAs($reviewer)->patch(route('data-migrations.review', [$batch]), [
             'decision' => 'approve',
             'notes' => 'County codes and source totals independently reconciled.',
         ])->assertRedirect();
 
-        $this->actingAs($reviewer)->post(route('data-migrations.apply', [$reviewer->currentTeam->slug, $batch]), [
+        $this->actingAs($reviewer)->post(route('data-migrations.apply', [$batch]), [
             'confirmation' => true,
         ])->assertForbidden();
 
-        $this->actingAs($applier)->post(route('data-migrations.apply', [$applier->currentTeam->slug, $batch]), [
+        $this->actingAs($applier)->post(route('data-migrations.apply', [$batch]), [
             'confirmation' => true,
         ])->assertRedirect();
 
@@ -237,13 +235,13 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         ]);
 
         $this->actingAs($administrator)
-            ->get(route('data-migrations.download', [$administrator->currentTeam->slug, $batch]))
+            ->get(route('data-migrations.download', [$batch]))
             ->assertOk()
             ->assertDownload('retained.csv');
 
         Storage::disk('local')->put($path, 'tampered source');
         $this->actingAs($administrator)
-            ->get(route('data-migrations.download', [$administrator->currentTeam->slug, $batch]))
+            ->get(route('data-migrations.download', [$batch]))
             ->assertStatus(409);
     }
 

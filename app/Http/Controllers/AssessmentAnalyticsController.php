@@ -26,7 +26,7 @@ class AssessmentAnalyticsController extends Controller
         return Inertia::render('assessments/analytics', ['report' => $this->analytics->report($this->user($request), $filters), 'filters' => $filters]);
     }
 
-    public function export(AssessmentAnalyticsRequest $request, string $currentTeam, string $format): Response
+    public function export(AssessmentAnalyticsRequest $request, string $format): Response
     {
         abort_unless(in_array($format, ['csv', 'xlsx', 'json', 'pdf'], true), 404);
         $user = $this->user($request);

@@ -37,24 +37,24 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $otherViewer = User::factory()->countyAdmin($otherCounty)->create();
         $release = $this->publishedReferenceRelease([$county, $otherCounty], $publisher);
 
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $this->dashboardPayload($county->id))->assertRedirect();
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $this->dashboardPayload($county->id))->assertRedirect();
         $dashboard = AnalyticsDashboard::query()->with('widgets')->sole();
         $this->assertTrue(Str::isUuid($dashboard->id));
         $this->assertSame('draft', $dashboard->status);
         $this->assertSame($release->id, $dashboard->reference_data_release_id);
         $this->assertCount(1, $dashboard->widgets);
-        $this->actingAs($author)->patch(route('analytics.dashboards.publish', [$author->currentTeam->slug, $dashboard]))->assertForbidden();
-        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$publisher->currentTeam->slug, $dashboard]))->assertRedirect();
+        $this->actingAs($author)->patch(route('analytics.dashboards.publish', [$dashboard]))->assertForbidden();
+        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$dashboard]))->assertRedirect();
         $this->assertSame('published', $dashboard->refresh()->status);
         $this->assertSame(64, strlen((string) $dashboard->checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $dashboard->id, 'action' => 'analytics.dashboard.published']);
 
-        $this->actingAs($countyViewer)->get(route('analytics.index', $countyViewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($countyViewer)->get(route('analytics.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->has('dashboards', 1)
             ->where('dashboards.0.county.name', 'Baringo')
             ->where('dashboards.0.referenceData.version', $release->version)
             ->where('dashboards.0.widgets.0.measurement.value', 1));
-        $this->actingAs($otherViewer)->get(route('analytics.index', $otherViewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('dashboards', []));
+        $this->actingAs($otherViewer)->get(route('analytics.index'))->assertOk()->assertInertia(fn ($page) => $page->where('dashboards', []));
     }
 
     public function test_schedules_require_independent_activation_and_due_execution_is_idempotently_queued(): void
@@ -66,14 +66,14 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $recipient = User::factory()->countyAdmin($county)->create();
         $dashboard = $this->publishedDashboard($author, $approver, $county);
 
-        $this->actingAs($author)->post(route('analytics.schedules.store', $author->currentTeam->slug), $this->schedulePayload($dashboard, $county, $recipient))->assertRedirect();
+        $this->actingAs($author)->post(route('analytics.schedules.store'), $this->schedulePayload($dashboard, $county, $recipient))->assertRedirect();
         $schedule = ReportSchedule::query()->sole();
         $this->assertSame('draft', $schedule->status);
-        $this->actingAs($author)->patch(route('analytics.schedules.activate', [$author->currentTeam->slug, $schedule]))->assertForbidden();
+        $this->actingAs($author)->patch(route('analytics.schedules.activate', [$schedule]))->assertForbidden();
         $this->assertTrue($schedule->next_run_at->isFuture(), 'The validated first execution should remain in the future.');
         $this->assertSame('published', $dashboard->status);
         $this->assertNotNull($dashboard->checksum);
-        $this->actingAs($approver)->patch(route('analytics.schedules.activate', [$approver->currentTeam->slug, $schedule]))->assertRedirect();
+        $this->actingAs($approver)->patch(route('analytics.schedules.activate', [$schedule]))->assertRedirect();
         $this->assertSame('active', $schedule->refresh()->status);
         $schedule->update(['next_run_at' => now()->subMinute()]);
 
@@ -112,11 +112,11 @@ class AnalyticsReportingWorkflowTest extends TestCase
         EvaluationFinding::factory()->create(['county_id' => $county->id, 'status' => 'closed', 'due_at' => today()->subMonth(), 'closed_at' => now()]);
         EvaluationFinding::factory()->create(['county_id' => $otherCounty->id, 'status' => 'open', 'due_at' => today()->subDay()]);
 
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $this->dashboardPayload($county->id, 'indicators.target-attainment', 'ANL-ME-PERFORMANCE'))->assertRedirect();
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $this->dashboardPayload($county->id, 'indicators.target-attainment', 'ANL-ME-PERFORMANCE'))->assertRedirect();
         $dashboard = AnalyticsDashboard::query()->sole();
-        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$publisher->currentTeam->slug, $dashboard]))->assertRedirect();
+        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$dashboard]))->assertRedirect();
 
-        $this->actingAs($countyViewer)->get(route('analytics.index', $countyViewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($countyViewer)->get(route('analytics.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('dashboards.0.widgets.0.measurement.value', 125)
             ->where('dashboards.0.widgets.0.measurement.unit', 'percent')
             ->where('dashboards.0.widgets.0.measurement.series.0.county.name', 'Baringo')
@@ -170,9 +170,9 @@ class AnalyticsReportingWorkflowTest extends TestCase
         }
 
         $downloadable = ReportRun::query()->latest()->firstOrFail();
-        $this->actingAs($recipient)->get(route('analytics.runs.download', [$recipient->currentTeam->slug, $downloadable]))->assertOk()->assertDownload();
+        $this->actingAs($recipient)->get(route('analytics.runs.download', [$downloadable]))->assertOk()->assertDownload();
         Storage::disk('local')->put((string) $downloadable->path, 'tampered');
-        $this->actingAs($recipient)->get(route('analytics.runs.download', [$recipient->currentTeam->slug, $downloadable]))->assertStatus(409);
+        $this->actingAs($recipient)->get(route('analytics.runs.download', [$downloadable]))->assertStatus(409);
     }
 
     public function test_analytics_configuration_fails_closed_without_valid_catalogue_lineage(): void
@@ -182,17 +182,17 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $publisher = User::factory()->platformAdmin()->create();
         $payload = $this->dashboardPayload($county->id, code: 'ANL-CATALOGUE-CONTROL');
 
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('analytics_dashboards', 0);
 
         $corruptSnapshot = ['counties' => [['id' => $county->id, 'code' => $county->code, 'name' => $county->name]], 'organizations' => [], 'sectors' => [], 'programmes' => []];
         ReferenceDataRelease::factory()->create(['approved_by' => $publisher->id, 'status' => 'published', 'snapshot' => $corruptSnapshot, 'checksum' => str_repeat('0', 64), 'effective_from' => now()->subMinute(), 'published_at' => now()]);
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('analytics_dashboards', 0);
 
         $validButIncomplete = ['counties' => [], 'organizations' => [], 'sectors' => [], 'programmes' => []];
         ReferenceDataRelease::factory()->create(['approved_by' => $publisher->id, 'status' => 'published', 'snapshot' => $validButIncomplete, 'checksum' => app(CanonicalJson::class)->checksum($validButIncomplete), 'effective_from' => now(), 'published_at' => now()]);
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $payload)->assertSessionHasErrors('county_id');
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $payload)->assertSessionHasErrors('county_id');
         $this->assertDatabaseCount('analytics_dashboards', 0);
     }
 
@@ -201,9 +201,9 @@ class AnalyticsReportingWorkflowTest extends TestCase
         if (! ReferenceDataRelease::query()->where('status', 'published')->where('effective_from', '<=', now())->exists()) {
             $this->publishedReferenceRelease([$county], $publisher);
         }
-        $this->actingAs($author)->post(route('analytics.dashboards.store', $author->currentTeam->slug), $this->dashboardPayload($county->id))->assertRedirect();
+        $this->actingAs($author)->post(route('analytics.dashboards.store'), $this->dashboardPayload($county->id))->assertRedirect();
         $dashboard = AnalyticsDashboard::query()->latest()->firstOrFail();
-        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$publisher->currentTeam->slug, $dashboard]))->assertRedirect();
+        $this->actingAs($publisher)->patch(route('analytics.dashboards.publish', [$dashboard]))->assertRedirect();
 
         return $dashboard->refresh();
     }

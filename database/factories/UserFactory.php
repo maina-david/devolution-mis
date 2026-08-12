@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Actions\ProvisionUserWorkspace;
 use App\Enums\UserRole;
 use App\Models\County;
 use App\Models\User;
@@ -89,8 +88,6 @@ class UserFactory extends Factory
     public function configure(): static
     {
         return $this->afterCreating(function (User $user): void {
-            app(ProvisionUserWorkspace::class)->handle($user, $user->name."'s Workspace");
-
             if ($user->roles()->doesntExist()) {
                 app(ProgrammeAuthorization::class)->assignRole($user, UserRole::CountyOfficial);
             }

@@ -78,9 +78,9 @@ export default function ClassroomAttendance({
     roster,
     filters,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -98,7 +98,7 @@ export default function ClassroomAttendance({
                                 variant="link"
                                 className="mb-3 h-auto p-0 text-[#83d4ad]"
                             >
-                                <Link href={learningIndex(currentTeam.slug)}>
+                                <Link href={learningIndex()}>
                                     <ArrowLeft aria-hidden="true" />
                                     Learning hub
                                 </Link>
@@ -174,8 +174,6 @@ export default function ClassroomAttendance({
                                             <a
                                                 href={exportMethod.url(
                                                     {
-                                                        current_team:
-                                                            currentTeam.slug,
                                                         workspace:
                                                             'learning-attendance',
                                                         format,
@@ -211,7 +209,6 @@ export default function ClassroomAttendance({
                                 <AttendanceAction
                                     classroom={classroom}
                                     row={row as AttendanceRow}
-                                    teamSlug={currentTeam.slug}
                                 />
                             )}
                         />
@@ -231,11 +228,9 @@ export default function ClassroomAttendance({
 function AttendanceAction({
     classroom,
     row,
-    teamSlug,
 }: {
     classroom: Classroom;
     row: AttendanceRow;
-    teamSlug: string;
 }) {
     const [open, setOpen] = useState(false);
     const [status, setStatus] = useState(
@@ -274,10 +269,7 @@ function AttendanceAction({
                         </SheetDescription>
                     </SheetHeader>
                     <Form
-                        action={storeAttendance({
-                            current_team: teamSlug,
-                            classroom: classroom.id,
-                        })}
+                        action={storeAttendance({ classroom: classroom.id })}
                         className="grid gap-4 px-4 pb-8"
                     >
                         {({ errors, processing }) => (

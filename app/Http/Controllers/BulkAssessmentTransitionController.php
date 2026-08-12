@@ -16,7 +16,7 @@ use Inertia\Inertia;
 
 class BulkAssessmentTransitionController extends Controller
 {
-    public function __invoke(BulkAssessmentTransitionRequest $request, string $currentTeam, TransitionAssessment $transition): RedirectResponse
+    public function __invoke(BulkAssessmentTransitionRequest $request, TransitionAssessment $transition): RedirectResponse
     {
         $actor = $this->user($request);
         $transitionName = $request->string('transition')->toString();

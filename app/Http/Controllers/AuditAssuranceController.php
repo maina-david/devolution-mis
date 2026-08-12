@@ -37,7 +37,7 @@ class AuditAssuranceController extends Controller
         return back()->with($run->outcome === 'fail' ? 'error' : 'success', "Audit assurance evidence retained with outcome {$run->outcome}.");
     }
 
-    public function download(Request $request, string $currentTeam, AuditAssuranceRun $auditAssuranceRun): StreamedResponse
+    public function download(Request $request, AuditAssuranceRun $auditAssuranceRun): StreamedResponse
     {
         $user = $this->authorizedNationalViewer($request);
         abort_unless(is_string($auditAssuranceRun->path) && Storage::disk($auditAssuranceRun->disk)->exists($auditAssuranceRun->path), 404, 'Audit assurance artifact is unavailable.');

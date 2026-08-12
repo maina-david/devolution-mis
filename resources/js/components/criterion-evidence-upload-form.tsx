@@ -22,11 +22,9 @@ type RequirementOption = {
 };
 
 export default function CriterionEvidenceUploadForm({
-    teamSlug,
     assessmentId,
     requirements,
 }: {
-    teamSlug: string;
     assessmentId: string;
     requirements: RequirementOption[];
 }) {
@@ -53,10 +51,7 @@ export default function CriterionEvidenceUploadForm({
             </CardHeader>
             <CardContent>
                 <Form
-                    {...store.form({
-                        current_team: teamSlug,
-                        assessment: assessmentId,
-                    })}
+                    {...store.form({ assessment: assessmentId })}
                     resetOnSuccess
                     className="grid gap-4 lg:grid-cols-2 xl:grid-cols-6 xl:items-end"
                 >

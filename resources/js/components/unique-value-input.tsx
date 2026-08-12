@@ -16,7 +16,6 @@ export default function UniqueValueInput({
     label,
     resource,
     field,
-    teamSlug,
     serverError,
     required = false,
 }: {
@@ -25,7 +24,6 @@ export default function UniqueValueInput({
     label: string;
     resource: UniqueResource;
     field: UniqueField;
-    teamSlug: string;
     serverError?: string;
     required?: boolean;
 }) {
@@ -38,7 +36,7 @@ export default function UniqueValueInput({
         { resource: UniqueResource; field: UniqueField; value: string },
         { available: boolean; message: string }
     >(
-        () => UniqueValueController(teamSlug),
+        () => UniqueValueController(),
         () => ({ resource, field, value: value.trim() }),
     );
     const feedbackId = `${id}-availability`;

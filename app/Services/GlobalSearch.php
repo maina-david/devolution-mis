@@ -17,7 +17,7 @@ class GlobalSearch
     ) {}
 
     /** @return list<array{category: string, id: string, title: string, description: string, url: string}> */
-    public function for(User $user, string $teamSlug, string $term): array
+    public function for(User $user, string $term): array
     {
         $results = [];
 
@@ -33,7 +33,7 @@ class GlobalSearch
                     'id' => $county->id,
                     'title' => $county->name.' County',
                     'description' => sprintf('County %03d · %s', $county->code, $county->region ?? ReferenceCatalogue::defaultCountryName()),
-                    'url' => route('counties.show', ['current_team' => $teamSlug, 'county' => $county]),
+                    'url' => route('counties.show', ['county' => $county]),
                 ];
             }
         }
@@ -52,7 +52,7 @@ class GlobalSearch
                     'id' => $replication->id,
                     'title' => $replication->reference.' · '.$replication->innovation->title,
                     'description' => $replication->targetCounty->name.' · '.str($replication->status)->headline(),
-                    'url' => route('knowledge.innovation-replications.index', ['current_team' => $teamSlug, 'search' => $replication->reference]),
+                    'url' => route('knowledge.innovation-replications.index', ['search' => $replication->reference]),
                 ];
             }
         }
@@ -65,7 +65,7 @@ class GlobalSearch
 
             $workspace = $this->workspaceData->{$provider['method']}($user, $filters);
             foreach ($workspace['rows'] as $row) {
-                $results[] = $this->result($provider, $row, $workspace, $teamSlug, $term);
+                $results[] = $this->result($provider, $row, $workspace, $term);
 
                 if (count($results) >= 40) {
                     break 2;
@@ -113,10 +113,10 @@ class GlobalSearch
      * @param  array<string, mixed>  $workspace
      * @return array{category: string, id: string, title: string, description: string, url: string}
      */
-    private function result(array $provider, array $row, array $workspace, string $teamSlug, string $term): array
+    private function result(array $provider, array $row, array $workspace, string $term): array
     {
         $labels = collect($row['cells'])->map(fn (mixed $cell): string => $this->cellText($cell))->filter()->values();
-        $parameters = ['current_team' => $teamSlug];
+        $parameters = [];
         if (isset($provider['detailRoute'])) {
             $parameters[$provider['method'] === 'projects' ? 'project' : 'assessment'] = $row['id'];
         } else {

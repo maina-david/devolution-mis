@@ -54,9 +54,7 @@ class DocumentTextExtractionTest extends TestCase
         $this->assertNotNull($attempt->duration_ms);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $document->id, 'action' => 'document.text_extraction_completed']);
 
-        $this->actingAs($official)->get(route('evidence.index', [
-            'current_team' => $official->currentTeam->slug,
-            'search' => 'KWALE-SEARCH-441',
+        $this->actingAs($official)->get(route('evidence.index', ['search' => 'KWALE-SEARCH-441',
         ]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('workspace.rows', 1)
             ->where('workspace.rows.0.id', $document->id)
@@ -76,7 +74,7 @@ class DocumentTextExtractionTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Scanned participation register',
             'category' => 'Public participation',
             'source_type' => 'scanned',
@@ -90,7 +88,7 @@ class DocumentTextExtractionTest extends TestCase
         $this->assertSame('tesseract_unavailable', $extraction->error_code);
         $this->assertSame('tesseract_unavailable', DocumentExtractionAttempt::query()->sole()->error_code);
         $this->assertNull($extraction->extracted_text);
-        $this->actingAs($official)->get(route('evidence.preview', [$official->currentTeam->slug, $document]))->assertOk();
+        $this->actingAs($official)->get(route('evidence.preview', [$document]))->assertOk();
     }
 
     public function test_image_only_pdf_is_rasterized_ocr_indexed_and_records_page_provenance(): void
@@ -117,7 +115,7 @@ class DocumentTextExtractionTest extends TestCase
             $official = User::factory()->countyOfficial($county)->create();
             $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-            $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+            $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
                 'title' => 'Image-only scanned PDF',
                 'category' => 'Public participation',
                 'source_type' => 'scanned',
@@ -131,7 +129,7 @@ class DocumentTextExtractionTest extends TestCase
             $this->assertSame(1, $extraction->page_count);
             $this->assertSame(200, $extraction->metadata['dpi']);
             $this->assertSame('poppler-pdftoppm+tesseract', DocumentExtractionAttempt::query()->sole()->engine);
-            $this->actingAs($official)->get(route('evidence.index', ['current_team' => $official->currentTeam->slug, 'search' => 'OCR-PDF-778']))
+            $this->actingAs($official)->get(route('evidence.index', ['search' => 'OCR-PDF-778']))
                 ->assertOk()->assertInertia(fn (Assert $page) => $page->has('workspace.rows', 1));
         } finally {
             foreach ([$pdftotext, $pdftoppm, $tesseract] as $binary) {
@@ -152,8 +150,8 @@ class DocumentTextExtractionTest extends TestCase
         $this->uploadTextEvidence($official, $assessment, 'Retry evidence', 'Governed text extraction retry.');
         $document = AssessmentDocument::query()->sole();
 
-        $this->actingAs($official)->post(route('evidence.extract', [$official->currentTeam->slug, $document]))->assertForbidden();
-        $this->actingAs($recordsManager)->post(route('evidence.extract', [$recordsManager->currentTeam->slug, $document]))->assertRedirect();
+        $this->actingAs($official)->post(route('evidence.extract', [$document]))->assertForbidden();
+        $this->actingAs($recordsManager)->post(route('evidence.extract', [$document]))->assertRedirect();
 
         $attempts = DocumentExtractionAttempt::query()->orderBy('attempt_number')->get();
         $this->assertCount(2, $attempts);
@@ -200,7 +198,7 @@ class DocumentTextExtractionTest extends TestCase
         $document = AssessmentDocument::query()->sole();
         $oldVersionId = (string) $document->current_version_id;
 
-        $this->actingAs($official)->post(route('evidence.versions.store', [$official->currentTeam->slug, $document]), [
+        $this->actingAs($official)->post(route('evidence.versions.store', [$document]), [
             'document' => UploadedFile::fake()->createWithContent('replacement.txt', 'Corrected marker NEW-CONTENT-992.'),
             'change_summary' => 'Corrected the approved reference.',
         ])->assertRedirect();
@@ -211,9 +209,9 @@ class DocumentTextExtractionTest extends TestCase
         $this->assertSame(2, DocumentExtraction::query()->count());
         $this->assertSame(2, DocumentVersion::query()->count());
 
-        $this->actingAs($official)->get(route('evidence.index', ['current_team' => $official->currentTeam->slug, 'search' => 'OLD-CONTENT-771']))
+        $this->actingAs($official)->get(route('evidence.index', ['search' => 'OLD-CONTENT-771']))
             ->assertOk()->assertInertia(fn (Assert $page) => $page->has('workspace.rows', 0));
-        $this->actingAs($official)->get(route('evidence.index', ['current_team' => $official->currentTeam->slug, 'search' => 'NEW-CONTENT-992']))
+        $this->actingAs($official)->get(route('evidence.index', ['search' => 'NEW-CONTENT-992']))
             ->assertOk()->assertInertia(fn (Assert $page) => $page->has('workspace.rows', 1));
     }
 
@@ -248,13 +246,13 @@ class DocumentTextExtractionTest extends TestCase
 
         $this->assertSame('failed', $document->fresh()?->ocr_status);
         $this->assertSame('integrity_mismatch', $document->currentVersion?->extraction?->fresh()?->error_code);
-        $this->actingAs($official)->get(route('evidence.preview', [$official->currentTeam->slug, $document]))->assertStatus(409);
-        $this->actingAs($official)->get(route('evidence.download', [$official->currentTeam->slug, $document]))->assertStatus(409);
+        $this->actingAs($official)->get(route('evidence.preview', [$document]))->assertStatus(409);
+        $this->actingAs($official)->get(route('evidence.download', [$document]))->assertStatus(409);
     }
 
     private function uploadTextEvidence(User $official, Assessment $assessment, string $title, string $contents): void
     {
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => $title,
             'category' => 'Other',
             'source_type' => 'digital',

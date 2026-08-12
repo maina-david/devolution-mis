@@ -105,7 +105,6 @@ export default function CommunityAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
-    const teamSlug = page.props.currentTeam!.slug;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -148,7 +147,7 @@ export default function CommunityAnalytics({
             `${item.resolutionRate}%`,
         ],
         href: preserveDrilldownFilters(
-            showCounty.url({ current_team: teamSlug, county: item.county.id }),
+            showCounty.url({ county: item.county.id }),
             page.url,
         ),
     }));
@@ -172,7 +171,7 @@ export default function CommunityAnalytics({
                                 county portfolio.
                             </p>
                         </div>
-                        <ExportMenu teamSlug={teamSlug} query={query} />
+                        <ExportMenu query={query} />
                     </div>
                 </section>
 
@@ -306,7 +305,6 @@ export default function CommunityAnalytics({
                                     pagination={report.discussions.pagination}
                                     renderActionControl={(row) => (
                                         <DiscussionActions
-                                            teamSlug={teamSlug}
                                             title={String(row.cells[0])}
                                         />
                                     )}
@@ -358,13 +356,7 @@ function Summary({ label, value }: { label: string; value: string | number }) {
     );
 }
 
-function ExportMenu({
-    teamSlug,
-    query,
-}: {
-    teamSlug: string;
-    query: Record<string, string | undefined>;
-}) {
+function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -376,12 +368,7 @@ function ExportMenu({
                 <DropdownMenuGroup>
                     {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                         <DropdownMenuItem key={format} asChild>
-                            <a
-                                href={exportMethod.url(
-                                    { current_team: teamSlug, format },
-                                    { query },
-                                )}
-                            >
+                            <a href={exportMethod.url({ format }, { query })}>
                                 {format.toUpperCase()}
                             </a>
                         </DropdownMenuItem>
@@ -392,13 +379,7 @@ function ExportMenu({
     );
 }
 
-function DiscussionActions({
-    teamSlug,
-    title,
-}: {
-    teamSlug: string;
-    title: string;
-}) {
+function DiscussionActions({ title }: { title: string }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -414,7 +395,7 @@ function DiscussionActions({
                 <DropdownMenuGroup>
                     <DropdownMenuItem asChild>
                         <Link
-                            href={knowledgeIndex.url(teamSlug, {
+                            href={knowledgeIndex.url({
                                 query: { search: title },
                             })}
                         >
@@ -422,7 +403,7 @@ function DiscussionActions({
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                        <Link href={analyticsIndex.url(teamSlug)}>
+                        <Link href={analyticsIndex.url()}>
                             Reset analytics filters
                         </Link>
                     </DropdownMenuItem>

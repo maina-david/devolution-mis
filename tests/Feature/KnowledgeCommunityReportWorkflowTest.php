@@ -32,7 +32,7 @@ class KnowledgeCommunityReportWorkflowTest extends TestCase
         $post = KnowledgePost::factory()->create(['knowledge_discussion_id' => $discussion->id, 'author_id' => $author->id]);
         $payload = ['category' => 'misinformation', 'severity' => 'high', 'description' => 'The contribution makes a material claim without the evidence required for safe cross-county reuse.'];
 
-        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$reporter->currentTeam->slug, $post]), $payload)->assertRedirect();
+        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$post]), $payload)->assertRedirect();
         $report = KnowledgeCommunityReport::query()->with('workflowInstance')->sole();
         $this->assertTrue(Str::isUuid($report->id));
         $this->assertSame('reported', $report->status);
@@ -42,9 +42,9 @@ class KnowledgeCommunityReportWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $report->id, 'action' => 'knowledge.community_report.created']);
         Notification::assertSentTo($reporter, ProgrammeAlert::class);
 
-        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$reporter->currentTeam->slug, $post]), $payload)->assertSessionHasErrors('description');
-        $this->actingAs($author)->post(route('knowledge.posts.reports.store', [$author->currentTeam->slug, $post]), $payload)->assertForbidden();
-        $this->actingAs($outsider)->post(route('knowledge.posts.reports.store', [$outsider->currentTeam->slug, $post]), $payload)->assertForbidden();
+        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$post]), $payload)->assertSessionHasErrors('description');
+        $this->actingAs($author)->post(route('knowledge.posts.reports.store', [$post]), $payload)->assertForbidden();
+        $this->actingAs($outsider)->post(route('knowledge.posts.reports.store', [$post]), $payload)->assertForbidden();
         $this->assertSame(1, KnowledgeCommunityReport::query()->count());
         $this->assertNotNull($decisionMaker->id);
     }
@@ -60,20 +60,20 @@ class KnowledgeCommunityReportWorkflowTest extends TestCase
         $this->seed(KnowledgeWorkflowSeeder::class);
         $discussion = KnowledgeDiscussion::factory()->create(['county_id' => $county->id, 'created_by' => $author->id]);
         $post = KnowledgePost::factory()->create(['knowledge_discussion_id' => $discussion->id, 'author_id' => $author->id]);
-        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$reporter->currentTeam->slug, $post]), ['category' => 'privacy', 'severity' => 'critical', 'description' => 'The contribution appears to disclose restricted personal information requiring immediate controlled review.'])->assertRedirect();
+        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$post]), ['category' => 'privacy', 'severity' => 'critical', 'description' => 'The contribution appears to disclose restricted personal information requiring immediate controlled review.'])->assertRedirect();
         $report = KnowledgeCommunityReport::query()->sole();
 
-        $this->actingAs($reporter)->patch(route('knowledge.community-reports.transition', [$reporter->currentTeam->slug, $report]), ['transition' => 'triage', 'rationale' => 'Attempted reporter self-triage is not permitted.'])->assertForbidden();
-        $this->actingAs($triager)->patch(route('knowledge.community-reports.transition', [$triager->currentTeam->slug, $report]), ['transition' => 'triage', 'rationale' => 'Initial evidence indicates a credible privacy risk requiring independent decision.'])->assertRedirect();
+        $this->actingAs($reporter)->patch(route('knowledge.community-reports.transition', [$report]), ['transition' => 'triage', 'rationale' => 'Attempted reporter self-triage is not permitted.'])->assertForbidden();
+        $this->actingAs($triager)->patch(route('knowledge.community-reports.transition', [$report]), ['transition' => 'triage', 'rationale' => 'Initial evidence indicates a credible privacy risk requiring independent decision.'])->assertRedirect();
         $this->assertSame('investigating', $report->refresh()->status);
         $this->assertSame($triager->id, $report->triaged_by);
         $workflow = $report->workflowInstance()->firstOrFail();
         $this->assertSame(72, (int) $workflow->state_entered_at->diffInHours($workflow->due_at));
 
         $decision = ['transition' => 'resolve', 'rationale' => 'Independent review confirms the disclosure and requires immediate suppression.', 'post_action' => 'hide', 'resolution' => 'The contribution is hidden, the original is retained for audit, and the privacy owner must complete follow-up.'];
-        $this->actingAs($triager)->patch(route('knowledge.community-reports.transition', [$triager->currentTeam->slug, $report]), $decision)->assertForbidden();
-        $this->actingAs($decisionMaker)->patch(route('knowledge.community-reports.transition', [$decisionMaker->currentTeam->slug, $report]), [...$decision, 'resolution' => 'short'])->assertSessionHasErrors('resolution');
-        $this->actingAs($decisionMaker)->patch(route('knowledge.community-reports.transition', [$decisionMaker->currentTeam->slug, $report]), $decision)->assertRedirect();
+        $this->actingAs($triager)->patch(route('knowledge.community-reports.transition', [$report]), $decision)->assertForbidden();
+        $this->actingAs($decisionMaker)->patch(route('knowledge.community-reports.transition', [$report]), [...$decision, 'resolution' => 'short'])->assertSessionHasErrors('resolution');
+        $this->actingAs($decisionMaker)->patch(route('knowledge.community-reports.transition', [$report]), $decision)->assertRedirect();
 
         $report->refresh();
         $post->refresh();
@@ -100,15 +100,15 @@ class KnowledgeCommunityReportWorkflowTest extends TestCase
         $this->seed(KnowledgeWorkflowSeeder::class);
         $discussion = KnowledgeDiscussion::factory()->create(['county_id' => $county->id, 'created_by' => $author->id, 'title' => 'County safeguards exchange']);
         $post = KnowledgePost::factory()->create(['knowledge_discussion_id' => $discussion->id, 'author_id' => $author->id]);
-        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$reporter->currentTeam->slug, $post]), ['category' => 'security', 'severity' => 'high', 'description' => 'The contribution includes operational details that require a controlled security review before wider reuse.'])->assertRedirect();
+        $this->actingAs($reporter)->post(route('knowledge.posts.reports.store', [$post]), ['category' => 'security', 'severity' => 'high', 'description' => 'The contribution includes operational details that require a controlled security review before wider reuse.'])->assertRedirect();
         $report = KnowledgeCommunityReport::query()->sole();
 
-        $this->actingAs($countyCurator)->get(route('knowledge.index', [$countyCurator->currentTeam->slug, 'report_search' => $report->reference, 'report_status' => 'reported']))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 1)->where('reports.data.0.county.id', $county->id));
-        $this->actingAs($otherCurator)->get(route('knowledge.index', $otherCurator->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 0));
-        $this->actingAs($reporter)->get(route('knowledge.index', $reporter->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 1));
+        $this->actingAs($countyCurator)->get(route('knowledge.index', ['report_search' => $report->reference, 'report_status' => 'reported']))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 1)->where('reports.data.0.county.id', $county->id));
+        $this->actingAs($otherCurator)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 0));
+        $this->actingAs($reporter)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('reports.total', 1));
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($nationalManager)->get(route('workspace.export', [$nationalManager->currentTeam->slug, 'knowledge-moderation', $format, 'status' => 'reported']))->assertOk()->assertDownload();
+            $this->actingAs($nationalManager)->get(route('workspace.export', ['knowledge-moderation', $format, 'status' => 'reported']))->assertOk()->assertDownload();
         }
     }
 
@@ -124,7 +124,7 @@ class KnowledgeCommunityReportWorkflowTest extends TestCase
             'workflow_instance_id' => null,
         ]);
 
-        $this->actingAs($manager)->get(route('knowledge.index', $manager->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($manager)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('reports.total', 1)
             ->where('reports.data.0.id', $report->id)
             ->where('reports.data.0.dueAt', null));

@@ -127,13 +127,13 @@ export default function HistoricalDataMigrations({
     filters,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
         'details',
     );
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -185,8 +185,8 @@ export default function HistoricalDataMigrations({
                         </div>
                         {capabilities.stage && (
                             <div className="flex flex-wrap gap-2">
-                                <ReferenceImportForm team={currentTeam.slug} />
-                                <MigrationForm team={currentTeam.slug} />
+                                <ReferenceImportForm />
+                                <MigrationForm />
                             </div>
                         )}
                     </div>
@@ -290,8 +290,6 @@ export default function HistoricalDataMigrations({
                                                     <DropdownMenuItem asChild>
                                                         <a
                                                             href={download.url({
-                                                                current_team:
-                                                                    currentTeam.slug,
                                                                 dataMigrationBatch:
                                                                     batch.id,
                                                             })}
@@ -307,8 +305,6 @@ export default function HistoricalDataMigrations({
                                                             <a
                                                                 href={downloadExceptions.url(
                                                                     {
-                                                                        current_team:
-                                                                            currentTeam.slug,
                                                                         dataMigrationBatch:
                                                                             batch.id,
                                                                     },
@@ -368,14 +364,13 @@ export default function HistoricalDataMigrations({
             <BatchSheet
                 batch={selected}
                 action={action}
-                team={currentTeam.slug}
                 onOpenChange={(isOpen) => !isOpen && setSelected(null)}
             />
         </>
     );
 }
 
-function MigrationForm({ team }: { team: string }) {
+function MigrationForm() {
     const [datasetType, setDatasetType] = useState('acpa_scores');
 
     return (
@@ -386,7 +381,7 @@ function MigrationForm({ team }: { team: string }) {
             icon={FileUp}
             size="lg"
         >
-            <Form {...store.form(team)} resetOnSuccess>
+            <Form {...store.form()} resetOnSuccess>
                 {({ errors, processing }) => (
                     <div className="flex flex-col gap-5">
                         <div className="flex flex-col gap-2">
@@ -420,10 +415,7 @@ function MigrationForm({ team }: { team: string }) {
                             onValueChange={setDatasetType}
                             error={errors.dataset_type}
                         />
-                        <TemplateDownloadMenu
-                            team={team}
-                            datasetType={datasetType}
-                        />
+                        <TemplateDownloadMenu datasetType={datasetType} />
                         <TextField
                             id="migration-source-name"
                             name="source_name"
@@ -461,7 +453,7 @@ function MigrationForm({ team }: { team: string }) {
     );
 }
 
-function ReferenceImportForm({ team }: { team: string }) {
+function ReferenceImportForm() {
     const [datasetType, setDatasetType] = useState('organizations');
 
     return (
@@ -472,7 +464,7 @@ function ReferenceImportForm({ team }: { team: string }) {
             icon={FileUp}
             size="lg"
         >
-            <Form {...storeReferenceData.form(team)} resetOnSuccess>
+            <Form {...storeReferenceData.form()} resetOnSuccess>
                 {({ errors, processing }) => (
                     <div className="flex flex-col gap-5">
                         <StaticSearchableSelect
@@ -486,10 +478,7 @@ function ReferenceImportForm({ team }: { team: string }) {
                             onValueChange={setDatasetType}
                             error={errors.dataset_type}
                         />
-                        <TemplateDownloadMenu
-                            team={team}
-                            datasetType={datasetType}
-                        />
+                        <TemplateDownloadMenu datasetType={datasetType} />
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="reference-import-file">
                                 Completed CSV or XLSX template
@@ -537,13 +526,7 @@ function ReferenceImportForm({ team }: { team: string }) {
     );
 }
 
-function TemplateDownloadMenu({
-    team,
-    datasetType,
-}: {
-    team: string;
-    datasetType: string;
-}) {
+function TemplateDownloadMenu({ datasetType }: { datasetType: string }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -554,19 +537,14 @@ function TemplateDownloadMenu({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
                 <DropdownMenuItem asChild>
-                    <a
-                        href={showTemplate.url({
-                            current_team: team,
-                            datasetType,
-                        })}
-                    >
+                    <a href={showTemplate.url({ datasetType })}>
                         <Download /> CSV template
                     </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                     <a
                         href={showTemplate.url(
-                            { current_team: team, datasetType },
+                            { datasetType },
                             { query: { format: 'xlsx' } },
                         )}
                     >
@@ -581,12 +559,10 @@ function TemplateDownloadMenu({
 function BatchSheet({
     batch,
     action,
-    team,
     onOpenChange,
 }: {
     batch: Batch | null;
     action: 'details' | 'review' | 'apply';
-    team: string;
     onOpenChange: (open: boolean) => void;
 }) {
     return (
@@ -684,7 +660,6 @@ function BatchSheet({
                             <Button variant="outline" asChild>
                                 <a
                                     href={downloadExceptions.url({
-                                        current_team: team,
                                         dataMigrationBatch: batch.id,
                                     })}
                                 >
@@ -696,7 +671,6 @@ function BatchSheet({
                         {action === 'review' && (
                             <Form
                                 {...review.form({
-                                    current_team: team,
                                     dataMigrationBatch: batch.id,
                                 })}
                             >
@@ -741,7 +715,6 @@ function BatchSheet({
                         {action === 'apply' && (
                             <Form
                                 {...apply.form({
-                                    current_team: team,
                                     dataMigrationBatch: batch.id,
                                 })}
                             >

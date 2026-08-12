@@ -3,13 +3,11 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Concerns\HasTeams;
 use App\Enums\UserRole;
 use App\Services\DelegatedAccessResolver;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,7 +41,6 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $access_revoked_at
  * @property string|null $access_revoked_by
  * @property string|null $access_revocation_reason
- * @property string|null $current_team_id
  * @property string|null $profile_photo_disk
  * @property string|null $profile_photo_path
  * @property string|null $profile_photo_mime_type
@@ -52,20 +49,13 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $profile_photo_updated_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Team|null $currentTeam
- * @property-read Collection<int, Team> $ownedTeams
- * @property-read Collection<int, Membership> $teamMemberships
- * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'county_id', 'current_team_id', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum', 'profile_photo_updated_at'])]
+#[Fillable(['name', 'email', 'password', 'county_id', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum', 'profile_photo_updated_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum'])]
 class User extends Authenticatable implements OAuthenticatable, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, HasRoles, HasTeams, HasUuids, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable {
-        HasTeams::teams insteadof HasRoles;
-        HasRoles::teams as permissionTeams;
-    }
+    use HasApiTokens, HasFactory, HasRoles, HasUuids, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     /** @return BelongsTo<County, $this> */
     public function county(): BelongsTo

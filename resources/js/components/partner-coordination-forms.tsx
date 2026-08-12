@@ -22,7 +22,6 @@ type Option = {
     title?: string;
 };
 type Props = {
-    teamSlug: string;
     capabilities: { manage: boolean; submitData: boolean };
     organizations: Option[];
     counties: Option[];
@@ -42,13 +41,7 @@ export default function PartnerCoordinationForms(props: Props) {
     );
 }
 
-function ProfileForm({
-    teamSlug,
-    organizations,
-    counties,
-    sectors,
-    users,
-}: Props) {
+function ProfileForm({ organizations, counties, sectors, users }: Props) {
     return (
         <FormSheet
             title="Register partner"
@@ -56,11 +49,7 @@ function ProfileForm({
             icon={Handshake}
             description="Define the organization, authorised representatives, counties, sectors and delivery modalities."
         >
-            <Form
-                action={storeProfile(teamSlug)}
-                className="grid gap-4"
-                resetOnSuccess
-            >
+            <Form action={storeProfile()} className="grid gap-4" resetOnSuccess>
                 {({ errors, processing }) => (
                     <>
                         <Field
@@ -169,7 +158,7 @@ function ProfileForm({
     );
 }
 
-function AgreementForm({ teamSlug, partners }: Props) {
+function AgreementForm({ partners }: Props) {
     return (
         <FormSheet
             title="Register agreement"
@@ -178,7 +167,7 @@ function AgreementForm({ teamSlug, partners }: Props) {
             description="Catalogue MoUs, financing instruments and cooperation frameworks."
         >
             <Form
-                action={storeAgreement(teamSlug)}
+                action={storeAgreement()}
                 className="grid gap-4"
                 resetOnSuccess
             >
@@ -278,7 +267,7 @@ function AgreementForm({ teamSlug, partners }: Props) {
     );
 }
 
-function ContributionForm({ teamSlug, partners, projects }: Props) {
+function ContributionForm({ partners, projects }: Props) {
     return (
         <FormSheet
             title="Report contribution"
@@ -287,7 +276,7 @@ function ContributionForm({ teamSlug, partners, projects }: Props) {
             description="Record who funds what, where and how with traceable source provenance."
         >
             <Form
-                action={storeContribution(teamSlug)}
+                action={storeContribution()}
                 className="grid gap-4"
                 resetOnSuccess
             >

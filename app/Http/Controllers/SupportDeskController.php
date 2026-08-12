@@ -126,7 +126,7 @@ class SupportDeskController extends Controller
         return back()->with('success', "Support ticket {$ticket->reference} submitted.");
     }
 
-    public function assign(AssignSupportTicketRequest $request, string $currentTeam, SupportTicket $supportTicket, AssignSupportTicket $action): RedirectResponse
+    public function assign(AssignSupportTicketRequest $request, SupportTicket $supportTicket, AssignSupportTicket $action): RedirectResponse
     {
         $assignee = User::query()->findOrFail($request->string('assigned_to')->toString());
         $action->handle($supportTicket, $this->user($request), $assignee, $request->string('narrative')->toString());
@@ -134,7 +134,7 @@ class SupportDeskController extends Controller
         return back()->with('success', 'Support ticket assignment recorded.');
     }
 
-    public function transition(TransitionSupportTicketRequest $request, string $currentTeam, SupportTicket $supportTicket, TransitionSupportTicket $action): RedirectResponse
+    public function transition(TransitionSupportTicketRequest $request, SupportTicket $supportTicket, TransitionSupportTicket $action): RedirectResponse
     {
         $action->handle($supportTicket, $this->user($request), $request->validated());
 
@@ -148,7 +148,7 @@ class SupportDeskController extends Controller
         return back()->with('success', "Service-desk policy {$policy->code} v{$policy->version} drafted.");
     }
 
-    public function publishPolicy(PublishServiceDeskPolicyRequest $request, string $currentTeam, ServiceDeskPolicy $serviceDeskPolicy, PublishServiceDeskPolicy $action): RedirectResponse
+    public function publishPolicy(PublishServiceDeskPolicyRequest $request, ServiceDeskPolicy $serviceDeskPolicy, PublishServiceDeskPolicy $action): RedirectResponse
     {
         $validated = $request->validated();
         $action->handle($serviceDeskPolicy, $this->user($request), [

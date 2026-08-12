@@ -61,17 +61,17 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
 
-        $this->actingAs($admin)->get(route('projects.index', $admin->currentTeam->slug))
+        $this->actingAs($admin)->get(route('projects.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('projects.data.0.referenceRelease.version', $release->version)
                 ->where('projects.data.0.referenceRelease.checksum', $release->checksum));
-        $this->actingAs($admin)->get(route('projects.show', [$admin->currentTeam->slug, $project]))
+        $this->actingAs($admin)->get(route('projects.show', [$project]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('referenceRelease.version', $release->version)
                 ->where('referenceRelease.checksum', $release->checksum));
-        $export = $this->actingAs($admin)->get(route('workspace.export', [$admin->currentTeam->slug, 'projects', 'json']))
+        $export = $this->actingAs($admin)->get(route('workspace.export', ['projects', 'json']))
             ->assertOk()
             ->streamedContent();
         $this->assertStringContainsString('Reference release', $export);
@@ -142,11 +142,11 @@ class ProjectManagementWorkflowTest extends TestCase
         $hidden = DevolutionProject::factory()->create(['lead_county_id' => $other->id]);
         $hidden->counties()->attach($other, ['is_lead' => true]);
 
-        $this->actingAs($admin)->get(route('projects.index', $admin->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($admin)->get(route('projects.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('projects/index')->where('projects.total', 1)->where('projects.data.0.id', $visible->id));
-        $this->actingAs($admin)->get(route('projects.show', [$admin->currentTeam->slug, $visible]))->assertOk()->assertInertia(fn (Assert $page) => $page->component('projects/show')->has('project.milestones')->has('project.budget_lines')->has('project.risks')->has('project.procurements')->has('project.progress_updates')->where('referenceRelease', null));
-        $this->actingAs($admin)->get(route('projects.show', [$admin->currentTeam->slug, $hidden]))->assertForbidden();
-        $export = $this->actingAs($admin)->get(route('workspace.export', [$admin->currentTeam->slug, 'projects', 'json']))->assertOk();
+        $this->actingAs($admin)->get(route('projects.show', [$visible]))->assertOk()->assertInertia(fn (Assert $page) => $page->component('projects/show')->has('project.milestones')->has('project.budget_lines')->has('project.risks')->has('project.procurements')->has('project.progress_updates')->where('referenceRelease', null));
+        $this->actingAs($admin)->get(route('projects.show', [$hidden]))->assertForbidden();
+        $export = $this->actingAs($admin)->get(route('workspace.export', ['projects', 'json']))->assertOk();
         $exportedContent = $export->streamedContent();
         $this->assertStringContainsString($visible->code, $exportedContent);
         $this->assertStringNotContainsString($hidden->code, $exportedContent);
@@ -159,7 +159,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $project = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $project->counties()->attach($county, ['is_lead' => true]);
 
-        $this->actingAs($official)->post(route('projects.progress-updates.store', [$official->currentTeam->slug, $project]), [
+        $this->actingAs($official)->post(route('projects.progress-updates.store', [$project]), [
             'reporting_date' => today()->toDateString(), 'physical_progress' => 35, 'financial_progress' => 28,
             'narrative' => 'Foundation works completed.', 'provenance' => ['source_system' => 'county-investment-dashboard', 'captured_at' => now()->toIso8601String()],
         ])->assertRedirect();
@@ -178,7 +178,7 @@ class ProjectManagementWorkflowTest extends TestCase
 
         $assessor = User::factory()->assessor()->create();
         $assessor->assignedCounties()->attach($county);
-        $this->actingAs($assessor)->patch(route('projects.progress-updates.verify', [$assessor->currentTeam->slug, $project, $update]), [
+        $this->actingAs($assessor)->patch(route('projects.progress-updates.verify', [$project, $update]), [
             'status' => 'verified', 'rationale' => 'Site certificate and expenditure report reconciled.',
         ])->assertRedirect();
         $this->assertSame('verified', $update->refresh()->verification_status);
@@ -199,7 +199,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $project->counties()->attach($county, ['is_lead' => true]);
         $project->indicators()->attach($indicator, ['is_primary' => true]);
 
-        $this->actingAs($official)->post(route('projects.progress-updates.store', [$official->currentTeam->slug, $project]), [
+        $this->actingAs($official)->post(route('projects.progress-updates.store', [$project]), [
             'reporting_date' => today()->toDateString(), 'physical_progress' => 42, 'financial_progress' => 38,
             'narrative' => 'Verified outputs recorded for the reporting quarter.',
             'provenance' => ['source_system' => 'county-investment-dashboard', 'captured_at' => now()->toIso8601String()],
@@ -219,7 +219,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertTrue(Str::isUuid($sourceResult->id));
         $this->assertSame(['sex' => 'female'], $sourceResult->disaggregation);
 
-        $this->actingAs($projectVerifier)->patch(route('projects.progress-updates.verify', [$projectVerifier->currentTeam->slug, $project, $update]), [
+        $this->actingAs($projectVerifier)->patch(route('projects.progress-updates.verify', [$project, $update]), [
             'status' => 'verified', 'rationale' => 'Project source register and delivery certificate reconciled.',
         ])->assertRedirect();
 
@@ -234,9 +234,7 @@ class ProjectManagementWorkflowTest extends TestCase
 
         app(IngestVerifiedProjectResults::class)->handle($update->refresh(), $projectVerifier);
         $this->assertDatabaseCount('indicator_observations', 1);
-        $this->actingAs($meVerifier)->get(route('monitoring-evaluation.index', [
-            $meVerifier->currentTeam->slug,
-            'county_id' => $county->id,
+        $this->actingAs($meVerifier)->get(route('monitoring-evaluation.index', ['county_id' => $county->id,
             'status' => 'submitted',
         ]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('results.summary.total', 1)
@@ -256,15 +254,13 @@ class ProjectManagementWorkflowTest extends TestCase
         $verified = app(VerifyIndicatorObservation::class)->handle($meVerifier, $observation, $this->indicatorVerificationPayload());
         $this->assertSame('verified', $verified->verification_status);
         $this->assertSame($meVerifier->id, $verified->verified_by);
-        $this->actingAs($meVerifier)->get(route('monitoring-evaluation.index', [$meVerifier->currentTeam->slug, 'county_id' => $county->id]))
+        $this->actingAs($meVerifier)->get(route('monitoring-evaluation.index', ['county_id' => $county->id]))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('results.summary.verified', 1)
             ->where('results.indicators.0.code', 'M07-PROJECT-01')
             ->where('results.indicators.0.average', 64.25)
             ->where('results.disaggregations.0.dimension', 'sex:female'));
-        $export = $this->actingAs($meVerifier)->get(route('workspace.export', [
-            $meVerifier->currentTeam->slug,
-            'monitoring-evaluation',
+        $export = $this->actingAs($meVerifier)->get(route('workspace.export', ['monitoring-evaluation',
             'json',
             'county_id' => $county->id,
             'status' => 'verified',
@@ -298,11 +294,11 @@ class ProjectManagementWorkflowTest extends TestCase
             ]],
         ];
 
-        $this->actingAs($official)->post(route('projects.progress-updates.store', [$official->currentTeam->slug, $project]), $payload)
+        $this->actingAs($official)->post(route('projects.progress-updates.store', [$project]), $payload)
             ->assertSessionHasErrors('indicator_results.0.indicator_definition_id');
         $project->indicators()->attach($unlinkedIndicator);
         $payload['indicator_results'][0]['county_id'] = $otherCounty->id;
-        $this->actingAs($official)->post(route('projects.progress-updates.store', [$official->currentTeam->slug, $project]), $payload)
+        $this->actingAs($official)->post(route('projects.progress-updates.store', [$project]), $payload)
             ->assertSessionHasErrors('indicator_results.0.county_id');
         $this->assertDatabaseCount('project_progress_updates', 0);
         $this->assertDatabaseCount('project_indicator_results', 0);
@@ -322,26 +318,26 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$leadCounty, $participatingCounty], $sector, $administrator);
         $project = app(CreateDevolutionProject::class)->handle($administrator, $this->projectPayload($leadCounty, $participatingCounty, $sector));
 
-        $this->actingAs($administrator)->patch(route('projects.transition', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->patch(route('projects.transition', [$project]), [
             'transition' => 'plan', 'comment' => 'The approved project plan is ready for detailed delivery controls.',
         ])->assertRedirect();
-        $this->actingAs($administrator)->patch(route('projects.transition', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->patch(route('projects.transition', [$project]), [
             'transition' => 'start_execution', 'comment' => 'Planning controls are complete and execution is authorized.',
         ])->assertRedirect();
-        $this->actingAs($reportingOfficer)->post(route('projects.progress-updates.store', [$reportingOfficer->currentTeam->slug, $project]), [
+        $this->actingAs($reportingOfficer)->post(route('projects.progress-updates.store', [$project]), [
             'reporting_date' => today()->toDateString(), 'physical_progress' => 100, 'financial_progress' => 98,
             'narrative' => 'All approved outputs are complete and pending independent closure verification.',
             'provenance' => ['source_system' => 'project-completion-certificate', 'captured_at' => now()->toIso8601String()],
         ])->assertRedirect();
         $progressUpdate = $project->progressUpdates()->sole();
-        $this->actingAs($verifier)->patch(route('projects.progress-updates.verify', [$verifier->currentTeam->slug, $project, $progressUpdate]), [
+        $this->actingAs($verifier)->patch(route('projects.progress-updates.verify', [$project, $progressUpdate]), [
             'status' => 'verified', 'rationale' => 'Physical completion was independently reconciled to certified outputs.',
         ])->assertRedirect();
 
-        $this->actingAs($administrator)->patch(route('projects.transition', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->patch(route('projects.transition', [$project]), [
             'transition' => 'submit_closure', 'comment' => 'A narrative alone must not satisfy the retained closure-report gate.',
         ])->assertSessionHasErrors('transition');
-        $this->actingAs($administrator)->post(route('projects.documents.store', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->post(route('projects.documents.store', [$project]), [
             'record_purpose' => 'closure_report', 'title' => 'Signed final project closure report', 'category' => 'Project closure', 'source_type' => 'scanned',
             'document' => UploadedFile::fake()->create('signed-project-closure-report.pdf', 30, 'application/pdf'),
         ])->assertRedirect();
@@ -350,19 +346,19 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertSame('clean', $link->document->scan_status);
         Storage::disk('local')->assertExists($link->document->path);
 
-        $this->actingAs($administrator)->patch(route('projects.transition', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->patch(route('projects.transition', [$project]), [
             'transition' => 'submit_closure', 'comment' => 'Verified completion and the signed closure report are submitted for approval.',
         ])->assertRedirect();
         $this->assertSame('closure_review', $project->refresh()->lifecycle_stage);
-        $this->actingAs($administrator)->patch(route('projects.transition', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->patch(route('projects.transition', [$project]), [
             'transition' => 'approve_closure', 'comment' => 'The closure submitter must not approve the same project closure.',
         ])->assertForbidden();
-        $this->actingAs($verifier)->patch(route('projects.transition', [$verifier->currentTeam->slug, $project]), [
+        $this->actingAs($verifier)->patch(route('projects.transition', [$project]), [
             'transition' => 'approve_closure', 'comment' => 'Completion, expenditure, retained report and outcome records are independently verified.',
         ])->assertRedirect();
         $this->assertSame('closed', $project->refresh()->lifecycle_stage);
         $this->assertSame('closed', $project->status);
-        $this->actingAs($administrator)->post(route('projects.documents.store', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->post(route('projects.documents.store', [$project]), [
             'record_purpose' => 'closure_report', 'title' => 'Late replacement report', 'category' => 'Project closure', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late-report.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
@@ -374,7 +370,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $project = DevolutionProject::factory()->create(['lead_county_id' => $county->id, 'status' => 'active', 'lifecycle_stage' => 'execution']);
         $project->counties()->attach($county, ['is_lead' => true]);
-        $routeArguments = [$administrator->currentTeam->slug, $project];
+        $routeArguments = [$project];
 
         $this->actingAs($administrator)->post(route('projects.milestones.store', $routeArguments), [
             'code' => 'MS-01', 'title' => 'Initial works', 'planned_start_date' => '2026-08-01', 'planned_end_date' => '2026-12-31', 'weight' => 40,
@@ -420,7 +416,7 @@ class ProjectManagementWorkflowTest extends TestCase
 
         $otherProject = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $otherProject->counties()->attach($county, ['is_lead' => true]);
-        $this->actingAs($administrator)->patch(route('projects.milestones.update', [$administrator->currentTeam->slug, $otherProject, $milestone]), [
+        $this->actingAs($administrator)->patch(route('projects.milestones.update', [$otherProject, $milestone]), [
             'title' => 'Cross-project amendment', 'planned_start_date' => '2026-08-01', 'planned_end_date' => '2026-12-31', 'weight' => 40, 'progress' => 100, 'status' => 'completed', 'amendment_reason' => $reason,
         ])->assertNotFound();
         $project->update(['status' => 'closed']);
@@ -435,7 +431,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $project = DevolutionProject::factory()->create(['lead_county_id' => $county->id, 'status' => 'active', 'lifecycle_stage' => 'execution']);
         $project->counties()->attach($county, ['is_lead' => true]);
-        $routeArguments = [$administrator->currentTeam->slug, $project];
+        $routeArguments = [$project];
 
         foreach ([
             ['code' => 'MS-01', 'title' => 'Design approval', 'dependencies' => []],
@@ -499,13 +495,13 @@ class ProjectManagementWorkflowTest extends TestCase
             $participatingCounty->id => ['is_lead' => false],
         ]);
 
-        $this->actingAs($uploader)->post(route('projects.documents.store', [$uploader->currentTeam->slug, $project]), [
+        $this->actingAs($uploader)->post(route('projects.documents.store', [$project]), [
             'title' => 'Signed site inspection certificate',
             'category' => 'Implementation evidence',
             'source_type' => 'scanned',
             'document' => UploadedFile::fake()->image('site-certificate.jpg'),
         ])->assertRedirect();
-        $this->actingAs($uploader)->post(route('projects.documents.store', [$uploader->currentTeam->slug, $project]), [
+        $this->actingAs($uploader)->post(route('projects.documents.store', [$project]), [
             'title' => 'Approved project work plan',
             'category' => 'Planning',
             'source_type' => 'digital',
@@ -521,16 +517,16 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $links->firstOrFail()->document->id, 'action' => 'document.linked_uploaded']);
 
         $scannedDocument = $links->firstOrFail()->document;
-        $this->actingAs($uploader)->get(route('evidence.preview', [$uploader->currentTeam->slug, $scannedDocument]))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
-        $this->actingAs($uploader)->get(route('projects.show', [$uploader->currentTeam->slug, $project]))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($uploader)->get(route('evidence.preview', [$scannedDocument]))->assertOk()->assertHeader('Content-Type', 'image/jpeg');
+        $this->actingAs($uploader)->get(route('projects.show', [$project]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('documents', 2)
             ->where('documents', fn ($documents): bool => collect($documents)->pluck('title')->sort()->values()->all() === ['Approved project work plan', 'Signed site inspection certificate'])
             ->where('capabilities.uploadDocuments', true));
-        $this->actingAs($uploader)->get(route('evidence.index', $uploader->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($uploader)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('workspace.pagination.total', 2));
-        $this->actingAs($outsider)->get(route('evidence.preview', [$outsider->currentTeam->slug, $scannedDocument]))->assertForbidden();
-        $this->actingAs($viewerWithoutUploadPermission)->get(route('evidence.preview', [$viewerWithoutUploadPermission->currentTeam->slug, $scannedDocument]))->assertOk();
-        $this->actingAs($viewerWithoutUploadPermission)->post(route('projects.documents.store', [$viewerWithoutUploadPermission->currentTeam->slug, $project]), [
+        $this->actingAs($outsider)->get(route('evidence.preview', [$scannedDocument]))->assertForbidden();
+        $this->actingAs($viewerWithoutUploadPermission)->get(route('evidence.preview', [$scannedDocument]))->assertOk();
+        $this->actingAs($viewerWithoutUploadPermission)->post(route('projects.documents.store', [$project]), [
             'title' => 'Unauthorized upload',
             'category' => 'Planning',
             'source_type' => 'digital',
@@ -538,7 +534,7 @@ class ProjectManagementWorkflowTest extends TestCase
         ])->assertForbidden();
 
         $project->update(['status' => 'closed']);
-        $this->actingAs($uploader)->post(route('projects.documents.store', [$uploader->currentTeam->slug, $project]), [
+        $this->actingAs($uploader)->post(route('projects.documents.store', [$project]), [
             'title' => 'Late closure document',
             'category' => 'Closure',
             'source_type' => 'digital',
@@ -561,17 +557,17 @@ class ProjectManagementWorkflowTest extends TestCase
         $mobilization = $project->milestones()->create(['code' => 'MS-03', 'title' => 'Independent mobilization', 'planned_start_date' => '2026-01-01', 'planned_end_date' => '2026-01-03', 'weight' => 30, 'dependencies' => []]);
         $reason = 'The planning review confirmed the complete dependency-linked delivery schedule.';
 
-        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$requester->currentTeam->slug, $project]), ['baseline_reason' => $reason])->assertRedirect();
+        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$project]), ['baseline_reason' => $reason])->assertRedirect();
         $baseline = ProjectScheduleBaseline::query()->sole();
         $this->assertTrue(Str::isUuid($baseline->id));
         $this->assertSame('pending', $baseline->status);
         $this->assertSame(1, $baseline->version);
         $this->assertSame(['MS-01', 'MS-02'], $baseline->critical_path_analysis['critical_path_codes']);
         $this->assertSame(7, collect($baseline->critical_path_analysis['milestones'])->firstWhere('id', $mobilization->id)['total_float_days']);
-        $this->actingAs($requester)->patch(route('projects.schedule-baselines.decide', [$requester->currentTeam->slug, $project, $baseline]), [
+        $this->actingAs($requester)->patch(route('projects.schedule-baselines.decide', [$project, $baseline]), [
             'decision' => 'approve', 'decision_rationale' => 'The requester must not independently approve the same baseline.',
         ])->assertSessionHasErrors('decision');
-        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$reviewer->currentTeam->slug, $project, $baseline]), [
+        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$project, $baseline]), [
             'decision' => 'approve', 'decision_rationale' => 'Dependencies, milestone dates, weights and delivery authority were independently verified.',
         ])->assertRedirect();
         $this->assertSame('approved', $baseline->refresh()->status);
@@ -580,7 +576,7 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $baseline->id, 'action' => 'project.schedule_baseline_approved']);
 
         $works->update(['planned_end_date' => '2026-01-12', 'actual_start_date' => '2026-01-06', 'progress' => 50, 'status' => 'in_progress']);
-        $this->actingAs($reviewer)->get(route('projects.show', [$reviewer->currentTeam->slug, $project]))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($reviewer)->get(route('projects.show', [$project]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('scheduleBaselines.0.version', 1)
             ->where('scheduleBaselines.0.status', 'approved')
             ->where('scheduleAnalysis.baseline_finish', '2026-01-10')
@@ -589,7 +585,7 @@ class ProjectManagementWorkflowTest extends TestCase
             ->where('scheduleAnalysis.planned_variance_days', 2)
             ->where('scheduleAnalysis.forecast_variance_days', 5)
             ->where('scheduleAnalysis.critical_path_codes', ['MS-01', 'MS-02']));
-        $export = $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'projects', 'json']))->assertOk()->streamedContent();
+        $export = $this->actingAs($reviewer)->get(route('workspace.export', ['projects', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('MS-01', $export);
         $this->assertStringContainsString('2026-01-15', $export);
         $this->assertStringContainsString('v1', $export);
@@ -613,18 +609,18 @@ class ProjectManagementWorkflowTest extends TestCase
         $milestone = $project->milestones()->create(['code' => 'MS-01', 'title' => 'Incomplete schedule', 'planned_start_date' => '2026-02-01', 'planned_end_date' => '2026-02-10', 'weight' => 80, 'dependencies' => []]);
         $payload = ['baseline_reason' => 'The complete schedule is being submitted for independent baseline review.'];
 
-        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$requester->currentTeam->slug, $project]), $payload)->assertStatus(422);
+        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$project]), $payload)->assertStatus(422);
         $milestone->update(['weight' => 100]);
-        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$requester->currentTeam->slug, $project]), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('projects.schedule-baselines.store', [$project]), $payload)->assertRedirect();
         $baseline = ProjectScheduleBaseline::query()->sole();
         $milestone->update(['planned_end_date' => '2026-02-12']);
         $decision = ['decision' => 'approve', 'decision_rationale' => 'The schedule was independently reviewed against current milestone controls.'];
-        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$reviewer->currentTeam->slug, $project, $baseline]), $decision)->assertSessionHasErrors('decision');
+        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$project, $baseline]), $decision)->assertSessionHasErrors('decision');
         $this->assertSame('pending', $baseline->refresh()->status);
 
         $otherProject = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $otherProject->counties()->attach($county, ['is_lead' => true]);
-        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$reviewer->currentTeam->slug, $otherProject, $baseline]), $decision)->assertNotFound();
+        $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$otherProject, $baseline]), $decision)->assertNotFound();
     }
 
     public function test_resource_capacity_is_project_bound_costed_and_enforced_for_each_overlapping_day(): void
@@ -643,7 +639,7 @@ class ProjectManagementWorkflowTest extends TestCase
             'code' => 'MS-CAP', 'title' => 'Capacity-controlled delivery', 'planned_start_date' => '2026-01-05', 'planned_end_date' => '2026-01-20', 'weight' => 100, 'dependencies' => [],
         ]);
 
-        $this->actingAs($administrator)->post(route('projects.resources.store', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->post(route('projects.resources.store', [$project]), [
             'code' => 'ENG-01', 'name' => 'Resident engineer', 'resource_type' => 'human', 'capacity_unit' => 'hours', 'capacity_per_day' => 8, 'cost_rate' => 125, 'available_from' => '2026-01-01', 'available_to' => '2026-01-31',
         ])->assertRedirect();
         $resource = ProjectResource::query()->sole();
@@ -652,26 +648,26 @@ class ProjectManagementWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $resource->id, 'action' => 'project.resource_created']);
 
         $allocation = ['project_resource_id' => $resource->id, 'project_milestone_id' => $milestone->id, 'starts_on' => '2026-01-05', 'ends_on' => '2026-01-09', 'planned_units_per_day' => 6, 'notes' => 'Primary supervision allocation.'];
-        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$administrator->currentTeam->slug, $project]), $allocation)->assertRedirect();
+        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$project]), $allocation)->assertRedirect();
         $created = ProjectResourceAllocation::query()->sole();
         $this->assertSame('30.0000', $created->planned_units);
         $this->assertSame('3750.00', $created->planned_cost);
         $this->assertSame(64, strlen($created->allocation_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $created->id, 'action' => 'project.resource_allocated']);
-        $this->actingAs($administrator)->get(route('projects.show', [$administrator->currentTeam->slug, $project]))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($administrator)->get(route('projects.show', [$project]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('resourcePlan.0.id', $resource->id)
             ->where('resourcePlan.0.currency', 'USD')
             ->where('resourcePlan.0.plannedCost', 3750)
             ->where('resourcePlan.0.allocations.0.checksum', $created->allocation_checksum));
 
-        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$administrator->currentTeam->slug, $project]), [
+        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$project]), [
             ...$allocation, 'starts_on' => '2026-01-08', 'ends_on' => '2026-01-12', 'planned_units_per_day' => 3,
         ])->assertSessionHasErrors('planned_units_per_day');
         $this->assertDatabaseCount('project_resource_allocations', 1);
 
         $otherProject = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $otherProject->counties()->attach($county, ['is_lead' => true]);
-        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$administrator->currentTeam->slug, $otherProject]), $allocation)->assertNotFound();
+        $this->actingAs($administrator)->post(route('projects.resource-allocations.store', [$otherProject]), $allocation)->assertNotFound();
     }
 
     public function test_approved_weighted_baseline_drives_reproducible_earned_value_forecast(): void
@@ -706,7 +702,7 @@ class ProjectManagementWorkflowTest extends TestCase
             'decided_at' => now(),
         ]);
 
-        $this->actingAs($viewer)->get(route('projects.show', [$viewer->currentTeam->slug, $project]))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($viewer)->get(route('projects.show', [$project]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('earnedValueAnalysis.available', true)
             ->where('earnedValueAnalysis.method', 'CPI-only earned value forecast using approved weighted schedule baseline')
             ->where('earnedValueAnalysis.planned_completion_percent', 50)
@@ -717,7 +713,7 @@ class ProjectManagementWorkflowTest extends TestCase
             ->where('earnedValueAnalysis.schedule_performance_index', 0.8)
             ->where('earnedValueAnalysis.estimate_at_completion', 75000)
             ->where('earnedValueAnalysis.variance_at_completion', 25000));
-        $export = $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'projects', 'json']))->assertOk()->streamedContent();
+        $export = $this->actingAs($viewer)->get(route('workspace.export', ['projects', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('Resource plan cost', $export);
         $this->assertStringContainsString('75000', $export);
         $this->assertStringContainsString('1.3333', $export);

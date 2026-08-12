@@ -61,7 +61,7 @@ class AssessmentWorkflowController extends Controller
 {
     public function __construct(private TransitionAssessment $transition) {}
 
-    public function store(StoreAssessmentRequest $request, string $currentTeam, CreateAssessment $create): RedirectResponse
+    public function store(StoreAssessmentRequest $request, CreateAssessment $create): RedirectResponse
     {
         $assessment = $create->handle(
             $this->user($request),
@@ -70,10 +70,10 @@ class AssessmentWorkflowController extends Controller
         );
         Inertia::flash('toast', ['type' => 'success', 'message' => 'County assessment initiated with governed catalogue and scorecard lineage.']);
 
-        return to_route('assessments.show', [$currentTeam, $assessment]);
+        return to_route('assessments.show', $assessment);
     }
 
-    public function show(Request $request, string $currentTeam, Assessment $assessment, AssessmentDetailData $detailData): Response
+    public function show(Request $request, Assessment $assessment, AssessmentDetailData $detailData): Response
     {
         Gate::authorize(ProgrammePermission::ViewCountyData->value);
         $this->authorizeCounty($request, $assessment);
@@ -90,17 +90,17 @@ class AssessmentWorkflowController extends Controller
         ]);
     }
 
-    public function submit(Request $request, string $currentTeam, Assessment $assessment): RedirectResponse
+    public function submit(Request $request, Assessment $assessment): RedirectResponse
     {
         return $this->transition($request, $assessment, ProgrammePermission::SubmitAssessment, [AssessmentStatus::Draft, AssessmentStatus::EvidenceCollection], AssessmentStatus::Submitted);
     }
 
-    public function review(Request $request, string $currentTeam, Assessment $assessment): RedirectResponse
+    public function review(Request $request, Assessment $assessment): RedirectResponse
     {
         return $this->transition($request, $assessment, ProgrammePermission::ReviewAssessment, [AssessmentStatus::Submitted], AssessmentStatus::UnderAssessment);
     }
 
-    public function score(ScoreAssessmentRequest $request, string $currentTeam, Assessment $assessment): RedirectResponse
+    public function score(ScoreAssessmentRequest $request, Assessment $assessment): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         abort_if($assessment->assessment_scorecard_version_id !== null, 409, 'Governed assessments must be calculated from verified criterion results.');
@@ -111,7 +111,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function approve(Request $request, string $currentTeam, Assessment $assessment): RedirectResponse
+    public function approve(Request $request, Assessment $assessment): RedirectResponse
     {
         if ($assessment->assessment_scorecard_version_id !== null) {
             abort_unless($assessment->score !== null && $assessment->completeness_percentage >= 100 && $assessment->attestation_status === 'attested', 409, 'A calculated, complete and attested assessment is required for approval.');
@@ -121,7 +121,7 @@ class AssessmentWorkflowController extends Controller
         return $this->transition($request, $assessment, ProgrammePermission::ApproveAssessment, [AssessmentStatus::Assessed], AssessmentStatus::Approved);
     }
 
-    public function submitCriterionScore(SubmitCriterionScoreRequest $request, string $currentTeam, Assessment $assessment, AssessmentCriterion $criterion, SubmitCriterionScore $action): RedirectResponse
+    public function submitCriterionScore(SubmitCriterionScoreRequest $request, Assessment $assessment, AssessmentCriterion $criterion, SubmitCriterionScore $action): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $criterion, $this->user($request), (float) $request->validated('score'), $request->validated('rationale'));
@@ -130,7 +130,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function verifyCriterionScore(VerifyCriterionScoreRequest $request, string $currentTeam, Assessment $assessment, AssessmentCriterionResult $result, VerifyCriterionScore $action): RedirectResponse
+    public function verifyCriterionScore(VerifyCriterionScoreRequest $request, Assessment $assessment, AssessmentCriterionResult $result, VerifyCriterionScore $action): RedirectResponse
     {
         abort_unless($result->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -139,7 +139,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function overrideCriterionScore(OverrideCriterionScoreRequest $request, string $currentTeam, Assessment $assessment, AssessmentCriterionResult $result, OverrideCriterionScore $action): RedirectResponse
+    public function overrideCriterionScore(OverrideCriterionScoreRequest $request, Assessment $assessment, AssessmentCriterionResult $result, OverrideCriterionScore $action): RedirectResponse
     {
         abort_unless($result->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -148,7 +148,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function calculate(Request $request, string $currentTeam, Assessment $assessment, CalculateAssessmentScore $action): RedirectResponse
+    public function calculate(Request $request, Assessment $assessment, CalculateAssessmentScore $action): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ScoreAssessment->value);
         $this->authorizeCounty($request, $assessment);
@@ -157,7 +157,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function attest(AttestAssessmentRequest $request, string $currentTeam, Assessment $assessment, AttestAssessment $action): RedirectResponse
+    public function attest(AttestAssessmentRequest $request, Assessment $assessment, AttestAssessment $action): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $this->user($request), $request->validated('attestor_title'), $request->validated('statement'));
@@ -165,7 +165,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function storeFinding(StoreAssessmentFindingRequest $request, string $currentTeam, Assessment $assessment, RecordAssessmentFinding $action): RedirectResponse
+    public function storeFinding(StoreAssessmentFindingRequest $request, Assessment $assessment, RecordAssessmentFinding $action): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $this->user($request), [
@@ -181,7 +181,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function storeAppeal(StoreAssessmentAppealRequest $request, string $currentTeam, Assessment $assessment, SubmitAssessmentAppeal $action): RedirectResponse
+    public function storeAppeal(StoreAssessmentAppealRequest $request, Assessment $assessment, SubmitAssessmentAppeal $action): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $this->user($request), $request->validated('grounds'), $request->validated('requested_remedy'), $request->validated('assessment_criterion_id'));
@@ -189,7 +189,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function respondToFinding(RespondAssessmentFindingRequest $request, string $currentTeam, Assessment $assessment, AssessmentFinding $finding, RespondToAssessmentFinding $action): RedirectResponse
+    public function respondToFinding(RespondAssessmentFindingRequest $request, Assessment $assessment, AssessmentFinding $finding, RespondToAssessmentFinding $action): RedirectResponse
     {
         abort_unless($finding->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -198,7 +198,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function resolveFinding(ResolveAssessmentFindingRequest $request, string $currentTeam, Assessment $assessment, AssessmentFinding $finding, ResolveAssessmentFinding $action): RedirectResponse
+    public function resolveFinding(ResolveAssessmentFindingRequest $request, Assessment $assessment, AssessmentFinding $finding, ResolveAssessmentFinding $action): RedirectResponse
     {
         abort_unless($finding->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -207,7 +207,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function decideAppeal(DecideAssessmentAppealRequest $request, string $currentTeam, Assessment $assessment, AssessmentAppeal $appeal, DecideAssessmentAppeal $action): RedirectResponse
+    public function decideAppeal(DecideAssessmentAppealRequest $request, Assessment $assessment, AssessmentAppeal $appeal, DecideAssessmentAppeal $action): RedirectResponse
     {
         abort_unless($appeal->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -216,7 +216,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function publish(Request $request, string $currentTeam, Assessment $assessment, PublishAssessmentResult $action): RedirectResponse
+    public function publish(Request $request, Assessment $assessment, PublishAssessmentResult $action): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ApproveAssessment->value);
         $this->authorizeCounty($request, $assessment);
@@ -225,7 +225,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function storeCorrectivePlan(StoreAssessmentCorrectivePlanRequest $request, string $currentTeam, Assessment $assessment, CreateAssessmentCorrectivePlan $action): RedirectResponse
+    public function storeCorrectivePlan(StoreAssessmentCorrectivePlanRequest $request, Assessment $assessment, CreateAssessmentCorrectivePlan $action): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $this->user($request), $request->payload());
@@ -234,7 +234,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function reviewCorrectivePlan(ReviewAssessmentCorrectivePlanRequest $request, string $currentTeam, Assessment $assessment, AssessmentCorrectivePlan $plan, ReviewAssessmentCorrectivePlan $action): RedirectResponse
+    public function reviewCorrectivePlan(ReviewAssessmentCorrectivePlanRequest $request, Assessment $assessment, AssessmentCorrectivePlan $plan, ReviewAssessmentCorrectivePlan $action): RedirectResponse
     {
         abort_unless($plan->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -243,7 +243,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function storeCorrectiveUpdate(StoreAssessmentCorrectiveUpdateRequest $request, string $currentTeam, Assessment $assessment, AssessmentCorrectivePlan $plan, AssessmentCorrectiveAction $correctiveAction, RecordAssessmentCorrectiveUpdate $action): RedirectResponse
+    public function storeCorrectiveUpdate(StoreAssessmentCorrectiveUpdateRequest $request, Assessment $assessment, AssessmentCorrectivePlan $plan, AssessmentCorrectiveAction $correctiveAction, RecordAssessmentCorrectiveUpdate $action): RedirectResponse
     {
         abort_unless($plan->assessment_id === $assessment->id && $correctiveAction->assessment_corrective_plan_id === $plan->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -253,7 +253,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function verifyCorrectiveUpdate(VerifyAssessmentCorrectiveUpdateRequest $request, string $currentTeam, Assessment $assessment, AssessmentCorrectivePlan $plan, AssessmentCorrectiveAction $correctiveAction, AssessmentCorrectiveUpdate $update, VerifyAssessmentCorrectiveUpdate $action): RedirectResponse
+    public function verifyCorrectiveUpdate(VerifyAssessmentCorrectiveUpdateRequest $request, Assessment $assessment, AssessmentCorrectivePlan $plan, AssessmentCorrectiveAction $correctiveAction, AssessmentCorrectiveUpdate $update, VerifyAssessmentCorrectiveUpdate $action): RedirectResponse
     {
         abort_unless($plan->assessment_id === $assessment->id && $correctiveAction->assessment_corrective_plan_id === $plan->id && $update->assessment_corrective_action_id === $correctiveAction->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -262,7 +262,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function requestCorrectiveClosure(RequestAssessmentCorrectiveClosureRequest $request, string $currentTeam, Assessment $assessment, AssessmentCorrectivePlan $plan, RequestAssessmentCorrectiveClosure $action): RedirectResponse
+    public function requestCorrectiveClosure(RequestAssessmentCorrectiveClosureRequest $request, Assessment $assessment, AssessmentCorrectivePlan $plan, RequestAssessmentCorrectiveClosure $action): RedirectResponse
     {
         abort_unless($plan->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);
@@ -271,7 +271,7 @@ class AssessmentWorkflowController extends Controller
         return back();
     }
 
-    public function decideCorrectiveClosure(DecideAssessmentCorrectiveClosureRequest $request, string $currentTeam, Assessment $assessment, AssessmentCorrectivePlan $plan, DecideAssessmentCorrectiveClosure $action): RedirectResponse
+    public function decideCorrectiveClosure(DecideAssessmentCorrectiveClosureRequest $request, Assessment $assessment, AssessmentCorrectivePlan $plan, DecideAssessmentCorrectiveClosure $action): RedirectResponse
     {
         abort_unless($plan->assessment_id === $assessment->id, 404);
         $this->authorizeCounty($request, $assessment);

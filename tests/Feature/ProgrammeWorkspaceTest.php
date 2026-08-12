@@ -37,11 +37,11 @@ class ProgrammeWorkspaceTest extends TestCase
         $user = $this->userForRole($role, $county);
 
         foreach ($allowedRoutes as $routeName) {
-            $this->actingAs($user)->get(route($routeName, $user->currentTeam->slug))->assertOk();
+            $this->actingAs($user)->get(route($routeName))->assertOk();
         }
 
         foreach ($forbiddenRoutes as $routeName) {
-            $this->actingAs($user)->get(route($routeName, $user->currentTeam->slug))->assertForbidden();
+            $this->actingAs($user)->get(route($routeName))->assertForbidden();
         }
     }
 
@@ -51,7 +51,7 @@ class ProgrammeWorkspaceTest extends TestCase
         County::factory()->create(['name' => 'Hidden County']);
         $user = User::factory()->countyAdmin($home)->create();
 
-        $this->actingAs($user)->get(route('counties.index', $user->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($user)->get(route('counties.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('programme/workspace')
             ->has('workspace.rows', 1)
             ->where('workspace.rows.0.cells.0.kind', 'county')
@@ -70,7 +70,7 @@ class ProgrammeWorkspaceTest extends TestCase
         ]);
         $user = User::factory()->countyAdmin($county)->create();
 
-        $this->actingAs($user)->get(route('programme-users.index', $user->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($user)->get(route('programme-users.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('workspace.accessOptions.counties.0.kind', 'county')
             ->where('workspace.accessOptions.counties.0.name', 'Mombasa')
             ->where('workspace.accessOptions.counties.0.logoUrl', '/images/counties/mombasa.webp')

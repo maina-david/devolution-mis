@@ -121,7 +121,6 @@ type EvaluationFindingActionItem = {
 };
 
 export default function EvaluationFindingRegister({
-    teamSlug,
     findings,
     evaluations,
     owners,
@@ -129,7 +128,6 @@ export default function EvaluationFindingRegister({
     canVerify,
     currentUserId,
 }: {
-    teamSlug: string;
     findings: EvaluationFindingItem[];
     evaluations: EvaluationOption[];
     owners: Option[];
@@ -166,10 +164,7 @@ export default function EvaluationFindingRegister({
                         size="lg"
                     >
                         <Form
-                            {...store.form({
-                                current_team: teamSlug,
-                                evaluation: evaluationId,
-                            })}
+                            {...store.form({ evaluation: evaluationId })}
                             className="flex flex-col gap-4"
                             resetOnSuccess
                         >
@@ -372,7 +367,6 @@ export default function EvaluationFindingRegister({
                                 </TableCell>
                                 <TableCell>
                                     <FindingActions
-                                        teamSlug={teamSlug}
                                         item={item}
                                         currentUserId={currentUserId}
                                         canVerify={canVerify}
@@ -397,14 +391,12 @@ export default function EvaluationFindingRegister({
 type ActionMode = 'upload' | 'respond' | 'verify' | 'close' | 'plan' | null;
 
 function FindingActions({
-    teamSlug,
     item,
     currentUserId,
     canVerify,
     canManage,
     owners,
 }: {
-    teamSlug: string;
     item: EvaluationFindingItem;
     currentUserId: string;
     canVerify: boolean;
@@ -509,7 +501,6 @@ function FindingActions({
                         {mode === 'upload' && (
                             <Form
                                 {...storeFindingDocument.form({
-                                    current_team: teamSlug,
                                     finding: item.id,
                                 })}
                                 className="flex flex-col gap-4"
@@ -546,7 +537,6 @@ function FindingActions({
                         )}
                         {mode === 'plan' && (
                             <FindingActionPlan
-                                teamSlug={teamSlug}
                                 finding={item}
                                 owners={owners}
                                 currentUserId={currentUserId}
@@ -557,7 +547,6 @@ function FindingActions({
                         {mode === 'respond' && (
                             <Form
                                 {...storeFindingUpdate.form({
-                                    current_team: teamSlug,
                                     finding: item.id,
                                 })}
                                 className="flex flex-col gap-4"
@@ -609,10 +598,7 @@ function FindingActions({
                         )}
                         {mode === 'verify' && pending && (
                             <Form
-                                {...verify.form({
-                                    current_team: teamSlug,
-                                    update: pending.id,
-                                })}
+                                {...verify.form({ update: pending.id })}
                                 className="flex flex-col gap-4"
                                 resetOnSuccess
                             >
@@ -634,10 +620,7 @@ function FindingActions({
                         )}
                         {mode === 'close' && (
                             <Form
-                                {...close.form({
-                                    current_team: teamSlug,
-                                    finding: item.id,
-                                })}
+                                {...close.form({ finding: item.id })}
                                 className="flex flex-col gap-4"
                                 resetOnSuccess
                             >
@@ -665,14 +648,12 @@ function FindingActions({
 type PlanMode = 'add' | 'upload' | 'progress' | 'verify' | null;
 
 function FindingActionPlan({
-    teamSlug,
     finding,
     owners,
     currentUserId,
     canManage,
     canVerify,
 }: {
-    teamSlug: string;
     finding: EvaluationFindingItem;
     owners: Option[];
     currentUserId: string;
@@ -916,7 +897,6 @@ function FindingActionPlan({
                                         >
                                             <a
                                                 href={previewEvidence.url({
-                                                    current_team: teamSlug,
                                                     document: document.id,
                                                 })}
                                                 target="_blank"
@@ -933,7 +913,6 @@ function FindingActionPlan({
                                         >
                                             <a
                                                 href={downloadEvidence.url({
-                                                    current_team: teamSlug,
                                                     document: document.id,
                                                 })}
                                             >
@@ -949,10 +928,7 @@ function FindingActionPlan({
             )}
             {mode === 'add' && (
                 <Form
-                    {...storeFindingAction.form({
-                        current_team: teamSlug,
-                        finding: finding.id,
-                    })}
+                    {...storeFindingAction.form({ finding: finding.id })}
                     className="grid gap-4 rounded-lg border p-4"
                     resetOnSuccess
                 >
@@ -1056,10 +1032,7 @@ function FindingActionPlan({
             )}
             {mode === 'upload' && selected && (
                 <Form
-                    {...storeActionDocument.form({
-                        current_team: teamSlug,
-                        action: selected.id,
-                    })}
+                    {...storeActionDocument.form({ action: selected.id })}
                     className="grid gap-4 rounded-lg border p-4"
                     resetOnSuccess
                 >
@@ -1097,10 +1070,7 @@ function FindingActionPlan({
             )}
             {mode === 'progress' && selected && (
                 <Form
-                    {...storeActionUpdate.form({
-                        current_team: teamSlug,
-                        action: selected.id,
-                    })}
+                    {...storeActionUpdate.form({ action: selected.id })}
                     className="grid gap-4 rounded-lg border p-4"
                     resetOnSuccess
                 >
@@ -1147,10 +1117,7 @@ function FindingActionPlan({
             )}
             {mode === 'verify' && selected && pending && (
                 <Form
-                    {...verifyActionUpdate.form({
-                        current_team: teamSlug,
-                        update: pending.id,
-                    })}
+                    {...verifyActionUpdate.form({ update: pending.id })}
                     className="grid gap-4 rounded-lg border p-4"
                     resetOnSuccess
                 >

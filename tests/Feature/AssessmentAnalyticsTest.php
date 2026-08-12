@@ -31,7 +31,7 @@ class AssessmentAnalyticsTest extends TestCase
         $countyB->assignedUsers()->attach($assessor);
         $nationalAdmin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($countyAdmin)->get(route('assessments.analytics.index', $countyAdmin->currentTeam->slug))
+        $this->actingAs($countyAdmin)->get(route('assessments.analytics.index'))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('assessments/analytics')
             ->where('report.summary.counties', 1)
@@ -40,19 +40,19 @@ class AssessmentAnalyticsTest extends TestCase
             ->has('report.rankings.rows', 1)
             ->where('report.counties.0.county.name', 'Mombasa'));
 
-        $this->actingAs($assessor)->get(route('assessments.analytics.index', $assessor->currentTeam->slug))
+        $this->actingAs($assessor)->get(route('assessments.analytics.index'))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('report.summary.counties', 2)
             ->has('report.options.counties', 2)
             ->has('report.rankings.rows', 2));
 
-        $this->actingAs($nationalAdmin)->get(route('assessments.analytics.index', $nationalAdmin->currentTeam->slug))
+        $this->actingAs($nationalAdmin)->get(route('assessments.analytics.index'))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('report.summary.counties', 3)
             ->has('report.options.counties', 3)
             ->has('report.rankings.rows', 3));
 
-        $this->actingAs($countyAdmin)->get(route('assessments.analytics.index', [$countyAdmin->currentTeam->slug, 'county_id' => $countyB->id]))->assertForbidden();
+        $this->actingAs($countyAdmin)->get(route('assessments.analytics.index', ['county_id' => $countyB->id]))->assertForbidden();
     }
 
     public function test_cycles_dates_counties_and_function_profiles_are_filterable_and_reproducible(): void
@@ -64,9 +64,7 @@ class AssessmentAnalyticsTest extends TestCase
         $this->publication($county, $olderCycle, 64, 'F01', '2025-01-20');
         $publication = $this->publication($county, $newerCycle, 84, 'F02', '2026-01-20');
 
-        $this->actingAs($admin)->get(route('assessments.analytics.index', [
-            'current_team' => $admin->currentTeam->slug,
-            'from' => '2026-01-01',
+        $this->actingAs($admin)->get(route('assessments.analytics.index', ['from' => '2026-01-01',
             'to' => '2026-12-31',
             'cycle_id' => $newerCycle->id,
             'county_id' => $county->id,
@@ -89,9 +87,7 @@ class AssessmentAnalyticsTest extends TestCase
         $this->publication($hiddenCounty, $cycle, 91, 'F01');
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $response = $this->actingAs($admin)->get(route('assessments.analytics.export', [
-                'current_team' => $admin->currentTeam->slug,
-                'format' => $format,
+            $response = $this->actingAs($admin)->get(route('assessments.analytics.export', ['format' => $format,
                 'cycle_id' => $cycle->id,
             ]));
             $response->assertOk()->assertDownload();
@@ -115,7 +111,7 @@ class AssessmentAnalyticsTest extends TestCase
         $this->publication($hiddenCounty, $cycle, 90, 'F01');
         $countyAdmin = User::factory()->countyAdmin($visibleCounty)->create();
 
-        $this->actingAs($countyAdmin)->get(route('assessments.show', [$countyAdmin->currentTeam->slug, $visible->assessment_id]))
+        $this->actingAs($countyAdmin)->get(route('assessments.show', [$visible->assessment_id]))
             ->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('assessment.rankings', 1)
             ->where('assessment.rankings.0.countyId', $visibleCounty->id)
@@ -147,9 +143,7 @@ class AssessmentAnalyticsTest extends TestCase
         }
         $admin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($admin)->get(route('assessments.analytics.index', [
-            'current_team' => $admin->currentTeam->slug,
-            'cycle_id' => $cycle->id,
+        $this->actingAs($admin)->get(route('assessments.analytics.index', ['cycle_id' => $cycle->id,
             'function_page' => 2,
             'ranking_page' => 2,
             'per_page' => 10,

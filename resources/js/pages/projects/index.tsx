@@ -62,9 +62,9 @@ export default function ProjectIndex({
     options,
 }: Props) {
     const page = usePage();
-    const { currentTeam } = page.props;
+    const { routeContext } = page.props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -108,12 +108,7 @@ export default function ProjectIndex({
                         references, and verified results.
                     </p>
                 </section>
-                {capabilities.manage && (
-                    <ProjectInitiationForm
-                        teamSlug={currentTeam.slug}
-                        {...options}
-                    />
-                )}
+                {capabilities.manage && <ProjectInitiationForm {...options} />}
                 <DateRangeFilter
                     initialFrom={filters.from}
                     initialTo={filters.to}
@@ -146,11 +141,7 @@ export default function ProjectIndex({
                                 >
                                     <a
                                         href={exportMethod.url(
-                                            {
-                                                current_team: currentTeam.slug,
-                                                workspace: 'projects',
-                                                format,
-                                            },
+                                            { workspace: 'projects', format },
                                             { query: filters },
                                         )}
                                     >
@@ -176,16 +167,12 @@ export default function ProjectIndex({
                             rows={rows}
                             pagination={pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'projects',
                                 filters,
                             }}
                             getRowHref={(row) =>
                                 preserveDrilldownFilters(
-                                    show.url({
-                                        current_team: currentTeam.slug,
-                                        project: row.id,
-                                    }),
+                                    show.url({ project: row.id }),
                                     page.url,
                                 )
                             }

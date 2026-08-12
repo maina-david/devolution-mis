@@ -120,7 +120,7 @@ export default function DswgIndex({
     options,
 }: Props) {
     const page = usePage();
-    const team = page.props.currentTeam;
+    const team = page.props.routeContext;
     const currentUserId = page.props.auth.user.id;
 
     if (!team) {
@@ -144,9 +144,7 @@ export default function DswgIndex({
                         deadlines, reminders, and independent closure.
                     </p>
                 </section>
-                {capabilities.manage && (
-                    <DswgCoordinationForms teamSlug={team.slug} {...options} />
-                )}
+                {capabilities.manage && <DswgCoordinationForms {...options} />}
                 <Card>
                     <CardHeader>
                         <CardTitle>Recurring meeting series</CardTitle>
@@ -241,7 +239,6 @@ export default function DswgIndex({
                             <MeetingCard
                                 key={meeting.id}
                                 meeting={meeting}
-                                teamSlug={team.slug}
                                 currentUserId={currentUserId}
                                 capabilities={capabilities}
                                 options={options}
@@ -274,11 +271,7 @@ export default function DswgIndex({
                                 >
                                     <a
                                         href={exportMethod.url(
-                                            {
-                                                current_team: team.slug,
-                                                workspace: 'dswg',
-                                                format,
-                                            },
+                                            { workspace: 'dswg', format },
                                             { query: filters },
                                         )}
                                     >
@@ -295,15 +288,10 @@ export default function DswgIndex({
                                 columns={workspace.columns}
                                 rows={workspace.rows}
                                 pagination={workspace.pagination}
-                                bulkExport={{
-                                    teamSlug: team.slug,
-                                    workspace: 'dswg',
-                                    filters,
-                                }}
+                                bulkExport={{ workspace: 'dswg', filters }}
                                 renderActions={(row) => (
                                     <ActionControls
                                         row={row}
-                                        teamSlug={team.slug}
                                         currentUserId={currentUserId}
                                         capabilities={capabilities}
                                     />
@@ -325,14 +313,12 @@ export default function DswgIndex({
 
 function MeetingCard({
     meeting,
-    teamSlug,
     currentUserId,
     capabilities,
     options,
     catalogue,
 }: {
     meeting: Meeting;
-    teamSlug: string;
     currentUserId: string;
     capabilities: Props['capabilities'];
     options: Props['options'];
@@ -368,7 +354,6 @@ function MeetingCard({
                 </div>
             </div>
             <DswgDocumentControls
-                teamSlug={teamSlug}
                 subjectId={meeting.id}
                 subjectType="meeting"
                 documents={meeting.documents}
@@ -382,10 +367,7 @@ function MeetingCard({
                 meeting.invitationStatus &&
                 meeting.status === 'scheduled' && (
                     <Form
-                        action={respondInvitation({
-                            current_team: teamSlug,
-                            meeting: meeting.id,
-                        })}
+                        action={respondInvitation({ meeting: meeting.id })}
                         className="flex flex-wrap gap-2"
                     >
                         {({ processing }) => (
@@ -421,10 +403,7 @@ function MeetingCard({
                     description={`Record attendance, quorum and draft minutes for ${meeting.reference}.`}
                 >
                     <Form
-                        action={recordOutcomes({
-                            current_team: teamSlug,
-                            meeting: meeting.id,
-                        })}
+                        action={recordOutcomes({ meeting: meeting.id })}
                         className="grid gap-4"
                     >
                         {({ errors, processing }) => (
@@ -473,10 +452,7 @@ function MeetingCard({
                         description={`Independently review and approve the minutes for ${meeting.reference}.`}
                     >
                         <Form
-                            action={approveMinutes({
-                                current_team: teamSlug,
-                                meeting: meeting.id,
-                            })}
+                            action={approveMinutes({ meeting: meeting.id })}
                             className="grid gap-4"
                         >
                             {({ processing }) => (
@@ -507,10 +483,9 @@ function MeetingCard({
             {capabilities.manage &&
                 ['minutes_pending', 'closed'].includes(meeting.status) && (
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <DecisionForm meeting={meeting} teamSlug={teamSlug} />
+                        <DecisionForm meeting={meeting} />
                         <ActionForm
                             meeting={meeting}
-                            teamSlug={teamSlug}
                             options={options}
                             catalogue={catalogue}
                         />
@@ -520,13 +495,7 @@ function MeetingCard({
     );
 }
 
-function DecisionForm({
-    meeting,
-    teamSlug,
-}: {
-    meeting: Meeting;
-    teamSlug: string;
-}) {
+function DecisionForm({ meeting }: { meeting: Meeting }) {
     return (
         <FormSheet
             title="Register adopted decision"
@@ -535,10 +504,7 @@ function DecisionForm({
             description={`Record an adopted decision from ${meeting.reference}.`}
         >
             <Form
-                action={storeDecision({
-                    current_team: teamSlug,
-                    meeting: meeting.id,
-                })}
+                action={storeDecision({ meeting: meeting.id })}
                 className="grid gap-3"
                 resetOnSuccess
             >
@@ -588,12 +554,10 @@ function DecisionForm({
 
 function ActionForm({
     meeting,
-    teamSlug,
     options,
     catalogue,
 }: {
     meeting: Meeting;
-    teamSlug: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -611,10 +575,7 @@ function ActionForm({
             }
         >
             <Form
-                action={storeAction({
-                    current_team: teamSlug,
-                    meeting: meeting.id,
-                })}
+                action={storeAction({ meeting: meeting.id })}
                 className="grid gap-3"
                 resetOnSuccess
             >
@@ -677,12 +638,10 @@ function ActionForm({
 
 function ActionControls({
     row,
-    teamSlug,
     currentUserId,
     capabilities,
 }: {
     row: WorkspaceRow;
-    teamSlug: string;
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
@@ -700,7 +659,6 @@ function ActionControls({
     return (
         <div className="flex flex-wrap gap-2">
             <DswgDocumentControls
-                teamSlug={teamSlug}
                 subjectId={row.id}
                 subjectType="action"
                 documents={documents}
@@ -709,7 +667,6 @@ function ActionControls({
             {row.status === 'open' && canManage && (
                 <TransitionSheet
                     actionId={row.id}
-                    teamSlug={teamSlug}
                     transition="start"
                     label="Start"
                 />
@@ -721,10 +678,7 @@ function ActionControls({
                     description="Submit repository-backed completion evidence for independent verification."
                 >
                     <Form
-                        action={transitionAction({
-                            current_team: teamSlug,
-                            action: row.id,
-                        })}
+                        action={transitionAction({ action: row.id })}
                         className="grid gap-4"
                     >
                         {({ processing }) => (
@@ -770,13 +724,11 @@ function ActionControls({
                     <>
                         <TransitionSheet
                             actionId={row.id}
-                            teamSlug={teamSlug}
                             transition="verify"
                             label="Verify"
                         />
                         <TransitionSheet
                             actionId={row.id}
-                            teamSlug={teamSlug}
                             transition="reject"
                             label="Return"
                             variant="outline"
@@ -789,13 +741,11 @@ function ActionControls({
 
 function TransitionSheet({
     actionId,
-    teamSlug,
     transition,
     label,
     variant = 'default',
 }: {
     actionId: string;
-    teamSlug: string;
     transition: string;
     label: string;
     variant?: 'default' | 'outline';
@@ -807,10 +757,7 @@ function TransitionSheet({
             description={`${label} this action through the governed DSWG workflow.`}
         >
             <Form
-                action={transitionAction({
-                    current_team: teamSlug,
-                    action: actionId,
-                })}
+                action={transitionAction({ action: actionId })}
                 className="grid gap-4"
             >
                 {({ processing }) => (

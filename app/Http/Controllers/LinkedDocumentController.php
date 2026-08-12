@@ -32,7 +32,6 @@ class LinkedDocumentController extends Controller
 {
     public function storeSupportTicket(
         StoreLinkedDocumentRequest $request,
-        string $currentTeam,
         SupportTicket $supportTicket,
         StoreLinkedDocument $storeDocument,
         DocumentAccess $documentAccess,
@@ -67,7 +66,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeInnovationReplication(StoreLinkedDocumentRequest $request, string $currentTeam, InnovationReplication $replication, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeInnovationReplication(StoreLinkedDocumentRequest $request, InnovationReplication $replication, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -80,7 +79,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeSecurityIncident(StoreLinkedDocumentRequest $request, string $currentTeam, SecurityIncident $securityIncident, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeSecurityIncident(StoreLinkedDocumentRequest $request, SecurityIncident $securityIncident, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -98,7 +97,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePrivacyIncident(StoreLinkedDocumentRequest $request, string $currentTeam, PrivacyIncident $privacyIncident, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePrivacyIncident(StoreLinkedDocumentRequest $request, PrivacyIncident $privacyIncident, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -114,7 +113,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeTravel(StoreLinkedDocumentRequest $request, string $currentTeam, TravelRequest $travelRequest, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeTravel(StoreLinkedDocumentRequest $request, TravelRequest $travelRequest, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -126,7 +125,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeProject(StoreLinkedDocumentRequest $request, string $currentTeam, DevolutionProject $project, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeProject(StoreLinkedDocumentRequest $request, DevolutionProject $project, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -141,7 +140,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePartnerAgreement(StoreLinkedDocumentRequest $request, string $currentTeam, PartnerAgreement $agreement, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePartnerAgreement(StoreLinkedDocumentRequest $request, PartnerAgreement $agreement, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -157,7 +156,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeDswgMeeting(StoreLinkedDocumentRequest $request, string $currentTeam, DswgMeeting $meeting, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeDswgMeeting(StoreLinkedDocumentRequest $request, DswgMeeting $meeting, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -173,7 +172,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePartnerAgreementChange(StoreLinkedDocumentRequest $request, string $currentTeam, PartnerAgreementChangeRequest $changeRequest, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePartnerAgreementChange(StoreLinkedDocumentRequest $request, PartnerAgreementChangeRequest $changeRequest, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -187,7 +186,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePartnerContribution(StoreLinkedDocumentRequest $request, string $currentTeam, PartnerContribution $contribution, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePartnerContribution(StoreLinkedDocumentRequest $request, PartnerContribution $contribution, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -199,7 +198,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePartnerCollaborationAction(StoreLinkedDocumentRequest $request, string $currentTeam, PartnerCollaborationAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePartnerCollaborationAction(StoreLinkedDocumentRequest $request, PartnerCollaborationAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -212,7 +211,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeDswgAction(StoreLinkedDocumentRequest $request, string $currentTeam, DswgAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeDswgAction(StoreLinkedDocumentRequest $request, DswgAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -226,7 +225,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeIgrResolution(StoreLinkedDocumentRequest $request, string $currentTeam, IgrResolution $resolution, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeIgrResolution(StoreLinkedDocumentRequest $request, IgrResolution $resolution, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -242,7 +241,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeProgrammeEvaluation(StoreLinkedDocumentRequest $request, string $currentTeam, ProgrammeEvaluation $evaluation, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeProgrammeEvaluation(StoreLinkedDocumentRequest $request, ProgrammeEvaluation $evaluation, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -262,7 +261,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeEvaluationFinding(StoreLinkedDocumentRequest $request, string $currentTeam, EvaluationFinding $finding, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeEvaluationFinding(StoreLinkedDocumentRequest $request, EvaluationFinding $finding, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -274,7 +273,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storeEvaluationFindingAction(StoreLinkedDocumentRequest $request, string $currentTeam, EvaluationFindingAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storeEvaluationFindingAction(StoreLinkedDocumentRequest $request, EvaluationFindingAction $action, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);
@@ -286,7 +285,7 @@ class LinkedDocumentController extends Controller
         return back();
     }
 
-    public function storePerformancePlan(StoreLinkedDocumentRequest $request, string $currentTeam, PerformancePlan $performancePlan, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
+    public function storePerformancePlan(StoreLinkedDocumentRequest $request, PerformancePlan $performancePlan, StoreLinkedDocument $storeDocument, DocumentAccess $documentAccess): RedirectResponse
     {
         $user = $request->user();
         abort_unless($user instanceof User, 401);

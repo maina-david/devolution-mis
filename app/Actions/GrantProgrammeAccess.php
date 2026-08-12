@@ -15,7 +15,6 @@ use Illuminate\Support\Str;
 class GrantProgrammeAccess
 {
     public function __construct(
-        private ProvisionUserWorkspace $provisionUserWorkspace,
         private ProgrammeAuthorization $authorization,
         private AuditLogger $auditLogger,
     ) {}
@@ -32,7 +31,6 @@ class GrantProgrammeAccess
                 'email_verified_at' => now(),
                 'county_id' => in_array($role, [UserRole::CountyOfficial, UserRole::CountyAdmin]) ? ($data['county_id'] ?? null) : null,
             ]);
-            $this->provisionUserWorkspace->handle($user, $user->name."'s Workspace");
             $this->authorization->assignRole($user, $role);
             $user->assignedCounties()->sync($role->hasAssignedCountyScope() ? ($data['assigned_county_ids'] ?? []) : []);
 

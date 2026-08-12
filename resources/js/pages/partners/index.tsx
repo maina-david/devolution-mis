@@ -115,9 +115,9 @@ export default function PartnerCoordinationIndex({
     catalogue,
     options,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -139,13 +139,11 @@ export default function PartnerCoordinationIndex({
                     </p>
                 </section>
                 <PartnerCoordinationForms
-                    teamSlug={currentTeam.slug}
                     capabilities={capabilities}
                     {...options}
                 />
                 <PartnerPortfolioMap {...portfolioMap} />
                 <PartnerCollaborationPlans
-                    teamSlug={currentTeam.slug}
                     plans={collaborationPlans}
                     partners={options.partners}
                     counties={options.counties}
@@ -156,17 +154,12 @@ export default function PartnerCoordinationIndex({
                     filters={filters}
                 />
                 <PartnerAgreementRegister
-                    teamSlug={currentTeam.slug}
                     agreements={agreements}
                     canManage={capabilities.manage}
                     canApprove={capabilities.approveAgreements}
                 />
-                <PartnerContributionRegister
-                    teamSlug={currentTeam.slug}
-                    contributions={contributions}
-                />
+                <PartnerContributionRegister contributions={contributions} />
                 <PartnerOperationalAlerts
-                    teamSlug={currentTeam.slug}
                     alerts={operationalAlerts}
                     canResolve={capabilities.resolveAlerts}
                 />
@@ -240,11 +233,7 @@ export default function PartnerCoordinationIndex({
                                 >
                                     <a
                                         href={exportMethod.url(
-                                            {
-                                                current_team: currentTeam.slug,
-                                                workspace: 'partners',
-                                                format,
-                                            },
+                                            { workspace: 'partners', format },
                                             { query: filters },
                                         )}
                                     >
@@ -262,7 +251,6 @@ export default function PartnerCoordinationIndex({
                                 rows={workspace.rows}
                                 pagination={workspace.pagination}
                                 bulkExport={{
-                                    teamSlug: currentTeam.slug,
                                     workspace: 'partners',
                                     filters,
                                 }}
@@ -294,7 +282,7 @@ export default function PartnerCoordinationIndex({
                             </div>
                         </div>
                         {capabilities.manage && (
-                            <Form action={analyze(currentTeam.slug)}>
+                            <Form action={analyze()}>
                                 {({ processing }) => (
                                     <Button
                                         variant="outline"
@@ -353,8 +341,6 @@ export default function PartnerCoordinationIndex({
                                         >
                                             <Form
                                                 action={resolveAlert({
-                                                    current_team:
-                                                        currentTeam.slug,
                                                     alert: alert.id,
                                                 })}
                                                 className="grid gap-4"

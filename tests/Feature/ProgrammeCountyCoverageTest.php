@@ -35,7 +35,7 @@ class ProgrammeCountyCoverageTest extends TestCase
             'currency' => 'KES',
         ]);
 
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $this->payload($programme, $county, $lead))->assertRedirect();
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $this->payload($programme, $county, $lead))->assertRedirect();
 
         $coverage = ProgrammeCountyCoverage::query()->sole();
         $this->assertTrue(Str::isUuid($coverage->id));
@@ -47,9 +47,7 @@ class ProgrammeCountyCoverageTest extends TestCase
             'action' => 'reference.programme-coverage.created',
         ]);
 
-        $this->actingAs($manager)->get(route('reference-data.index', [
-            'current_team' => $manager->currentTeam->slug,
-            'county_id' => $county->id,
+        $this->actingAs($manager)->get(route('reference-data.index', ['county_id' => $county->id,
             'status' => 'active',
             'from' => '2025-01-01',
             'to' => '2026-12-31',
@@ -65,15 +63,11 @@ class ProgrammeCountyCoverageTest extends TestCase
             ->where('filters.county_id', $county->id)
             ->where('filters.status', 'active'));
 
-        $this->actingAs($manager)->get(route('reference-data.index', [
-            'current_team' => $manager->currentTeam->slug,
-            'county_id' => $otherCounty->id,
+        $this->actingAs($manager)->get(route('reference-data.index', ['county_id' => $otherCounty->id,
         ]))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->where('programmeCoverages.pagination.total', 0));
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $response = $this->actingAs($manager)->get(route('workspace.export', [
-                'current_team' => $manager->currentTeam->slug,
-                'workspace' => 'programme-coverage',
+            $response = $this->actingAs($manager)->get(route('workspace.export', ['workspace' => 'programme-coverage',
                 'format' => $format,
                 'county_id' => $county->id,
             ]));
@@ -89,19 +83,19 @@ class ProgrammeCountyCoverageTest extends TestCase
         $county = County::factory()->create();
         $lead = Organization::factory()->create();
 
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $this->payload($programme, $county, $lead, [
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $this->payload($programme, $county, $lead, [
             'starts_on' => '2025-01-01',
             'ends_on' => '2028-12-31',
         ]))->assertSessionHasErrors(['starts_on', 'ends_on']);
 
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $this->payload($programme, $county, $lead))->assertRedirect();
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $this->payload($programme, $county, $lead, [
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $this->payload($programme, $county, $lead))->assertRedirect();
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $this->payload($programme, $county, $lead, [
             'starts_on' => '2027-01-01',
             'ends_on' => '2028-06-30',
         ]))->assertStatus(409);
 
         $otherCounty = County::factory()->create();
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $this->payload($programme, $otherCounty, $lead))->assertRedirect();
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $this->payload($programme, $otherCounty, $lead))->assertRedirect();
         $this->assertSame(2, ProgrammeCountyCoverage::query()->count());
     }
 
@@ -157,26 +151,24 @@ class ProgrammeCountyCoverageTest extends TestCase
         $lead = Organization::factory()->create();
         $payload = $this->payload($programme, $county, $lead);
 
-        $this->actingAs($official)->post(route('reference-data.programme-coverages.store', $official->currentTeam->slug), $payload)->assertForbidden();
-        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store', $manager->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($official)->post(route('reference-data.programme-coverages.store'), $payload)->assertForbidden();
+        $this->actingAs($manager)->post(route('reference-data.programme-coverages.store'), $payload)->assertRedirect();
         $coverage = ProgrammeCountyCoverage::query()->sole();
 
-        $this->actingAs($manager)->post(route('reference-data.releases.store', $manager->currentTeam->slug), [
+        $this->actingAs($manager)->post(route('reference-data.releases.store'), [
             'change_summary' => 'Add governed county implementation coverage to the canonical programme catalogue.',
         ])->assertRedirect();
         $release = ReferenceDataRelease::query()->sole();
         $this->assertCount(1, $release->snapshot['programme_county_coverages']);
         $this->assertSame($coverage->id, $release->snapshot['programme_county_coverages'][0]['id']);
 
-        $this->actingAs($manager)->delete(route('reference-data.programmes.destroy', [$manager->currentTeam->slug, $programme]))->assertStatus(409);
-        $this->actingAs($manager)->delete(route('reference-data.programme-coverages.destroy', [$manager->currentTeam->slug, $coverage]))->assertRedirect();
+        $this->actingAs($manager)->delete(route('reference-data.programmes.destroy', [$programme]))->assertStatus(409);
+        $this->actingAs($manager)->delete(route('reference-data.programme-coverages.destroy', [$coverage]))->assertRedirect();
         $this->assertSoftDeleted($coverage);
         $this->assertCount(1, $release->fresh()->snapshot['programme_county_coverages']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $coverage->id, 'action' => 'reference.programme-coverage.archived']);
 
-        $this->actingAs($official)->get(route('workspace.export', [
-            'current_team' => $official->currentTeam->slug,
-            'workspace' => 'programme-coverage',
+        $this->actingAs($official)->get(route('workspace.export', ['workspace' => 'programme-coverage',
             'format' => 'json',
         ]))->assertForbidden();
     }

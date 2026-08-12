@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/sheet';
 import { download, store } from '@/routes/audit-assurance';
 
-export function AuditAssuranceRunControl({ teamSlug }: { teamSlug: string }) {
+export function AuditAssuranceRunControl() {
     return (
         <FormSheet
             title="Run audit integrity assurance"
@@ -35,7 +35,7 @@ export function AuditAssuranceRunControl({ teamSlug }: { teamSlug: string }) {
             triggerLabel="Run assurance"
             icon={Play}
         >
-            <Form {...store.form(teamSlug)} className="flex flex-col gap-4">
+            <Form {...store.form()} className="flex flex-col gap-4">
                 {({ processing, errors }) => (
                     <>
                         <Alert>
@@ -70,12 +70,10 @@ export function AuditAssuranceRunControl({ teamSlug }: { teamSlug: string }) {
 }
 
 export function AuditAssuranceRowAction({
-    teamSlug,
     runId,
     status,
     meta,
 }: {
-    teamSlug: string;
     runId: string;
     status?: string;
     meta?: Record<string, string | null>;
@@ -107,7 +105,6 @@ export function AuditAssuranceRowAction({
                             <DropdownMenuItem asChild>
                                 <a
                                     href={download.url({
-                                        current_team: teamSlug,
                                         auditAssuranceRun: runId,
                                     })}
                                 >

@@ -56,7 +56,7 @@ class CitizenCaseController extends Controller
         return Inertia::render('citizen-cases/index', ['workspace' => $workspaceData->citizenCases($user, WorkspaceFilters::fromRequest($request)), 'filters' => WorkspaceFilters::fromRequest($request), 'capabilities' => ['manage' => $user->can(ProgrammePermission::ManageCitizenCases->value), 'respond' => $user->can(ProgrammePermission::RespondCitizenCases->value), 'resolve' => $user->can(ProgrammePermission::ResolveCitizenCases->value)], 'summary' => $summary, 'cases' => $cases->map(fn (CitizenCase $case): array => $this->casePayload($case)), 'options' => ['users' => User::query()->whereHas('roles.permissions', fn ($query) => $query->where('name', ProgrammePermission::RespondCitizenCases->value))->orderBy('name')->get(['id', 'name', 'email']), 'organizations' => Organization::query()->whereIn('id', $organizationIds)->where('status', 'active')->orderBy('name')->get(['id', 'name']), 'sectors' => Sector::query()->whereIn('id', $sectorIds)->where('is_active', true)->orderBy('name')->get(['id', 'name'])]]);
     }
 
-    public function triage(TriageCitizenCaseRequest $request, string $currentTeam, CitizenCase $case, TriageCitizenCase $triageCase, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function triage(TriageCitizenCaseRequest $request, CitizenCase $case, TriageCitizenCase $triageCase, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeCase($user, $case, $countyScope);
@@ -68,7 +68,7 @@ class CitizenCaseController extends Controller
         return back()->with('success', 'Case triaged and assigned.');
     }
 
-    public function message(StoreCitizenCaseMessageRequest $request, string $currentTeam, CitizenCase $case, AddCitizenCaseMessage $addMessage, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function message(StoreCitizenCaseMessageRequest $request, CitizenCase $case, AddCitizenCaseMessage $addMessage, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeCase($user, $case, $countyScope);
@@ -79,7 +79,7 @@ class CitizenCaseController extends Controller
         return back()->with('success', 'Case message recorded.');
     }
 
-    public function transition(TransitionCitizenCaseRequest $request, string $currentTeam, CitizenCase $case, TransitionWorkflow $transitionWorkflow, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
+    public function transition(TransitionCitizenCaseRequest $request, CitizenCase $case, TransitionWorkflow $transitionWorkflow, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeCase($user, $case, $countyScope);
@@ -101,7 +101,7 @@ class CitizenCaseController extends Controller
         return back()->with('success', 'Case workflow updated.');
     }
 
-    public function attachment(Request $request, string $currentTeam, CitizenCaseAttachment $attachment, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): StreamedResponse
+    public function attachment(Request $request, CitizenCaseAttachment $attachment, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): StreamedResponse
     {
         $user = $this->user($request);
         $case = $attachment->citizenCase;

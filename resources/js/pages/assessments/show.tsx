@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calculator,
@@ -152,11 +152,7 @@ type Props = {
 };
 
 export default function AssessmentShow({ assessment, capabilities }: Props) {
-    const teamSlug = usePage().props.currentTeam!.slug;
-    const routeArguments = {
-        current_team: teamSlug,
-        assessment: assessment.id,
-    };
+    const routeArguments = { assessment: assessment.id };
     const evidenceRequirements = assessment.functions.flatMap((fn) =>
         fn.themes.flatMap((theme) =>
             theme.standards.flatMap((standard) =>
@@ -178,7 +174,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
             <Head title={`${assessment.county.name} assessment`} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
-                    <Link href={index.url(teamSlug)}>
+                    <Link href={index.url()}>
                         <ArrowLeft data-icon="inline-start" />
                         Assessments
                     </Link>
@@ -343,7 +339,6 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     ].includes(assessment.status) &&
                     evidenceRequirements.length > 0 && (
                         <CriterionEvidenceUploadForm
-                            teamSlug={teamSlug}
                             assessmentId={assessment.id}
                             requirements={evidenceRequirements}
                         />
@@ -405,7 +400,6 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                                             assessmentId={
                                                                 assessment.id
                                                             }
-                                                            teamSlug={teamSlug}
                                                             capabilities={
                                                                 capabilities
                                                             }
@@ -473,10 +467,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                 <GovernanceActions
                     assessment={assessment}
                     capabilities={capabilities}
-                    teamSlug={teamSlug}
                 />
                 <AssessmentCorrectivePlans
-                    teamSlug={teamSlug}
                     assessmentId={assessment.id}
                     plans={assessment.correctivePlans}
                     options={assessment.correctiveOptions}
@@ -561,11 +553,9 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
 function GovernanceActions({
     assessment,
     capabilities,
-    teamSlug,
 }: {
     assessment: Props['assessment'];
     capabilities: Record<string, boolean>;
-    teamSlug: string;
 }) {
     return (
         <div className="grid gap-4 lg:grid-cols-2">
@@ -583,7 +573,6 @@ function GovernanceActions({
                             {capabilities.submit && (
                                 <Form
                                     {...respondFinding.form({
-                                        current_team: teamSlug,
                                         assessment: assessment.id,
                                         finding: finding.id,
                                     })}
@@ -603,7 +592,6 @@ function GovernanceActions({
                             {capabilities.review && finding.county_response && (
                                 <Form
                                     {...resolveFinding.form({
-                                        current_team: teamSlug,
                                         assessment: assessment.id,
                                         finding: finding.id,
                                     })}
@@ -642,7 +630,6 @@ function GovernanceActions({
                                 <CardContent>
                                     <Form
                                         {...decideAppeal.form({
-                                            current_team: teamSlug,
                                             assessment: assessment.id,
                                             appeal: appeal.id,
                                         })}
@@ -692,19 +679,13 @@ function GovernanceActions({
 function CriterionPanel({
     criterion,
     assessmentId,
-    teamSlug,
     capabilities,
 }: {
     criterion: Criterion;
     assessmentId: string;
-    teamSlug: string;
     capabilities: Record<string, boolean>;
 }) {
-    const args = {
-        current_team: teamSlug,
-        assessment: assessmentId,
-        criterion: criterion.id,
-    };
+    const args = { assessment: assessmentId, criterion: criterion.id };
 
     return (
         <article className="grid gap-4 rounded-md bg-muted/40 p-4 xl:grid-cols-[1fr_22rem]">
@@ -780,7 +761,6 @@ function CriterionPanel({
                 {capabilities.review && criterion.resultId && (
                     <Form
                         {...verify.form({
-                            current_team: teamSlug,
                             assessment: assessmentId,
                             result: criterion.resultId,
                         })}

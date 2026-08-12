@@ -17,7 +17,7 @@ class PlatformSettingTest extends TestCase
         $setting = PlatformSetting::factory()->create(['value' => 'design']);
         $admin = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($admin)->patch(route('platform-settings.update', [$admin->currentTeam->slug, $setting]), ['value' => 'sandbox'])->assertRedirect();
+        $this->actingAs($admin)->patch(route('platform-settings.update', [$setting]), ['value' => 'sandbox'])->assertRedirect();
 
         $this->assertSame('sandbox', $setting->fresh()?->value);
         $this->assertSame($admin->id, $setting->fresh()?->updated_by);
@@ -29,7 +29,7 @@ class PlatformSettingTest extends TestCase
         $setting = PlatformSetting::factory()->create(['value' => 'design']);
         $admin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($admin)->patch(route('platform-settings.update', [$admin->currentTeam->slug, $setting]), ['value' => 'live'])->assertForbidden();
+        $this->actingAs($admin)->patch(route('platform-settings.update', [$setting]), ['value' => 'live'])->assertForbidden();
         $this->assertSame('design', $setting->fresh()?->value);
     }
 }

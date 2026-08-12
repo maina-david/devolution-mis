@@ -25,7 +25,7 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $creator = User::factory()->countyOfficial($county)->create();
         $outsider = User::factory()->countyOfficial($otherCounty)->create();
 
-        $this->actingAs($creator)->post(route('knowledge.discussions.store', $creator->currentTeam->slug), [
+        $this->actingAs($creator)->post(route('knowledge.discussions.store'), [
             'county_id' => $county->id,
             'title' => 'County peer-learning forum',
             'prompt' => 'Which verified practices should counties adapt and measure?',
@@ -37,7 +37,7 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $this->assertTrue(Str::isUuid($subscription->id));
         $this->assertSame($creator->id, $subscription->user_id);
 
-        $route = route('knowledge.discussions.subscription', [$creator->currentTeam->slug, $discussion]);
+        $route = route('knowledge.discussions.subscription', [$discussion]);
         $this->actingAs($creator)->patch($route, ['subscribed' => true])->assertRedirect();
         $this->assertSame(1, KnowledgeDiscussionSubscription::withTrashed()->count());
         $this->actingAs($creator)->patch($route, ['subscribed' => false])->assertRedirect();
@@ -46,7 +46,7 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $this->assertNotNull($subscription->fresh());
         $this->assertDatabaseHas('audit_events', ['subject_id' => $discussion->id, 'action' => 'knowledge.discussion.subscribed']);
 
-        $this->actingAs($outsider)->patch(route('knowledge.discussions.subscription', [$outsider->currentTeam->slug, $discussion]), ['subscribed' => true])->assertForbidden();
+        $this->actingAs($outsider)->patch(route('knowledge.discussions.subscription', [$discussion]), ['subscribed' => true])->assertForbidden();
     }
 
     public function test_visible_contributions_notify_only_other_active_subscribers(): void
@@ -61,7 +61,7 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         KnowledgeDiscussionSubscription::factory()->create(['knowledge_discussion_id' => $discussion->id, 'user_id' => $author->id]);
         KnowledgeDiscussionSubscription::factory()->create(['knowledge_discussion_id' => $discussion->id, 'user_id' => $unsubscribedUser->id])->delete();
 
-        $this->actingAs($author)->post(route('knowledge.posts.store', [$author->currentTeam->slug, $discussion]), [
+        $this->actingAs($author)->post(route('knowledge.posts.store', [$discussion]), [
             'body' => 'A verified peer-learning contribution with a documented county implementation result.',
         ])->assertRedirect();
 
@@ -85,11 +85,11 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $item = KnowledgeItem::factory()->create(['county_id' => $county->id, 'author_id' => $author->id, 'status' => 'published']);
         $discussion = KnowledgeDiscussion::factory()->create(['knowledge_item_id' => $item->id, 'county_id' => $county->id, 'created_by' => $author->id]);
         $post = KnowledgePost::factory()->create(['knowledge_discussion_id' => $discussion->id, 'author_id' => $author->id, 'body' => 'The original contribution remains available as immutable moderation context.']);
-        $route = route('knowledge.posts.moderate', [$curator->currentTeam->slug, $post]);
+        $route = route('knowledge.posts.moderate', [$post]);
         $payload = ['moderation_status' => 'hidden', 'moderation_reason' => 'The contribution contains an unverified assertion requiring evidence before republication.'];
 
-        $this->actingAs($author)->patch(route('knowledge.posts.moderate', [$author->currentTeam->slug, $post]), $payload)->assertForbidden();
-        $this->actingAs($outsider)->patch(route('knowledge.posts.moderate', [$outsider->currentTeam->slug, $post]), $payload)->assertForbidden();
+        $this->actingAs($author)->patch(route('knowledge.posts.moderate', [$post]), $payload)->assertForbidden();
+        $this->actingAs($outsider)->patch(route('knowledge.posts.moderate', [$post]), $payload)->assertForbidden();
         $this->actingAs($curator)->patch($route, ['moderation_status' => 'hidden', 'moderation_reason' => 'Too short'])->assertSessionHasErrors('moderation_reason');
         $this->actingAs($curator)->patch($route, $payload)->assertRedirect();
 
@@ -99,8 +99,8 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $this->assertSame($curator->id, $post->moderated_by);
         $this->assertNotNull($post->moderated_at);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $post->id, 'action' => 'knowledge.post.moderated']);
-        $this->actingAs($author)->get(route('knowledge.index', $author->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('items.data.0.discussions.0.posts', []));
-        $this->actingAs($curator)->get(route('knowledge.index', $curator->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('items.data.0.discussions.0.posts.0.moderationStatus', 'hidden')->where('items.data.0.discussions.0.posts.0.body', $post->body));
+        $this->actingAs($author)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('items.data.0.discussions.0.posts', []));
+        $this->actingAs($curator)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('items.data.0.discussions.0.posts.0.moderationStatus', 'hidden')->where('items.data.0.discussions.0.posts.0.body', $post->body));
 
         $this->actingAs($curator)->patch($route, ['moderation_status' => 'visible', 'moderation_reason' => 'The supporting evidence was independently verified and the contribution may be restored.'])->assertRedirect();
         $this->assertSame('visible', $post->refresh()->moderation_status);

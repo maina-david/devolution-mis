@@ -40,7 +40,7 @@ class CreateKnowledgeCommunityReport
             $instance = $this->startWorkflow->handle($definition, $report, $reporter, ['resolution_present' => false, 'severity' => $report->severity], $report->county_id);
             $report->update(['workflow_instance_id' => $instance->id]);
             $this->auditLogger->record($reporter, $report, 'knowledge.community_report.created', "Community report {$report->reference} submitted.", $report->county_id, ['category' => $report->category, 'severity' => $report->severity]);
-            $reporter->notify(new ProgrammeAlert('Community report received', "{$report->reference} has entered the governed moderation queue.", 'knowledge', route('knowledge.index', $reporter->currentTeam?->slug)));
+            $reporter->notify(new ProgrammeAlert('Community report received', "{$report->reference} has entered the governed moderation queue.", 'knowledge', route('knowledge.index')));
 
             return $report->refresh();
         });

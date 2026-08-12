@@ -7,10 +7,8 @@ import { Label } from '@/components/ui/label';
 import { store } from '@/routes/evidence';
 
 export default function EvidenceUploadForm({
-    teamSlug,
     assessments,
 }: {
-    teamSlug: string;
     assessments: Array<{ id: string; label: string }>;
 }) {
     const [assessmentId, setAssessmentId] = useState(assessments[0]?.id ?? '');
@@ -37,10 +35,7 @@ export default function EvidenceUploadForm({
                 </div>
             </div>
             <Form
-                {...store.form({
-                    current_team: teamSlug,
-                    assessment: assessmentId,
-                })}
+                {...store.form({ assessment: assessmentId })}
                 className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1.2fr_auto] lg:items-end"
                 resetOnSuccess
             >

@@ -6,11 +6,9 @@ import { Input } from '@/components/ui/input';
 import { verify } from '@/routes/monitoring-evaluation/observations';
 
 export default function IndicatorVerificationAction({
-    teamSlug,
     observationId,
     status,
 }: {
-    teamSlug: string;
     observationId: string;
     status?: string;
 }) {
@@ -25,10 +23,7 @@ export default function IndicatorVerificationAction({
             description="Record an independent data-quality decision and rationale."
         >
             <Form
-                {...verify.form({
-                    current_team: teamSlug,
-                    observation: observationId,
-                })}
+                {...verify.form({ observation: observationId })}
                 className="grid gap-4"
             >
                 {({ processing }) => (

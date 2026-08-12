@@ -58,7 +58,7 @@ class SupportDeskWorkflowTest extends TestCase
             'description' => 'The approved quarterly indicator workbook passes local validation but the governed import reports an unexplained row-level validation failure.',
         ];
         $this->actingAs($requester)
-            ->post(route('support-desk.store', $requester->currentTeam->slug), $payload)
+            ->post(route('support-desk.store'), $payload)
             ->assertRedirect();
 
         $ticket = SupportTicket::query()->sole();
@@ -81,11 +81,11 @@ class SupportDeskWorkflowTest extends TestCase
         ]);
 
         $this->actingAs($outsider)
-            ->get(route('support-desk.index', $outsider->currentTeam->slug))
+            ->get(route('support-desk.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page->where('workspace.pagination.total', 0));
         $this->actingAs($manager)
-            ->patch(route('support-desk.assign', [$manager->currentTeam->slug, $ticket]), [
+            ->patch(route('support-desk.assign', [$ticket]), [
                 'assigned_to' => $resolver->id,
                 'narrative' => 'Assigned to the county support resolver with the data-quality investigation brief.',
             ])
@@ -95,10 +95,10 @@ class SupportDeskWorkflowTest extends TestCase
         $this->assertNotNull($ticket->first_responded_at);
 
         $this->actingAs($resolver)
-            ->patch(route('support-desk.transition', [$resolver->currentTeam->slug, $ticket]), $this->transition('start'))
+            ->patch(route('support-desk.transition', [$ticket]), $this->transition('start'))
             ->assertRedirect();
         $this->actingAs($resolver)
-            ->post(route('support-desk.documents.store', [$resolver->currentTeam->slug, $ticket]), [
+            ->post(route('support-desk.documents.store', [$ticket]), [
                 'record_purpose' => 'investigation',
                 'title' => 'Indicator import validation trace',
                 'category' => 'Service desk investigation',
@@ -113,23 +113,23 @@ class SupportDeskWorkflowTest extends TestCase
             'activity_type' => 'document_uploaded',
         ]);
         $this->actingAs($requester)
-            ->get(route('evidence.preview', [$requester->currentTeam->slug, $document]))
+            ->get(route('evidence.preview', [$document]))
             ->assertOk();
         $this->actingAs($outsider)
-            ->get(route('evidence.preview', [$outsider->currentTeam->slug, $document]))
+            ->get(route('evidence.preview', [$document]))
             ->assertForbidden();
 
         $this->actingAs($resolver)
-            ->patch(route('support-desk.transition', [$resolver->currentTeam->slug, $ticket]), [
+            ->patch(route('support-desk.transition', [$ticket]), [
                 ...$this->transition('resolve'),
                 'resolution_summary' => 'The workbook schema profile was refreshed against the published indicator catalogue and the affected rows were successfully revalidated.',
             ])
             ->assertRedirect();
         $this->actingAs($resolver)
-            ->patch(route('support-desk.transition', [$resolver->currentTeam->slug, $ticket]), $this->transition('close'))
+            ->patch(route('support-desk.transition', [$ticket]), $this->transition('close'))
             ->assertForbidden();
         $this->actingAs($requester)
-            ->patch(route('support-desk.transition', [$requester->currentTeam->slug, $ticket]), $this->transition('close'))
+            ->patch(route('support-desk.transition', [$ticket]), $this->transition('close'))
             ->assertRedirect();
 
         $ticket->refresh();
@@ -144,7 +144,7 @@ class SupportDeskWorkflowTest extends TestCase
         Notification::assertSentTo($resolver, ProgrammeAlert::class);
 
         $this->actingAs($manager)
-            ->get(route('support-desk.index', $manager->currentTeam->slug))
+            ->get(route('support-desk.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->where('workspace.pagination.total', 1)
@@ -153,7 +153,7 @@ class SupportDeskWorkflowTest extends TestCase
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($manager)
-                ->get(route('workspace.export', [$manager->currentTeam->slug, 'support-desk', $format]))
+                ->get(route('workspace.export', ['support-desk', $format]))
                 ->assertDownload();
         }
 
@@ -205,7 +205,7 @@ class SupportDeskWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$county, $otherCounty], $nationalManager);
 
         $this->actingAs($requester)
-            ->post(route('support-desk.store', $requester->currentTeam->slug), [
+            ->post(route('support-desk.store'), [
                 'county_id' => $otherCounty->id,
                 'category' => 'access',
                 'priority' => 'medium',
@@ -222,13 +222,13 @@ class SupportDeskWorkflowTest extends TestCase
             'county_id' => $county->id,
         ]);
         $this->actingAs($samePersonManager)
-            ->patch(route('support-desk.assign', [$samePersonManager->currentTeam->slug, $ticket]), [
+            ->patch(route('support-desk.assign', [$ticket]), [
                 'assigned_to' => $requester->id,
                 'narrative' => 'Attempt to assign the requester as their own resolver.',
             ])
             ->assertStatus(422);
         $this->actingAs($nationalManager)
-            ->patch(route('support-desk.assign', [$nationalManager->currentTeam->slug, $ticket]), [
+            ->patch(route('support-desk.assign', [$ticket]), [
                 'assigned_to' => $outsideResolver->id,
                 'narrative' => 'Attempt to assign a resolver outside the governed county scope.',
             ])

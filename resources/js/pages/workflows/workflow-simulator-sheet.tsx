@@ -52,13 +52,11 @@ type Simulation = {
 };
 
 export default function WorkflowSimulatorSheet({
-    teamSlug,
     workflowId,
     workflowName,
     version,
     users,
 }: {
-    teamSlug: string;
     workflowId: string;
     workflowName: string;
     version: {
@@ -123,7 +121,6 @@ export default function WorkflowSimulatorSheet({
             http.transform(() => payload);
             await http.post(
                 simulate({
-                    current_team: teamSlug,
                     workflowDefinition: workflowId,
                     workflowVersion: version.id,
                 }).url,

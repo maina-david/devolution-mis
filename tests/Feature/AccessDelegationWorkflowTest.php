@@ -34,14 +34,14 @@ class AccessDelegationWorkflowTest extends TestCase
         $payload = $this->payload($beneficiary, [$delegatedCounty], [ProgrammePermission::ManageProjects->value]);
 
         $this->assertFalse($beneficiary->can(ProgrammePermission::ManageProjects->value));
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $payload)->assertRedirect();
         $delegation = AccessDelegation::query()->sole();
         $this->assertTrue(Str::isUuid($delegation->id));
         $this->assertSame($release->id, $delegation->reference_data_release_id);
         $this->assertSame($delegatedCounty->id, $delegation->county_scope_snapshot[0]['id']);
         $decision = ['decision' => 'approve', 'decision_rationale' => 'Independent approval confirms temporary project-management coverage and the least-privilege county scope.'];
-        $this->actingAs($requester)->patch(route('security-governance.access-delegations.decide', [$requester->currentTeam->slug, $delegation]), $decision)->assertForbidden();
-        $this->actingAs($approver)->patch(route('security-governance.access-delegations.decide', [$approver->currentTeam->slug, $delegation]), $decision)->assertRedirect();
+        $this->actingAs($requester)->patch(route('security-governance.access-delegations.decide', [$delegation]), $decision)->assertForbidden();
+        $this->actingAs($approver)->patch(route('security-governance.access-delegations.decide', [$delegation]), $decision)->assertRedirect();
 
         $this->assertSame('active', $delegation->refresh()->status);
         $this->assertNotNull($delegation->approval_checksum);
@@ -52,13 +52,13 @@ class AccessDelegationWorkflowTest extends TestCase
         $this->assertTrue(app(ProgrammeCountyScope::class)->query($beneficiary)->whereKey($delegatedCounty)->exists());
         $this->assertSame('county-official', $beneficiary->getRoleNames()->sole());
 
-        $this->actingAs($requester)->patch(route('security-governance.access-delegations.revoke', [$requester->currentTeam->slug, $delegation]), ['revocation_reason' => 'The temporary coverage assignment ended earlier than planned.'])->assertRedirect();
+        $this->actingAs($requester)->patch(route('security-governance.access-delegations.revoke', [$delegation]), ['revocation_reason' => 'The temporary coverage assignment ended earlier than planned.'])->assertRedirect();
         $this->assertFalse($beneficiary->can(ProgrammePermission::ManageProjects->value));
         $this->assertFalse($beneficiary->canAccessCounty($delegatedCounty));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $delegation->id, 'action' => 'security.delegation.revoked']);
-        $this->actingAs($requester)->get(route('security-governance.index', $requester->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->component('security-governance/index')->has('delegations.data', 1)->where('delegations.data.0.reference', $delegation->reference)->has('delegationUsers')->has('delegablePermissions')->has('counties'));
+        $this->actingAs($requester)->get(route('security-governance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('security-governance/index')->has('delegations.data', 1)->where('delegations.data.0.reference', $delegation->reference)->has('delegationUsers')->has('delegablePermissions')->has('counties'));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($requester)->get(route('workspace.export', [$requester->currentTeam->slug, 'access-delegations', $format]))->assertOk()->assertDownload();
+            $this->actingAs($requester)->get(route('workspace.export', ['access-delegations', $format]))->assertOk()->assertDownload();
         }
     }
 
@@ -75,11 +75,11 @@ class AccessDelegationWorkflowTest extends TestCase
         $startsAt = now()->addMinute()->startOfSecond();
         $payload = $this->payload($beneficiary, [$county], [ProgrammePermission::ManageCitizenCases->value], 'emergency', $startsAt, $startsAt->copy()->addHours(4));
 
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), [...$payload, 'expires_at' => $startsAt->copy()->addHours(5)->toIso8601String()])->assertSessionHasErrors('expires_at');
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), [...$payload, 'expires_at' => $startsAt->copy()->addHours(5)->toIso8601String()])->assertSessionHasErrors('expires_at');
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $payload)->assertRedirect();
         $delegation = AccessDelegation::query()->sole();
         $this->assertTrue($delegation->starts_at->isFuture(), "Stored start {$delegation->starts_at->toIso8601String()} is not after application time ".now()->toIso8601String());
-        $this->actingAs($approver)->patch(route('security-governance.access-delegations.decide', [$approver->currentTeam->slug, $delegation]), ['decision' => 'approve', 'decision_rationale' => 'Independent emergency approval is limited to the affected county, named incident and four-hour recovery window.'])->assertRedirect();
+        $this->actingAs($approver)->patch(route('security-governance.access-delegations.decide', [$delegation]), ['decision' => 'approve', 'decision_rationale' => 'Independent emergency approval is limited to the affected county, named incident and four-hour recovery window.'])->assertRedirect();
         $this->assertSame('scheduled', $delegation->refresh()->status);
         $this->assertFalse($beneficiary->can(ProgrammePermission::ManageCitizenCases->value));
 
@@ -95,8 +95,8 @@ class AccessDelegationWorkflowTest extends TestCase
         $this->assertSame('review_pending', $delegation->refresh()->status);
         $this->assertFalse($beneficiary->can(ProgrammePermission::ManageCitizenCases->value));
         $review = ['post_use_outcome' => 'appropriate', 'post_use_findings' => 'Audit evidence shows the grant remained within the approved county, permission set and incident recovery purpose.'];
-        $this->actingAs($approver)->patch(route('security-governance.access-delegations.review', [$approver->currentTeam->slug, $delegation]), $review)->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('security-governance.access-delegations.review', [$reviewer->currentTeam->slug, $delegation]), $review)->assertRedirect();
+        $this->actingAs($approver)->patch(route('security-governance.access-delegations.review', [$delegation]), $review)->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('security-governance.access-delegations.review', [$delegation]), $review)->assertRedirect();
         $this->assertSame('reviewed', $delegation->refresh()->status);
         $this->assertSame($reviewer->id, $delegation->reviewed_by);
     }
@@ -106,10 +106,10 @@ class AccessDelegationWorkflowTest extends TestCase
         $requester = User::factory()->devolutionAdmin()->withTwoFactor()->create();
         $weakBeneficiary = User::factory()->countyOfficial()->create();
         $county = County::factory()->create();
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $this->payload($weakBeneficiary, [$county], [ProgrammePermission::ManageProjects->value]))->assertStatus(409);
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $this->payload($weakBeneficiary, [$county], [ProgrammePermission::ManageProjects->value]))->assertStatus(409);
 
         $strongBeneficiary = User::factory()->countyOfficial()->withTwoFactor()->create();
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $this->payload($strongBeneficiary, [$county], [ProgrammePermission::ManageSecurityGovernance->value]))->assertUnprocessable();
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $this->payload($strongBeneficiary, [$county], [ProgrammePermission::ManageSecurityGovernance->value]))->assertUnprocessable();
         $this->assertDatabaseCount('access_delegations', 0);
     }
 
@@ -122,9 +122,9 @@ class AccessDelegationWorkflowTest extends TestCase
         $otherCounty = County::factory()->create();
         $payload = $this->payload($beneficiary, [$county], [ProgrammePermission::ManageProjects->value]);
 
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $payload)->assertConflict();
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $payload)->assertConflict();
         $this->publishedReferenceRelease([$otherCounty], $requester);
-        $this->actingAs($requester)->post(route('security-governance.access-delegations.store', $requester->currentTeam->slug), $this->payload($beneficiary, [$county], [ProgrammePermission::ManageProjects->value]))->assertSessionHasErrors('county_ids');
+        $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $this->payload($beneficiary, [$county], [ProgrammePermission::ManageProjects->value]))->assertSessionHasErrors('county_ids');
         $this->assertDatabaseCount('access_delegations', 0);
     }
 

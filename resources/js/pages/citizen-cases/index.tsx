@@ -118,7 +118,7 @@ export default function CitizenCasesIndex({
     cases,
     options,
 }: Props) {
-    const team = usePage().props.currentTeam;
+    const team = usePage().props.routeContext;
 
     if (!team) {
         return null;
@@ -156,7 +156,6 @@ export default function CitizenCasesIndex({
                                     <a
                                         href={exportMethod.url(
                                             {
-                                                current_team: team.slug,
                                                 workspace: 'citizen-cases',
                                                 format,
                                             },
@@ -201,11 +200,7 @@ export default function CitizenCasesIndex({
                         columns={workspace.columns}
                         rows={workspace.rows}
                         pagination={workspace.pagination}
-                        bulkExport={{
-                            teamSlug: team.slug,
-                            workspace: 'citizen-cases',
-                            filters,
-                        }}
+                        bulkExport={{ workspace: 'citizen-cases', filters }}
                         allowFilteredBulkSelection={capabilities.manage}
                         renderBulkActions={(
                             selectedRows,
@@ -217,7 +212,6 @@ export default function CitizenCasesIndex({
                                 (row) => row.status === 'received',
                             ) ? (
                                 <CitizenCaseBulkTriageActions
-                                    teamSlug={team.slug}
                                     rows={selectedRows}
                                     users={options.users}
                                     organizations={options.organizations}
@@ -234,7 +228,6 @@ export default function CitizenCasesIndex({
                             return item ? (
                                 <CaseSheet
                                     citizenCase={item}
-                                    teamSlug={team.slug}
                                     capabilities={capabilities}
                                     options={options}
                                 />
@@ -248,12 +241,12 @@ export default function CitizenCasesIndex({
 }
 
 CitizenCasesIndex.layout = (props: {
-    currentTeam?: { slug: string } | null;
+    routeContext?: { key: any; slug: any } | null;
 }) => ({
     breadcrumbs: [
         {
             title: 'Citizen cases',
-            href: props.currentTeam ? index(props.currentTeam.slug) : '/',
+            href: props.routeContext ? index() : '/',
         },
     ],
 });
@@ -271,12 +264,10 @@ function Metric({ label, value }: { label: string; value: number | string }) {
 
 function CaseSheet({
     citizenCase,
-    teamSlug,
     capabilities,
     options,
 }: {
     citizenCase: Case;
-    teamSlug: string;
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
@@ -371,7 +362,6 @@ function CaseSheet({
                         citizenCase.status === 'received' && (
                             <TriageSheetForm
                                 citizenCase={citizenCase}
-                                teamSlug={teamSlug}
                                 options={options}
                             />
                         )}
@@ -382,14 +372,12 @@ function CaseSheet({
                         ) && (
                             <MessageSheetForm
                                 citizenCase={citizenCase}
-                                teamSlug={teamSlug}
                                 capabilities={capabilities}
                             />
                         )}
                     {canHandle && (
                         <WorkflowActions
                             citizenCase={citizenCase}
-                            teamSlug={teamSlug}
                             capabilities={capabilities}
                         />
                     )}
@@ -434,11 +422,9 @@ function formatReferenceDataLineage(
 
 function TriageSheetForm({
     citizenCase,
-    teamSlug,
     options,
 }: {
     citizenCase: Case;
-    teamSlug: string;
     options: Props['options'];
 }) {
     return (
@@ -448,10 +434,7 @@ function TriageSheetForm({
             icon={<UsersRound aria-hidden="true" />}
         >
             <Form
-                action={triage({
-                    current_team: teamSlug,
-                    case: citizenCase.id,
-                })}
+                action={triage({ case: citizenCase.id })}
                 className="flex flex-col gap-4"
             >
                 {({ errors, processing }) => (
@@ -523,11 +506,9 @@ function TriageSheetForm({
 
 function MessageSheetForm({
     citizenCase,
-    teamSlug,
     capabilities,
 }: {
     citizenCase: Case;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     return (
@@ -537,10 +518,7 @@ function MessageSheetForm({
             icon={<MessageSquareReply aria-hidden="true" />}
         >
             <Form
-                action={message({
-                    current_team: teamSlug,
-                    case: citizenCase.id,
-                })}
+                action={message({ case: citizenCase.id })}
                 className="flex flex-col gap-4"
             >
                 {({ errors, processing, progress }) => (
@@ -622,11 +600,9 @@ function MessageSheetForm({
 
 function WorkflowActions({
     citizenCase,
-    teamSlug,
     capabilities,
 }: {
     citizenCase: Case;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     const actions: Array<{ name: string; label: string; summary?: boolean }> =
@@ -676,10 +652,7 @@ function WorkflowActions({
                 {actions.map((action) => (
                     <Form
                         key={action.name}
-                        action={transition({
-                            current_team: teamSlug,
-                            case: citizenCase.id,
-                        })}
+                        action={transition({ case: citizenCase.id })}
                         className="flex flex-col gap-3 rounded-lg border p-3"
                     >
                         {({ processing }) => (

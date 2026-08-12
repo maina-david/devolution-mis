@@ -50,18 +50,18 @@ class OperationalReadinessTest extends TestCase
         $deployer = User::factory()->platformAdmin()->create();
         $validator = User::factory()->platformAdmin()->create();
         $versionOne = $this->releasePayload('2026.8.1', str_repeat('1', 40), str_repeat('a', 64));
-        $this->actingAs($deployer)->post(route('operations.releases.store', $deployer->currentTeam->slug), $versionOne)->assertRedirect();
+        $this->actingAs($deployer)->post(route('operations.releases.store'), $versionOne)->assertRedirect();
         $releaseOne = ReleaseRecord::query()->sole();
         $this->assertTrue(Str::isUuid($releaseOne->id));
-        $this->actingAs($deployer)->patch(route('operations.releases.validate', [$deployer->currentTeam->slug, $releaseOne]), ['evidence' => 'Attempted self-validation.'])->assertForbidden();
-        $this->actingAs($validator)->patch(route('operations.releases.validate', [$validator->currentTeam->slug, $releaseOne]), ['evidence' => 'Smoke, migration, authorization and rollback-readiness checks passed.'])->assertRedirect();
+        $this->actingAs($deployer)->patch(route('operations.releases.validate', [$releaseOne]), ['evidence' => 'Attempted self-validation.'])->assertForbidden();
+        $this->actingAs($validator)->patch(route('operations.releases.validate', [$releaseOne]), ['evidence' => 'Smoke, migration, authorization and rollback-readiness checks passed.'])->assertRedirect();
         $this->assertSame('validated', $releaseOne->refresh()->status);
 
-        $this->actingAs($deployer)->post(route('operations.releases.store', $deployer->currentTeam->slug), $this->releasePayload('2026.8.2', str_repeat('2', 40), str_repeat('b', 64)))->assertRedirect();
+        $this->actingAs($deployer)->post(route('operations.releases.store'), $this->releasePayload('2026.8.2', str_repeat('2', 40), str_repeat('b', 64)))->assertRedirect();
         $releaseTwo = ReleaseRecord::query()->where('version', '2026.8.2')->sole();
-        $this->actingAs($validator)->patch(route('operations.releases.validate', [$validator->currentTeam->slug, $releaseTwo]), ['evidence' => 'Independent post-deployment checks passed.'])->assertRedirect();
-        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$validator->currentTeam->slug, $releaseTwo]), ['rollback_to_version' => 'missing-version', 'reason' => 'Invalid target test.'])->assertStatus(409);
-        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$validator->currentTeam->slug, $releaseTwo]), ['rollback_to_version' => '2026.8.1', 'reason' => 'Controlled rollback rehearsal after simulated release-health regression.'])->assertRedirect();
+        $this->actingAs($validator)->patch(route('operations.releases.validate', [$releaseTwo]), ['evidence' => 'Independent post-deployment checks passed.'])->assertRedirect();
+        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$releaseTwo]), ['rollback_to_version' => 'missing-version', 'reason' => 'Invalid target test.'])->assertStatus(409);
+        $this->actingAs($validator)->patch(route('operations.releases.rollback', [$releaseTwo]), ['rollback_to_version' => '2026.8.1', 'reason' => 'Controlled rollback rehearsal after simulated release-health regression.'])->assertRedirect();
         $this->assertSame('rolled_back', $releaseTwo->refresh()->status);
         $this->assertSame('2026.8.1', $releaseTwo->rollback_to_version);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $releaseTwo->id, 'action' => 'operations.release.rolled_back']);
@@ -86,10 +86,10 @@ class OperationalReadinessTest extends TestCase
         $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'opened']);
         Notification::assertSentToTimes($operator, ProgrammeAlert::class, 1);
 
-        $this->actingAs($viewer)->get(route('operations.index', $viewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('operationalAlerts.total', 1)->where('operationalAlerts.data.0.id', $alert->id)->where('operationalAlerts.data.0.status', 'open')->where('operationalAlerts.data.0.eventCount', 1)->has('operationalAlerts.data.0.events', 1)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $this->actingAs($viewer)->get(route('operations.index'))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('operationalAlerts.total', 1)->where('operationalAlerts.data.0.id', $alert->id)->where('operationalAlerts.data.0.status', 'open')->where('operationalAlerts.data.0.eventCount', 1)->has('operationalAlerts.data.0.events', 1)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
         $acknowledgement = ['note' => 'Database backup freshness breach assigned to the operations lead for immediate remediation.'];
-        $this->actingAs($viewer)->patch(route('operations.alerts.acknowledge', [$viewer->currentTeam->slug, $alert]), $acknowledgement)->assertForbidden();
-        $this->actingAs($operator)->patch(route('operations.alerts.acknowledge', [$operator->currentTeam->slug, $alert]), $acknowledgement)->assertRedirect();
+        $this->actingAs($viewer)->patch(route('operations.alerts.acknowledge', [$alert]), $acknowledgement)->assertForbidden();
+        $this->actingAs($operator)->patch(route('operations.alerts.acknowledge', [$alert]), $acknowledgement)->assertRedirect();
         $this->assertSame('acknowledged', $alert->refresh()->status);
         $this->assertSame($operator->id, $alert->acknowledged_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $alert->id, 'action' => 'operations.alert.acknowledged']);
@@ -100,8 +100,8 @@ class OperationalReadinessTest extends TestCase
         $this->assertDatabaseCount('operational_alerts', 1);
         $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'repeated']);
         Notification::assertSentToTimes($operator, ProgrammeAlert::class, 1);
-        $this->actingAs($viewer)->post(route('operations.backups.store', $viewer->currentTeam->slug))->assertForbidden();
-        $this->actingAs($operator)->post(route('operations.backups.store', $operator->currentTeam->slug))->assertRedirect();
+        $this->actingAs($viewer)->post(route('operations.backups.store'))->assertForbidden();
+        $this->actingAs($operator)->post(route('operations.backups.store'))->assertRedirect();
         Queue::assertPushed(CreateOperationalBackupJob::class, fn ($job) => $job->userId === $operator->id);
 
         $backup = OperationalBackup::create(['initiated_by' => $operator->id, 'reference' => 'BKP-TEST-001', 'disk' => 'local', 'path' => 'operations/backups/test.dump', 'database_name' => 'devolution_mis_test', 'format' => 'postgres_custom', 'sha256' => str_repeat('c', 64), 'size_bytes' => 1024, 'status' => 'completed', 'started_at' => now()->subMinute(), 'completed_at' => now()]);
@@ -110,11 +110,11 @@ class OperationalReadinessTest extends TestCase
         $this->assertNotNull($alert->recovered_at);
         $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'recovered']);
         Notification::assertSentToTimes($operator, ProgrammeAlert::class, 2);
-        $this->actingAs($operator)->post(route('operations.backups.verify', [$operator->currentTeam->slug, $backup]))->assertRedirect();
+        $this->actingAs($operator)->post(route('operations.backups.verify', [$backup]))->assertRedirect();
         Queue::assertPushed(VerifyOperationalBackupJob::class, fn ($job) => $job->backupId === $backup->id && $job->restoreProbe);
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'operations', $format]))->assertOk()->assertDownload();
-            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'operational-alerts', $format]))->assertOk()->assertDownload();
+            $this->actingAs($viewer)->get(route('workspace.export', ['operations', $format]))->assertOk()->assertDownload();
+            $this->actingAs($viewer)->get(route('workspace.export', ['operational-alerts', $format]))->assertOk()->assertDownload();
         }
     }
 
@@ -142,16 +142,16 @@ class OperationalReadinessTest extends TestCase
         $payload = json_encode(['uuid' => $failedJobUuid, 'displayName' => 'App\\Jobs\\GenerateScheduledReport', 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call', 'attempts' => 3, 'data' => ['commandName' => 'App\\Jobs\\GenerateScheduledReport', 'command' => 'protected-serialized-command']], JSON_THROW_ON_ERROR);
         DB::table('failed_jobs')->insert(['uuid' => $failedJobUuid, 'connection' => 'database', 'queue' => 'reports', 'payload' => $payload, 'exception' => 'RuntimeException: Simulated protected report failure at /private/path.php:10', 'failed_at' => now()->subMinutes(10)]);
 
-        $this->actingAs($viewer)->post(route('operations.failed-jobs.retry', [$viewer->currentTeam->slug, $failedJobUuid]))->assertForbidden();
+        $this->actingAs($viewer)->post(route('operations.failed-jobs.retry', [$failedJobUuid]))->assertForbidden();
         $this->assertDatabaseHas('failed_jobs', ['uuid' => $failedJobUuid]);
-        $this->actingAs($operator)->get(route('operations.index', $operator->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+        $this->actingAs($operator)->get(route('operations.index'))->assertOk()->assertInertia(fn ($page) => $page
             ->where('failedJobs.total', 1)
             ->where('failedJobs.data.0.jobName', 'App\\Jobs\\GenerateScheduledReport')
             ->where('failedJobs.data.0.exceptionCategory', 'RuntimeException')
             ->missing('failedJobs.data.0.payload')
             ->missing('failedJobs.data.0.exception'));
 
-        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, $failedJobUuid]))->assertRedirect();
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$failedJobUuid]))->assertRedirect();
         $this->assertDatabaseMissing('failed_jobs', ['uuid' => $failedJobUuid]);
         $this->assertDatabaseHas('jobs', ['queue' => 'reports', 'attempts' => 0]);
         $attempt = QueueRecoveryAttempt::query()->sole();
@@ -173,8 +173,8 @@ class OperationalReadinessTest extends TestCase
         $payload = json_encode(['uuid' => $failedJobUuid, 'displayName' => 'App\\Jobs\\ExternalProviderJob', 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call', 'data' => []], JSON_THROW_ON_ERROR);
         DB::table('failed_jobs')->insert(['uuid' => $failedJobUuid, 'connection' => 'sync', 'queue' => 'external', 'payload' => $payload, 'exception' => 'RuntimeException: External provider failure', 'failed_at' => now()->subMinute()]);
 
-        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, (string) Str::uuid()]))->assertNotFound();
-        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$operator->currentTeam->slug, $failedJobUuid]))->assertStatus(409);
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [(string) Str::uuid()]))->assertNotFound();
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$failedJobUuid]))->assertStatus(409);
         $this->assertDatabaseHas('failed_jobs', ['uuid' => $failedJobUuid]);
         $this->assertDatabaseCount('queue_recovery_attempts', 0);
         $this->assertDatabaseCount('jobs', 0);

@@ -1,5 +1,4 @@
 import type { Auth } from '@/types/auth';
-import type { Team } from '@/types/teams';
 
 declare module 'react' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -76,7 +75,7 @@ declare module '@inertiajs/core' {
             };
             auth: Auth;
             sidebarOpen: boolean;
-            currentTeam: Team | null;
+            routeContext: { key: string } | null;
             assessmentCycles: Array<{ id: string; name: string }>;
             notificationSummary: {
                 unread: number;

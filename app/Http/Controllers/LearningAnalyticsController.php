@@ -26,7 +26,7 @@ class LearningAnalyticsController extends Controller
         return Inertia::render('learning/analytics', ['report' => $this->analytics->report($this->user($request), $filters), 'filters' => $filters]);
     }
 
-    public function export(LearningAnalyticsRequest $request, string $currentTeam, string $format): Response
+    public function export(LearningAnalyticsRequest $request, string $format): Response
     {
         abort_unless(in_array($format, ['csv', 'xlsx', 'json', 'pdf'], true), 404);
         $user = $this->user($request);

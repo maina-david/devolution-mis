@@ -214,7 +214,7 @@ export default function IgrResolutionsIndex({
     resolutions,
     options,
 }: Props) {
-    const team = usePage().props.currentTeam;
+    const team = usePage().props.routeContext;
 
     if (!team) {
         return null;
@@ -238,9 +238,7 @@ export default function IgrResolutionsIndex({
                         reminders and independent closure.
                     </p>
                 </section>
-                {capabilities.manage && (
-                    <GovernanceForms teamSlug={team.slug} options={options} />
-                )}
+                {capabilities.manage && <GovernanceForms options={options} />}
                 <DateRangeFilter
                     initialFrom={filters.from}
                     initialTo={filters.to}
@@ -499,7 +497,6 @@ export default function IgrResolutionsIndex({
                                 <ResolutionCard
                                     key={resolution.id}
                                     resolution={resolution}
-                                    teamSlug={team.slug}
                                     capabilities={capabilities}
                                     resolutionOptions={options.resolutions}
                                     gapCategories={options.gapCategories}
@@ -527,11 +524,7 @@ export default function IgrResolutionsIndex({
                                 >
                                     <a
                                         href={exportMethod.url(
-                                            {
-                                                current_team: team.slug,
-                                                workspace: 'igr-gaps',
-                                                format,
-                                            },
+                                            { workspace: 'igr-gaps', format },
                                             {
                                                 query: {
                                                     from: filters.from,
@@ -559,11 +552,7 @@ export default function IgrResolutionsIndex({
                                 columns={gapWorkspace.columns}
                                 rows={gapWorkspace.rows}
                                 pagination={gapWorkspace.pagination}
-                                bulkExport={{
-                                    teamSlug: team.slug,
-                                    workspace: 'igr-gaps',
-                                    filters,
-                                }}
+                                bulkExport={{ workspace: 'igr-gaps', filters }}
                             />
                         ) : (
                             <WorkspaceEmptyState
@@ -599,7 +588,6 @@ export default function IgrResolutionsIndex({
                                     <a
                                         href={exportMethod.url(
                                             {
-                                                current_team: team.slug,
                                                 workspace: 'igr-resolutions',
                                                 format,
                                             },
@@ -620,7 +608,6 @@ export default function IgrResolutionsIndex({
                                 rows={workspace.rows}
                                 pagination={workspace.pagination}
                                 bulkExport={{
-                                    teamSlug: team.slug,
                                     workspace: 'igr-resolutions',
                                     filters,
                                 }}
@@ -675,13 +662,7 @@ function AnalyticsRanking({
     );
 }
 
-function GovernanceForms({
-    teamSlug,
-    options,
-}: {
-    teamSlug: string;
-    options: Props['options'];
-}) {
+function GovernanceForms({ options }: { options: Props['options'] }) {
     const [partyCount, setPartyCount] = useState(1);
     const [quorumConfirmed, setQuorumConfirmed] = useState(false);
 
@@ -693,7 +674,7 @@ function GovernanceForms({
                 description="Create the authoritative source forum."
             >
                 <Form
-                    action={storeForum({ current_team: teamSlug })}
+                    action={storeForum({})}
                     className="flex flex-col gap-3"
                     resetOnSuccess
                 >
@@ -748,7 +729,7 @@ function GovernanceForms({
                 description="Capture quorum and minutes provenance before linking adopted resolutions."
             >
                 <Form
-                    action={storeMeeting({ current_team: teamSlug })}
+                    action={storeMeeting({})}
                     className="flex flex-col gap-3"
                     resetOnSuccess
                     onSuccess={() => setQuorumConfirmed(false)}
@@ -827,7 +808,7 @@ function GovernanceForms({
                 description="Configure a reusable classification and its default risk severity."
             >
                 <Form
-                    action={storeGapCategory({ current_team: teamSlug })}
+                    action={storeGapCategory({})}
                     className="flex flex-col gap-3"
                     resetOnSuccess
                 >
@@ -877,7 +858,7 @@ function GovernanceForms({
                 description="Assign exactly one lead and any supporting responsible parties."
             >
                 <Form
-                    action={storeResolution({ current_team: teamSlug })}
+                    action={storeResolution({})}
                     className="flex flex-col gap-3"
                     resetOnSuccess
                 >
@@ -1032,14 +1013,12 @@ function GovernanceForms({
 
 function ResolutionCard({
     resolution,
-    teamSlug,
     capabilities,
     resolutionOptions,
     gapCategories,
     countyOptions,
 }: {
     resolution: Resolution;
-    teamSlug: string;
     capabilities: Props['capabilities'];
     resolutionOptions: Option[];
     gapCategories: Option[];
@@ -1195,7 +1174,6 @@ function ResolutionCard({
                             key={gap.id}
                             gap={gap}
                             resolutionId={resolution.id}
-                            teamSlug={teamSlug}
                             capabilities={capabilities}
                         />
                     ))}
@@ -1209,10 +1187,7 @@ function ResolutionCard({
                         description={`Classify, assign and deadline a gap affecting ${resolution.number}.`}
                     >
                         <Form
-                            action={storeGap({
-                                current_team: teamSlug,
-                                resolution: resolution.id,
-                            })}
+                            action={storeGap({ resolution: resolution.id })}
                             className="grid gap-4"
                             resetOnSuccess
                         >
@@ -1294,7 +1269,6 @@ function ResolutionCard({
                     </FormSheet>
                 )}
             <IgrDocumentControls
-                teamSlug={teamSlug}
                 resolutionId={resolution.id}
                 status={resolution.status}
                 documents={resolution.documents}
@@ -1312,7 +1286,6 @@ function ResolutionCard({
                     >
                         <Form
                             action={storeDependency({
-                                current_team: teamSlug,
                                 resolution: resolution.id,
                             })}
                             className="grid gap-4"
@@ -1360,10 +1333,7 @@ function ResolutionCard({
                         description={`Update ${resolution.number} with evidence and any implementation gap.`}
                     >
                         <Form
-                            action={storeUpdate({
-                                current_team: teamSlug,
-                                resolution: resolution.id,
-                            })}
+                            action={storeUpdate({ resolution: resolution.id })}
                             className="grid gap-4"
                         >
                             {({ processing }) => (
@@ -1402,7 +1372,6 @@ function ResolutionCard({
             <div className="flex flex-wrap gap-2">
                 {resolution.status === 'open' && capabilities.update && (
                     <Transition
-                        teamSlug={teamSlug}
                         resolutionId={resolution.id}
                         name="start"
                         label="Start implementation"
@@ -1412,7 +1381,6 @@ function ResolutionCard({
                     resolution.progress === 100 &&
                     capabilities.update && (
                         <Transition
-                            teamSlug={teamSlug}
                             resolutionId={resolution.id}
                             name="submit_closure"
                             label="Submit for closure"
@@ -1431,13 +1399,11 @@ function ResolutionCard({
                     capabilities.close && (
                         <>
                             <Transition
-                                teamSlug={teamSlug}
                                 resolutionId={resolution.id}
                                 name="approve_closure"
                                 label="Approve closure"
                             />
                             <Transition
-                                teamSlug={teamSlug}
                                 resolutionId={resolution.id}
                                 name="reject_closure"
                                 label="Return for action"
@@ -1526,12 +1492,10 @@ function DependencyList({
 function ResolutionGapCard({
     gap,
     resolutionId,
-    teamSlug,
     capabilities,
 }: {
     gap: ResolutionGap;
     resolutionId: string;
-    teamSlug: string;
     capabilities: Props['capabilities'];
 }) {
     return (
@@ -1574,7 +1538,6 @@ function ResolutionGapCard({
                 {gap.status === 'open' &&
                     (capabilities.update || capabilities.manage) && (
                         <GapTransition
-                            teamSlug={teamSlug}
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="start_mitigation"
@@ -1584,7 +1547,6 @@ function ResolutionGapCard({
                 {['open', 'mitigating'].includes(gap.status) &&
                     (capabilities.update || capabilities.manage) && (
                         <GapTransition
-                            teamSlug={teamSlug}
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="resolve"
@@ -1594,14 +1556,12 @@ function ResolutionGapCard({
                 {gap.status === 'resolved' && capabilities.close && (
                     <>
                         <GapTransition
-                            teamSlug={teamSlug}
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="accept"
                             label="Accept resolution"
                         />
                         <GapTransition
-                            teamSlug={teamSlug}
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="reject"
@@ -1615,13 +1575,11 @@ function ResolutionGapCard({
 }
 
 function GapTransition({
-    teamSlug,
     resolutionId,
     gapId,
     transition: transitionName,
     label,
 }: {
-    teamSlug: string;
     resolutionId: string;
     gapId: string;
     transition: string;
@@ -1634,11 +1592,7 @@ function GapTransition({
             description="Record the decision basis for the governed implementation-gap lifecycle."
         >
             <Form
-                action={transitionGap({
-                    current_team: teamSlug,
-                    resolution: resolutionId,
-                    gap: gapId,
-                })}
+                action={transitionGap({ resolution: resolutionId, gap: gapId })}
                 className="grid gap-4"
             >
                 {({ processing }) => (
@@ -1667,7 +1621,6 @@ function GapTransition({
 }
 
 function Transition({
-    teamSlug,
     resolutionId,
     name,
     label,
@@ -1675,7 +1628,6 @@ function Transition({
     disabled = false,
     disabledReason,
 }: {
-    teamSlug: string;
     resolutionId: string;
     name: string;
     label: string;
@@ -1696,10 +1648,7 @@ function Transition({
             triggerTitle={disabledReason}
         >
             <Form
-                action={transition({
-                    current_team: teamSlug,
-                    resolution: resolutionId,
-                })}
+                action={transition({ resolution: resolutionId })}
                 className="grid gap-4"
             >
                 {({ processing, errors }) => (

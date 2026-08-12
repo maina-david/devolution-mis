@@ -169,7 +169,7 @@ class DswgCoordinationController extends Controller
         return $this->success("Recurring meeting series {$series->reference_prefix} created and its rolling schedule generated.");
     }
 
-    public function respondInvitation(RespondDswgInvitationRequest $request, string $currentTeam, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
+    public function respondInvitation(RespondDswgInvitationRequest $request, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
@@ -180,7 +180,7 @@ class DswgCoordinationController extends Controller
         return $this->success('Invitation response recorded.');
     }
 
-    public function recordOutcomes(RecordDswgMeetingOutcomesRequest $request, string $currentTeam, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
+    public function recordOutcomes(RecordDswgMeetingOutcomesRequest $request, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
@@ -199,7 +199,7 @@ class DswgCoordinationController extends Controller
         return $this->success('Meeting outcomes recorded for independent minutes approval.');
     }
 
-    public function approveMinutes(ApproveDswgMinutesRequest $request, string $currentTeam, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
+    public function approveMinutes(ApproveDswgMinutesRequest $request, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
@@ -213,7 +213,7 @@ class DswgCoordinationController extends Controller
         return $this->success('Minutes approved and meeting closed.');
     }
 
-    public function storeDecision(StoreDswgDecisionRequest $request, string $currentTeam, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
+    public function storeDecision(StoreDswgDecisionRequest $request, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
     {
         $this->authorizeMeeting($this->user($request), $meeting);
         abort_unless(in_array($meeting->status, ['minutes_pending', 'closed'], true), 409, 'Decisions may be registered only after outcomes are recorded.');
@@ -224,7 +224,7 @@ class DswgCoordinationController extends Controller
         return $this->success('Meeting decision registered.');
     }
 
-    public function storeAction(StoreDswgActionRequest $request, string $currentTeam, DswgMeeting $meeting, CreateDswgAction $createAction): RedirectResponse
+    public function storeAction(StoreDswgActionRequest $request, DswgMeeting $meeting, CreateDswgAction $createAction): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
@@ -235,7 +235,7 @@ class DswgCoordinationController extends Controller
         return $this->success('Accountable action created and assignee notified.');
     }
 
-    public function transitionAction(TransitionDswgActionRequest $request, string $currentTeam, DswgAction $action, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
+    public function transitionAction(TransitionDswgActionRequest $request, DswgAction $action, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $action->meeting);

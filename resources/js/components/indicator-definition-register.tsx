@@ -50,11 +50,9 @@ export type IndicatorDefinitionItem = {
 };
 
 export default function IndicatorDefinitionRegister({
-    teamSlug,
     definitions,
     currentUserId,
 }: {
-    teamSlug: string;
     definitions: IndicatorDefinitionItem[];
     currentUserId: string;
 }) {
@@ -134,8 +132,6 @@ export default function IndicatorDefinitionRegister({
                                                             <Form
                                                                 {...approve.form(
                                                                     {
-                                                                        current_team:
-                                                                            teamSlug,
                                                                         indicator:
                                                                             item.id,
                                                                     },
@@ -186,7 +182,6 @@ export default function IndicatorDefinitionRegister({
                 </TableBody>
             </Table>
             <IndicatorSupersessionSheet
-                teamSlug={teamSlug}
                 indicator={superseding}
                 open={superseding !== null}
                 onOpenChange={(open) => !open && setSuperseding(null)}

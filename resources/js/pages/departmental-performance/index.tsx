@@ -203,9 +203,9 @@ export default function DepartmentalPerformance({
     options,
     analytics,
 }: Props) {
-    const { currentTeam, auth } = usePage().props;
+    const { routeContext, auth } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -249,12 +249,9 @@ export default function DepartmentalPerformance({
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {capabilities.manageCycles && (
-                                <CycleForm teamSlug={currentTeam.slug} />
-                            )}
+                            {capabilities.manageCycles && <CycleForm />}
                             {capabilities.submit && (
                                 <PlanForm
-                                    teamSlug={currentTeam.slug}
                                     options={options}
                                     catalogue={catalogue}
                                 />
@@ -362,8 +359,6 @@ export default function DepartmentalPerformance({
                                                 <a
                                                     href={exportMethod.url(
                                                         {
-                                                            current_team:
-                                                                currentTeam.slug,
                                                             workspace:
                                                                 'departmental-performance',
                                                             format,
@@ -395,7 +390,6 @@ export default function DepartmentalPerformance({
                             rows={rows}
                             pagination={pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'departmental-performance',
                                 filters,
                             }}
@@ -407,7 +401,6 @@ export default function DepartmentalPerformance({
                                 return plan ? (
                                     <PlanActions
                                         plan={plan}
-                                        teamSlug={currentTeam.slug}
                                         currentUserId={auth.user.id}
                                         capabilities={capabilities}
                                     />
@@ -483,7 +476,7 @@ function AnalyticsTable({
     );
 }
 
-function CycleForm({ teamSlug }: { teamSlug: string }) {
+function CycleForm() {
     return (
         <FormSheet
             title="Create performance cycle"
@@ -491,7 +484,7 @@ function CycleForm({ teamSlug }: { teamSlug: string }) {
             triggerLabel="New cycle"
             icon={Plus}
         >
-            <Form action={storeCycle(teamSlug)} className="grid gap-4 pt-4">
+            <Form action={storeCycle()} className="grid gap-4 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <Field
@@ -555,11 +548,9 @@ function CycleForm({ teamSlug }: { teamSlug: string }) {
 }
 
 function PlanForm({
-    teamSlug,
     options,
     catalogue,
 }: {
-    teamSlug: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -579,7 +570,7 @@ function PlanForm({
                     : 'No checksum-valid published reference catalogue is currently effective.'
             }
         >
-            <Form action={storePlan(teamSlug)} className="grid gap-6 pt-4">
+            <Form action={storePlan()} className="grid gap-6 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -780,12 +771,10 @@ function PlanForm({
 
 function PlanActions({
     plan,
-    teamSlug,
     currentUserId,
     capabilities,
 }: {
     plan: PerformancePlan;
-    teamSlug: string;
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
@@ -967,7 +956,6 @@ function PlanActions({
                         {surface === 'details' ? (
                             <PlanDetails
                                 plan={plan}
-                                teamSlug={teamSlug}
                                 currentUserId={currentUserId}
                                 capabilities={capabilities}
                             />
@@ -975,19 +963,16 @@ function PlanActions({
                             <GoalAmendmentForm
                                 plan={plan}
                                 goal={amendmentGoal}
-                                teamSlug={teamSlug}
                             />
                         ) : decisionAmendment ? (
                             <GoalAmendmentDecisionForm
                                 plan={plan}
                                 goal={decisionAmendment.goal}
                                 amendment={decisionAmendment.amendment}
-                                teamSlug={teamSlug}
                             />
                         ) : surface ? (
                             <TransitionForm
                                 plan={plan}
-                                teamSlug={teamSlug}
                                 transitionName={surface}
                                 disabledReason={evidenceGate(surface)}
                             />
@@ -1001,12 +986,10 @@ function PlanActions({
 
 function TransitionForm({
     plan,
-    teamSlug,
     transitionName,
     disabledReason,
 }: {
     plan: PerformancePlan;
-    teamSlug: string;
     transitionName: string;
     disabledReason?: string;
 }) {
@@ -1016,10 +999,7 @@ function TransitionForm({
 
     return (
         <Form
-            action={transition({
-                current_team: teamSlug,
-                performancePlan: plan.id,
-            })}
+            action={transition({ performancePlan: plan.id })}
             className="grid gap-5 pt-4"
         >
             {({ errors, processing }) => (
@@ -1156,16 +1136,13 @@ function TransitionForm({
 function GoalAmendmentForm({
     plan,
     goal,
-    teamSlug,
 }: {
     plan: PerformancePlan;
     goal: Goal;
-    teamSlug: string;
 }) {
     return (
         <Form
             action={storeGoalAmendment({
-                current_team: teamSlug,
                 performancePlan: plan.id,
                 performanceGoal: goal.id,
             })}
@@ -1261,17 +1238,14 @@ function GoalAmendmentDecisionForm({
     plan,
     goal,
     amendment,
-    teamSlug,
 }: {
     plan: PerformancePlan;
     goal: Goal;
     amendment: GoalAmendment;
-    teamSlug: string;
 }) {
     return (
         <Form
             action={storeGoalAmendmentDecision({
-                current_team: teamSlug,
                 performancePlan: plan.id,
                 performanceGoalAmendment: amendment.id,
             })}
@@ -1350,12 +1324,10 @@ function GoalAmendmentDecisionForm({
 
 function PlanDetails({
     plan,
-    teamSlug,
     currentUserId,
     capabilities,
 }: {
     plan: PerformancePlan;
-    teamSlug: string;
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
@@ -1372,7 +1344,6 @@ function PlanDetails({
     return (
         <div className="grid gap-6 pt-4">
             <PerformancePlanDocumentControls
-                teamSlug={teamSlug}
                 planId={plan.id}
                 status={plan.status}
                 documents={plan.documents}

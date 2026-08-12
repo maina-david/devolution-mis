@@ -26,9 +26,8 @@ class CreateKnowledgePost
             return $post;
         });
 
-        $discussion->subscriptions()->with('user.currentTeam')->where('user_id', '!=', $author->id)->each(function (KnowledgeDiscussionSubscription $subscription) use ($discussion): void {
-            $teamSlug = $subscription->user->currentTeam?->slug;
-            $subscription->user->notify(new ProgrammeAlert('New knowledge discussion contribution', "A new contribution was posted to {$discussion->title}.", 'knowledge', is_string($teamSlug) ? route('knowledge.index', $teamSlug) : null));
+        $discussion->subscriptions()->with('user')->where('user_id', '!=', $author->id)->each(function (KnowledgeDiscussionSubscription $subscription) use ($discussion): void {
+            $subscription->user->notify(new ProgrammeAlert('New knowledge discussion contribution', "A new contribution was posted to {$discussion->title}.", 'knowledge', route('knowledge.index')));
         });
 
         return $post;

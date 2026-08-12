@@ -15,7 +15,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('user_id');
             $table->char('session_fingerprint', 64)->unique();
-            $table->uuid('team_id')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->string('current_route')->nullable();
@@ -29,7 +28,6 @@ return new class extends Migration
             $table->timestampsTz();
             $table->softDeletesTz();
             $table->foreign('user_id')->references('id')->on('users')->restrictOnDelete();
-            $table->foreign('team_id')->references('id')->on('teams')->nullOnDelete();
             $table->index(['user_id', 'logged_in_at']);
             $table->index(['user_id', 'last_seen_at']);
         });

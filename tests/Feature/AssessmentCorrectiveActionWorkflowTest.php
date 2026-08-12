@@ -28,24 +28,24 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
         [$assessment, $finding, $document, $submitter, $reviewer, $closer, $owner] = $this->scenario();
         $publicationChecksum = $assessment->publication?->checksum;
 
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$submitter->currentTeam->slug, $assessment]), $this->planPayload($finding, $owner))->assertRedirect();
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertRedirect();
         $plan = AssessmentCorrectivePlan::query()->sole();
         $correctiveAction = AssessmentCorrectiveAction::query()->sole();
         $this->assertSame(64, strlen($plan->checksum));
         $this->assertSame('submitted', $plan->status);
 
         $reviewPayload = ['decision' => 'activate', 'review_note' => 'The root-cause analysis, owner, indicator, target and timeframe are credible.'];
-        $this->actingAs($submitter)->patch(route('assessments.corrective-plans.review', [$submitter->currentTeam->slug, $assessment, $plan]), $reviewPayload)->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.review', [$reviewer->currentTeam->slug, $assessment, $plan]), $reviewPayload)->assertRedirect();
+        $this->actingAs($submitter)->patch(route('assessments.corrective-plans.review', [$assessment, $plan]), $reviewPayload)->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.review', [$assessment, $plan]), $reviewPayload)->assertRedirect();
 
         $this->submitAndVerifyProgress($assessment, $plan, $correctiveAction, $document, $submitter, $reviewer, 50);
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.closure.store', [$submitter->currentTeam->slug, $assessment, $plan]))->assertStatus(409);
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.closure.store', [$assessment, $plan]))->assertStatus(409);
         $this->submitAndVerifyProgress($assessment, $plan, $correctiveAction, $document, $submitter, $reviewer, 100);
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.closure.store', [$submitter->currentTeam->slug, $assessment, $plan]))->assertRedirect();
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.closure.store', [$assessment, $plan]))->assertRedirect();
 
         $closure = ['decision' => 'closed', 'decision_reason' => 'All actions have independently verified completion evidence and the intended control is operational.'];
-        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.closure.decide', [$reviewer->currentTeam->slug, $assessment, $plan]), $closure)->assertForbidden();
-        $this->actingAs($closer)->patch(route('assessments.corrective-plans.closure.decide', [$closer->currentTeam->slug, $assessment, $plan]), $closure)->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.closure.decide', [$assessment, $plan]), $closure)->assertForbidden();
+        $this->actingAs($closer)->patch(route('assessments.corrective-plans.closure.decide', [$assessment, $plan]), $closure)->assertRedirect();
 
         $this->assertSame('closed', $plan->fresh()->status);
         $this->assertSame('completed', $correctiveAction->fresh()->status);
@@ -54,7 +54,7 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $plan->id, 'action' => 'assessment.corrective_plan_submitted']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $plan->id, 'action' => 'assessment.corrective_plan_closed']);
 
-        $this->actingAs($closer)->get(route('assessments.show', [$closer->currentTeam->slug, $assessment]))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($closer)->get(route('assessments.show', [$assessment]))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('assessment.correctivePlans.0.status', 'closed')
             ->where('assessment.correctivePlans.0.actions.0.progress', 100)
             ->has('assessment.correctivePlans.0.actions.0.updates', 2));
@@ -72,28 +72,28 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Approved]);
         $finding = AssessmentFinding::factory()->create(['assessment_id' => $assessment->id, 'severity' => 'minor', 'status' => 'resolved']);
 
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$submitter->currentTeam->slug, $assessment]), $this->planPayload($finding, $owner))->assertStatus(409);
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertStatus(409);
         $this->assertDatabaseCount('assessment_corrective_plans', 0);
     }
 
     public function test_progress_rejects_cross_county_unverified_and_non_monotonic_evidence(): void
     {
         [$assessment, $finding, $document, $submitter, $reviewer, , $owner] = $this->scenario();
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$submitter->currentTeam->slug, $assessment]), $this->planPayload($finding, $owner))->assertRedirect();
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertRedirect();
         $plan = AssessmentCorrectivePlan::query()->sole();
         $correctiveAction = AssessmentCorrectiveAction::query()->sole();
-        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.review', [$reviewer->currentTeam->slug, $assessment, $plan]), ['decision' => 'activate', 'review_note' => 'Approved.'])->assertRedirect();
+        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.review', [$assessment, $plan]), ['decision' => 'activate', 'review_note' => 'Approved.'])->assertRedirect();
 
         $otherCounty = County::factory()->create();
         $otherOfficial = User::factory()->countyAdmin($otherCounty)->create();
         $otherAssessment = Assessment::factory()->create(['county_id' => $otherCounty->id]);
         $otherDocument = AssessmentDocument::factory()->create(['assessment_id' => $otherAssessment->id, 'county_id' => $otherCounty->id, 'verification_status' => 'verified', 'scan_status' => 'clean']);
         $updatePayload = ['assessment_document_id' => $otherDocument->id, 'progress_percentage' => 40, 'narrative' => 'Evidence from another county.'];
-        $this->actingAs($otherOfficial)->post(route('assessments.corrective-plans.actions.updates.store', [$otherOfficial->currentTeam->slug, $assessment, $plan, $correctiveAction]), $updatePayload)->assertForbidden();
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$submitter->currentTeam->slug, $assessment, $plan, $correctiveAction]), $updatePayload)->assertStatus(409);
+        $this->actingAs($otherOfficial)->post(route('assessments.corrective-plans.actions.updates.store', [$assessment, $plan, $correctiveAction]), $updatePayload)->assertForbidden();
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$assessment, $plan, $correctiveAction]), $updatePayload)->assertStatus(409);
 
         $this->submitAndVerifyProgress($assessment, $plan, $correctiveAction, $document, $submitter, $reviewer, 60);
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$submitter->currentTeam->slug, $assessment, $plan, $correctiveAction]), ['assessment_document_id' => $document->id, 'progress_percentage' => 50, 'narrative' => 'Regressive progress.'])->assertStatus(409);
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$assessment, $plan, $correctiveAction]), ['assessment_document_id' => $document->id, 'progress_percentage' => 50, 'narrative' => 'Regressive progress.'])->assertStatus(409);
     }
 
     /** @return array{Assessment, AssessmentFinding, AssessmentDocument, User, User, User, User} */
@@ -122,9 +122,9 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
 
     private function submitAndVerifyProgress(Assessment $assessment, AssessmentCorrectivePlan $plan, AssessmentCorrectiveAction $action, AssessmentDocument $document, User $submitter, User $reviewer, float $progress): void
     {
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$submitter->currentTeam->slug, $assessment, $plan, $action]), ['assessment_document_id' => $document->id, 'progress_percentage' => $progress, 'narrative' => "Verified implementation progress reached {$progress} percent."])->assertRedirect();
+        $this->actingAs($submitter)->post(route('assessments.corrective-plans.actions.updates.store', [$assessment, $plan, $action]), ['assessment_document_id' => $document->id, 'progress_percentage' => $progress, 'narrative' => "Verified implementation progress reached {$progress} percent."])->assertRedirect();
         $update = AssessmentCorrectiveUpdate::query()->where('status', 'pending_verification')->sole();
-        $this->actingAs($submitter)->patch(route('assessments.corrective-plans.actions.updates.verify', [$submitter->currentTeam->slug, $assessment, $plan, $action, $update]), ['decision' => 'verified', 'decision_note' => 'Attempted self-verification.'])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.actions.updates.verify', [$reviewer->currentTeam->slug, $assessment, $plan, $action, $update]), ['decision' => 'verified', 'decision_note' => 'Repository evidence supports the reported progress.'])->assertRedirect();
+        $this->actingAs($submitter)->patch(route('assessments.corrective-plans.actions.updates.verify', [$assessment, $plan, $action, $update]), ['decision' => 'verified', 'decision_note' => 'Attempted self-verification.'])->assertForbidden();
+        $this->actingAs($reviewer)->patch(route('assessments.corrective-plans.actions.updates.verify', [$assessment, $plan, $action, $update]), ['decision' => 'verified', 'decision_note' => 'Repository evidence supports the reported progress.'])->assertRedirect();
     }
 }

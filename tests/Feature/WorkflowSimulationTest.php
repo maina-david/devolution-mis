@@ -42,7 +42,7 @@ class WorkflowSimulationTest extends TestCase
         $definition = WorkflowDefinition::factory()->create();
         $version = WorkflowVersion::factory()->create(['workflow_definition_id' => $definition->id, 'configuration' => $this->configuration()]);
 
-        $response = $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$administrator->currentTeam->slug, $definition, $version]), [
+        $response = $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$definition, $version]), [
             'started_at' => '2026-08-10T08:00:00+03:00',
             'started_by' => $submitter->id,
             'initial_context' => ['evidence_count' => 0],
@@ -73,10 +73,10 @@ class WorkflowSimulationTest extends TestCase
         $version = WorkflowVersion::factory()->create(['workflow_definition_id' => $definition->id, 'configuration' => $this->configuration()]);
 
         $base = ['started_at' => now()->toIso8601String(), 'started_by' => $actor->id, 'initial_context' => ['evidence_count' => 0]];
-        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$administrator->currentTeam->slug, $definition, $version]), $base + ['steps' => [['transition_name' => 'submit', 'actor_id' => $actor->id, 'context_changes' => []]]])
+        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$definition, $version]), $base + ['steps' => [['transition_name' => 'submit', 'actor_id' => $actor->id, 'context_changes' => []]]])
             ->assertOk()->assertJsonPath('simulation.failureCode', 'rules_failed');
 
-        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$administrator->currentTeam->slug, $definition, $version]), array_replace($base, ['initial_context' => ['evidence_count' => 1], 'steps' => [['transition_name' => 'submit', 'actor_id' => $actor->id, 'context_changes' => []], ['transition_name' => 'approve', 'actor_id' => $actor->id, 'context_changes' => []]]]))
+        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$definition, $version]), array_replace($base, ['initial_context' => ['evidence_count' => 1], 'steps' => [['transition_name' => 'submit', 'actor_id' => $actor->id, 'context_changes' => []], ['transition_name' => 'approve', 'actor_id' => $actor->id, 'context_changes' => []]]]))
             ->assertOk()->assertJsonPath('simulation.failureCode', 'separation_of_duties_failed');
     }
 
@@ -89,8 +89,8 @@ class WorkflowSimulationTest extends TestCase
         $version = WorkflowVersion::factory()->create(['workflow_definition_id' => $definition->id, 'configuration' => $this->configuration()]);
         $payload = ['started_at' => now()->toIso8601String(), 'started_by' => $administrator->id, 'initial_context' => [], 'steps' => []];
 
-        $this->actingAs($countyUser)->postJson(route('workflows.versions.simulate', [$countyUser->currentTeam->slug, $definition, $version]), $payload)->assertForbidden();
-        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$administrator->currentTeam->slug, $otherDefinition, $version]), $payload)->assertNotFound();
-        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$administrator->currentTeam->slug, $definition, $version]), ['started_at' => 'invalid'])->assertJsonValidationErrors(['started_at', 'started_by', 'initial_context', 'steps']);
+        $this->actingAs($countyUser)->postJson(route('workflows.versions.simulate', [$definition, $version]), $payload)->assertForbidden();
+        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$otherDefinition, $version]), $payload)->assertNotFound();
+        $this->actingAs($administrator)->postJson(route('workflows.versions.simulate', [$definition, $version]), ['started_at' => 'invalid'])->assertJsonValidationErrors(['started_at', 'started_by', 'initial_context', 'steps']);
     }
 }

@@ -20,7 +20,7 @@ class GrantWorkflowTest extends TestCase
         $admin = User::factory()->devolutionAdmin()->create();
         Notification::fake();
 
-        $this->actingAs($admin)->patch(route('grants.update', [$admin->currentTeam->slug, $grant]), [
+        $this->actingAs($admin)->patch(route('grants.update', [$grant]), [
             'allocated_amount' => 1200,
             'disbursed_amount' => 800,
             'status' => 'disbursed',
@@ -38,7 +38,7 @@ class GrantWorkflowTest extends TestCase
         $grant = CountyGrant::factory()->create(['county_id' => $county->id]);
         $admin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($admin)->patch(route('grants.update', [$admin->currentTeam->slug, $grant]), [
+        $this->actingAs($admin)->patch(route('grants.update', [$grant]), [
             'allocated_amount' => 100,
             'disbursed_amount' => 101,
             'status' => 'processing',
@@ -55,7 +55,7 @@ class GrantWorkflowTest extends TestCase
                 $user->assignedCounties()->attach($county);
             }
 
-            $this->actingAs($user)->patch(route('grants.update', [$user->currentTeam->slug, $grant]), [
+            $this->actingAs($user)->patch(route('grants.update', [$grant]), [
                 'allocated_amount' => 100,
                 'disbursed_amount' => 50,
                 'status' => 'processing',

@@ -14,7 +14,7 @@ class BulkProgrammeUserController extends Controller
     /**
      * Handle the incoming request.
      */
-    public function __invoke(BulkProgrammeUserRequest $request, string $currentTeam, DeactivateProgrammeUser $deactivate): RedirectResponse
+    public function __invoke(BulkProgrammeUserRequest $request, DeactivateProgrammeUser $deactivate): RedirectResponse
     {
         /** @var User $actor */
         $actor = $request->user();

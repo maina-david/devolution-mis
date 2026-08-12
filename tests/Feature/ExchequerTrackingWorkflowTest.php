@@ -33,22 +33,22 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $ocobContract = IntegrationContract::factory()->create(['integration_system_id' => $ocobSystem->id]);
         $ocobExchange = IntegrationExchange::factory()->create(['integration_contract_id' => $ocobContract->id, 'county_id' => $county->id, 'status' => 'succeeded']);
         $release = $this->publishedReferenceRelease([$county], $creator);
-        $this->actingAs($creator)->post(route('exchequer.store', $creator->currentTeam->slug), $this->requestPayload($grant))->assertRedirect();
+        $this->actingAs($creator)->post(route('exchequer.store'), $this->requestPayload($grant))->assertRedirect();
         $request = ExchequerRequest::query()->sole();
         $this->assertTrue(Str::isUuid($request->id));
         $this->assertSame($release->id, $request->reference_data_release_id);
-        $this->actingAs($creator)->post(route('exchequer.events.store', [$creator->currentTeam->slug, $request]), $this->eventPayload('submitted_to_treasury', 'IDMIS', 'IDMIS-SUBMIT-001'))->assertForbidden();
+        $this->actingAs($creator)->post(route('exchequer.events.store', [$request]), $this->eventPayload('submitted_to_treasury', 'IDMIS', 'IDMIS-SUBMIT-001'))->assertForbidden();
 
         Carbon::setTestNow(now()->addHours(2));
-        $this->actingAs($integrator)->post(route('exchequer.events.store', [$integrator->currentTeam->slug, $request]), $this->eventPayload('ocob_authorized', 'OCOB', 'OCOB-SKIP-001'))->assertSessionHasErrors('event_type');
-        $this->actingAs($integrator)->post(route('exchequer.events.store', [$integrator->currentTeam->slug, $request]), $this->eventPayload('submitted_to_treasury', 'CBK', 'CBK-WRONG-001'))->assertSessionHasErrors('source_system');
+        $this->actingAs($integrator)->post(route('exchequer.events.store', [$request]), $this->eventPayload('ocob_authorized', 'OCOB', 'OCOB-SKIP-001'))->assertSessionHasErrors('event_type');
+        $this->actingAs($integrator)->post(route('exchequer.events.store', [$request]), $this->eventPayload('submitted_to_treasury', 'CBK', 'CBK-WRONG-001'))->assertSessionHasErrors('source_system');
         $this->record($integrator, $request, 'submitted_to_treasury', 'IDMIS', 'IDMIS-SUBMIT-001');
         $this->assertSame('submitted_to_treasury', $request->refresh()->current_stage);
         Carbon::setTestNow(now()->addHours(8));
         $this->record($integrator, $request, 'treasury_forwarded_ocob', 'TREASURY', 'IFMIS-FWD-001');
         $this->assertSame('forwarded_to_ocob', $request->refresh()->current_stage);
         Carbon::setTestNow(now()->addHours(12));
-        $this->actingAs($integrator)->post(route('exchequer.events.store', [$integrator->currentTeam->slug, $request]), [...$this->eventPayload('ocob_authorized', 'OCOB', 'OCOB-AUTH-001'), 'integration_exchange_id' => $ocobExchange->id])->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs($integrator)->post(route('exchequer.events.store', [$request]), [...$this->eventPayload('ocob_authorized', 'OCOB', 'OCOB-AUTH-001'), 'integration_exchange_id' => $ocobExchange->id])->assertRedirect()->assertSessionHasNoErrors();
         $this->assertSame('authorized_by_ocob', $request->refresh()->current_stage);
         Carbon::setTestNow(now()->addHours(3));
         $this->record($integrator, $request, 'treasury_issued_cbk', 'TREASURY', 'IFMIS-ISSUE-001');
@@ -83,12 +83,12 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $visible = ExchequerRequest::factory()->create(['county_grant_id' => $grant->id, 'county_id' => $county->id, 'created_by' => $creator->id, 'tranche_reference' => 'VISIBLE']);
         ExchequerRequest::factory()->create(['county_grant_id' => $otherGrant->id, 'county_id' => $otherCounty->id, 'created_by' => $creator->id, 'tranche_reference' => 'HIDDEN']);
 
-        $this->actingAs($viewer)->get(route('exchequer.index', [$viewer->currentTeam->slug, 'search' => 'VISIBLE']))->assertOk()->assertInertia(fn ($page) => $page->where('requests.total', 1)->where('requests.data.0.id', $visible->id)->where('requests.data.0.referenceData', null)->where('summary.total', 1));
-        $this->actingAs($viewer)->get(route('exchequer.index', [$viewer->currentTeam->slug, 'county_id' => $otherCounty->id]))->assertForbidden();
+        $this->actingAs($viewer)->get(route('exchequer.index', ['search' => 'VISIBLE']))->assertOk()->assertInertia(fn ($page) => $page->where('requests.total', 1)->where('requests.data.0.id', $visible->id)->where('requests.data.0.referenceData', null)->where('summary.total', 1));
+        $this->actingAs($viewer)->get(route('exchequer.index', ['county_id' => $otherCounty->id]))->assertForbidden();
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'exchequer', $format, 'search' => 'VISIBLE']))->assertOk()->assertDownload();
+            $this->actingAs($viewer)->get(route('workspace.export', ['exchequer', $format, 'search' => 'VISIBLE']))->assertOk()->assertDownload();
         }
-        $this->actingAs($viewer)->get(route('workspace.export', [$viewer->currentTeam->slug, 'exchequer', 'json', 'county_id' => $otherCounty->id]))->assertForbidden();
+        $this->actingAs($viewer)->get(route('workspace.export', ['exchequer', 'json', 'county_id' => $otherCounty->id]))->assertForbidden();
     }
 
     public function test_allocation_and_source_reference_controls_reject_overcommit_and_replay(): void
@@ -98,13 +98,13 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $creator = User::factory()->devolutionAdmin()->create();
         $integrator = User::factory()->platformAdmin()->create();
         $this->publishedReferenceRelease([$county], $creator);
-        $this->actingAs($creator)->post(route('exchequer.store', $creator->currentTeam->slug), $this->requestPayload($grant))->assertRedirect();
-        $this->actingAs($creator)->post(route('exchequer.store', $creator->currentTeam->slug), [...$this->requestPayload($grant), 'tranche_reference' => 'OVERCOMMIT', 'amount' => 10_000_000])->assertUnprocessable();
+        $this->actingAs($creator)->post(route('exchequer.store'), $this->requestPayload($grant))->assertRedirect();
+        $this->actingAs($creator)->post(route('exchequer.store'), [...$this->requestPayload($grant), 'tranche_reference' => 'OVERCOMMIT', 'amount' => 10_000_000])->assertUnprocessable();
         $request = ExchequerRequest::query()->sole();
         $this->record($integrator, $request, 'submitted_to_treasury', 'IDMIS', 'SOURCE-REPLAY-001');
         $secondGrant = CountyGrant::factory()->create(['county_id' => $county->id, 'programme' => 'Other programme']);
         $second = ExchequerRequest::factory()->create(['county_grant_id' => $secondGrant->id, 'county_id' => $county->id, 'created_by' => $creator->id]);
-        $this->actingAs($integrator)->post(route('exchequer.events.store', [$integrator->currentTeam->slug, $second]), $this->eventPayload('submitted_to_treasury', 'IDMIS', 'SOURCE-REPLAY-001'))->assertSessionHasErrors('source_event_reference');
+        $this->actingAs($integrator)->post(route('exchequer.events.store', [$second]), $this->eventPayload('submitted_to_treasury', 'IDMIS', 'SOURCE-REPLAY-001'))->assertSessionHasErrors('source_event_reference');
     }
 
     public function test_request_creation_fails_closed_without_a_valid_governed_county_catalogue(): void
@@ -114,17 +114,17 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $grant = CountyGrant::factory()->create(['county_id' => $county->id]);
         $creator = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($creator)->post(route('exchequer.store', $creator->currentTeam->slug), $this->requestPayload($grant))->assertConflict();
+        $this->actingAs($creator)->post(route('exchequer.store'), $this->requestPayload($grant))->assertConflict();
         $this->assertDatabaseCount('exchequer_requests', 0);
 
         $this->publishedReferenceRelease([$otherCounty], $creator);
-        $this->actingAs($creator)->post(route('exchequer.store', $creator->currentTeam->slug), $this->requestPayload($grant))->assertSessionHasErrors('county_id');
+        $this->actingAs($creator)->post(route('exchequer.store'), $this->requestPayload($grant))->assertSessionHasErrors('county_id');
         $this->assertDatabaseCount('exchequer_requests', 0);
     }
 
     private function record(User $actor, ExchequerRequest $request, string $event, string $source, string $reference): void
     {
-        $this->actingAs($actor)->post(route('exchequer.events.store', [$actor->currentTeam->slug, $request]), $this->eventPayload($event, $source, $reference))->assertRedirect()->assertSessionHasNoErrors();
+        $this->actingAs($actor)->post(route('exchequer.events.store', [$request]), $this->eventPayload($event, $source, $reference))->assertRedirect()->assertSessionHasNoErrors();
     }
 
     /** @return array<string, mixed> */

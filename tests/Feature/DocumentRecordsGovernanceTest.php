@@ -76,7 +76,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Unscanned evidence',
             'category' => 'Other',
             'source_type' => 'digital',
@@ -95,7 +95,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Scanned participation register',
             'category' => 'Public participation',
             'source_type' => 'scanned',
@@ -126,7 +126,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
         $eicar = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
 
-        $this->actingAs($official)->post(route('evidence.store', [$official->currentTeam->slug, $assessment]), [
+        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
             'title' => 'Unsafe attachment',
             'category' => 'Other',
             'source_type' => 'digital',
@@ -135,9 +135,9 @@ class DocumentRecordsGovernanceTest extends TestCase
 
         $document = AssessmentDocument::query()->sole();
         $this->assertSame('infected', $document->scan_status);
-        $this->actingAs($official)->get(route('evidence.preview', [$official->currentTeam->slug, $document]))->assertStatus(423);
-        $this->actingAs($official)->get(route('evidence.download', [$official->currentTeam->slug, $document]))->assertStatus(423);
-        $this->actingAs($assessor)->patch(route('evidence.verify', [$assessor->currentTeam->slug, $document]), ['status' => 'verified'])->assertStatus(409);
+        $this->actingAs($official)->get(route('evidence.preview', [$document]))->assertStatus(423);
+        $this->actingAs($official)->get(route('evidence.download', [$document]))->assertStatus(423);
+        $this->actingAs($assessor)->patch(route('evidence.verify', [$document]), ['status' => 'verified'])->assertStatus(409);
     }
 
     public function test_replacement_creates_a_new_version_and_resets_evidence_verification(): void
@@ -149,7 +149,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id, 'verification_status' => 'verified']);
         DocumentVersion::factory()->create(['assessment_document_id' => $document->id, 'uploaded_by' => $official->id]);
 
-        $this->actingAs($official)->post(route('evidence.versions.store', [$official->currentTeam->slug, $document]), [
+        $this->actingAs($official)->post(route('evidence.versions.store', [$document]), [
             'document' => UploadedFile::fake()->createWithContent('replacement.txt', 'replacement version'),
             'change_summary' => 'Corrected the signed date.',
         ])->assertRedirect();
@@ -170,23 +170,23 @@ class DocumentRecordsGovernanceTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id]);
         $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id, 'retention_until' => '2030-01-01']);
 
-        $this->actingAs($recordsManager)->post(route('evidence.legal-holds.store', [$recordsManager->currentTeam->slug, $document]), [
+        $this->actingAs($recordsManager)->post(route('evidence.legal-holds.store', [$document]), [
             'reference' => 'HOLD-CASE-001',
             'reason' => 'Pending investigation and records preservation order.',
             'authority' => 'Office of the Auditor-General',
         ])->assertRedirect();
         $this->assertTrue($document->hasActiveLegalHold());
 
-        $this->actingAs($official)->post(route('evidence.versions.store', [$official->currentTeam->slug, $document]), [
+        $this->actingAs($official)->post(route('evidence.versions.store', [$document]), [
             'document' => UploadedFile::fake()->createWithContent('replacement.txt', 'replacement version'),
             'change_summary' => 'Attempted replacement',
         ])->assertStatus(409);
-        $this->actingAs($official)->patch(route('evidence.update', [$official->currentTeam->slug, $document]), [
+        $this->actingAs($official)->patch(route('evidence.update', [$document]), [
             'title' => $document->title,
             'category' => $document->category,
             'retention_until' => '2031-01-01',
         ])->assertStatus(409);
-        $this->actingAs($official)->delete(route('evidence.destroy', [$official->currentTeam->slug, $document]))->assertStatus(409);
+        $this->actingAs($official)->delete(route('evidence.destroy', [$document]))->assertStatus(409);
         $this->assertDatabaseHas('assessment_documents', ['id' => $document->id, 'deleted_at' => null]);
         $this->assertSame(1, DocumentLegalHold::query()->count());
     }
@@ -216,19 +216,19 @@ class DocumentRecordsGovernanceTest extends TestCase
             'content_checksum' => hash('sha256', '%PDF other county'),
         ]);
 
-        $this->actingAs($admin)->get(route('evidence.versions.preview', [$admin->currentTeam->slug, $document, $version]))
+        $this->actingAs($admin)->get(route('evidence.versions.preview', [$document, $version]))
             ->assertOk()
             ->assertHeader('Content-Type', 'application/pdf');
-        $this->actingAs($admin)->get(route('evidence.versions.download', [$admin->currentTeam->slug, $document, $version]))
+        $this->actingAs($admin)->get(route('evidence.versions.download', [$document, $version]))
             ->assertOk()
             ->assertDownload('evidence.pdf');
-        $this->actingAs($admin)->get(route('evidence.versions.download', [$admin->currentTeam->slug, $document, $otherVersion]))->assertNotFound();
-        $this->actingAs($admin)->get(route('evidence.versions.download', [$admin->currentTeam->slug, $otherDocument, $otherVersion]))->assertForbidden();
+        $this->actingAs($admin)->get(route('evidence.versions.download', [$document, $otherVersion]))->assertNotFound();
+        $this->actingAs($admin)->get(route('evidence.versions.download', [$otherDocument, $otherVersion]))->assertForbidden();
         $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_previewed']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_downloaded']);
 
         Storage::put($version->path, '%PDF tampered retained version');
-        $this->actingAs($admin)->get(route('evidence.versions.download', [$admin->currentTeam->slug, $document, $version]))->assertStatus(409);
+        $this->actingAs($admin)->get(route('evidence.versions.download', [$document, $version]))->assertStatus(409);
     }
 
     public function test_retained_media_versions_support_authorized_range_preview(): void
@@ -269,7 +269,7 @@ class DocumentRecordsGovernanceTest extends TestCase
 
         $this->actingAs($admin)
             ->withHeader('Range', 'bytes=0-9')
-            ->get(route('evidence.versions.preview', [$admin->currentTeam->slug, $document, $version]))
+            ->get(route('evidence.versions.preview', [$document, $version]))
             ->assertStatus(206)
             ->assertHeader('Accept-Ranges', 'bytes')
             ->assertHeader('Content-Range', 'bytes 0-9/'.strlen($content))
@@ -277,7 +277,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->withoutHeader('Range');
 
         $this->actingAs($admin)
-            ->get(route('evidence.versions.preview', [$admin->currentTeam->slug, $hiddenDocument, $hiddenVersion]))
+            ->get(route('evidence.versions.preview', [$hiddenDocument, $hiddenVersion]))
             ->assertForbidden();
         $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_previewed']);
     }
@@ -305,7 +305,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $document->update(['current_version_id' => $version->id, 'version' => 1]);
         $hold = DocumentLegalHold::factory()->create(['assessment_document_id' => $document->id, 'placed_by' => $holdPlacer->id]);
 
-        $this->actingAs($recordsManager)->get(route('evidence.index', $recordsManager->currentTeam->slug))
+        $this->actingAs($recordsManager)->get(route('evidence.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->has('workspace.rows', 1)
@@ -315,11 +315,11 @@ class DocumentRecordsGovernanceTest extends TestCase
                 ->where('workspace.rows.0.meta.legalHolds.0.releasedAt', null)
                 ->where('workspace.rows.0.meta.legalHolds.0.canRelease', true));
 
-        $this->actingAs($holdPlacer)->patch(route('evidence.legal-holds.release', [$holdPlacer->currentTeam->slug, $document, $hold]), [
+        $this->actingAs($holdPlacer)->patch(route('evidence.legal-holds.release', [$document, $hold]), [
             'release_reason' => 'Attempted self-release.',
         ])->assertStatus(409);
 
-        $this->actingAs($recordsManager)->patch(route('evidence.legal-holds.release', [$recordsManager->currentTeam->slug, $document, $hold]), [
+        $this->actingAs($recordsManager)->patch(route('evidence.legal-holds.release', [$document, $hold]), [
             'release_reason' => 'The preservation authority confirmed the investigation is closed and approved release.',
         ])->assertRedirect();
 

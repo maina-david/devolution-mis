@@ -47,14 +47,14 @@ class PerformanceAssuranceTest extends TestCase
         $sector = Sector::factory()->create();
         $this->insertProjects(array_values($counties->all()), $sector->id, $nationalUser->id, 2000);
 
-        $this->actingAs($nationalUser)->get(route('projects.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('projects.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('projects.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('projects.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->where('projects.total', 2000)->has('projects.data', 15));
         $this->assertLessThanOrEqual(25, $nationalQueries, "National project register used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National project register took {$nationalMilliseconds} ms at reference volume.");
 
         $expectedCountyProjects = (int) ceil(2000 / 47);
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('projects.index', $countyUser->currentTeam->slug)));
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('projects.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page->where('projects.total', $expectedCountyProjects)->has('projects.data', 15));
         $this->assertLessThanOrEqual(25, $countyQueries, "County project register used {$countyQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $countyMilliseconds, "County project register took {$countyMilliseconds} ms at reference volume.");
@@ -74,14 +74,14 @@ class PerformanceAssuranceTest extends TestCase
         $sector = Sector::factory()->create();
         $this->insertProjects(array_values($counties->all()), $sector->id, $nationalUser->id, 2000, 'Discovery benchmark');
 
-        $nationalUrl = route('search.global', ['current_team' => $nationalUser->currentTeam->slug, 'q' => 'Discovery benchmark']);
+        $nationalUrl = route('search.global', ['q' => 'Discovery benchmark']);
         $this->actingAs($nationalUser)->getJson($nationalUrl)->assertOk();
         [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->getJson($nationalUrl));
         $nationalResponse->assertOk()->assertJsonCount(5, 'results')->assertJsonPath('results.0.category', 'Projects');
         $this->assertLessThanOrEqual(60, $nationalQueries, "National global search used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National global search took {$nationalMilliseconds} ms at reference volume.");
 
-        $countyUrl = route('search.global', ['current_team' => $countyUser->currentTeam->slug, 'q' => 'Discovery benchmark']);
+        $countyUrl = route('search.global', ['q' => 'Discovery benchmark']);
         $this->actingAs($countyUser)->getJson($countyUrl)->assertOk();
         [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->getJson($countyUrl));
         $countyResponse->assertOk()->assertJsonCount(5, 'results')->assertJsonPath('results.0.category', 'Projects');
@@ -92,7 +92,7 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(60, $countyQueries, "County global search used {$countyQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $countyMilliseconds, "County global search took {$countyMilliseconds} ms at reference volume.");
 
-        $portfolioUrl = route('search.global', ['current_team' => $assessor->currentTeam->slug, 'q' => 'Discovery benchmark']);
+        $portfolioUrl = route('search.global', ['q' => 'Discovery benchmark']);
         $this->actingAs($assessor)->getJson($portfolioUrl)->assertOk();
         [$portfolioResponse, $portfolioQueries, $portfolioMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($assessor)->getJson($portfolioUrl));
         $portfolioResponse->assertOk()->assertJsonCount(5, 'results')->assertJsonPath('results.0.category', 'Projects');
@@ -114,7 +114,7 @@ class PerformanceAssuranceTest extends TestCase
         $countyUser = User::factory()->countyAdmin($homeCounty)->create();
         $this->insertRepositoryVolume(array_values($counties->all()), $nationalUser->id, 4700);
 
-        $nationalUrl = route('evidence.index', ['current_team' => $nationalUser->currentTeam->slug, 'search' => 'repository benchmark']);
+        $nationalUrl = route('evidence.index', ['search' => 'repository benchmark']);
         $this->actingAs($nationalUser)->get($nationalUrl)->assertOk();
         [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get($nationalUrl));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
@@ -123,7 +123,7 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(35, $nationalQueries, "National repository search used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National repository search took {$nationalMilliseconds} ms at reference volume.");
 
-        $countyUrl = route('evidence.index', ['current_team' => $countyUser->currentTeam->slug, 'search' => 'repository benchmark']);
+        $countyUrl = route('evidence.index', ['search' => 'repository benchmark']);
         $this->actingAs($countyUser)->get($countyUrl)->assertOk();
         [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get($countyUrl));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
@@ -237,8 +237,8 @@ class PerformanceAssuranceTest extends TestCase
         ]);
         $this->insertInnovationReplications(array_values($counties->all()), $nationalUser->id, $release->id, 940);
 
-        $this->actingAs($nationalUser)->get(route('knowledge.innovation-replications.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('knowledge.innovation-replications.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('knowledge.innovation-replications.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('knowledge.innovation-replications.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('replications.total', 940)
             ->where('summary.total', 940)
@@ -246,8 +246,8 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(25, $nationalQueries, "National innovation replication register used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National innovation replication register took {$nationalMilliseconds} ms at reference volume.");
 
-        $this->actingAs($countyUser)->get(route('knowledge.innovation-replications.index', $countyUser->currentTeam->slug))->assertOk();
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('knowledge.innovation-replications.index', $countyUser->currentTeam->slug)));
+        $this->actingAs($countyUser)->get(route('knowledge.innovation-replications.index'))->assertOk();
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('knowledge.innovation-replications.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('replications.total', 20)
             ->where('summary.total', 20)
@@ -273,8 +273,8 @@ class PerformanceAssuranceTest extends TestCase
         ]));
         $this->insertAssessmentPublications(array_values($counties->all()), array_values($cycles->all()), $nationalUser->id);
 
-        $this->actingAs($nationalUser)->get(route('assessments.analytics.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('assessments.analytics.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('assessments.analytics.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('assessments.analytics.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.publications', 470)
             ->where('report.summary.counties', 47)
@@ -285,8 +285,8 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(20, $nationalQueries, "National assessment analytics used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National assessment analytics took {$nationalMilliseconds} ms at reference volume.");
 
-        $this->actingAs($countyUser)->get(route('assessments.analytics.index', $countyUser->currentTeam->slug))->assertOk();
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('assessments.analytics.index', $countyUser->currentTeam->slug)));
+        $this->actingAs($countyUser)->get(route('assessments.analytics.index'))->assertOk();
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('assessments.analytics.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.publications', 10)
             ->where('report.summary.counties', 1)
@@ -309,8 +309,8 @@ class PerformanceAssuranceTest extends TestCase
         $countyUser = User::factory()->countyAdmin($homeCounty)->create();
         $this->insertLearningAnalyticsVolume(array_values($counties->all()), $nationalUser);
 
-        $this->actingAs($nationalUser)->get(route('learning.analytics.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('learning.analytics.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('learning.analytics.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('learning.analytics.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.enrollments', 9400)
             ->has('report.courses.rows', 10)
@@ -320,8 +320,8 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(20, $nationalQueries, "National learning analytics used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National learning analytics took {$nationalMilliseconds} ms at reference volume.");
 
-        $this->actingAs($countyUser)->get(route('learning.analytics.index', $countyUser->currentTeam->slug))->assertOk();
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('learning.analytics.index', $countyUser->currentTeam->slug)));
+        $this->actingAs($countyUser)->get(route('learning.analytics.index'))->assertOk();
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('learning.analytics.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.enrollments', 200)
             ->has('report.counties.rows', 1)
@@ -340,8 +340,8 @@ class PerformanceAssuranceTest extends TestCase
         $countyUser = User::factory()->countyAdmin($homeCounty)->create();
         $this->insertKnowledgeCommunityVolume(array_values($counties->all()), $nationalUser->id);
 
-        $this->actingAs($nationalUser)->get(route('knowledge.community-analytics.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('knowledge.community-analytics.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('knowledge.community-analytics.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('knowledge.community-analytics.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.discussions', 940)
             ->where('report.summary.contributions', 3760)
@@ -351,8 +351,8 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(20, $nationalQueries, "National community analytics used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National community analytics took {$nationalMilliseconds} ms at reference volume.");
 
-        $this->actingAs($countyUser)->get(route('knowledge.community-analytics.index', $countyUser->currentTeam->slug))->assertOk();
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('knowledge.community-analytics.index', $countyUser->currentTeam->slug)));
+        $this->actingAs($countyUser)->get(route('knowledge.community-analytics.index'))->assertOk();
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('knowledge.community-analytics.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('report.summary.discussions', 20)
             ->where('report.summary.contributions', 80)
@@ -379,8 +379,8 @@ class PerformanceAssuranceTest extends TestCase
         $policy = $this->publishedPerformanceServicePolicy($resolver, $publisher);
         $this->insertSupportTicketVolume(array_values($counties->all()), $release->id, $policy, $requester->id, $resolver->id, 4700);
 
-        $this->actingAs($nationalUser)->get(route('support-desk.index', $nationalUser->currentTeam->slug))->assertOk();
-        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('support-desk.index', $nationalUser->currentTeam->slug)));
+        $this->actingAs($nationalUser)->get(route('support-desk.index'))->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get(route('support-desk.index')));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('workspace.pagination.total', 4700)
             ->has('workspace.rows', 15)
@@ -389,7 +389,7 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(45, $nationalQueries, "National service-desk register used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National service-desk register took {$nationalMilliseconds} ms at reference volume.");
 
-        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('support-desk.index', $countyUser->currentTeam->slug)));
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get(route('support-desk.index')));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('workspace.pagination.total', 100)
             ->has('workspace.rows', 15)
@@ -427,7 +427,7 @@ class PerformanceAssuranceTest extends TestCase
         $category = IgrGapCategory::factory()->create(['created_by' => $nationalUser->id]);
         $this->insertIgrGapAnalyticsVolume(array_values($counties->all()), $forum->id, $category->id, $nationalUser->id, 4700);
 
-        $nationalUrl = route('igr-resolutions.index', $nationalUser->currentTeam->slug);
+        $nationalUrl = route('igr-resolutions.index');
         $this->actingAs($nationalUser)->get($nationalUrl)->assertOk();
         [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get($nationalUrl));
         $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
@@ -438,7 +438,7 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertLessThanOrEqual(60, $nationalQueries, "National IGR gap analytics used {$nationalQueries} database queries at reference volume.");
         $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National IGR gap analytics took {$nationalMilliseconds} ms at reference volume.");
 
-        $countyUrl = route('igr-resolutions.index', $countyUser->currentTeam->slug);
+        $countyUrl = route('igr-resolutions.index');
         $this->actingAs($countyUser)->get($countyUrl)->assertOk();
         [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get($countyUrl));
         $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page

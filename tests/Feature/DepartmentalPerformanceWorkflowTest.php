@@ -38,7 +38,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $cycle = $this->cycle($publisher);
         $this->seed(PerformanceWorkflowSeeder::class);
 
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $this->planPayload($cycle, $supervisor))->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))->assertRedirect();
         $plan = PerformancePlan::query()->with('goals')->sole();
         $this->assertTrue(Str::isUuid($plan->id));
         $this->assertCount(2, $plan->goals);
@@ -75,23 +75,23 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
             $this->assertSame('clean', $link->document->scan_status);
             Storage::disk('local')->assertExists($link->document->path);
         });
-        $this->actingAs($supervisor)->get(route('departmental-performance.index', $supervisor->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->has('plans.data.0.documents', 3));
-        $this->actingAs($supervisor)->get(route('evidence.preview', [$supervisor->currentTeam->slug, $links->first()->document]))->assertOk();
+        $this->actingAs($supervisor)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('plans.data.0.documents', 3));
+        $this->actingAs($supervisor)->get(route('evidence.preview', [$links->first()->document]))->assertOk();
         $outside = User::factory()->topManagement()->create();
-        $this->actingAs($outside)->get(route('evidence.preview', [$outside->currentTeam->slug, $links->first()->document]))->assertForbidden();
-        $this->actingAs($employee)->get(route('evidence.index', $employee->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->where('workspace.pagination.total', 3));
-        $this->actingAs($supervisor)->post(route('departmental-performance.plans.documents.store', [$supervisor->currentTeam->slug, $plan]), [
+        $this->actingAs($outside)->get(route('evidence.preview', [$links->first()->document]))->assertForbidden();
+        $this->actingAs($employee)->get(route('evidence.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('workspace.pagination.total', 3));
+        $this->actingAs($supervisor)->post(route('departmental-performance.plans.documents.store', [$plan]), [
             'record_purpose' => 'final_appraisal', 'title' => 'Late appraisal record', 'category' => 'Performance appraisal', 'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late-appraisal.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $this->actingAs($supervisor)->get(route('workspace.export', [$supervisor->currentTeam->slug, 'departmental-performance', $format]))->assertOk()->assertDownload();
+            $this->actingAs($supervisor)->get(route('workspace.export', ['departmental-performance', $format]))->assertOk()->assertDownload();
         }
         $release = $plan->referenceDataRelease()->sole();
-        $csv = $this->actingAs($supervisor)->get(route('workspace.export', [$supervisor->currentTeam->slug, 'departmental-performance', 'csv']))->streamedContent();
+        $csv = $this->actingAs($supervisor)->get(route('workspace.export', ['departmental-performance', 'csv']))->streamedContent();
         $this->assertStringContainsString('Reference release', $csv);
         $this->assertStringContainsString($release->checksum, $csv);
-        $this->actingAs($supervisor)->get(route('departmental-performance.index', $supervisor->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($supervisor)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('catalogue.available', true)
             ->where('plans.data.0.referenceData.version', $release->version)
             ->where('plans.data.0.referenceData.checksum', $release->checksum));
@@ -109,11 +109,11 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $payload = $this->planPayload($cycle, $supervisor);
         $payload['organization_id'] = $organization->id;
 
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('performance_plans', 0);
 
         $this->publishedReferenceRelease($publisher, [], str_repeat('0', 64));
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $payload)->assertStatus(409);
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $payload)->assertStatus(409);
         $this->assertDatabaseCount('performance_plans', 0);
 
         $this->publishedReferenceRelease($publisher);
@@ -126,7 +126,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $this->assertDatabaseCount('performance_plans', 0);
 
         $expectedRelease = $this->publishedReferenceRelease($publisher, [$organization]);
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $payload)->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $payload)->assertRedirect();
         $this->assertSame($expectedRelease->id, PerformancePlan::query()->sole()->reference_data_release_id);
     }
 
@@ -140,7 +140,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $payload = $this->planPayload($cycle, $supervisor);
         $payload['goals'][1]['weight'] = 20;
 
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $payload)->assertSessionHasErrors('goals');
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $payload)->assertSessionHasErrors('goals');
         $this->assertDatabaseCount('performance_plans', 0);
     }
 
@@ -154,7 +154,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $cycle = $this->cycle($publisher);
         $this->seed(PerformanceWorkflowSeeder::class);
 
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $this->planPayload($cycle, $supervisor))->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))->assertRedirect();
         $plan = PerformancePlan::query()->with('goals.versions')->sole();
         $goal = $plan->goals->first();
         $initialVersion = $goal->versions->sole();
@@ -167,7 +167,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $this->transition($supervisor, $plan, ['transition' => 'approve_goals', 'rationale' => 'Approve the signed baseline before controlled execution.'])->assertRedirect();
 
         $payload = [...$initialVersion->definition_snapshot, 'target_value' => 97, 'reason' => 'The approved annual delivery target increased after a documented executive commitment.'];
-        $amendmentRoute = route('departmental-performance.plans.goals.amendments.store', [$employee->currentTeam->slug, $plan, $goal]);
+        $amendmentRoute = route('departmental-performance.plans.goals.amendments.store', [$plan, $goal]);
         $this->actingAs($outsider)->post($amendmentRoute, $payload)->assertForbidden();
         $this->actingAs($employee)->post($amendmentRoute, $payload)->assertRedirect();
 
@@ -177,8 +177,8 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $this->assertSame(64, strlen($amendment->request_checksum));
         $this->assertSame('95.0000', $goal->refresh()->target_value);
 
-        $decisionRoute = route('departmental-performance.plans.goal-amendments.decisions.store', [$employee->currentTeam->slug, $plan, $amendment]);
-        $supervisorDecisionRoute = route('departmental-performance.plans.goal-amendments.decisions.store', [$supervisor->currentTeam->slug, $plan, $amendment]);
+        $decisionRoute = route('departmental-performance.plans.goal-amendments.decisions.store', [$plan, $amendment]);
+        $supervisorDecisionRoute = route('departmental-performance.plans.goal-amendments.decisions.store', [$plan, $amendment]);
         $decisionPayload = ['decision' => 'approved', 'rationale' => 'The revised target is measurable and the total weighting remains exactly one hundred percent.'];
         $this->actingAs($employee)->post($decisionRoute, $decisionPayload)->assertForbidden();
         $this->actingAs($outsider)->post($decisionRoute, $decisionPayload)->assertForbidden();
@@ -195,7 +195,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $plan->id, 'action' => 'performance.goal.amendment_requested']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $plan->id, 'action' => 'performance.goal.amendment_decided']);
         $this->actingAs($supervisor)->post($supervisorDecisionRoute, $decisionPayload)->assertStatus(409);
-        $this->actingAs($supervisor)->get(route('departmental-performance.index', $supervisor->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($supervisor)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('plans.data.0.goals.0.versions', 2)
             ->has('plans.data.0.goals.0.amendments', 1)
             ->where('plans.data.0.goals.0.amendments.0.decision.decision', 'approved'));
@@ -216,16 +216,16 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $supervisor = User::factory()->topManagement()->create();
         $cycle = $this->cycle($publisher);
         $this->seed(PerformanceWorkflowSeeder::class);
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $this->planPayload($cycle, $supervisor))->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))->assertRedirect();
         $plan = PerformancePlan::query()->with('goals.versions')->sole();
         $goal = $plan->goals->first();
         $this->uploadRecord($employee, $plan, 'goal_plan', 'Signed weighted goal plan', 'digital');
         $this->transition($employee, $plan, ['transition' => 'submit_goals', 'rationale' => 'Submit signed baseline goals for approval.'])->assertRedirect();
         $this->transition($supervisor, $plan, ['transition' => 'approve_goals', 'rationale' => 'Approve the complete weighted plan.'])->assertRedirect();
         $payload = [...$goal->versions->first()->definition_snapshot, 'weight' => 50, 'reason' => 'A material reweighting was requested for supervisor consideration and control.'];
-        $this->actingAs($employee)->post(route('departmental-performance.plans.goals.amendments.store', [$employee->currentTeam->slug, $plan, $goal]), $payload)->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.goals.amendments.store', [$plan, $goal]), $payload)->assertRedirect();
         $amendment = PerformanceGoalAmendment::query()->sole();
-        $this->actingAs($supervisor)->post(route('departmental-performance.plans.goal-amendments.decisions.store', [$supervisor->currentTeam->slug, $plan, $amendment]), [
+        $this->actingAs($supervisor)->post(route('departmental-performance.plans.goal-amendments.decisions.store', [$plan, $amendment]), [
             'decision' => 'approved', 'rationale' => 'Attempt to approve a plan whose resulting total weighting is only ninety percent.',
         ])->assertStatus(422);
         $this->assertSame('60.00', $goal->refresh()->weight);
@@ -240,11 +240,11 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $outsider = User::factory()->topManagement()->create();
         $cycle = $this->cycle($publisher);
         $this->seed(PerformanceWorkflowSeeder::class);
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store', $employee->currentTeam->slug), $this->planPayload($cycle, $supervisor))->assertRedirect();
+        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))->assertRedirect();
         $plan = PerformancePlan::query()->sole();
 
-        $this->actingAs($supervisor)->get(route('departmental-performance.index', $supervisor->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->component('departmental-performance/index')->where('plans.total', 1));
-        $this->actingAs($outsider)->get(route('departmental-performance.index', $outsider->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->where('plans.total', 0));
+        $this->actingAs($supervisor)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('departmental-performance/index')->where('plans.total', 1));
+        $this->actingAs($outsider)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->where('plans.total', 0));
         $this->transition($outsider, $plan, ['transition' => 'approve_goals', 'rationale' => 'Unauthorized review attempt.'])->assertForbidden();
     }
 
@@ -258,7 +258,7 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         PerformancePlan::factory()->create(['performance_cycle_id' => $cycle->id, 'employee_id' => $employee->id, 'supervisor_id' => $supervisor->id, 'status' => 'finalized', 'final_score' => 84, 'capacity_gap_summary' => 'Data visualization']);
         PerformancePlan::factory()->create(['performance_cycle_id' => $cycle->id, 'employee_id' => $outsider->id, 'supervisor_id' => $supervisor->id, 'status' => 'finalized', 'final_score' => 20, 'capacity_gap_summary' => 'Procurement']);
 
-        $this->actingAs($employee)->get(route('departmental-performance.index', $employee->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($employee)->get(route('departmental-performance.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('analytics.summary.finalized', 1)
             ->where('analytics.summary.averageScore', 84)
             ->where('analytics.capacityGaps.0.gap', 'Data visualization')
@@ -326,12 +326,12 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
     /** @param array<string, mixed> $payload */
     private function transition(User $actor, PerformancePlan $plan, array $payload): TestResponse
     {
-        return $this->actingAs($actor)->patch(route('departmental-performance.plans.transition', [$actor->currentTeam->slug, $plan]), $payload);
+        return $this->actingAs($actor)->patch(route('departmental-performance.plans.transition', [$plan]), $payload);
     }
 
     private function uploadRecord(User $actor, PerformancePlan $plan, string $purpose, string $title, string $sourceType): void
     {
-        $this->actingAs($actor)->post(route('departmental-performance.plans.documents.store', [$actor->currentTeam->slug, $plan]), [
+        $this->actingAs($actor)->post(route('departmental-performance.plans.documents.store', [$plan]), [
             'record_purpose' => $purpose,
             'title' => $title,
             'category' => 'Performance appraisal',

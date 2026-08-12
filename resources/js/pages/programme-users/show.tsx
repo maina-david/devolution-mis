@@ -114,10 +114,10 @@ function DataSection({
 }
 
 export default function ProgrammeUserProfile(props: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
     const { profile, summary, capabilities } = props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -131,7 +131,7 @@ export default function ProgrammeUserProfile(props: Props) {
                         variant="link"
                         className="mb-3 h-auto p-0 text-[#83d4ad]"
                     >
-                        <Link href={usersIndex(currentTeam.slug)}>
+                        <Link href={usersIndex()}>
                             <ArrowLeft aria-hidden="true" /> User access
                         </Link>
                     </Button>

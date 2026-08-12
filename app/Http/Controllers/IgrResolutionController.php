@@ -119,7 +119,7 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Resolution registered and responsible parties notified.');
     }
 
-    public function storeUpdate(StoreIgrResolutionUpdateRequest $request, string $currentTeam, IgrResolution $resolution, RecordIgrResolutionUpdate $recordUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeUpdate(StoreIgrResolutionUpdateRequest $request, IgrResolution $resolution, RecordIgrResolutionUpdate $recordUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $this->authorizeResolution($this->user($request), $resolution, $countyScope);
         $recordUpdate->handle($resolution, $this->user($request), $request->validated());
@@ -127,7 +127,7 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Implementation update recorded.');
     }
 
-    public function storeDependency(StoreIgrResolutionDependencyRequest $request, string $currentTeam, IgrResolution $resolution, CreateIgrResolutionDependency $createDependency, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeDependency(StoreIgrResolutionDependencyRequest $request, IgrResolution $resolution, CreateIgrResolutionDependency $createDependency, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         $prerequisite = IgrResolution::query()->whereKey((string) $request->validated('prerequisite_resolution_id'))->firstOrFail();
@@ -138,7 +138,7 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Resolution dependency recorded.');
     }
 
-    public function storeGap(StoreIgrResolutionGapRequest $request, string $currentTeam, IgrResolution $resolution, CreateIgrResolutionGap $createGap, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function storeGap(StoreIgrResolutionGapRequest $request, IgrResolution $resolution, CreateIgrResolutionGap $createGap, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeResolution($user, $resolution, $countyScope);
@@ -147,7 +147,7 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Implementation gap recorded and assigned.');
     }
 
-    public function transitionGap(TransitionIgrResolutionGapRequest $request, string $currentTeam, IgrResolution $resolution, IgrResolutionGap $gap, TransitionIgrResolutionGap $transitionGap, ProgrammeCountyScope $countyScope, IgrGapScope $gapScope): RedirectResponse
+    public function transitionGap(TransitionIgrResolutionGapRequest $request, IgrResolution $resolution, IgrResolutionGap $gap, TransitionIgrResolutionGap $transitionGap, ProgrammeCountyScope $countyScope, IgrGapScope $gapScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeResolution($user, $resolution, $countyScope);
@@ -158,7 +158,7 @@ class IgrResolutionController extends Controller
         return back()->with('success', 'Implementation gap lifecycle updated.');
     }
 
-    public function transition(TransitionIgrResolutionRequest $request, string $currentTeam, IgrResolution $resolution, TransitionWorkflow $transitionWorkflow, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): RedirectResponse
+    public function transition(TransitionIgrResolutionRequest $request, IgrResolution $resolution, TransitionWorkflow $transitionWorkflow, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeResolution($user, $resolution, $countyScope);

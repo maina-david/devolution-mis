@@ -24,8 +24,8 @@ class AssessmentWorkflowTest extends TestCase
         $hidden = Assessment::factory()->create(['county_id' => $other->id, 'status' => AssessmentStatus::EvidenceCollection]);
         Notification::fake();
 
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $assessment]))->assertRedirect();
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $hidden]))->assertForbidden();
+        $this->actingAs($admin)->patch(route('assessments.submit', [$assessment]))->assertRedirect();
+        $this->actingAs($admin)->patch(route('assessments.submit', [$hidden]))->assertForbidden();
 
         $this->assertSame(AssessmentStatus::Submitted, $assessment->fresh()?->status);
         $this->assertSame(AssessmentStatus::EvidenceCollection, $hidden->fresh()?->status);
@@ -37,7 +37,7 @@ class AssessmentWorkflowTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->patch(route('assessments.submit', [$official->currentTeam->slug, $assessment]))->assertForbidden();
+        $this->actingAs($official)->patch(route('assessments.submit', [$assessment]))->assertForbidden();
     }
 
     public function test_assessor_can_review_and_score_an_assigned_assessment(): void
@@ -48,8 +48,8 @@ class AssessmentWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Submitted, 'score' => null]);
         Notification::fake();
 
-        $this->actingAs($assessor)->patch(route('assessments.review', [$assessor->currentTeam->slug, $assessment]))->assertRedirect();
-        $this->actingAs($assessor)->patch(route('assessments.score', [$assessor->currentTeam->slug, $assessment]), ['score' => 84.5])->assertRedirect();
+        $this->actingAs($assessor)->patch(route('assessments.review', [$assessment]))->assertRedirect();
+        $this->actingAs($assessor)->patch(route('assessments.score', [$assessment]), ['score' => 84.5])->assertRedirect();
 
         $assessment->refresh();
         $this->assertSame(AssessmentStatus::Assessed, $assessment->status);
@@ -65,7 +65,7 @@ class AssessmentWorkflowTest extends TestCase
         $assessor->assignedCounties()->attach($county);
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::UnderAssessment]);
 
-        $this->actingAs($assessor)->from(route('assessments.index', $assessor->currentTeam->slug))->patch(route('assessments.score', [$assessor->currentTeam->slug, $assessment]), ['score' => 101])->assertSessionHasErrors('score');
+        $this->actingAs($assessor)->from(route('assessments.index'))->patch(route('assessments.score', [$assessment]), ['score' => 101])->assertSessionHasErrors('score');
     }
 
     public function test_top_management_can_approve_an_assessed_county_in_its_portfolio(): void
@@ -77,7 +77,7 @@ class AssessmentWorkflowTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Assessed]);
         Notification::fake();
 
-        $this->actingAs($manager)->patch(route('assessments.approve', [$manager->currentTeam->slug, $assessment]))->assertRedirect();
+        $this->actingAs($manager)->patch(route('assessments.approve', [$assessment]))->assertRedirect();
 
         $this->assertSame(AssessmentStatus::Approved, $assessment->fresh()?->status);
         Notification::assertSentTo($countyOfficial, ProgrammeAlert::class);
@@ -89,6 +89,6 @@ class AssessmentWorkflowTest extends TestCase
         $admin = User::factory()->countyAdmin($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Approved]);
 
-        $this->actingAs($admin)->patch(route('assessments.submit', [$admin->currentTeam->slug, $assessment]))->assertStatus(409);
+        $this->actingAs($admin)->patch(route('assessments.submit', [$assessment]))->assertStatus(409);
     }
 }

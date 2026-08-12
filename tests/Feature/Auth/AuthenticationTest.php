@@ -34,7 +34,7 @@ class AuthenticationTest extends TestCase
         $response->assertRedirect(route('dashboard'));
     }
 
-    public function test_passkey_login_response_redirects_to_the_current_team_dashboard(): void
+    public function test_passkey_login_response_redirects_to_the_dashboard(): void
     {
         $user = User::factory()->create();
 
@@ -47,7 +47,7 @@ class AuthenticationTest extends TestCase
         $jsonResponse = app(PasskeyLoginResponse::class)->toResponse($request);
 
         $this->assertSame(
-            route('dashboard', ['current_team' => $user->personalTeam()->slug]),
+            route('dashboard'),
             $jsonResponse->getData()->redirect,
         );
     }

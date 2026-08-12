@@ -19,13 +19,13 @@ class ProgrammeUserProfileTest extends TestCase
     {
         $admin = User::factory()->platformAdmin()->create();
         $target = User::factory()->devolutionAdmin()->create();
-        UserActivitySession::factory()->for($target)->create(['team_id' => $admin->currentTeam->id, 'current_page_title' => 'Assessment configuration']);
+        UserActivitySession::factory()->for($target)->create(['current_page_title' => 'Assessment configuration']);
         UserPageView::factory()->for($target)->create(['page_title' => 'County assessments']);
         AuditEvent::factory()->for($target, 'actor')->create(['action' => 'assessment.approved']);
         AuditEvent::factory()->create(['subject_type' => $target->getMorphClass(), 'subject_id' => $target->id, 'action' => 'access.reviewed']);
 
         $this->actingAs($admin)
-            ->get(route('programme-users.show', [$admin->currentTeam->slug, $target]))
+            ->get(route('programme-users.show', [$target]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('programme-users/show')
@@ -47,10 +47,10 @@ class ProgrammeUserProfileTest extends TestCase
         $county = County::factory()->create();
         $admin = User::factory()->countyAdmin($county)->create();
         $target = User::factory()->countyOfficial($county)->create();
-        UserActivitySession::factory()->for($target)->create(['team_id' => $admin->currentTeam->id]);
+        UserActivitySession::factory()->for($target)->create();
 
         $this->actingAs($admin)
-            ->get(route('programme-users.show', [$admin->currentTeam->slug, $target]))
+            ->get(route('programme-users.show', [$target]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('profile.id', $target->id)
@@ -71,7 +71,7 @@ class ProgrammeUserProfileTest extends TestCase
         $target = User::factory()->countyOfficial(County::factory()->create())->create();
 
         $this->actingAs($admin)
-            ->get(route('programme-users.show', [$admin->currentTeam->slug, $target]))
+            ->get(route('programme-users.show', [$target]))
             ->assertForbidden();
     }
 }

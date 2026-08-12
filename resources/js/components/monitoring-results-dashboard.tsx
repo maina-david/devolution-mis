@@ -133,10 +133,8 @@ export type MonitoringResults = {
 };
 
 export default function MonitoringResultsDashboard({
-    teamSlug,
     results,
 }: {
-    teamSlug: string;
     results: MonitoringResults;
 }) {
     const page = usePage();
@@ -321,10 +319,7 @@ export default function MonitoringResultsDashboard({
                 </Card>
             </div>
 
-            <TargetPerformance
-                teamSlug={teamSlug}
-                performance={results.performance}
-            />
+            <TargetPerformance performance={results.performance} />
 
             <Card>
                 <CardHeader>
@@ -357,7 +352,6 @@ export default function MonitoringResultsDashboard({
                                                 className="font-medium hover:underline"
                                                 href={drilldown(
                                                     showProject.url({
-                                                        current_team: teamSlug,
                                                         project:
                                                             item.project.id,
                                                     }),
@@ -373,7 +367,6 @@ export default function MonitoringResultsDashboard({
                                             <Link
                                                 href={drilldown(
                                                     showCounty.url({
-                                                        current_team: teamSlug,
                                                         county: item.county.id,
                                                     }),
                                                 )}
@@ -420,10 +413,8 @@ const performanceChartConfig = {
 } satisfies ChartConfig;
 
 function TargetPerformance({
-    teamSlug,
     performance,
 }: {
-    teamSlug: string;
     performance: MonitoringResults['performance'];
 }) {
     const page = usePage();
@@ -483,7 +474,6 @@ function TargetPerformance({
                                     <Link
                                         href={drilldown(
                                             showCounty.url({
-                                                current_team: teamSlug,
                                                 county: trend.county.id,
                                             }),
                                         )}
@@ -603,7 +593,6 @@ function TargetPerformance({
                                             <Link
                                                 href={drilldown(
                                                     showCounty.url({
-                                                        current_team: teamSlug,
                                                         county: row.county.id,
                                                     }),
                                                 )}

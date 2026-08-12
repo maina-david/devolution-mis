@@ -122,7 +122,7 @@ class LearningController extends Controller
         return back()->with('success', "Learning cohort {$cohort->code} created.");
     }
 
-    public function addCohortMember(StoreLearningCohortMembershipRequest $request, string $currentTeam, LearningCohort $cohort, AddLearningCohortMember $action): RedirectResponse
+    public function addCohortMember(StoreLearningCohortMembershipRequest $request, LearningCohort $cohort, AddLearningCohortMember $action): RedirectResponse
     {
         $enrollmentId = $request->validated('learning_enrollment_id');
         abort_unless(is_string($enrollmentId), 422);
@@ -131,7 +131,7 @@ class LearningController extends Controller
         return back()->with('success', 'Learner added to the cohort roster.');
     }
 
-    public function transitionCohort(TransitionLearningCohortRequest $request, string $currentTeam, LearningCohort $cohort, TransitionLearningCohort $action): RedirectResponse
+    public function transitionCohort(TransitionLearningCohortRequest $request, LearningCohort $cohort, TransitionLearningCohort $action): RedirectResponse
     {
         /** @var array{transition:string, rationale:string} $attributes */
         $attributes = $request->validated();
@@ -140,14 +140,14 @@ class LearningController extends Controller
         return back()->with('success', 'Learning cohort lifecycle updated.');
     }
 
-    public function transition(TransitionLearningCourseRequest $request, string $currentTeam, LearningCourse $course, TransitionLearningCourse $action): RedirectResponse
+    public function transition(TransitionLearningCourseRequest $request, LearningCourse $course, TransitionLearningCourse $action): RedirectResponse
     {
         $action->handle($course, $this->user($request), $request->validated());
 
         return back()->with('success', 'Course publication lifecycle updated.');
     }
 
-    public function storeAsset(StoreLearningAssetRequest $request, string $currentTeam, LearningCourse $course, LearningLesson $lesson, StoreLinkedDocument $storeDocument, AuditLogger $auditLogger): RedirectResponse
+    public function storeAsset(StoreLearningAssetRequest $request, LearningCourse $course, LearningLesson $lesson, StoreLinkedDocument $storeDocument, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         abort_unless($lesson->module()->where('learning_course_id', $course->id)->exists(), 404);
@@ -187,14 +187,14 @@ class LearningController extends Controller
         return back()->with('success', 'Course enrolment confirmed.');
     }
 
-    public function generateOfflinePackage(GenerateLearningOfflinePackageRequest $request, string $currentTeam, LearningCourse $course, GenerateLearningOfflinePackage $action): RedirectResponse
+    public function generateOfflinePackage(GenerateLearningOfflinePackageRequest $request, LearningCourse $course, GenerateLearningOfflinePackage $action): RedirectResponse
     {
         $package = $action->handle($course, $this->user($request));
 
         return back()->with('success', "Offline package v{$package->package_version} generated with verified course content.");
     }
 
-    public function downloadOfflinePackage(Request $request, string $currentTeam, LearningOfflinePackage $offlinePackage, DocumentIntegrityVerifier $integrityVerifier, AuditLogger $auditLogger): StreamedResponse
+    public function downloadOfflinePackage(Request $request, LearningOfflinePackage $offlinePackage, DocumentIntegrityVerifier $integrityVerifier, AuditLogger $auditLogger): StreamedResponse
     {
         $user = $this->user($request);
         $offlinePackage->load('course.county');
@@ -209,14 +209,14 @@ class LearningController extends Controller
         return Storage::disk($offlinePackage->storage_disk)->download($offlinePackage->path, $offlinePackage->original_name, ['Content-Type' => 'application/zip']);
     }
 
-    public function submitOfflineSync(SubmitLearningOfflineSyncRequest $request, string $currentTeam, LearningEnrollment $enrollment, SubmitLearningOfflineSync $action): RedirectResponse
+    public function submitOfflineSync(SubmitLearningOfflineSyncRequest $request, LearningEnrollment $enrollment, SubmitLearningOfflineSync $action): RedirectResponse
     {
         $sync = $action->handle($enrollment, $this->user($request), $request->syncPayload());
 
         return back()->with('success', $sync->status === 'pending' ? 'Offline activity submitted for independent reconciliation.' : 'The existing synchronization record was retained.');
     }
 
-    public function decideOfflineSync(DecideLearningOfflineSyncRequest $request, string $currentTeam, LearningOfflineSync $offlineSync, DecideLearningOfflineSync $action): RedirectResponse
+    public function decideOfflineSync(DecideLearningOfflineSyncRequest $request, LearningOfflineSync $offlineSync, DecideLearningOfflineSync $action): RedirectResponse
     {
         /** @var array{decision: string, rationale: string} $attributes */
         $attributes = $request->validated();
@@ -225,14 +225,14 @@ class LearningController extends Controller
         return back()->with('success', $decided->status === 'conflict' ? 'A newer official record caused a reconciliation conflict; no progress was changed.' : 'Offline synchronization decision recorded.');
     }
 
-    public function completeLesson(CompleteLearningLessonRequest $request, string $currentTeam, LearningEnrollment $enrollment, LearningLesson $lesson, RecordLearningProgress $action): RedirectResponse
+    public function completeLesson(CompleteLearningLessonRequest $request, LearningEnrollment $enrollment, LearningLesson $lesson, RecordLearningProgress $action): RedirectResponse
     {
         $action->handle($enrollment, $lesson, $this->user($request), $request->validated());
 
         return back()->with('success', 'Lesson completion recorded.');
     }
 
-    public function assess(SubmitLearningAssessmentRequest $request, string $currentTeam, LearningEnrollment $enrollment, GradeLearningAssessment $action): RedirectResponse
+    public function assess(SubmitLearningAssessmentRequest $request, LearningEnrollment $enrollment, GradeLearningAssessment $action): RedirectResponse
     {
         $action->handle($enrollment, $this->user($request), $request->validated('answers'));
 
@@ -247,7 +247,7 @@ class LearningController extends Controller
         return back()->with('success', "Virtual classroom {$classroom->title} scheduled.");
     }
 
-    public function showClassroom(WorkspaceIndexRequest $request, string $currentTeam, VirtualClassroom $classroom, ProgrammeWorkspaceData $workspaceData): InertiaResponse
+    public function showClassroom(WorkspaceIndexRequest $request, VirtualClassroom $classroom, ProgrammeWorkspaceData $workspaceData): InertiaResponse
     {
         $classroom->load('course.county', 'facilitator:id,name');
         $filters = WorkspaceFilters::fromRequest($request, $classroom->id);
@@ -256,14 +256,14 @@ class LearningController extends Controller
         return Inertia::render('learning/classrooms/show', ['classroom' => ['id' => $classroom->id, 'title' => $classroom->title, 'course' => ['id' => $classroom->course->id, 'code' => $classroom->course->code, 'title' => $classroom->course->title, 'county' => $classroom->course->county?->identityCell()], 'facilitator' => $classroom->facilitator->name, 'startsAt' => $classroom->starts_at->toIso8601String(), 'endsAt' => $classroom->ends_at->toIso8601String(), 'platform' => $classroom->platform, 'capacity' => $classroom->capacity, 'status' => $classroom->status], 'roster' => ['rows' => $register['rows'], 'pagination' => $register['pagination']], 'filters' => $request->safe()->only(['from', 'to', 'search', 'status', 'per_page'])]);
     }
 
-    public function recordClassroomAttendance(RecordVirtualClassroomAttendanceRequest $request, string $currentTeam, VirtualClassroom $classroom, RecordVirtualClassroomAttendance $action): RedirectResponse
+    public function recordClassroomAttendance(RecordVirtualClassroomAttendanceRequest $request, VirtualClassroom $classroom, RecordVirtualClassroomAttendance $action): RedirectResponse
     {
         $attendance = $action->handle($classroom, $this->user($request), $request->validated());
 
         return back()->with('success', "{$attendance->attendance_status} attendance recorded.");
     }
 
-    public function certificate(Request $request, string $currentTeam, LearningCertificate $certificate): Response
+    public function certificate(Request $request, LearningCertificate $certificate): Response
     {
         $user = $this->user($request);
         $certificate->load('enrollment.course', 'enrollment.user');

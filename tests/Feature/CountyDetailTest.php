@@ -29,7 +29,7 @@ class CountyDetailTest extends TestCase
         AssessmentDocument::factory()->create(['county_id' => $county->id, 'assessment_id' => $assessment->id, 'title' => 'Visible evidence', 'created_at' => '2026-03-01']);
         CountyGrant::factory()->create(['county_id' => $county->id, 'programme' => 'Visible grant', 'created_at' => '2026-04-01']);
 
-        $this->actingAs($admin)->get(route('counties.show', [$admin->currentTeam->slug, $county, 'from' => '2026-01-01', 'to' => '2026-12-31']))
+        $this->actingAs($admin)->get(route('counties.show', [$county, 'from' => '2026-01-01', 'to' => '2026-12-31']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('counties/show')
@@ -42,7 +42,7 @@ class CountyDetailTest extends TestCase
                 ->where('filters.from', '2026-01-01')
             );
 
-        $this->actingAs($admin)->get(route('counties.show', [$admin->currentTeam->slug, $otherCounty]))->assertForbidden();
+        $this->actingAs($admin)->get(route('counties.show', [$otherCounty]))->assertForbidden();
     }
 
     public function test_demo_documents_are_backed_by_previewable_stored_files(): void
@@ -55,7 +55,7 @@ class CountyDetailTest extends TestCase
 
         Storage::assertExists($document->path);
         $this->actingAs($admin)
-            ->get(route('evidence.preview', [$admin->currentTeam->slug, $document]))
+            ->get(route('evidence.preview', [$document]))
             ->assertOk()
             ->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
     }

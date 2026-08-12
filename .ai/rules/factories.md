@@ -6,4 +6,4 @@ paths:
 # Factories
 
 ## Administrator-only account provisioning
-Accounts must be created only through the governed administrator GrantProgrammeAccess flow. Do not add self-registration, user invitations, team/workspace creation, switching, or membership-management routes/UI. Team and team_members remain internal one-workspace-per-user URL/tenant boundaries; provision that workspace via ProvisionUserWorkspace.
+Accounts must be created only through the governed administrator GrantProgrammeAccess flow. Do not add self-registration, user invitations, team/workspace creation, switching, membership-management routes/UI, or user/workspace slugs. Authenticated routes use stable application paths such as `/dashboard`; authorization and county scope come from programme RBAC and county assignments, never a team URL parameter.

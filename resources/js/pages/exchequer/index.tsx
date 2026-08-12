@@ -155,9 +155,9 @@ export default function ExchequerTracking({
     options,
     catalogue,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -201,7 +201,6 @@ export default function ExchequerTracking({
                         </div>
                         {capabilities.create && (
                             <RequestForm
-                                teamSlug={currentTeam.slug}
                                 options={options}
                                 catalogue={catalogue}
                             />
@@ -278,10 +277,7 @@ export default function ExchequerTracking({
                                 requests with source-attributed stage telemetry
                             </p>
                         </div>
-                        <ExportMenu
-                            teamSlug={currentTeam.slug}
-                            filters={filters}
-                        />
+                        <ExportMenu filters={filters} />
                     </div>
                     {rows.length ? (
                         <WorkspaceDataTable
@@ -311,7 +307,6 @@ export default function ExchequerTracking({
                                 return request ? (
                                     <RequestActions
                                         request={request}
-                                        teamSlug={currentTeam.slug}
                                         canRecord={capabilities.recordEvents}
                                         exchanges={options.exchanges}
                                     />
@@ -354,11 +349,9 @@ function Metric({
 }
 
 function RequestForm({
-    teamSlug,
     options,
     catalogue,
 }: {
-    teamSlug: string;
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
@@ -379,7 +372,7 @@ function RequestForm({
                     : 'Publish an effective reference-data catalogue before creating requests.'
             }
         >
-            <Form action={storeExchequer(teamSlug)} className="grid gap-4 pt-4">
+            <Form action={storeExchequer()} className="grid gap-4 pt-4">
                 {({ errors, processing }) => (
                     <>
                         <SearchableSelect
@@ -418,12 +411,10 @@ function RequestForm({
 
 function RequestActions({
     request,
-    teamSlug,
     canRecord,
     exchanges,
 }: {
     request: ExchequerRequest;
-    teamSlug: string;
     canRecord: boolean;
     exchanges: Option[];
 }) {
@@ -581,7 +572,6 @@ function RequestActions({
                         ) : surface === 'event' ? (
                             <EventForm
                                 request={request}
-                                teamSlug={teamSlug}
                                 events={available}
                                 exchanges={exchanges}
                                 onSuccess={() => setSurface(null)}
@@ -596,13 +586,11 @@ function RequestActions({
 
 function EventForm({
     request,
-    teamSlug,
     events,
     exchanges,
     onSuccess,
 }: {
     request: ExchequerRequest;
-    teamSlug: string;
     events: string[];
     exchanges: Option[];
     onSuccess: () => void;
@@ -611,10 +599,7 @@ function EventForm({
 
     return (
         <Form
-            action={storeEvent({
-                current_team: teamSlug,
-                exchequerRequest: request.id,
-            })}
+            action={storeEvent({ exchequerRequest: request.id })}
             className="grid gap-4"
             onSuccess={onSuccess}
         >
@@ -669,13 +654,7 @@ function EventForm({
     );
 }
 
-function ExportMenu({
-    teamSlug,
-    filters,
-}: {
-    teamSlug: string;
-    filters: Props['filters'];
-}) {
+function ExportMenu({ filters }: { filters: Props['filters'] }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -688,11 +667,7 @@ function ExportMenu({
                     <DropdownMenuItem key={format} asChild>
                         <a
                             href={exportMethod.url(
-                                {
-                                    current_team: teamSlug,
-                                    workspace: 'exchequer',
-                                    format,
-                                },
+                                { workspace: 'exchequer', format },
                                 { query: filters },
                             )}
                         >

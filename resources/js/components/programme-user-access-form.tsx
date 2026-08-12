@@ -13,11 +13,9 @@ import { store } from '@/routes/programme-users';
 type Option = { value: string; label: string };
 
 export default function ProgrammeUserAccessForm({
-    teamSlug,
     roles,
     counties,
 }: {
-    teamSlug: string;
     roles: Option[];
     counties: CountyIdentityValue[];
 }) {
@@ -38,7 +36,7 @@ export default function ProgrammeUserAccessForm({
             size="xl"
         >
             <Form
-                {...store.form(teamSlug)}
+                {...store.form()}
                 className="grid gap-4 pt-4 md:grid-cols-2"
                 resetOnSuccess
             >

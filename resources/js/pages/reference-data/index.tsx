@@ -1,4 +1,4 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     Building2,
     ClipboardCheck,
@@ -217,9 +217,6 @@ export default function ReferenceDataIndex({
     releases,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
-    const teamSlug = currentTeam!.slug;
-
     return (
         <>
             <Head title="Reference data" />
@@ -241,7 +238,7 @@ export default function ReferenceDataIndex({
                         </div>
                         {capabilities.manage && (
                             <Button variant="secondary" asChild>
-                                <Link href={dataImportsIndex(teamSlug)}>
+                                <Link href={dataImportsIndex()}>
                                     <FileUp data-icon="inline-start" />
                                     Bulk upload
                                 </Link>
@@ -304,7 +301,7 @@ export default function ReferenceDataIndex({
                                 icon={Building2}
                             >
                                 <Form
-                                    {...storeOrganization.form(teamSlug)}
+                                    {...storeOrganization.form()}
                                     resetOnSuccess
                                     className="flex flex-col gap-3"
                                 >
@@ -316,7 +313,6 @@ export default function ReferenceDataIndex({
                                                 label="Code"
                                                 resource="organizations"
                                                 field="code"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.code}
                                                 required
                                             />
@@ -326,7 +322,6 @@ export default function ReferenceDataIndex({
                                                 label="Name"
                                                 resource="organizations"
                                                 field="name"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.name}
                                                 required
                                             />
@@ -393,7 +388,7 @@ export default function ReferenceDataIndex({
                                 icon={Layers3}
                             >
                                 <Form
-                                    {...storeSector.form(teamSlug)}
+                                    {...storeSector.form()}
                                     resetOnSuccess
                                     className="flex flex-col gap-3"
                                 >
@@ -405,7 +400,6 @@ export default function ReferenceDataIndex({
                                                 label="Code"
                                                 resource="sectors"
                                                 field="code"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.code}
                                                 required
                                             />
@@ -415,7 +409,6 @@ export default function ReferenceDataIndex({
                                                 label="Name"
                                                 resource="sectors"
                                                 field="name"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.name}
                                                 required
                                             />
@@ -474,7 +467,7 @@ export default function ReferenceDataIndex({
                                 icon={Database}
                             >
                                 <Form
-                                    {...storeProgramme.form(teamSlug)}
+                                    {...storeProgramme.form()}
                                     resetOnSuccess
                                     className="flex flex-col gap-3"
                                 >
@@ -486,7 +479,6 @@ export default function ReferenceDataIndex({
                                                 label="Code"
                                                 resource="programmes"
                                                 field="code"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.code}
                                                 required
                                             />
@@ -496,7 +488,6 @@ export default function ReferenceDataIndex({
                                                 label="Name"
                                                 resource="programmes"
                                                 field="name"
-                                                teamSlug={teamSlug}
                                                 serverError={errors.name}
                                                 required
                                             />
@@ -547,14 +538,12 @@ export default function ReferenceDataIndex({
                     workspace={programmeCoverages}
                     options={options}
                     filters={filters}
-                    teamSlug={teamSlug}
                     canManage={capabilities.manage}
                 />
 
                 <ReleaseRegister
                     releases={releases}
                     capabilities={capabilities}
-                    teamSlug={teamSlug}
                 />
 
                 <RegistryTable
@@ -620,13 +609,11 @@ function ProgrammeCoverageRegister({
     workspace,
     options,
     filters,
-    teamSlug,
     canManage,
 }: {
     workspace: Props['programmeCoverages'];
     options: Props['options'];
     filters: Props['filters'];
-    teamSlug: string;
     canManage: boolean;
 }) {
     return (
@@ -647,7 +634,7 @@ function ProgrammeCoverageRegister({
                         icon={MapPinned}
                     >
                         <Form
-                            {...storeProgrammeCoverage.form(teamSlug)}
+                            {...storeProgrammeCoverage.form()}
                             resetOnSuccess
                             className="flex flex-col gap-4"
                         >
@@ -758,15 +745,11 @@ function ProgrammeCoverageRegister({
                         rows={workspace.rows}
                         pagination={workspace.pagination}
                         bulkExport={{
-                            teamSlug,
                             workspace: 'programme-coverage',
                             filters,
                         }}
                         renderActionControl={(row) => (
-                            <ProgrammeCoverageAction
-                                row={row}
-                                teamSlug={teamSlug}
-                            />
+                            <ProgrammeCoverageAction row={row} />
                         )}
                     />
                 ) : (
@@ -781,13 +764,7 @@ function ProgrammeCoverageRegister({
     );
 }
 
-function ProgrammeCoverageAction({
-    row,
-    teamSlug,
-}: {
-    row: WorkspaceRow;
-    teamSlug: string;
-}) {
+function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
     const [open, setOpen] = useState(false);
 
     return (
@@ -827,7 +804,6 @@ function ProgrammeCoverageAction({
                         </p>
                         <Form
                             {...destroyProgrammeCoverage.form({
-                                current_team: teamSlug,
                                 programmeCountyCoverage: row.id,
                             })}
                             onSuccess={() => setOpen(false)}
@@ -854,11 +830,9 @@ type ReferenceDataRelease = Props['releases'][number];
 function ReleaseRegister({
     releases,
     capabilities,
-    teamSlug,
 }: {
     releases: ReferenceDataRelease[];
     capabilities: Props['capabilities'];
-    teamSlug: string;
 }) {
     const [selected, setSelected] = useState<ReferenceDataRelease | null>(null);
 
@@ -880,7 +854,7 @@ function ReleaseRegister({
                         icon={ClipboardCheck}
                     >
                         <Form
-                            {...storeRelease.form(teamSlug)}
+                            {...storeRelease.form()}
                             resetOnSuccess
                             className="flex flex-col gap-4"
                         >
@@ -1036,10 +1010,7 @@ function ReleaseRegister({
                     </SheetHeader>
                     {selected && (
                         <Form
-                            {...publishRelease.form({
-                                current_team: teamSlug,
-                                release: selected.id,
-                            })}
+                            {...publishRelease.form({ release: selected.id })}
                             onSuccess={() => setSelected(null)}
                             className="flex flex-col gap-4 px-4 pb-8"
                         >

@@ -72,14 +72,14 @@ class ChangeReadinessController extends Controller
         return back()->with('success', 'Participant registered; attendance and competency remain unverified.');
     }
 
-    public function assess(RecordTrainingAssessmentRequest $request, string $currentTeam, TrainingParticipant $participant, RecordTrainingAssessment $action): RedirectResponse
+    public function assess(RecordTrainingAssessmentRequest $request, TrainingParticipant $participant, RecordTrainingAssessment $action): RedirectResponse
     {
         $action->handle($participant, $this->user($request), $request->validated());
 
         return back()->with('success', 'Attendance and competency evidence recorded.');
     }
 
-    public function approve(TransitionRolloutWaveRequest $request, string $currentTeam, RolloutWave $wave, TransitionRolloutWave $action): RedirectResponse
+    public function approve(TransitionRolloutWaveRequest $request, RolloutWave $wave, TransitionRolloutWave $action): RedirectResponse
     {
         $action->handle($wave, $this->user($request), $request->validated());
 

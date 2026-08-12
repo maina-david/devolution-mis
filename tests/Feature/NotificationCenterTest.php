@@ -25,7 +25,7 @@ class NotificationCenterTest extends TestCase
         $user->notifyNow(new ProgrammeAlert('Evidence received', 'The ADP evidence was uploaded.', 'evidence'));
         $other->notifyNow(new ProgrammeAlert('Hidden event', 'This belongs to another user.', 'access'));
 
-        $this->actingAs($user)->get(route('notifications.index', $user->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($user)->get(route('notifications.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->component('notifications/index')
             ->where('notificationSummary.unread', 1)
             ->has('notificationSummary.recent', 1)
@@ -43,7 +43,7 @@ class NotificationCenterTest extends TestCase
         $user->notifyNow(new ProgrammeAlert('Assessment submitted', 'Submission received.', 'assessment'));
         $notification = $user->notifications()->firstOrFail();
 
-        $this->actingAs($user)->patch(route('notifications.read', [$user->currentTeam->slug, $notification]))->assertRedirect();
+        $this->actingAs($user)->patch(route('notifications.read', [$notification]))->assertRedirect();
 
         $this->assertNotNull($notification->fresh()?->read_at);
     }
@@ -56,7 +56,7 @@ class NotificationCenterTest extends TestCase
         $other->notifyNow(new ProgrammeAlert('Private event', 'Another user owns this.', 'access'));
         $notification = $other->notifications()->firstOrFail();
 
-        $this->actingAs($user)->patch(route('notifications.read', [$user->currentTeam->slug, $notification]))->assertForbidden();
+        $this->actingAs($user)->patch(route('notifications.read', [$notification]))->assertForbidden();
         $this->assertNull($notification->fresh()?->read_at);
     }
 
@@ -67,7 +67,7 @@ class NotificationCenterTest extends TestCase
         $user->notifyNow(new ProgrammeAlert('First', 'First event.', 'assessment'));
         $user->notifyNow(new ProgrammeAlert('Second', 'Second event.', 'evidence'));
 
-        $this->actingAs($user)->patch(route('notifications.read-all', $user->currentTeam->slug))->assertRedirect();
+        $this->actingAs($user)->patch(route('notifications.read-all'))->assertRedirect();
 
         $this->assertSame(0, $user->unreadNotifications()->count());
     }

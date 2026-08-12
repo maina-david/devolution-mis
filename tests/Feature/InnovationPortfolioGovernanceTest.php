@@ -25,11 +25,11 @@ class InnovationPortfolioGovernanceTest extends TestCase
     {
         [$county, $innovation, $submitter, $firstReviewer, $secondReviewer] = $this->screeningInnovation();
 
-        $this->actingAs($submitter)->post(route('knowledge.innovations.panel-reviews.store', [$submitter->currentTeam->slug, $innovation]), $this->reviewPayload())->assertForbidden();
-        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$firstReviewer->currentTeam->slug, $innovation]), $this->reviewPayload())->assertRedirect();
-        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$firstReviewer->currentTeam->slug, $innovation]), $this->reviewPayload())->assertSessionHasErrors('reviewer');
-        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$firstReviewer->currentTeam->slug, $innovation]), ['transition' => 'accept_incubation', 'rationale' => 'A single opinion cannot authorize incubation.'])->assertSessionHasErrors('transition');
-        $this->actingAs($secondReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$secondReviewer->currentTeam->slug, $innovation]), $this->reviewPayload(['strategic_fit_score' => 80, 'feasibility_score' => 76]))->assertRedirect();
+        $this->actingAs($submitter)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertForbidden();
+        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertRedirect();
+        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertSessionHasErrors('reviewer');
+        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'A single opinion cannot authorize incubation.'])->assertSessionHasErrors('transition');
+        $this->actingAs($secondReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload(['strategic_fit_score' => 80, 'feasibility_score' => 76]))->assertRedirect();
 
         $reviews = InnovationPanelReview::query()->orderBy('reviewed_at')->get();
         $this->assertCount(2, $reviews);
@@ -39,7 +39,7 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $this->assertSame(64, strlen($reviews->first()->evidence_checksum));
         $this->assertSame('82.25', $reviews->first()->weighted_score);
 
-        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$firstReviewer->currentTeam->slug, $innovation]), ['transition' => 'accept_incubation', 'rationale' => 'Two independent panel opinions exceed the governed threshold.', 'incubation_support' => 'Controlled funding and pilot protocol.'])->assertRedirect();
+        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'Two independent panel opinions exceed the governed threshold.', 'incubation_support' => 'Controlled funding and pilot protocol.'])->assertRedirect();
         $this->assertSame('incubating', $innovation->refresh()->status);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $reviews->first()->id, 'action' => 'knowledge.innovation.panel-reviewed', 'county_id' => $county->id]);
     }
@@ -50,23 +50,23 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $manager = User::factory()->devolutionAdmin()->create();
 
         $invalidFunding = $this->fundingPayload(['amount' => 0]);
-        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$manager->currentTeam->slug, $innovation]), $invalidFunding)->assertSessionHasErrors('amount');
-        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.funding-decisions.store', [$firstReviewer->currentTeam->slug, $innovation]), $this->fundingPayload())->assertForbidden();
-        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$manager->currentTeam->slug, $innovation]), $this->fundingPayload())->assertRedirect();
+        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $invalidFunding)->assertSessionHasErrors('amount');
+        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload())->assertForbidden();
+        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload())->assertRedirect();
         $firstDecision = InnovationFundingDecision::query()->sole();
         $this->assertSame(1, $firstDecision->decision_version);
         $this->assertSame(64, strlen($firstDecision->evidence_checksum));
 
-        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$manager->currentTeam->slug, $innovation]), $this->fundingPayload(['decision_reference' => 'IFD-2026-002', 'amount' => 1750000]))->assertRedirect();
+        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload(['decision_reference' => 'IFD-2026-002', 'amount' => 1750000]))->assertRedirect();
         $secondDecision = InnovationFundingDecision::query()->where('decision_version', 2)->sole();
         $this->assertSame($firstDecision->evidence_checksum, $secondDecision->previous_checksum);
-        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$manager->currentTeam->slug, $innovation]), ['transition' => 'start_pilot', 'rationale' => 'Funding alone is insufficient without measurable milestones.'])->assertSessionHasErrors('transition');
+        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'start_pilot', 'rationale' => 'Funding alone is insufficient without measurable milestones.'])->assertSessionHasErrors('transition');
 
-        $this->actingAs($manager)->post(route('knowledge.innovations.milestones.store', [$manager->currentTeam->slug, $innovation]), $this->milestonePayload($submitter))->assertRedirect();
+        $this->actingAs($manager)->post(route('knowledge.innovations.milestones.store', [$innovation]), $this->milestonePayload($submitter))->assertRedirect();
         $milestone = InnovationExperimentMilestone::query()->sole();
         $this->assertTrue(Str::isUuid($milestone->id));
         $this->assertSame('planned', $milestone->status);
-        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$manager->currentTeam->slug, $innovation]), ['transition' => 'start_pilot', 'rationale' => 'Current funding approval and measurable experiment protocol are recorded.', 'evidence_reference' => 'PILOT-PROTOCOL-2026-001'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'start_pilot', 'rationale' => 'Current funding approval and measurable experiment protocol are recorded.', 'evidence_reference' => 'PILOT-PROTOCOL-2026-001'])->assertRedirect();
         $this->assertSame('piloting', $innovation->refresh()->status);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $secondDecision->id, 'action' => 'knowledge.innovation.funding-decided', 'county_id' => $county->id]);
     }
@@ -79,14 +79,14 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $cleanEvidence = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id, 'scan_status' => 'clean', 'record_status' => 'active']);
         $otherEvidence = AssessmentDocument::factory()->create(['county_id' => $otherCounty->id, 'scan_status' => 'clean', 'record_status' => 'active']);
 
-        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$owner->currentTeam->slug, $innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $cleanEvidence->id])->assertSessionHasErrors('status');
-        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$owner->currentTeam->slug, $innovation, $milestone]), ['status' => 'in_progress'])->assertRedirect();
-        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$owner->currentTeam->slug, $innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $otherEvidence->id])->assertSessionHasErrors('assessment_document_id');
-        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$owner->currentTeam->slug, $innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $cleanEvidence->id])->assertRedirect();
-        $this->actingAs($curator)->patch(route('knowledge.innovations.transition', [$curator->currentTeam->slug, $innovation]), ['transition' => 'scale', 'rationale' => 'Unverified outcome evidence cannot authorize scale.'])->assertSessionHasErrors('transition');
-        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.verify', [$owner->currentTeam->slug, $innovation, $milestone]), ['verification_decision' => 'verified', 'verification_rationale' => 'Attempted self-verification of pilot evidence.'])->assertForbidden();
-        $this->actingAs($curator)->patch(route('knowledge.innovations.milestones.verify', [$curator->currentTeam->slug, $innovation, $milestone]), ['verification_decision' => 'verified', 'verification_rationale' => 'Source file, metric calculation and county provenance independently verified.'])->assertRedirect();
-        $this->actingAs($curator)->patch(route('knowledge.innovations.transition', [$curator->currentTeam->slug, $innovation]), ['transition' => 'scale', 'rationale' => 'All experiment outcomes have independently verified clean evidence.', 'evidence_reference' => 'PILOT-CLOSE-2026-001'])->assertRedirect();
+        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $cleanEvidence->id])->assertSessionHasErrors('status');
+        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$innovation, $milestone]), ['status' => 'in_progress'])->assertRedirect();
+        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $otherEvidence->id])->assertSessionHasErrors('assessment_document_id');
+        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.update', [$innovation, $milestone]), ['status' => 'completed', 'actual_value' => '82%', 'outcome_summary' => 'The controlled pilot exceeded the target with complete signed evidence.', 'assessment_document_id' => $cleanEvidence->id])->assertRedirect();
+        $this->actingAs($curator)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'scale', 'rationale' => 'Unverified outcome evidence cannot authorize scale.'])->assertSessionHasErrors('transition');
+        $this->actingAs($owner)->patch(route('knowledge.innovations.milestones.verify', [$innovation, $milestone]), ['verification_decision' => 'verified', 'verification_rationale' => 'Attempted self-verification of pilot evidence.'])->assertForbidden();
+        $this->actingAs($curator)->patch(route('knowledge.innovations.milestones.verify', [$innovation, $milestone]), ['verification_decision' => 'verified', 'verification_rationale' => 'Source file, metric calculation and county provenance independently verified.'])->assertRedirect();
+        $this->actingAs($curator)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'scale', 'rationale' => 'All experiment outcomes have independently verified clean evidence.', 'evidence_reference' => 'PILOT-CLOSE-2026-001'])->assertRedirect();
 
         $this->assertSame('scaling', $innovation->refresh()->status);
         $this->assertSame('verified', $milestone->refresh()->verification_decision);
@@ -94,7 +94,7 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $milestone->id, 'action' => 'knowledge.innovation.milestone-verified']);
 
         $otherOfficer = User::factory()->countyOfficial($otherCounty)->create();
-        $this->actingAs($otherOfficer)->get(route('knowledge.index', $otherOfficer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page->where('innovations.total', 0));
+        $this->actingAs($otherOfficer)->get(route('knowledge.index'))->assertOk()->assertInertia(fn ($page) => $page->where('innovations.total', 0));
     }
 
     public function test_scoped_innovation_register_exports_all_supported_formats(): void
@@ -102,9 +102,7 @@ class InnovationPortfolioGovernanceTest extends TestCase
         [$county, $innovation, , $reviewer] = $this->screeningInnovation();
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $response = $this->actingAs($reviewer)->get(route('workspace.export', [
-                $reviewer->currentTeam->slug,
-                'knowledge-innovations',
+            $response = $this->actingAs($reviewer)->get(route('workspace.export', ['knowledge-innovations',
                 $format,
                 'county_id' => $county->id,
                 'status' => 'screening',
@@ -114,12 +112,12 @@ class InnovationPortfolioGovernanceTest extends TestCase
             $this->assertStringContainsString('attachment', (string) $response->headers->get('content-disposition'));
         }
 
-        $csv = $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'knowledge-innovations', 'csv', 'county_id' => $county->id, 'status' => 'screening']))->streamedContent();
+        $csv = $this->actingAs($reviewer)->get(route('workspace.export', ['knowledge-innovations', 'csv', 'county_id' => $county->id, 'status' => 'screening']))->streamedContent();
         $this->assertStringContainsString('Reference release', $csv);
         $this->assertStringContainsString($innovation->referenceDataRelease()->firstOrFail()->checksum, $csv);
 
         $otherCounty = County::factory()->create();
-        $this->actingAs($reviewer)->get(route('workspace.export', [$reviewer->currentTeam->slug, 'knowledge-innovations', 'json', 'county_id' => $otherCounty->id]))->assertForbidden();
+        $this->actingAs($reviewer)->get(route('workspace.export', ['knowledge-innovations', 'json', 'county_id' => $otherCounty->id]))->assertForbidden();
         $this->assertDatabaseHas('audit_events', ['subject_id' => $reviewer->id, 'action' => 'workspace.exported']);
     }
 
@@ -134,10 +132,10 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $firstReviewer->assignedCounties()->attach($county);
         $this->seed(KnowledgeWorkflowSeeder::class);
         $release = $this->publishedReferenceRelease($county, $submitter);
-        $this->actingAs($submitter)->post(route('knowledge.innovations.store', $submitter->currentTeam->slug), $this->innovationPayload($county))->assertRedirect();
+        $this->actingAs($submitter)->post(route('knowledge.innovations.store'), $this->innovationPayload($county))->assertRedirect();
         $innovation = DevolutionInnovation::query()->sole();
         $this->assertSame($release->id, $innovation->reference_data_release_id);
-        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$submitter->currentTeam->slug, $innovation]), ['transition' => 'submit', 'rationale' => 'Problem, solution and intended impact are ready for independent screening.'])->assertRedirect();
+        $this->actingAs($submitter)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'submit', 'rationale' => 'Problem, solution and intended impact are ready for independent screening.'])->assertRedirect();
 
         return [$county, $innovation, $submitter, $firstReviewer, $secondReviewer];
     }
@@ -146,9 +144,9 @@ class InnovationPortfolioGovernanceTest extends TestCase
     private function incubatingInnovation(): array
     {
         [$county, $innovation, $submitter, $firstReviewer, $secondReviewer] = $this->screeningInnovation();
-        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$firstReviewer->currentTeam->slug, $innovation]), $this->reviewPayload())->assertRedirect();
-        $this->actingAs($secondReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$secondReviewer->currentTeam->slug, $innovation]), $this->reviewPayload())->assertRedirect();
-        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$firstReviewer->currentTeam->slug, $innovation]), ['transition' => 'accept_incubation', 'rationale' => 'The independent panel threshold has been met.'])->assertRedirect();
+        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertRedirect();
+        $this->actingAs($secondReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertRedirect();
+        $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'The independent panel threshold has been met.'])->assertRedirect();
 
         return [$county, $innovation->refresh(), $submitter, $firstReviewer, $secondReviewer];
     }
@@ -158,10 +156,10 @@ class InnovationPortfolioGovernanceTest extends TestCase
     {
         [$county, $innovation, $owner, $curator] = $this->incubatingInnovation();
         $manager = User::factory()->devolutionAdmin()->create();
-        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$manager->currentTeam->slug, $innovation]), $this->fundingPayload())->assertRedirect();
-        $this->actingAs($manager)->post(route('knowledge.innovations.milestones.store', [$manager->currentTeam->slug, $innovation]), $this->milestonePayload($owner))->assertRedirect();
+        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload())->assertRedirect();
+        $this->actingAs($manager)->post(route('knowledge.innovations.milestones.store', [$innovation]), $this->milestonePayload($owner))->assertRedirect();
         $milestone = InnovationExperimentMilestone::query()->sole();
-        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$manager->currentTeam->slug, $innovation]), ['transition' => 'start_pilot', 'rationale' => 'Funding and experiment protocol are approved.'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'start_pilot', 'rationale' => 'Funding and experiment protocol are approved.'])->assertRedirect();
 
         return [$county, $innovation->refresh(), $owner, $curator, $manager, $milestone];
     }

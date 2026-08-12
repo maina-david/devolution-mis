@@ -230,9 +230,9 @@ export default function Operations({
     filters,
     capabilities,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -359,8 +359,8 @@ export default function Operations({
                         </div>
                         {capabilities.manage && (
                             <div className="flex gap-2">
-                                <BackupRequest teamSlug={currentTeam.slug} />
-                                <ReleaseForm teamSlug={currentTeam.slug} />
+                                <BackupRequest />
+                                <ReleaseForm />
                             </div>
                         )}
                     </div>
@@ -461,7 +461,6 @@ export default function Operations({
                             rows={alertRows}
                             pagination={alertPagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'operational-alerts',
                                 filters,
                             }}
@@ -473,7 +472,6 @@ export default function Operations({
                                 return alert ? (
                                     <OperationalAlertAction
                                         alert={alert}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -488,11 +486,7 @@ export default function Operations({
                     )}
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
-                    <RegisterHeader
-                        teamSlug={currentTeam.slug}
-                        filters={filters}
-                        total={backups.total}
-                    />
+                    <RegisterHeader filters={filters} total={backups.total} />
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
@@ -508,7 +502,6 @@ export default function Operations({
                             rows={rows}
                             pagination={pagination}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'operations',
                                 filters,
                             }}
@@ -520,7 +513,6 @@ export default function Operations({
                                 return backup ? (
                                     <BackupAction
                                         backup={backup}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -565,7 +557,6 @@ export default function Operations({
                                     return job ? (
                                         <FailedJobAction
                                             job={job}
-                                            teamSlug={currentTeam.slug}
                                             canManage={capabilities.manage}
                                         />
                                     ) : null;
@@ -671,7 +662,6 @@ export default function Operations({
                                 key={release.id}
                                 release={release}
                                 releases={releases}
-                                teamSlug={currentTeam.slug}
                                 canManage={capabilities.manage}
                             />
                         ))}
@@ -759,11 +749,9 @@ export default function Operations({
 
 function OperationalAlertAction({
     alert,
-    teamSlug,
     canManage,
 }: {
     alert: OperationalAlert;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -875,7 +863,6 @@ function OperationalAlertAction({
                         {canManage && alert.status === 'open' && (
                             <Form
                                 {...acknowledgeAlert.form({
-                                    current_team: teamSlug,
                                     operationalAlert: alert.id,
                                 })}
                                 resetOnSuccess
@@ -1046,11 +1033,9 @@ function formatMetric(value: string | null, unit: string): string {
 
 function FailedJobAction({
     job,
-    teamSlug,
     canManage,
 }: {
     job: FailedJob;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -1099,7 +1084,6 @@ function FailedJobAction({
                         {canManage && (
                             <Form
                                 {...retryFailedJob.form({
-                                    current_team: teamSlug,
                                     failedJobUuid: job.uuid,
                                 })}
                                 className="grid gap-4 rounded-lg border p-4"
@@ -1131,7 +1115,7 @@ function FailedJobAction({
     );
 }
 
-function BackupRequest({ teamSlug }: { teamSlug: string }) {
+function BackupRequest() {
     return (
         <FormSheet
             title="Request database backup"
@@ -1139,7 +1123,7 @@ function BackupRequest({ teamSlug }: { teamSlug: string }) {
             triggerLabel="Request backup"
             icon={ArchiveRestore}
         >
-            <Form action={requestBackup(teamSlug)} className="grid gap-4 pt-4">
+            <Form action={requestBackup()} className="grid gap-4 pt-4">
                 <p className="text-sm text-muted-foreground">
                     The queue worker will record artifact size, SHA-256
                     checksum, timestamps and any failure. Restore verification
@@ -1153,7 +1137,7 @@ function BackupRequest({ teamSlug }: { teamSlug: string }) {
     );
 }
 
-function ReleaseForm({ teamSlug }: { teamSlug: string }) {
+function ReleaseForm() {
     return (
         <FormSheet
             title="Record deployment"
@@ -1162,7 +1146,7 @@ function ReleaseForm({ teamSlug }: { teamSlug: string }) {
             icon={Plus}
             size="xl"
         >
-            <Form action={storeRelease(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeRelease()} className="grid gap-5 pt-4">
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
@@ -1221,11 +1205,9 @@ function ReleaseForm({ teamSlug }: { teamSlug: string }) {
 
 function BackupAction({
     backup,
-    teamSlug,
     canManage,
 }: {
     backup: Backup;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [open, setOpen] = useState(false);
@@ -1273,10 +1255,7 @@ function BackupAction({
                         )}
                         {canManage && backup.status === 'completed' && (
                             <Form
-                                action={verifyBackup({
-                                    current_team: teamSlug,
-                                    backup: backup.id,
-                                })}
+                                action={verifyBackup({ backup: backup.id })}
                                 className="grid gap-4 rounded-lg border p-4"
                             >
                                 <p className="text-sm">
@@ -1300,12 +1279,10 @@ function BackupAction({
 function ReleaseCard({
     release,
     releases,
-    teamSlug,
     canManage,
 }: {
     release: Release;
     releases: Release[];
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [surface, setSurface] = useState<string | null>(null);
@@ -1418,10 +1395,7 @@ function ReleaseCard({
                             </>
                         ) : surface === 'validate' ? (
                             <Form
-                                action={validate({
-                                    current_team: teamSlug,
-                                    release: release.id,
-                                })}
+                                action={validate({ release: release.id })}
                                 className="grid gap-4"
                             >
                                 <TextField
@@ -1434,10 +1408,7 @@ function ReleaseCard({
                             </Form>
                         ) : surface === 'rollback' ? (
                             <Form
-                                action={rollback({
-                                    current_team: teamSlug,
-                                    release: release.id,
-                                })}
+                                action={rollback({ release: release.id })}
                                 className="grid gap-4"
                             >
                                 <SearchableSelect
@@ -1466,11 +1437,9 @@ function ReleaseCard({
 }
 
 function RegisterHeader({
-    teamSlug,
     filters,
     total,
 }: {
-    teamSlug: string;
     filters: Props['filters'];
     total: number;
 }) {
@@ -1493,11 +1462,7 @@ function RegisterHeader({
                         <DropdownMenuItem key={format} asChild>
                             <a
                                 href={exportMethod.url(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace: 'operations',
-                                        format,
-                                    },
+                                    { workspace: 'operations', format },
                                     { query: filters },
                                 )}
                             >

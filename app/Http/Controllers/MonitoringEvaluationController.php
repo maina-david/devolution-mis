@@ -163,14 +163,14 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Indicator definition created as a draft.');
     }
 
-    public function supersedeIndicator(SupersedeIndicatorDefinitionRequest $request, string $currentTeam, IndicatorDefinition $indicator, SupersedeIndicatorDefinition $supersede): RedirectResponse
+    public function supersedeIndicator(SupersedeIndicatorDefinitionRequest $request, IndicatorDefinition $indicator, SupersedeIndicatorDefinition $supersede): RedirectResponse
     {
         $supersede->handle($this->user($request), $indicator, $request->validated());
 
         return $this->success('A successor indicator version was created as a draft.');
     }
 
-    public function approveIndicator(Request $request, string $currentTeam, IndicatorDefinition $indicator, ApproveIndicatorDefinition $approve): RedirectResponse
+    public function approveIndicator(Request $request, IndicatorDefinition $indicator, ApproveIndicatorDefinition $approve): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageIndicators->value);
         $approve->handle($this->user($request), $indicator);
@@ -185,7 +185,7 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Indicator observation submitted for verification.');
     }
 
-    public function verifyObservation(VerifyIndicatorObservationRequest $request, string $currentTeam, IndicatorObservation $observation, VerifyIndicatorObservation $verify): RedirectResponse
+    public function verifyObservation(VerifyIndicatorObservationRequest $request, IndicatorObservation $observation, VerifyIndicatorObservation $verify): RedirectResponse
     {
         $verify->handle($this->user($request), $observation, $request->validated());
 
@@ -199,7 +199,7 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Programme evaluation created.');
     }
 
-    public function transitionEvaluation(TransitionProgrammeEvaluationRequest $request, string $currentTeam, ProgrammeEvaluation $evaluation, TransitionWorkflow $transitionWorkflow, AuditLogger $auditLogger): RedirectResponse
+    public function transitionEvaluation(TransitionProgrammeEvaluationRequest $request, ProgrammeEvaluation $evaluation, TransitionWorkflow $transitionWorkflow, AuditLogger $auditLogger): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeEvaluation($user, $evaluation);
@@ -215,14 +215,14 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Evaluation lifecycle updated.');
     }
 
-    public function storeFinding(StoreEvaluationFindingRequest $request, string $currentTeam, ProgrammeEvaluation $evaluation, CreateEvaluationFinding $create): RedirectResponse
+    public function storeFinding(StoreEvaluationFindingRequest $request, ProgrammeEvaluation $evaluation, CreateEvaluationFinding $create): RedirectResponse
     {
         $create->handle($evaluation, $this->user($request), $request->validated());
 
         return $this->success('Evaluation finding and recommendation issued.');
     }
 
-    public function storeFindingUpdate(StoreEvaluationFindingUpdateRequest $request, string $currentTeam, EvaluationFinding $finding, RecordEvaluationFindingUpdate $record): RedirectResponse
+    public function storeFindingUpdate(StoreEvaluationFindingUpdateRequest $request, EvaluationFinding $finding, RecordEvaluationFindingUpdate $record): RedirectResponse
     {
         $document = AssessmentDocument::query()->whereKey($request->validated('assessment_document_id'))->firstOrFail();
         $record->handle($finding, $document, $this->user($request), (float) $request->validated('progress_percentage'), $request->validated('narrative'));
@@ -230,14 +230,14 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Recommendation response submitted for verification.');
     }
 
-    public function storeFindingAction(StoreEvaluationFindingActionRequest $request, string $currentTeam, EvaluationFinding $finding, CreateEvaluationFindingAction $create): RedirectResponse
+    public function storeFindingAction(StoreEvaluationFindingActionRequest $request, EvaluationFinding $finding, CreateEvaluationFindingAction $create): RedirectResponse
     {
         $create->handle($finding, $this->user($request), $request->payload());
 
         return $this->success('Recommendation action added.');
     }
 
-    public function storeFindingActionUpdate(StoreEvaluationFindingActionUpdateRequest $request, string $currentTeam, EvaluationFindingAction $action, RecordEvaluationFindingActionUpdate $record): RedirectResponse
+    public function storeFindingActionUpdate(StoreEvaluationFindingActionUpdateRequest $request, EvaluationFindingAction $action, RecordEvaluationFindingActionUpdate $record): RedirectResponse
     {
         $document = AssessmentDocument::query()->whereKey($request->validated('assessment_document_id'))->firstOrFail();
         $record->handle($action, $document, $this->user($request), (float) $request->validated('progress_percentage'), $request->validated('narrative'));
@@ -245,21 +245,21 @@ class MonitoringEvaluationController extends Controller
         return $this->success('Action progress submitted for verification.');
     }
 
-    public function verifyFindingActionUpdate(VerifyEvaluationFindingActionUpdateRequest $request, string $currentTeam, EvaluationFindingActionUpdate $update, VerifyEvaluationFindingActionUpdate $verify): RedirectResponse
+    public function verifyFindingActionUpdate(VerifyEvaluationFindingActionUpdateRequest $request, EvaluationFindingActionUpdate $update, VerifyEvaluationFindingActionUpdate $verify): RedirectResponse
     {
         $verify->handle($update, $this->user($request), $request->validated('decision'), $request->validated('note'));
 
         return $this->success('Action progress decision recorded.');
     }
 
-    public function verifyFindingUpdate(VerifyEvaluationFindingUpdateRequest $request, string $currentTeam, EvaluationFindingUpdate $update, VerifyEvaluationFindingUpdate $verify): RedirectResponse
+    public function verifyFindingUpdate(VerifyEvaluationFindingUpdateRequest $request, EvaluationFindingUpdate $update, VerifyEvaluationFindingUpdate $verify): RedirectResponse
     {
         $verify->handle($update, $this->user($request), $request->validated('decision'), $request->validated('note'));
 
         return $this->success('Recommendation response decision recorded.');
     }
 
-    public function closeFinding(CloseEvaluationFindingRequest $request, string $currentTeam, EvaluationFinding $finding, CloseEvaluationFinding $close): RedirectResponse
+    public function closeFinding(CloseEvaluationFindingRequest $request, EvaluationFinding $finding, CloseEvaluationFinding $close): RedirectResponse
     {
         $close->handle($finding, $this->user($request), $request->validated('note'));
 

@@ -59,7 +59,7 @@ class SupplyChainAssuranceTest extends TestCase
         $viewer = User::factory()->devolutionAdmin()->create();
 
         $this->actingAs($viewer)
-            ->get(route('security-governance.index', $viewer->currentTeam->slug))
+            ->get(route('security-governance.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('security-governance/index')
@@ -68,19 +68,19 @@ class SupplyChainAssuranceTest extends TestCase
                 ->where('supplyChainScans.data.0.artifactChecksum', hash('sha256', $artifact)));
 
         $this->actingAs($viewer)
-            ->get(route('security-governance.supply-chain-scans.download', [$viewer->currentTeam->slug, $scan]))
+            ->get(route('security-governance.supply-chain-scans.download', [$scan]))
             ->assertOk()
             ->assertDownload('idmis-'.$scan->id.'.cdx.json');
         $this->assertDatabaseHas('audit_events', ['subject_id' => $scan->id, 'action' => 'security.supply-chain.artifact-downloaded']);
 
         Storage::disk('local')->put($path, '{"tampered":true}');
         $this->actingAs($viewer)
-            ->get(route('security-governance.supply-chain-scans.download', [$viewer->currentTeam->slug, $scan]))
+            ->get(route('security-governance.supply-chain-scans.download', [$scan]))
             ->assertStatus(409);
 
         $countyUser = User::factory()->countyAdmin()->create();
         $this->actingAs($countyUser)
-            ->get(route('security-governance.supply-chain-scans.download', [$countyUser->currentTeam->slug, $scan]))
+            ->get(route('security-governance.supply-chain-scans.download', [$scan]))
             ->assertForbidden();
     }
 

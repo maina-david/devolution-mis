@@ -84,18 +84,18 @@ export default function UserActivityIndex({
     };
     onlineWindowMinutes: number;
 }) {
-    const { currentTeam } = usePage().props;
+    const { routeContext } = usePage().props;
     usePoll(15000, {
         only: ['activeSessions', 'sessions', 'events', 'pageViews'],
     });
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
     const openUser = (userId: string, sessionId?: string) =>
         router.get(
-            userActivityIndex.url(currentTeam.slug),
+            userActivityIndex.url(),
             { ...filters, user_id: userId, session_id: sessionId },
             { preserveState: true, preserveScroll: true },
         );
@@ -277,7 +277,7 @@ export default function UserActivityIndex({
                                     'session_page',
                                 )}
                                 getRowHref={(row) =>
-                                    userActivityIndex.url(currentTeam.slug, {
+                                    userActivityIndex.url({
                                         query: {
                                             ...filters,
                                             user_id: row.meta?.userId,

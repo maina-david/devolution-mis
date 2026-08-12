@@ -50,14 +50,13 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const page = usePage();
-    const { auth, currentTeam, localization, notificationSummary } = page.props;
+    const { auth, routeContext, localization, notificationSummary } =
+        page.props;
     const user = auth.user;
     const { appearance, updateAppearance } = useAppearance();
     const { currentUrl } = useCurrentUrl();
     const groups =
-        currentTeam && user
-            ? appNavigationGroups(currentTeam.slug, user.permissions)
-            : [];
+        routeContext && user ? appNavigationGroups(user.permissions) : [];
     const activeGroup =
         settingsNavigationGroup(currentUrl) ??
         activeNavigationGroup(groups, currentUrl);
@@ -93,7 +92,7 @@ export function AppSidebarHeader({
                 <div className="min-w-0 flex-1">
                     <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} inverse />
                 </div>
-                {currentTeam && <GlobalSearchDialog />}
+                {routeContext && <GlobalSearchDialog />}
                 <HeaderLink href={help()} label={localization.copy.help}>
                     <CircleHelp />
                 </HeaderLink>
@@ -106,9 +105,8 @@ export function AppSidebarHeader({
                     copy={localization.copy}
                 />
                 <LocaleMenu inverse />
-                {currentTeam && (
+                {routeContext && (
                     <NotificationMenu
-                        teamSlug={currentTeam.slug}
                         summary={notificationSummary}
                         copy={localization.copy}
                     />
@@ -493,11 +491,9 @@ function ThemeMenu({
 }
 
 function NotificationMenu({
-    teamSlug,
     summary,
     copy,
 }: {
-    teamSlug: string;
     summary: ReturnType<typeof usePage>['props']['notificationSummary'];
     copy: ReturnType<typeof usePage>['props']['localization']['copy'];
 }) {
@@ -535,10 +531,7 @@ function NotificationMenu({
                     summary.recent.map((notification) => (
                         <DropdownMenuItem key={notification.id} asChild>
                             <Link
-                                href={
-                                    notification.url ??
-                                    notificationsIndex(teamSlug)
-                                }
+                                href={notification.url ?? notificationsIndex()}
                                 className="flex flex-col items-start gap-1 py-2"
                             >
                                 <span className="flex w-full items-center gap-2 font-medium">
@@ -558,7 +551,7 @@ function NotificationMenu({
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                    <Link href={notificationsIndex(teamSlug)}>
+                    <Link href={notificationsIndex()}>
                         {copy.viewAllNotifications}
                     </Link>
                 </DropdownMenuItem>

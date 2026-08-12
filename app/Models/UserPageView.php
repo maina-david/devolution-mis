@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon $viewed_at
  * @property-read User $user
  */
-#[Fillable(['user_id', 'user_activity_session_id', 'team_id', 'route_name', 'path', 'page_title', 'ip_address', 'user_agent', 'viewed_at'])]
+#[Fillable(['user_id', 'user_activity_session_id', 'route_name', 'path', 'page_title', 'ip_address', 'user_agent', 'viewed_at'])]
 class UserPageView extends Model
 {
     /** @use HasFactory<UserPageViewFactory> */

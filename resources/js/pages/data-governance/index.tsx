@@ -256,10 +256,10 @@ export default function DataGovernance({
     capabilities,
     targets,
 }: Props) {
-    const { currentTeam, localization } = usePage().props;
+    const { routeContext, localization } = usePage().props;
     const governanceCopy = localization.dataGovernance;
 
-    if (!currentTeam) {
+    if (!routeContext) {
         return null;
     }
 
@@ -335,28 +335,17 @@ export default function DataGovernance({
                         </div>
                         {capabilities.manage && (
                             <div className="flex flex-wrap gap-2">
-                                <AssetForm
-                                    teamSlug={currentTeam.slug}
-                                    users={users}
-                                />
-                                <RetentionForm
-                                    teamSlug={currentTeam.slug}
-                                    copy={governanceCopy}
-                                />
+                                <AssetForm users={users} />
+                                <RetentionForm copy={governanceCopy} />
                                 <ActivityForm
-                                    teamSlug={currentTeam.slug}
                                     assets={assets}
                                     schedules={retentionSchedules.filter(
                                         (schedule) =>
                                             schedule.status === 'approved',
                                     )}
                                 />
-                                <DataRequestForm
-                                    teamSlug={currentTeam.slug}
-                                    users={users}
-                                />
+                                <DataRequestForm users={users} />
                                 <PrivacyIncidentForm
-                                    teamSlug={currentTeam.slug}
                                     users={users}
                                     assets={assets}
                                     counties={counties}
@@ -434,7 +423,6 @@ export default function DataGovernance({
                     <RegisterHeader
                         title="Personal data breach register"
                         description={`${privacyIncidents.total.toLocaleString()} controlled incident records`}
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                         workspace="privacy-incidents"
                     />
@@ -457,7 +445,6 @@ export default function DataGovernance({
                                 'incidents_page',
                             )}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'privacy-incidents',
                                 filters,
                             }}
@@ -469,7 +456,6 @@ export default function DataGovernance({
                                 return incident ? (
                                     <PrivacyIncidentAction
                                         incident={incident}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -512,7 +498,6 @@ export default function DataGovernance({
                     <RegisterHeader
                         title="Processing activity register"
                         description={`${activities.total.toLocaleString()} purpose-bound processing records`}
-                        teamSlug={currentTeam.slug}
                         filters={filters}
                     />
                     {activityRows.length ? (
@@ -533,7 +518,6 @@ export default function DataGovernance({
                                 'activities_page',
                             )}
                             bulkExport={{
-                                teamSlug: currentTeam.slug,
                                 workspace: 'data-governance',
                                 filters,
                             }}
@@ -545,7 +529,6 @@ export default function DataGovernance({
                                 return activity ? (
                                     <ActivityAction
                                         activity={activity}
-                                        teamSlug={currentTeam.slug}
                                         canManage={capabilities.manage}
                                     />
                                 ) : null;
@@ -593,7 +576,6 @@ export default function DataGovernance({
                                     return request ? (
                                         <RequestAction
                                             request={request}
-                                            teamSlug={currentTeam.slug}
                                             canManage={capabilities.manage}
                                         />
                                     ) : null;
@@ -686,7 +668,6 @@ export default function DataGovernance({
                                         schedule.status === 'submitted' &&
                                         schedule.submission && (
                                             <RetentionReviewForm
-                                                teamSlug={currentTeam.slug}
                                                 schedule={schedule}
                                                 copy={governanceCopy}
                                             />
@@ -802,11 +783,9 @@ function AssetCard({ asset }: { asset: Asset }) {
 
 function ActivityAction({
     activity,
-    teamSlug,
     canManage,
 }: {
     activity: Activity;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [surface, setSurface] = useState<'detail' | 'review' | null>(null);
@@ -858,7 +837,6 @@ function ActivityAction({
                         {surface === 'review' ? (
                             <Form
                                 action={review({
-                                    current_team: teamSlug,
                                     processingActivity: activity.id,
                                 })}
                                 className="grid gap-4"
@@ -958,11 +936,9 @@ function ActivityAction({
 
 function RequestAction({
     request,
-    teamSlug,
     canManage,
 }: {
     request: DataRequest;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [surface, setSurface] = useState<'detail' | 'advance' | null>(null);
@@ -1021,7 +997,6 @@ function RequestAction({
                     <div className="grid gap-4 px-4 pb-8">
                         {surface === 'advance' ? (
                             <RequestTransitionForm
-                                teamSlug={teamSlug}
                                 request={request}
                                 transitions={transitions}
                             />
@@ -1071,11 +1046,9 @@ function RequestAction({
 }
 
 function RequestTransitionForm({
-    teamSlug,
     request,
     transitions,
 }: {
-    teamSlug: string;
     request: DataRequest;
     transitions: string[];
 }) {
@@ -1083,10 +1056,7 @@ function RequestTransitionForm({
 
     return (
         <Form
-            action={advance({
-                current_team: teamSlug,
-                dataSubjectRequest: request.id,
-            })}
+            action={advance({ dataSubjectRequest: request.id })}
             className="grid gap-4"
         >
             <SearchableSelect
@@ -1125,7 +1095,7 @@ function RequestTransitionForm({
     );
 }
 
-function AssetForm({ teamSlug, users }: { teamSlug: string; users: Option[] }) {
+function AssetForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title="Register data asset"
@@ -1134,7 +1104,7 @@ function AssetForm({ teamSlug, users }: { teamSlug: string; users: Option[] }) {
             icon={Plus}
             size="xl"
         >
-            <Form action={storeAsset(teamSlug)} className="grid gap-5 pt-4">
+            <Form action={storeAsset()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field name="code" label="Asset code" />
                     <Field name="name" label="Asset name" />
@@ -1211,13 +1181,7 @@ function AssetForm({ teamSlug, users }: { teamSlug: string; users: Option[] }) {
     );
 }
 
-function RetentionForm({
-    teamSlug,
-    copy,
-}: {
-    teamSlug: string;
-    copy: Record<string, string>;
-}) {
+function RetentionForm({ copy }: { copy: Record<string, string> }) {
     return (
         <FormSheet
             title={copy.retention_submit_title}
@@ -1226,10 +1190,7 @@ function RetentionForm({
             icon={FileClock}
             size="xl"
         >
-            <Form
-                action={storeRetentionSchedule(teamSlug)}
-                className="grid gap-4 pt-4"
-            >
+            <Form action={storeRetentionSchedule()} className="grid gap-4 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field name="code" label="Schedule code" />
                     <Field name="record_class" label="Record class" />
@@ -1274,11 +1235,9 @@ function RetentionForm({
 }
 
 function RetentionReviewForm({
-    teamSlug,
     schedule,
     copy,
 }: {
-    teamSlug: string;
     schedule: RetentionSchedule;
     copy: Record<string, string>;
 }) {
@@ -1290,7 +1249,7 @@ function RetentionReviewForm({
             icon={ShieldCheck}
         >
             <Form
-                action={reviewRetentionSchedule([teamSlug, schedule.id])}
+                action={reviewRetentionSchedule([schedule.id])}
                 className="grid gap-4 pt-4"
             >
                 <SearchableSelect
@@ -1314,11 +1273,9 @@ function RetentionReviewForm({
 }
 
 function ActivityForm({
-    teamSlug,
     assets,
     schedules,
 }: {
-    teamSlug: string;
     assets: Asset[];
     schedules: RetentionSchedule[];
 }) {
@@ -1331,7 +1288,7 @@ function ActivityForm({
             size="xl"
         >
             <Form
-                action={storeProcessingActivity(teamSlug)}
+                action={storeProcessingActivity()}
                 className="grid gap-5 pt-4"
             >
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1444,13 +1401,7 @@ function ActivityForm({
     );
 }
 
-function DataRequestForm({
-    teamSlug,
-    users,
-}: {
-    teamSlug: string;
-    users: Option[];
-}) {
+function DataRequestForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title="Record data-subject request"
@@ -1460,7 +1411,7 @@ function DataRequestForm({
             size="xl"
         >
             <Form
-                action={storeDataSubjectRequest(teamSlug)}
+                action={storeDataSubjectRequest()}
                 className="grid gap-4 pt-4"
             >
                 <div className="grid gap-4 md:grid-cols-2">
@@ -1514,12 +1465,10 @@ function DataRequestForm({
 }
 
 function PrivacyIncidentForm({
-    teamSlug,
     users,
     assets,
     counties,
 }: {
-    teamSlug: string;
     users: Option[];
     assets: Asset[];
     counties: CountyOption[];
@@ -1532,10 +1481,7 @@ function PrivacyIncidentForm({
             icon={ShieldAlert}
             size="xl"
         >
-            <Form
-                action={storePrivacyIncident(teamSlug)}
-                className="grid gap-4 pt-4"
-            >
+            <Form action={storePrivacyIncident()} className="grid gap-4 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
                     <Field name="title" label="Incident title" />
                     <SearchableSelect
@@ -1619,11 +1565,9 @@ function PrivacyIncidentForm({
 
 function PrivacyIncidentAction({
     incident,
-    teamSlug,
     canManage,
 }: {
     incident: PrivacyIncident;
-    teamSlug: string;
     canManage: boolean;
 }) {
     const [surface, setSurface] = useState<'detail' | 'workflow' | null>(null);
@@ -1685,7 +1629,6 @@ function PrivacyIncidentAction({
                         {surface === 'workflow' && transition ? (
                             <PrivacyIncidentTransitionForm
                                 incident={incident}
-                                teamSlug={teamSlug}
                                 transition={transition}
                             />
                         ) : (
@@ -1786,7 +1729,6 @@ function PrivacyIncidentAction({
                                     </div>
                                 )}
                                 <PrivacyIncidentDocumentControls
-                                    teamSlug={teamSlug}
                                     incidentId={incident.id}
                                     status={incident.status}
                                     documents={incident.documents}
@@ -1803,19 +1745,14 @@ function PrivacyIncidentAction({
 
 function PrivacyIncidentTransitionForm({
     incident,
-    teamSlug,
     transition,
 }: {
     incident: PrivacyIncident;
-    teamSlug: string;
     transition: string;
 }) {
     return (
         <Form
-            action={advancePrivacyIncident({
-                current_team: teamSlug,
-                privacyIncident: incident.id,
-            })}
+            action={advancePrivacyIncident({ privacyIncident: incident.id })}
             className="grid gap-4"
         >
             <input type="hidden" name="transition" value={transition} />
@@ -1934,13 +1871,11 @@ function Metric({
 function RegisterHeader({
     title,
     description,
-    teamSlug,
     filters,
     workspace = 'data-governance',
 }: {
     title: string;
     description: string;
-    teamSlug: string;
     filters: Record<string, string | undefined>;
     workspace?: 'data-governance' | 'privacy-incidents';
 }) {
@@ -1956,11 +1891,7 @@ function RegisterHeader({
                         <a
                             href={
                                 exportMethod(
-                                    {
-                                        current_team: teamSlug,
-                                        workspace,
-                                        format,
-                                    },
+                                    { workspace, format },
                                     { query: filters },
                                 ).url
                             }

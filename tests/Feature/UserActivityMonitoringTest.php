@@ -21,7 +21,7 @@ class UserActivityMonitoringTest extends TestCase
         $user = User::factory()->countyOfficial()->create();
 
         $this->post(route('login.store'), ['email' => $user->email, 'password' => 'password'])->assertRedirect();
-        $this->get(route('dashboard', $user->currentTeam->slug))->assertOk();
+        $this->get(route('dashboard'))->assertOk();
 
         $session = UserActivitySession::query()->where('user_id', $user->id)->sole();
         $this->assertSame('dashboard', $session->current_route);
@@ -39,15 +39,15 @@ class UserActivityMonitoringTest extends TestCase
     public function test_only_platform_admin_can_view_live_presence_and_single_user_timeline(): void
     {
         $subject = User::factory()->countyOfficial()->create();
-        $activitySession = UserActivitySession::factory()->for($subject)->create(['team_id' => $subject->current_team_id, 'current_page_title' => 'County performance']);
+        $activitySession = UserActivitySession::factory()->for($subject)->create(['current_page_title' => 'County performance']);
         AuditEvent::factory()->for($subject, 'actor')->create(['subject_type' => $activitySession->getMorphClass(), 'subject_id' => $activitySession->id, 'action' => 'page.viewed', 'description' => 'Viewed County performance.', 'metadata' => ['activity_session_id' => $activitySession->id, 'route_name' => 'counties.index'], 'occurred_at' => now()]);
         UserPageView::factory()->for($subject)->create(['user_activity_session_id' => $activitySession->id, 'page_title' => 'County performance']);
         $devolutionAdmin = User::factory()->devolutionAdmin()->create();
 
-        $this->actingAs($devolutionAdmin)->get(route('user-activity.index', $devolutionAdmin->currentTeam->slug))->assertForbidden();
+        $this->actingAs($devolutionAdmin)->get(route('user-activity.index'))->assertForbidden();
 
         $platformAdmin = User::factory()->platformAdmin()->create();
-        $this->actingAs($platformAdmin)->get(route('user-activity.index', [$platformAdmin->currentTeam->slug, 'user_id' => $subject->id, 'session_id' => $activitySession->id]))
+        $this->actingAs($platformAdmin)->get(route('user-activity.index', ['user_id' => $subject->id, 'session_id' => $activitySession->id]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('user-activity/index')->has('activeSessions', 1)->has('sessions.data', 1)->where('sessions.data.0.user.id', $subject->id)->has('events.data', 1)->where('events.data.0.sessionId', $activitySession->id)->has('pageViews.data', 1)->where('onlineWindowMinutes', 5));
 

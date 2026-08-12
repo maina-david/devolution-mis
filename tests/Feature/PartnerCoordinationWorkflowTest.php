@@ -51,7 +51,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $release = $this->publishedReferenceRelease([$county], [$sector], [$organization], $administrator);
 
-        $this->actingAs($administrator)->post(route('partners.profiles.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('partners.profiles.store'), [
             'organization_id' => $organization->id,
             'partner_type' => 'multilateral',
             'country' => 'Kenya',
@@ -76,24 +76,24 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
 
-        $this->actingAs($administrator)->get(route('partners.index', $administrator->currentTeam->slug))
+        $this->actingAs($administrator)->get(route('partners.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('workspace.columns.4', 'Reference release')
                 ->where('workspace.rows.0.cells.4', "v{$release->version} · {$release->effective_from?->toDateString()}")
                 ->where('workspace.rows.0.cells.5', $release->checksum));
         foreach (['json', 'csv'] as $format) {
-            $export = $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'partners', $format]))
+            $export = $this->actingAs($administrator)->get(route('workspace.export', ['partners', $format]))
                 ->assertOk()
                 ->streamedContent();
             $this->assertStringContainsString('Reference release', $export);
             $this->assertStringContainsString("v{$release->version}", $export);
             $this->assertStringContainsString($release->checksum, $export);
         }
-        $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'partners', 'xlsx']))
+        $this->actingAs($administrator)->get(route('workspace.export', ['partners', 'xlsx']))
             ->assertOk()
             ->assertDownload();
-        $this->actingAs($administrator)->get(route('workspace.export', [$administrator->currentTeam->slug, 'partners', 'pdf']))
+        $this->actingAs($administrator)->get(route('workspace.export', ['partners', 'pdf']))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
 
@@ -109,17 +109,17 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $payload = $this->partnerProfilePayload($organization, $county, $sector);
 
-        $this->actingAs($administrator)->post(route('partners.profiles.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('partners.profiles.store'), $payload)
             ->assertStatus(409);
         $this->assertDatabaseCount('partner_profiles', 0);
 
         $this->publishedReferenceRelease([$county], [$sector], [], $administrator);
-        $this->actingAs($administrator)->post(route('partners.profiles.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('partners.profiles.store'), $payload)
             ->assertSessionHasErrors('organization_id');
         $this->assertDatabaseCount('partner_profiles', 0);
 
         $release = $this->publishedReferenceRelease([$county], [$sector], [$organization], $administrator);
-        $this->actingAs($administrator)->post(route('partners.profiles.store', $administrator->currentTeam->slug), $payload)
+        $this->actingAs($administrator)->post(route('partners.profiles.store'), $payload)
             ->assertRedirect();
 
         $this->assertSame($release->id, PartnerProfile::query()->sole()->reference_data_release_id);
@@ -136,7 +136,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$home, $outside], [$sector], [$organization], $countyAdministrator);
 
         $this->actingAs($countyAdministrator)->post(
-            route('partners.profiles.store', $countyAdministrator->currentTeam->slug),
+            route('partners.profiles.store'),
             $this->partnerProfilePayload($organization, $outside, $sector),
         )->assertForbidden();
 
@@ -153,7 +153,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $hidden = PartnerProfile::factory()->create();
         $hidden->counties()->attach($other);
 
-        $this->actingAs($countyUser)->get(route('partners.index', $countyUser->currentTeam->slug))
+        $this->actingAs($countyUser)->get(route('partners.index'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('partners/index')
@@ -163,7 +163,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
                 ->has('portfolioMap.counties', 1)
                 ->where('portfolioMap.counties.0.id', $home->id));
 
-        $export = $this->actingAs($countyUser)->get(route('workspace.export', [$countyUser->currentTeam->slug, 'partners', 'json']))->assertOk();
+        $export = $this->actingAs($countyUser)->get(route('workspace.export', ['partners', 'json']))->assertOk();
         $content = $export->streamedContent();
         $this->assertStringContainsString($visible->organization->name, $content);
         $this->assertStringNotContainsString($hidden->organization->name, $content);
@@ -186,14 +186,14 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $hiddenProject = DevolutionProject::factory()->create(['lead_county_id' => $otherCounty->id]);
         $hiddenProject->counties()->attach($otherCounty, ['is_lead' => true]);
 
-        $this->actingAs($representative)->post(route('partners.contributions.store', $representative->currentTeam->slug), $this->contributionPayload($partner, $project))->assertRedirect();
+        $this->actingAs($representative)->post(route('partners.contributions.store'), $this->contributionPayload($partner, $project))->assertRedirect();
         $contribution = PartnerContribution::query()->sole();
         $this->assertSame($representative->id, $contribution->reported_by);
         $this->assertSame($representative->id, $contribution->provenance['captured_by']);
 
-        $this->actingAs($representative)->post(route('partners.contributions.store', $representative->currentTeam->slug), $this->contributionPayload($otherPartner, $project, 'loan'))->assertForbidden();
-        $this->actingAs($representative)->post(route('partners.contributions.store', $representative->currentTeam->slug), $this->contributionPayload($partner, $hiddenProject, 'in_kind'))->assertForbidden();
-        $this->actingAs($representative)->get(route('partners.index', $representative->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($representative)->post(route('partners.contributions.store'), $this->contributionPayload($otherPartner, $project, 'loan'))->assertForbidden();
+        $this->actingAs($representative)->post(route('partners.contributions.store'), $this->contributionPayload($partner, $hiddenProject, 'in_kind'))->assertForbidden();
+        $this->actingAs($representative)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('portfolioMap.showFullCountry', true)
             ->has('portfolioMap.counties', 1)
             ->where('portfolioMap.counties.0.id', $county->id)
@@ -219,10 +219,10 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame('synergy', $alert->alert_type);
 
         $countyUser = User::factory()->countyAdmin($county)->create();
-        $this->actingAs($countyUser)->patch(route('partners.alerts.resolve', [$countyUser->currentTeam->slug, $alert]), ['status' => 'resolved', 'resolution' => 'Joint planning session scheduled.'])->assertForbidden();
+        $this->actingAs($countyUser)->patch(route('partners.alerts.resolve', [$alert]), ['status' => 'resolved', 'resolution' => 'Joint planning session scheduled.'])->assertForbidden();
 
         $administrator = User::factory()->devolutionAdmin()->create();
-        $this->actingAs($administrator)->patch(route('partners.alerts.resolve', [$administrator->currentTeam->slug, $alert]), ['status' => 'resolved', 'resolution' => 'Joint planning session scheduled.'])->assertRedirect();
+        $this->actingAs($administrator)->patch(route('partners.alerts.resolve', [$alert]), ['status' => 'resolved', 'resolution' => 'Joint planning session scheduled.'])->assertRedirect();
         $this->assertSame('resolved', $alert->refresh()->status);
         $this->assertSame($administrator->id, $alert->resolved_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $alert->id, 'action' => 'partner.alert.resolved']);
@@ -244,7 +244,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $partner->users()->attach($representative, ['relationship_role' => 'authorized_representative']);
         $this->partnerAgreementWorkflow();
 
-        $this->actingAs($administrator)->post(route('partners.agreements.store', $administrator->currentTeam->slug), [
+        $this->actingAs($administrator)->post(route('partners.agreements.store'), [
             'partner_profile_id' => $partner->id,
             'reference' => 'MOU-GOV-001',
             'title' => 'County climate services cooperation agreement',
@@ -261,11 +261,11 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame('draft', $agreement->status);
         $this->assertSame('draft', $agreement->workflow?->current_state);
 
-        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$administrator->currentTeam->slug, $agreement]), [
+        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$agreement]), [
             'transition' => 'submit',
         ])->assertSessionHasErrors('transition');
 
-        $this->actingAs($representative)->post(route('partners.agreements.documents.store', [$representative->currentTeam->slug, $agreement]), [
+        $this->actingAs($representative)->post(route('partners.agreements.documents.store', [$agreement]), [
             'title' => 'Signed cooperation agreement',
             'category' => 'Agreement',
             'source_type' => 'scanned',
@@ -279,21 +279,21 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertNotNull($link->document->currentVersion);
         Storage::disk('local')->assertExists($link->document->path);
 
-        $this->actingAs($outsider)->get(route('evidence.preview', [$outsider->currentTeam->slug, $link->document]))->assertForbidden();
-        $this->actingAs($approver)->get(route('evidence.preview', [$approver->currentTeam->slug, $link->document]))->assertOk();
+        $this->actingAs($outsider)->get(route('evidence.preview', [$link->document]))->assertForbidden();
+        $this->actingAs($approver)->get(route('evidence.preview', [$link->document]))->assertOk();
 
-        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$administrator->currentTeam->slug, $agreement]), [
+        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$agreement]), [
             'transition' => 'submit',
             'comment' => 'Signed record and commercial terms checked.',
         ])->assertRedirect();
         $this->assertSame('pending_approval', $agreement->refresh()->status);
 
         $administrator->givePermissionTo(ProgrammePermission::ApprovePartnerAgreements->value);
-        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$administrator->currentTeam->slug, $agreement]), [
+        $this->actingAs($administrator)->patch(route('partners.agreements.transition', [$agreement]), [
             'transition' => 'approve',
         ])->assertForbidden();
 
-        $this->actingAs($approver)->patch(route('partners.agreements.transition', [$approver->currentTeam->slug, $agreement]), [
+        $this->actingAs($approver)->patch(route('partners.agreements.transition', [$agreement]), [
             'transition' => 'approve',
             'comment' => 'Independent review completed.',
         ])->assertRedirect();
@@ -301,14 +301,14 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame($approver->id, $agreement->approved_by);
         $this->assertNotNull($agreement->approved_at);
 
-        $this->actingAs($representative)->post(route('partners.agreements.documents.store', [$representative->currentTeam->slug, $agreement]), [
+        $this->actingAs($representative)->post(route('partners.agreements.documents.store', [$agreement]), [
             'title' => 'Late annex',
             'category' => 'Annex',
             'source_type' => 'digital',
             'document' => UploadedFile::fake()->create('late-annex.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
 
-        $this->actingAs($approver)->get(route('partners.index', $approver->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($approver)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('capabilities.approveAgreements', true)
             ->where('agreements.0.id', $agreement->id)
             ->where('agreements.0.status', 'active')
@@ -329,20 +329,20 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $project = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $project->counties()->attach($county, ['is_lead' => true]);
 
-        $this->actingAs($representative)->post(route('partners.contributions.store', $representative->currentTeam->slug), $this->contributionPayload($partner, $project))->assertRedirect();
+        $this->actingAs($representative)->post(route('partners.contributions.store'), $this->contributionPayload($partner, $project))->assertRedirect();
         $contribution = PartnerContribution::query()->sole();
         $decision = ['decision' => 'verified', 'verified_committed_amount' => '10000000.00', 'verified_disbursed_amount' => '2500000.00', 'verified_in_kind_value' => '0.00', 'source_reference' => 'BANK-STATEMENT-001', 'review_note' => 'Bank statement and partner ledger totals independently agree.'];
 
-        $this->actingAs($reviewer)->post(route('partners.contributions.reconciliations.store', [$reviewer->currentTeam->slug, $contribution]), $decision)->assertStatus(422);
-        $this->actingAs($representative)->post(route('partners.contributions.documents.store', [$representative->currentTeam->slug, $contribution]), [
+        $this->actingAs($reviewer)->post(route('partners.contributions.reconciliations.store', [$contribution]), $decision)->assertStatus(422);
+        $this->actingAs($representative)->post(route('partners.contributions.documents.store', [$contribution]), [
             'title' => 'Certified disbursement statement', 'category' => 'Financial record', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->image('statement.jpg'),
         ])->assertRedirect();
         $link = DocumentLink::query()->with('document')->sole();
         $link->document->update(['scan_status' => 'clean', 'record_status' => 'active']);
 
         $representative->givePermissionTo(ProgrammePermission::ManagePartners->value);
-        $this->actingAs($representative)->post(route('partners.contributions.reconciliations.store', [$representative->currentTeam->slug, $contribution]), $decision)->assertForbidden();
-        $this->actingAs($reviewer)->post(route('partners.contributions.reconciliations.store', [$reviewer->currentTeam->slug, $contribution]), $decision)->assertRedirect();
+        $this->actingAs($representative)->post(route('partners.contributions.reconciliations.store', [$contribution]), $decision)->assertForbidden();
+        $this->actingAs($reviewer)->post(route('partners.contributions.reconciliations.store', [$contribution]), $decision)->assertRedirect();
 
         $reconciliation = PartnerContributionReconciliation::query()->sole();
         $this->assertTrue(Str::isUuid($reconciliation->id));
@@ -351,7 +351,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame(64, strlen($reconciliation->evidence_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $contribution->id, 'action' => 'partner.contribution.reconciled']);
 
-        $this->actingAs($reviewer)->get(route('partners.index', $reviewer->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($reviewer)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('contributions.0.id', $contribution->id)
             ->where('contributions.0.county.logoUrl', '/counties/test.svg')
             ->where('contributions.0.reconciliations.0.decision', 'verified')
@@ -373,33 +373,33 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $agreement = PartnerAgreement::factory()->create(['partner_profile_id' => $partner->id, 'status' => 'active', 'approved_by' => $approver->id, 'approved_at' => now()]);
         $payload = ['change_type' => 'suspension', 'reason' => 'Material delivery controls require a temporary implementation pause.', 'effective_on' => now()->addDay()->toDateString()];
 
-        $this->actingAs($requester)->post(route('partners.agreement-changes.store', [$requester->currentTeam->slug, $agreement]), $payload)->assertRedirect();
+        $this->actingAs($requester)->post(route('partners.agreement-changes.store', [$agreement]), $payload)->assertRedirect();
         $change = PartnerAgreementChangeRequest::query()->sole();
         $this->assertTrue(Str::isUuid($change->id));
         $this->assertSame(1, $change->version);
         $this->assertSame($requester->id, $change->requested_by);
 
         $decision = ['decision' => 'approved', 'decision_note' => 'Independent review confirms that suspension is proportionate and evidenced.'];
-        $this->actingAs($approver)->post(route('partners.agreement-changes.decision.store', [$approver->currentTeam->slug, $change]), $decision)->assertStatus(422);
-        $this->actingAs($requester)->post(route('partners.agreement-changes.documents.store', [$requester->currentTeam->slug, $change]), [
+        $this->actingAs($approver)->post(route('partners.agreement-changes.decision.store', [$change]), $decision)->assertStatus(422);
+        $this->actingAs($requester)->post(route('partners.agreement-changes.documents.store', [$change]), [
             'title' => 'Signed suspension instrument', 'category' => 'Agreement change', 'source_type' => 'digital', 'document' => UploadedFile::fake()->create('suspension.pdf', 20, 'application/pdf'),
         ])->assertRedirect();
         $document = DocumentLink::query()->where('subject_id', $change->id)->with('document')->sole()->document;
         $document->update(['scan_status' => 'clean', 'record_status' => 'active']);
 
         $requester->givePermissionTo(ProgrammePermission::ApprovePartnerAgreements->value);
-        $this->actingAs($requester)->post(route('partners.agreement-changes.decision.store', [$requester->currentTeam->slug, $change]), $decision)->assertForbidden();
-        $this->actingAs($approver)->post(route('partners.agreement-changes.decision.store', [$approver->currentTeam->slug, $change]), $decision)->assertRedirect();
+        $this->actingAs($requester)->post(route('partners.agreement-changes.decision.store', [$change]), $decision)->assertForbidden();
+        $this->actingAs($approver)->post(route('partners.agreement-changes.decision.store', [$change]), $decision)->assertRedirect();
 
         $retained = PartnerAgreementChangeDecision::query()->sole();
         $this->assertSame('suspended', $agreement->refresh()->status);
         $this->assertSame($approver->id, $retained->decided_by);
         $this->assertSame(64, strlen($retained->decision_checksum));
-        $this->actingAs($requester)->post(route('partners.agreement-changes.documents.store', [$requester->currentTeam->slug, $change]), [
+        $this->actingAs($requester)->post(route('partners.agreement-changes.documents.store', [$change]), [
             'title' => 'Late record', 'category' => 'Agreement change', 'source_type' => 'digital', 'document' => UploadedFile::fake()->create('late.pdf', 10, 'application/pdf'),
         ])->assertStatus(409);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $agreement->id, 'action' => 'partner.agreement.change_decided']);
-        $this->actingAs($approver)->get(route('partners.index', $approver->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($approver)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('agreements.0.id', $agreement->id)
             ->where('agreements.0.status', 'suspended')
             ->where('agreements.0.changeRequests.0.decision.result', 'approved')
@@ -443,17 +443,17 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->artisan('partners:monitor-operational-alerts')->assertSuccessful();
         $this->assertSame('system_resolved', PartnerOperationalAlert::query()->where('alert_type', 'contribution_reconciliation_exception')->value('status'));
 
-        $this->actingAs($outsider)->get(route('partners.index', $outsider->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page->has('operationalAlerts', 0));
+        $this->actingAs($outsider)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('operationalAlerts', 0));
         $alert = PartnerOperationalAlert::query()->where('alert_type', 'agreement_expiry_due')->sole();
-        $this->actingAs($manager)->patch(route('partners.operational-alerts.resolve', [$manager->currentTeam->slug, $alert]), ['status' => 'resolved', 'resolution' => 'Renewal review completed and a controlled follow-up action was assigned.'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('partners.operational-alerts.resolve', [$alert]), ['status' => 'resolved', 'resolution' => 'Renewal review completed and a controlled follow-up action was assigned.'])->assertRedirect();
         $this->assertSame('resolved', $alert->refresh()->status);
         $this->assertSame($manager->id, $alert->resolved_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $alert->id, 'action' => 'partner.operational_alert.resolved']);
 
-        $this->actingAs($manager)->get(route('partners.index', $manager->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($manager)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('operationalAlerts', 3)
             ->where('operationalAlerts.0.county.logoUrl', '/counties/monitor.svg'));
-        $export = $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'partners', 'json']))->assertOk()->streamedContent();
+        $export = $this->actingAs($manager)->get(route('workspace.export', ['partners', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('Open alerts', $export);
         $this->assertStringContainsString($partner->organization->name, $export);
     }
@@ -473,38 +473,38 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $partner->users()->attach($owner, ['relationship_role' => 'authorized_representative']);
         $release = $this->publishedReferenceRelease([$county], [], [$accountableOrganization], $manager);
 
-        $this->actingAs($manager)->post(route('partners.collaboration-plans.store', $manager->currentTeam->slug), ['partner_profile_id' => $partner->id, 'reference' => 'COLLAB-2026-001', 'title' => 'County service delivery collaboration', 'objective' => 'Coordinate accountable partner and county delivery commitments.', 'starts_on' => today()->addDay()->toDateString(), 'ends_on' => today()->addMonths(6)->toDateString()])->assertRedirect();
+        $this->actingAs($manager)->post(route('partners.collaboration-plans.store'), ['partner_profile_id' => $partner->id, 'reference' => 'COLLAB-2026-001', 'title' => 'County service delivery collaboration', 'objective' => 'Coordinate accountable partner and county delivery commitments.', 'starts_on' => today()->addDay()->toDateString(), 'ends_on' => today()->addMonths(6)->toDateString()])->assertRedirect();
         $plan = PartnerCollaborationPlan::query()->sole();
-        $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$manager->currentTeam->slug, $plan]), ['transition' => 'submit'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'submit'])->assertRedirect();
         $manager->givePermissionTo(ProgrammePermission::ApprovePartnerAgreements->value);
-        $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$manager->currentTeam->slug, $plan]), ['transition' => 'approve', 'decision_note' => 'Self approval attempt must fail.'])->assertForbidden();
-        $this->actingAs($approver)->patch(route('partners.collaboration-plans.transition', [$approver->currentTeam->slug, $plan]), ['transition' => 'approve', 'decision_note' => 'Independent review confirms the plan is measurable and within scope.'])->assertRedirect();
+        $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'approve', 'decision_note' => 'Self approval attempt must fail.'])->assertForbidden();
+        $this->actingAs($approver)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'approve', 'decision_note' => 'Independent review confirms the plan is measurable and within scope.'])->assertRedirect();
 
-        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$manager->currentTeam->slug, $plan]), ['county_id' => $county->id, 'code' => 'ACT-001', 'title' => 'Deploy county reporting toolkit', 'description' => 'Deploy and validate the approved reporting toolkit with county officers.', 'accountable_user_id' => $owner->id, 'accountable_organization_id' => $accountableOrganization->id, 'due_on' => today()->addMonths(3)->toDateString()])->assertRedirect();
+        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$plan]), ['county_id' => $county->id, 'code' => 'ACT-001', 'title' => 'Deploy county reporting toolkit', 'description' => 'Deploy and validate the approved reporting toolkit with county officers.', 'accountable_user_id' => $owner->id, 'accountable_organization_id' => $accountableOrganization->id, 'due_on' => today()->addMonths(3)->toDateString()])->assertRedirect();
         $action = PartnerCollaborationAction::query()->sole();
         $this->assertSame($release->id, $action->reference_data_release_id);
         $creationEvent = AuditEvent::query()->where('subject_id', $action->id)->where('action', 'partner.collaboration_action.created')->sole();
         $this->assertSame($release->version, $creationEvent->metadata['reference_data_release_version']);
         $this->assertSame($release->checksum, $creationEvent->metadata['reference_data_release_checksum']);
         $updatePayload = ['progress_percentage' => 100, 'narrative' => 'Toolkit deployment and county validation have been completed successfully.'];
-        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.store', [$owner->currentTeam->slug, $action]), $updatePayload)->assertStatus(422);
-        $this->actingAs($owner)->post(route('partners.collaboration-actions.documents.store', [$owner->currentTeam->slug, $action]), ['title' => 'Signed deployment acceptance', 'category' => 'Action evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->image('acceptance.jpg')])->assertRedirect();
+        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.store', [$action]), $updatePayload)->assertStatus(422);
+        $this->actingAs($owner)->post(route('partners.collaboration-actions.documents.store', [$action]), ['title' => 'Signed deployment acceptance', 'category' => 'Action evidence', 'source_type' => 'scanned', 'document' => UploadedFile::fake()->image('acceptance.jpg')])->assertRedirect();
         $link = DocumentLink::query()->where('subject_id', $action->id)->with('document')->sole();
         $link->document->update(['scan_status' => 'clean', 'record_status' => 'active']);
-        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.store', [$owner->currentTeam->slug, $action]), $updatePayload)->assertRedirect();
+        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.store', [$action]), $updatePayload)->assertRedirect();
         $update = PartnerCollaborationActionUpdate::query()->sole();
 
         $owner->givePermissionTo(ProgrammePermission::ApprovePartnerAgreements->value);
         $decision = ['decision' => 'verified', 'verification_note' => 'Independent inspection confirms the submitted completion evidence.'];
-        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.decision.store', [$owner->currentTeam->slug, $update]), $decision)->assertForbidden();
-        $this->actingAs($approver)->post(route('partners.collaboration-action-updates.decision.store', [$approver->currentTeam->slug, $update]), $decision)->assertRedirect();
+        $this->actingAs($owner)->post(route('partners.collaboration-action-updates.decision.store', [$update]), $decision)->assertForbidden();
+        $this->actingAs($approver)->post(route('partners.collaboration-action-updates.decision.store', [$update]), $decision)->assertRedirect();
         $retained = PartnerCollaborationActionUpdateDecision::query()->sole();
         $this->assertSame('completed', $action->refresh()->status);
         $this->assertSame('100.00', $action->progress_percentage);
         $this->assertSame(64, strlen($retained->decision_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $action->id, 'action' => 'partner.collaboration_action.update_decided']);
 
-        $this->actingAs($approver)->get(route('partners.index', $approver->currentTeam->slug))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($approver)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->where('collaborationPlans.0.id', $plan->id)
             ->where('collaborationPlans.0.actions.0.county.logoUrl', '/counties/action.svg')
             ->where('collaborationPlans.0.actions.0.ownerOrganization', 'County Delivery Secretariat')
@@ -513,7 +513,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
             ->where('collaborationPlans.0.actions.0.status', 'completed')
             ->where('collaborationPlans.0.actions.0.updates.0.decision.result', 'verified'));
 
-        $export = $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'partner-actions', 'csv']))->assertOk()->streamedContent();
+        $export = $this->actingAs($manager)->get(route('workspace.export', ['partner-actions', 'csv']))->assertOk()->streamedContent();
         $this->assertStringContainsString('Owner organization', $export);
         $this->assertStringContainsString('County Delivery Secretariat', $export);
         $this->assertStringContainsString($release->checksum, $export);
@@ -545,14 +545,14 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $plan = PartnerCollaborationPlan::factory()->create(['partner_profile_id' => $partner->id, 'status' => 'active', 'created_by' => $manager->id, 'starts_on' => today()->subDay(), 'ends_on' => today()->addMonth()]);
         $payload = ['county_id' => $county->id, 'code' => 'ACT-CATALOGUE-001', 'title' => 'Validate governed catalogue boundary', 'description' => 'Prove that the action retains its governed county and organization lineage.', 'accountable_user_id' => $owner->id, 'accountable_organization_id' => $organization->id, 'due_on' => today()->addWeek()->toDateString()];
 
-        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$manager->currentTeam->slug, $plan]), $payload)->assertStatus(409);
+        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$plan]), $payload)->assertStatus(409);
 
         $snapshot = ['counties' => [['id' => $county->id]], 'organizations' => [['id' => $organization->id]], 'sectors' => [], 'programmes' => [], 'programme_county_coverages' => []];
         ReferenceDataRelease::factory()->create(['version' => 1, 'approved_by' => $manager->id, 'status' => 'published', 'snapshot' => $snapshot, 'checksum' => str_repeat('a', 64), 'effective_from' => now()->subMinute(), 'published_at' => now()]);
-        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$manager->currentTeam->slug, $plan]), $payload)->assertStatus(409);
+        $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$plan]), $payload)->assertStatus(409);
 
         $this->publishedReferenceRelease([$county], [], [$organization], $manager);
-        $this->actingAs($countyManager)->post(route('partners.collaboration-actions.store', [$countyManager->currentTeam->slug, $plan]), [...$payload, 'county_id' => $outsideCounty->id])->assertForbidden();
+        $this->actingAs($countyManager)->post(route('partners.collaboration-actions.store', [$plan]), [...$payload, 'county_id' => $outsideCounty->id])->assertForbidden();
         $this->assertDatabaseCount('partner_collaboration_actions', 0);
     }
 
@@ -585,13 +585,11 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $overdue->id, 'action' => 'partner.collaboration_action.escalated']);
 
         foreach (['csv', 'json'] as $format) {
-            $content = $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'partner-actions', $format]))->assertOk()->streamedContent();
+            $content = $this->actingAs($manager)->get(route('workspace.export', ['partner-actions', $format]))->assertOk()->streamedContent();
             $this->assertStringContainsString('EXPORT-ACT-001', $content);
             $this->assertStringContainsString('Action Export County', $content);
         }
-        $currentActions = $this->actingAs($manager)->get(route('workspace.export', [
-            $manager->currentTeam->slug,
-            'partner-actions',
+        $currentActions = $this->actingAs($manager)->get(route('workspace.export', ['partner-actions',
             'json',
             'county_id' => $county->id,
             'status' => 'open',
@@ -600,19 +598,17 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertStringContainsString('EXPORT-ACT-001', $currentActions);
         $this->assertStringNotContainsString('EXPORT-ACT-002', $currentActions);
 
-        $completedActions = $this->actingAs($manager)->get(route('workspace.export', [
-            $manager->currentTeam->slug,
-            'partner-actions',
+        $completedActions = $this->actingAs($manager)->get(route('workspace.export', ['partner-actions',
             'json',
             'status' => 'completed',
         ]))->assertOk()->streamedContent();
         $this->assertStringNotContainsString('EXPORT-ACT-001', $completedActions);
         $this->assertStringNotContainsString('EXPORT-ACT-002', $completedActions);
 
-        $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'partner-actions', 'xlsx']))->assertOk()->assertDownload();
-        $this->actingAs($manager)->get(route('workspace.export', [$manager->currentTeam->slug, 'partner-actions', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
+        $this->actingAs($manager)->get(route('workspace.export', ['partner-actions', 'xlsx']))->assertOk()->assertDownload();
+        $this->actingAs($manager)->get(route('workspace.export', ['partner-actions', 'pdf']))->assertOk()->assertHeader('content-type', 'application/pdf');
 
-        $outsideExport = $this->actingAs($outsider)->get(route('workspace.export', [$outsider->currentTeam->slug, 'partner-actions', 'json']))->assertOk()->streamedContent();
+        $outsideExport = $this->actingAs($outsider)->get(route('workspace.export', ['partner-actions', 'json']))->assertOk()->streamedContent();
         $this->assertStringNotContainsString('EXPORT-ACT-001', $outsideExport);
     }
 
