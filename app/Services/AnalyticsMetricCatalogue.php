@@ -8,7 +8,6 @@ use App\Models\County;
 use App\Models\DevolutionProject;
 use App\Models\EvaluationFinding;
 use App\Models\IndicatorObservation;
-use App\Models\TrainingParticipant;
 use App\Models\User;
 use App\Support\WorkspaceFilters;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,7 +32,6 @@ class AnalyticsMetricCatalogue
             'indicators.target-attainment' => 'Average verified target attainment',
             'evaluation-findings.overdue' => 'Overdue evaluation recommendations',
             'evaluation-findings.closed' => 'Closed evaluation recommendations',
-            'training.competent' => 'Competent training completions',
         ];
     }
 
@@ -81,7 +79,6 @@ class AnalyticsMetricCatalogue
             'indicators.verified' => IndicatorObservation::query()->whereIn('county_id', $countyIds)->where('verification_status', 'verified'),
             'evaluation-findings.overdue' => EvaluationFinding::query()->whereIn('county_id', $countyIds)->where('status', '!=', 'closed')->whereDate('due_at', '<', today()),
             'evaluation-findings.closed' => EvaluationFinding::query()->whereIn('county_id', $countyIds)->where('status', 'closed'),
-            'training.competent' => TrainingParticipant::query()->whereIn('county_id', $countyIds)->whereNotNull('completed_at'),
             default => throw new InvalidArgumentException('Unsupported governed analytics metric.'),
         };
         if ($metricKey !== 'counties.total') {

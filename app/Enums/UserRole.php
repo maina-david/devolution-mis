@@ -38,7 +38,7 @@ enum UserRole: string
     /** @return list<ProgrammePermission> */
     public function permissions(): array
     {
-        $viewCounty = [ProgrammePermission::ViewDashboard, ProgrammePermission::ViewCountyData, ProgrammePermission::ViewChangeReadiness, ProgrammePermission::RecordUatEvidence, ProgrammePermission::ViewAnalytics, ProgrammePermission::ViewSupportDesk, ProgrammePermission::SubmitSupportTickets];
+        $viewCounty = [ProgrammePermission::ViewDashboard, ProgrammePermission::ViewCountyData, ProgrammePermission::ViewAnalytics, ProgrammePermission::ViewSupportDesk, ProgrammePermission::SubmitSupportTickets];
 
         $permissions = match ($this) {
             self::CountyOfficial => [...$viewCounty, ProgrammePermission::UploadEvidence, ProgrammePermission::ViewGrants, ProgrammePermission::ViewMonitoringEvaluation, ProgrammePermission::SubmitIndicatorData, ProgrammePermission::ViewProjects, ProgrammePermission::SubmitProjectUpdates, ProgrammePermission::ViewPartnerCoordination, ProgrammePermission::ViewDswg, ProgrammePermission::ParticipateDswg, ProgrammePermission::ManageDswgActions, ProgrammePermission::ViewIgrResolutions, ProgrammePermission::UpdateIgrResolutions, ProgrammePermission::ViewCitizenCases, ProgrammePermission::RespondCitizenCases, ProgrammePermission::ViewTravelClearance, ProgrammePermission::SubmitTravelRequests, ProgrammePermission::ViewLearning, ProgrammePermission::EnrollLearning, ProgrammePermission::ViewKnowledge, ProgrammePermission::ContributeKnowledge],
@@ -52,9 +52,9 @@ enum UserRole: string
 
         return match ($this) {
             self::CountyAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets],
-            self::DevolutionAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ManageAnalytics],
-            self::PlatformAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageChangeReadiness, ProgrammePermission::RecordTrainingEvidence, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules, ProgrammePermission::ViewUserActivity],
-            self::TopManagement => [...$permissions, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveRolloutReadiness, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
+            self::DevolutionAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::ManageAnalytics],
+            self::PlatformAdmin => [...$permissions, ProgrammePermission::ManageSupportTickets, ProgrammePermission::ResolveSupportTickets, ProgrammePermission::ConfigureSupportDesk, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveReferenceData, ProgrammePermission::ManageAnalytics, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules, ProgrammePermission::ViewUserActivity],
+            self::TopManagement => [...$permissions, ProgrammePermission::PublishSupportDeskPolicy, ProgrammePermission::ApproveAnalytics, ProgrammePermission::ApproveReportSchedules],
             default => $permissions,
         };
     }

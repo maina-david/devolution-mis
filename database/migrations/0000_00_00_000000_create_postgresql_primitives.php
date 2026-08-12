@@ -922,12 +922,6 @@ SET default_table_access_method = heap;
 
 
 --
--- Name: county_rollout_wave; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
 --
 -- Name: county_user; Type: TABLE; Schema: public; Owner: -
 --
@@ -1875,12 +1869,6 @@ SET default_table_access_method = heap;
 
 
 --
--- Name: rollout_waves; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
 --
 -- Name: sectors; Type: TABLE; Schema: public; Owner: -
 --
@@ -1931,26 +1919,6 @@ SET default_table_access_method = heap;
 
 
 --
--- Name: training_assessments; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
---
--- Name: training_cohorts; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
---
--- Name: training_participants; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
 --
 -- Name: travel_approvals; Type: TABLE; Schema: public; Owner: -
 --

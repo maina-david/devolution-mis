@@ -116,34 +116,6 @@ class EffectiveReferenceDataReleaseResolver
         return $release;
     }
 
-    /** @param list<string> $countyIds */
-    public function forRolloutWave(array $countyIds, CarbonInterface $effectiveAt): ReferenceDataRelease
-    {
-        $release = $this->effectiveRelease($effectiveAt, 'planning a rollout wave');
-        $this->assertContains($release, 'counties', $countyIds, 'county_ids');
-
-        return $release;
-    }
-
-    /** @param list<string> $countyIds */
-    public function forUatCampaign(array $countyIds, CarbonInterface $effectiveAt): ReferenceDataRelease
-    {
-        $release = $this->effectiveRelease($effectiveAt, 'planning a user-acceptance campaign');
-        $this->assertContains($release, 'counties', $countyIds, 'county_ids');
-
-        return $release;
-    }
-
-    public function forTrainingCohort(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
-    {
-        $release = $this->effectiveRelease($effectiveAt, 'planning a training cohort');
-        if ($countyId !== null) {
-            $this->assertContains($release, 'counties', [$countyId], 'county_id');
-        }
-
-        return $release;
-    }
-
     public function forSupportTicket(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
         $release = $this->effectiveRelease($effectiveAt, 'submitting a service-desk ticket');

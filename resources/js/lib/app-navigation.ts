@@ -17,7 +17,6 @@ import { index as assessmentsIndex } from '@/routes/assessments';
 import { index as assessmentAnalyticsIndex } from '@/routes/assessments/analytics';
 import { index as auditIndex } from '@/routes/audit';
 import { index as auditAssuranceIndex } from '@/routes/audit-assurance';
-import { index as changeReadinessIndex } from '@/routes/change-readiness';
 import { index as citizenCasesIndex } from '@/routes/citizen-cases';
 import { index as countiesIndex } from '@/routes/counties';
 import { index as dataGovernanceIndex } from '@/routes/data-governance';
@@ -234,7 +233,6 @@ export function appNavigationGroups(
                     itemTitles: [
                         'E-Learning',
                         'Learning analytics',
-                        'Rollout & training',
                         'Service desk',
                     ],
                 },
@@ -272,11 +270,6 @@ export function appNavigationGroups(
                     title: 'Innovation replication',
                     href: innovationReplicationsIndex(),
                     visible: can('knowledge:view'),
-                },
-                {
-                    title: 'Rollout & training',
-                    href: changeReadinessIndex(),
-                    visible: can('change-readiness:view'),
                 },
                 {
                     title: 'Service desk',

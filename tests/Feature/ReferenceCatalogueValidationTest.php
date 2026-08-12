@@ -103,7 +103,6 @@ class ReferenceCatalogueValidationTest extends TestCase
             'programme update' => ['UpdateProgrammeRequest.php'],
             'project budget' => ['StoreProjectBudgetLineRequest.php'],
             'project procurement' => ['StoreProjectProcurementRequest.php'],
-            'training cohort' => ['StoreTrainingCohortRequest.php'],
             'travel clearance' => ['StoreTravelRequestRequest.php'],
         ];
     }

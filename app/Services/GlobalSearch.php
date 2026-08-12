@@ -100,8 +100,6 @@ class GlobalSearch
             ['category' => 'Operations', 'method' => 'operations', 'permission' => ProgrammePermission::ViewOperations->value, 'route' => 'operations.index'],
             ['category' => 'Data governance', 'method' => 'dataGovernance', 'permission' => ProgrammePermission::ViewDataGovernance->value, 'route' => 'data-governance.index'],
             ['category' => 'Security governance', 'method' => 'securityIncidents', 'permission' => ProgrammePermission::ViewSecurityGovernance->value, 'route' => 'security-governance.index'],
-            ['category' => 'Rollout & training', 'method' => 'changeReadiness', 'permission' => ProgrammePermission::ViewChangeReadiness->value, 'route' => 'change-readiness.index'],
-            ['category' => 'Pilot UAT', 'method' => 'uatCampaigns', 'permission' => ProgrammePermission::ViewChangeReadiness->value, 'route' => 'change-readiness.index', 'queryKey' => 'uat_search'],
             ['category' => 'Service desk', 'method' => 'supportTickets', 'permission' => ProgrammePermission::ViewSupportDesk->value, 'route' => 'support-desk.index'],
             ['category' => 'Service policies', 'method' => 'serviceDeskPolicies', 'permission' => ProgrammePermission::ConfigureSupportDesk->value, 'route' => 'support-desk.index'],
             ['category' => 'Users', 'method' => 'users', 'permission' => ProgrammePermission::ManageCountyUsers->value, 'route' => 'programme-users.index'],

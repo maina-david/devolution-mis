@@ -75,11 +75,6 @@ enum ProgrammePermission: string
     case ViewSecurityGovernance = 'security-governance:view';
     case ManageSecurityGovernance = 'security-governance:manage';
     case CertifyAccess = 'access-certification:decide';
-    case ViewChangeReadiness = 'change-readiness:view';
-    case ManageChangeReadiness = 'change-readiness:manage';
-    case RecordTrainingEvidence = 'training-evidence:record';
-    case RecordUatEvidence = 'uat-evidence:record';
-    case ApproveRolloutReadiness = 'rollout-readiness:approve';
     case ViewAnalytics = 'analytics:view';
     case ManageAnalytics = 'analytics:manage';
     case ApproveAnalytics = 'analytics:approve';
@@ -167,11 +162,6 @@ enum ProgrammePermission: string
             self::ViewSecurityGovernance => 'View security authorization evidence',
             self::ManageSecurityGovernance => 'Manage threats and access review campaigns',
             self::CertifyAccess => 'Independently certify or revoke programme access',
-            self::ViewChangeReadiness => 'View rollout and capacity-building readiness',
-            self::ManageChangeReadiness => 'Manage rollout waves and training cohorts',
-            self::RecordTrainingEvidence => 'Record attendance and competency evidence',
-            self::RecordUatEvidence => 'Execute assigned pilot UAT scenarios',
-            self::ApproveRolloutReadiness => 'Independently approve rollout readiness',
             self::ViewAnalytics => 'View authorized analytics and report artifacts',
             self::ManageAnalytics => 'Configure dashboards and report schedules',
             self::ApproveAnalytics => 'Independently publish analytics dashboards',

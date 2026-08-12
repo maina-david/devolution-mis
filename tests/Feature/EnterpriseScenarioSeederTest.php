@@ -33,7 +33,6 @@ use App\Models\ReferenceDataRelease;
 use App\Models\ReportRun;
 use App\Models\SecurityIncident;
 use App\Models\SecurityIncidentEvent;
-use App\Models\TrainingAssessment;
 use App\Models\WorkflowEscalation;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\EnterpriseScenarioSeeder;
@@ -81,7 +80,6 @@ class EnterpriseScenarioSeederTest extends TestCase
             ReportRun::class,
             SecurityIncident::class,
             SecurityIncidentEvent::class,
-            TrainingAssessment::class,
             WorkflowEscalation::class,
         ];
 

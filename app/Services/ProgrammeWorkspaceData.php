@@ -49,9 +49,7 @@ use App\Models\ProgrammeEvaluation;
 use App\Models\SecurityIncident;
 use App\Models\ServiceDeskPolicy;
 use App\Models\SupportTicket;
-use App\Models\TrainingParticipant;
 use App\Models\TravelRequest;
-use App\Models\UatCampaign;
 use App\Models\User;
 use App\Models\VirtualClassroom;
 use App\Models\VirtualClassroomAttendance;
@@ -1218,94 +1216,6 @@ class ProgrammeWorkspaceData
         $calendars = $this->applyFilters(BusinessCalendar::query()->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))->with(['holidays:id,business_calendar_id,holiday_date,name,category,source_reference', 'creator:id,name', 'publisher:id,name']), $filters, ['code', 'name', 'timezone', 'status'])->latest()->paginate($filters->perPage)->withQueryString();
 
         return $this->workspace('Business calendar evidence', 'Versioned government working hours, source-referenced exceptions and checksum-bound publication evidence used by workflow SLAs.', ['Calendar', 'Version', 'Status', 'Timezone', 'Working days', 'Office hours', 'Effective from', 'Effective to', 'Exceptions', 'Authority sources', 'Author', 'Publisher', 'Published', 'Checksum'], $calendars->through(fn (BusinessCalendar $calendar): array => ['id' => $calendar->id, 'status' => $calendar->status, 'cells' => [$calendar->code.' · '.$calendar->name, $calendar->version, $calendar->status, $calendar->timezone, implode(', ', $calendar->working_days), mb_substr($calendar->workday_starts_at, 0, 5).'–'.mb_substr($calendar->workday_ends_at, 0, 5), $calendar->effective_from->toDateString(), $calendar->effective_to?->toDateString() ?? 'Open-ended', $calendar->holidays->map(fn ($holiday): string => $holiday->holiday_date->toDateString().' · '.$holiday->name.' ('.$holiday->category.')')->implode('; ') ?: 'None recorded', $calendar->holidays->pluck('source_reference')->implode('; ') ?: 'None recorded', $calendar->creator->name, $calendar->published_by ? $calendar->publisher->name : 'Pending', $calendar->published_at?->toIso8601String() ?? 'Draft', $calendar->checksum ?? 'Draft']]));
-    }
-
-    /** @return array<string, mixed> */
-    public function changeReadiness(User $user, WorkspaceFilters $filters): array
-    {
-        $participants = $this->applyFilters(TrainingParticipant::query()->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereIn('county_id', $this->countyScope->query($user)->select('id')))->with(['cohort:id,rollout_wave_id,reference_data_release_id,code,name,audience_role,minimum_attendance_hours,passing_score', 'cohort.referenceDataRelease:id,version,checksum', 'cohort.wave:id,reference_data_release_id,code,name,status', 'cohort.wave.referenceDataRelease:id,version,checksum', 'user:id,name', 'county:id,name,code,logo_path', 'assessments.assessor:id,name']), $filters, ['participant_reference', 'role_title', 'attendance_status', 'competency_status'])->latest()->paginate($filters->perPage)->withQueryString();
-
-        return $this->workspace('Training and rollout evidence', 'Distinguishes planned capacity, registered participants, verified attendance, competency outcomes and rollout approval.', ['Wave', 'Wave catalogue', 'Wave catalogue checksum', 'Cohort', 'Cohort catalogue', 'Cohort catalogue checksum', 'Participant reference', 'Participant', 'County', 'Role', 'Attendance hours', 'Attendance status', 'Competency', 'Latest score', 'Assessor', 'Completion'], $participants->through(fn (TrainingParticipant $participant): array => $this->changeReadinessRow($participant)));
-    }
-
-    /** @return array<string, mixed> */
-    public function uatCampaigns(User $user, WorkspaceFilters $filters): array
-    {
-        $campaigns = UatCampaign::query()
-            ->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->whereHas('counties', fn (Builder $query) => $query->whereIn('counties.id', $this->countyScope->query($user)->select('id'))))
-            ->when($filters->countyId, fn (Builder $query, string $countyId) => $query->whereHas('counties', fn (Builder $query) => $query->whereKey($countyId)))
-            ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
-            ->when($filters->from, fn (Builder $query, string $from) => $query->whereDate('ends_on', '>=', $from))
-            ->when($filters->to, fn (Builder $query, string $to) => $query->whereDate('starts_on', '<=', $to))
-            ->when($filters->search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('code', 'ilike', '%'.$filters->search.'%')->orWhere('name', 'ilike', '%'.$filters->search.'%')->orWhere('objective', 'ilike', '%'.$filters->search.'%')))
-            ->with(['referenceDataRelease:id,version,effective_from,checksum', 'creator:id,name', 'counties:id,name,code,logo_path', 'scenarios.executions.findings', 'acceptances.submitter:id,name', 'acceptances.decisionMaker:id,name'])
-            ->latest('starts_on')
-            ->paginate($filters->perPage)
-            ->withQueryString();
-
-        return $this->workspace('Pilot UAT and formal acceptance evidence', 'Representative county and role coverage, immutable scenario executions, independently verified findings and checksum-bound acceptance history.', ['Campaign', 'Objective', 'Environment', 'Period', 'Counties', 'Minimum counties', 'Required roles', 'Acceptance criteria', 'Catalogue', 'Catalogue checksum', 'Scenarios', 'Executions', 'Passing executions', 'Open findings', 'Latest acceptance', 'Submitter', 'Decision maker', 'Acceptance checksum', 'Created by', 'Status'], $campaigns->through(function (UatCampaign $campaign): array {
-            $executions = $campaign->scenarios->flatMap->executions;
-            $findings = $executions->flatMap->findings;
-            $acceptance = $campaign->acceptances->sortByDesc('submitted_at')->first();
-
-            return [
-                'id' => $campaign->id,
-                'status' => $campaign->status,
-                'cells' => [
-                    $campaign->code.' · '.$campaign->name,
-                    $campaign->objective,
-                    $campaign->environment,
-                    $campaign->starts_on->toDateString().' – '.$campaign->ends_on->toDateString(),
-                    ['kind' => 'county-list', 'items' => $campaign->counties->map->identityCell()->values()->all()],
-                    $campaign->minimum_counties,
-                    implode(', ', $campaign->required_roles),
-                    implode('; ', $campaign->acceptance_criteria),
-                    'v'.$campaign->referenceDataRelease->version.' · '.$campaign->referenceDataRelease->effective_from?->toDateString(),
-                    $campaign->referenceDataRelease->checksum,
-                    $campaign->scenarios->count(),
-                    $executions->count(),
-                    $executions->where('outcome', 'pass')->count(),
-                    $findings->where('status', '!=', 'verified')->count(),
-                    $acceptance?->decision ?? 'Not submitted',
-                    $acceptance?->submitter->name ?? 'Not submitted',
-                    $acceptance?->decisionMaker?->name ?? 'Pending',
-                    $acceptance?->checksum ?? 'Not submitted',
-                    $campaign->creator->name,
-                    $campaign->status,
-                ],
-            ];
-        }));
-    }
-
-    /** @return array{id: string, status: string, meta: array{countyId: string|null}, cells: list<mixed>} */
-    private function changeReadinessRow(TrainingParticipant $participant): array
-    {
-        $hasAssessment = $participant->assessments->isNotEmpty();
-        $latestAssessment = $participant->assessments->last();
-
-        return [
-            'id' => $participant->id,
-            'status' => $participant->competency_status,
-            'meta' => ['countyId' => $participant->county_id],
-            'cells' => [
-                $participant->cohort->wave->code,
-                $participant->cohort->wave->reference_data_release_id ? $participant->cohort->wave->referenceDataRelease->version : 'Legacy unpinned',
-                $participant->cohort->wave->reference_data_release_id ? $participant->cohort->wave->referenceDataRelease->checksum : 'Legacy unpinned',
-                $participant->cohort->code,
-                $participant->cohort->reference_data_release_id ? $participant->cohort->referenceDataRelease->version : 'Legacy unpinned',
-                $participant->cohort->reference_data_release_id ? $participant->cohort->referenceDataRelease->checksum : 'Legacy unpinned',
-                $participant->participant_reference,
-                $participant->user_id ? $participant->user->name : 'External participant',
-                $participant->county_id ? $participant->county->identityCell() : 'National',
-                $participant->role_title,
-                $participant->attended_hours,
-                $participant->attendance_status,
-                $participant->competency_status,
-                $hasAssessment ? $latestAssessment->score : 'Not assessed',
-                $hasAssessment ? $latestAssessment->assessor->name : '—',
-                $participant->completed_at?->toIso8601String() ?? 'Not completed',
-            ],
-        ];
     }
 
     /**

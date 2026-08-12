@@ -76,8 +76,6 @@ class WorkspaceExportController extends Controller
             'service-desk-policies' => $workspaceData->serviceDeskPolicies($user, $filters),
             'access-delegations' => $workspaceData->accessDelegations($user, $filters),
             'business-calendars' => $workspaceData->businessCalendars($user, $filters),
-            'change-readiness' => $workspaceData->changeReadiness($user, $filters),
-            'uat-campaigns' => $workspaceData->uatCampaigns($user, $filters),
             'programme-coverage' => $workspaceData->programmeCountyCoverages($user, $filters),
             default => abort(404),
         };
@@ -253,7 +251,6 @@ class WorkspaceExportController extends Controller
             'support-desk' => ProgrammePermission::ViewSupportDesk,
             'service-desk-policies' => ProgrammePermission::ConfigureSupportDesk,
             'business-calendars' => ProgrammePermission::ManageWorkflows,
-            'change-readiness', 'uat-campaigns' => ProgrammePermission::ViewChangeReadiness,
             'programme-coverage' => ProgrammePermission::ManageReferenceData,
             default => abort(404),
         };

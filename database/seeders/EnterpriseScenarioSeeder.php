@@ -84,9 +84,6 @@ use App\Models\ReportRun;
 use App\Models\ReportSchedule;
 use App\Models\SecurityIncident;
 use App\Models\SecurityIncidentEvent;
-use App\Models\TrainingAssessment;
-use App\Models\TrainingCohort;
-use App\Models\TrainingParticipant;
 use App\Models\User;
 use App\Models\VirtualClassroom;
 use App\Models\VirtualClassroomAttendance;
@@ -752,35 +749,7 @@ class EnterpriseScenarioSeeder extends Seeder
 
     private function seedLearningAndKnowledge(User $administrator, User $countyAdministrator): void
     {
-        $cohort = TrainingCohort::query()->first();
         $county = County::query()->where('name', 'Mombasa')->first() ?? County::query()->first();
-
-        if ($cohort && $county) {
-            $participant = TrainingParticipant::query()->updateOrCreate(
-                ['training_cohort_id' => $cohort->id, 'user_id' => $countyAdministrator->id],
-                [
-                    'county_id' => $county->id,
-                    'participant_reference' => 'KSG-IDMIS-2026-MSA-001',
-                    'role_title' => 'County IDMIS Administrator',
-                    'attended_hours' => 12,
-                    'attendance_status' => 'completed',
-                    'competency_status' => 'competent',
-                    'completed_at' => '2026-07-24 16:30:00+03',
-                ],
-            );
-
-            TrainingAssessment::query()->updateOrCreate(
-                ['training_participant_id' => $participant->id, 'assessment_type' => 'post_training'],
-                [
-                    'assessed_by' => $administrator->id,
-                    'score' => 84,
-                    'outcome' => 'competent',
-                    'feedback' => 'Demonstrated accurate evidence indexing, cycle filtering and escalation of incomplete county submissions.',
-                    'evidence_references' => ['KSG-IDMIS-2026-PRACTICAL-01', 'KSG-IDMIS-2026-QUIZ-01'],
-                    'assessed_at' => '2026-07-24 15:45:00+03',
-                ],
-            );
-        }
 
         $classroom = VirtualClassroom::query()->first();
         $enrollment = LearningEnrollment::query()->first();

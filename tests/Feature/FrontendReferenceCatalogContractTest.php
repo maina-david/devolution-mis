@@ -106,7 +106,6 @@ class FrontendReferenceCatalogContractTest extends TestCase
             'workflow timezone' => ['pages/workflows/index.tsx'],
             'DSWG timezone' => ['components/dswg-coordination-forms.tsx'],
             'learning language' => ['pages/learning/index.tsx'],
-            'training language' => ['pages/change-readiness/index.tsx'],
             'knowledge language and currency' => ['pages/knowledge/index.tsx'],
             'data residency country' => ['pages/data-governance/index.tsx'],
             'travel destination geography' => ['components/geography-catalog-fields.tsx'],
