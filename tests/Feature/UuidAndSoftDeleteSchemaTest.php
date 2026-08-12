@@ -77,6 +77,17 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_development_schema_uses_only_owning_table_migrations(): void
+    {
+        $incrementalMigrations = glob(database_path('migrations/*_add_*')) ?: [];
+
+        $this->assertSame([], $incrementalMigrations, 'Development schema changes must be folded into their owning create-table migrations.');
+        $this->assertTrue(Schema::hasColumns('support_tickets', [
+            'service_desk_policy_id',
+            'service_desk_policy_checksum',
+        ]));
+    }
+
     public function test_application_models_use_uuid_primary_keys_and_soft_deletes(): void
     {
         $models = [

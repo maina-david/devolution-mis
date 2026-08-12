@@ -15,6 +15,8 @@ return new class extends Migration
         Schema::create('support_tickets', function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->uuid('reference_data_release_id');
+            $table->uuid('service_desk_policy_id')->nullable();
+            $table->char('service_desk_policy_checksum', 64)->nullable();
             $table->uuid('requester_id');
             $table->uuid('county_id')->nullable();
             $table->uuid('assigned_to')->nullable();
@@ -41,6 +43,7 @@ return new class extends Migration
             $table->softDeletesTz('deleted_at', 0);
 
             $table->foreign('reference_data_release_id')->references('id')->on('reference_data_releases')->restrictOnDelete();
+            $table->foreign('service_desk_policy_id')->references('id')->on('service_desk_policies')->restrictOnDelete();
             $table->foreign('requester_id')->references('id')->on('users')->restrictOnDelete();
             $table->foreign('county_id')->references('id')->on('counties')->restrictOnDelete();
             $table->foreign('assigned_to')->references('id')->on('users')->restrictOnDelete();
@@ -56,7 +59,9 @@ ALTER TABLE support_tickets ADD CONSTRAINT support_tickets_status_check CHECK (s
 ALTER TABLE support_tickets ADD CONSTRAINT support_tickets_sla_order_check CHECK (first_response_due_at <= resolution_due_at);
 ALTER TABLE support_tickets ADD CONSTRAINT support_tickets_resolved_state_check CHECK ((status IN ('resolved', 'closed')) = (resolved_at IS NOT NULL AND resolved_by IS NOT NULL AND resolution_summary IS NOT NULL));
 ALTER TABLE support_tickets ADD CONSTRAINT support_tickets_closed_state_check CHECK ((status = 'closed') = (closed_at IS NOT NULL AND closed_by IS NOT NULL));
+ALTER TABLE support_tickets ADD CONSTRAINT support_tickets_policy_lineage_check CHECK ((service_desk_policy_id IS NULL) = (service_desk_policy_checksum IS NULL));
 CREATE INDEX support_tickets_requester_id_index ON support_tickets (requester_id);
+CREATE INDEX support_tickets_service_desk_policy_id_index ON support_tickets (service_desk_policy_id);
 CREATE INDEX support_tickets_county_id_status_index ON support_tickets (county_id, status);
 CREATE INDEX support_tickets_assigned_to_status_index ON support_tickets (assigned_to, status);
 CREATE INDEX support_tickets_status_first_response_due_at_index ON support_tickets (status, first_response_due_at);
