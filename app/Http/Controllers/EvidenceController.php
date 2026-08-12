@@ -40,6 +40,25 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class EvidenceController extends Controller
 {
+    /** @var list<string> */
+    private const MEDIA_PREVIEW_MIME_TYPES = [
+        'video/mp4',
+        'video/webm',
+        'audio/mpeg',
+        'audio/mp4',
+        'audio/ogg',
+        'audio/wav',
+    ];
+
+    /** @var list<string> */
+    private const STATIC_PREVIEW_MIME_TYPES = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'text/plain',
+    ];
+
     public function __construct(private DocumentIntegrityVerifier $integrityVerifier, private DocumentAccess $documentAccess) {}
 
     public function preview(Request $request, string $currentTeam, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
@@ -48,12 +67,12 @@ class EvidenceController extends Controller
         abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
         abort_unless(Storage::exists($document->path), 404);
         abort_unless($this->hasValidIntegrity($document), 409, 'Document integrity verification failed.');
-        if (! in_array($document->mime_type, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain', 'video/mp4', 'video/webm', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/wav'], true)) {
+        if (! $this->isPreviewableMimeType((string) $document->mime_type)) {
             abort(415, 'Preview is not available for this file type.');
         }
         $auditLogger->record($this->user($request), $document, 'evidence.previewed', "Document previewed: {$document->title}.", $document->county_id);
 
-        if (str_starts_with((string) $document->mime_type, 'video/') || str_starts_with((string) $document->mime_type, 'audio/')) {
+        if ($this->isMediaMimeType((string) $document->mime_type)) {
             return $this->streamMedia($request, (string) config('filesystems.default'), $document->path, $document->original_name, (string) $document->mime_type);
         }
 
@@ -81,8 +100,12 @@ class EvidenceController extends Controller
     public function previewVersion(Request $request, string $currentTeam, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
     {
         $this->authorizeVersionAccess($request, $document, $version);
-        abort_unless(in_array($version->mime_type, ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'text/plain'], true), 415, 'Preview is not available for this file type.');
+        abort_unless($this->isPreviewableMimeType($version->mime_type), 415, 'Preview is not available for this file type.');
         $auditLogger->record($this->user($request), $version, 'evidence.version_previewed', "Document version {$version->version_number} previewed: {$document->title}.", $document->county_id);
+
+        if ($this->isMediaMimeType($version->mime_type)) {
+            return $this->streamMedia($request, $version->storage_disk, $version->path, $version->original_name, $version->mime_type);
+        }
 
         return Storage::disk($version->storage_disk)->response($version->path, $version->original_name, [
             'Content-Type' => $version->mime_type,
@@ -251,6 +274,16 @@ class EvidenceController extends Controller
         abort_unless($version->scan_status === 'clean', 423, 'This document version is quarantined until its security scan passes.');
         abort_unless(Storage::disk($version->storage_disk)->exists($version->path), 404);
         abort_unless($this->integrityVerifier->matches($version->storage_disk, $version->path, $version->content_checksum), 409, 'Document version integrity verification failed.');
+    }
+
+    private function isPreviewableMimeType(string $mimeType): bool
+    {
+        return in_array($mimeType, [...self::STATIC_PREVIEW_MIME_TYPES, ...self::MEDIA_PREVIEW_MIME_TYPES], true);
+    }
+
+    private function isMediaMimeType(string $mimeType): bool
+    {
+        return in_array($mimeType, self::MEDIA_PREVIEW_MIME_TYPES, true);
     }
 
     private function streamMedia(Request $request, string $disk, string $path, string $originalName, string $mimeType): StreamedResponse

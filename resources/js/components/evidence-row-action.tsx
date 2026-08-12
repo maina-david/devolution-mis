@@ -188,6 +188,9 @@ export default function EvidenceRowAction({
             disposition.status,
         ),
     );
+    const mimeType = meta.mimeType ?? '';
+    const isVideo = mimeType.startsWith('video/');
+    const isAudio = mimeType.startsWith('audio/');
     const canPreview =
         [
             'application/pdf',
@@ -195,7 +198,13 @@ export default function EvidenceRowAction({
             'image/png',
             'image/webp',
             'text/plain',
-        ].includes(meta.mimeType ?? '') && meta.scanStatus === 'clean';
+            'video/mp4',
+            'video/webm',
+            'audio/mpeg',
+            'audio/mp4',
+            'audio/ogg',
+            'audio/wav',
+        ].includes(mimeType) && meta.scanStatus === 'clean';
     const county =
         meta.countyId && meta.countyName && meta.countyCode
             ? {
@@ -394,11 +403,39 @@ export default function EvidenceRowAction({
                                 </div>
                             </section>
                         )}
-                        <iframe
-                            title={`Preview of ${meta.title ?? 'document'}`}
-                            src={preview.url(args)}
-                            className="h-[72vh] w-full rounded-lg border bg-muted"
-                        />
+                        {isVideo ? (
+                            <video
+                                controls
+                                controlsList="nodownload"
+                                preload="metadata"
+                                aria-label={`Preview of ${meta.title ?? 'document'}`}
+                                className="max-h-[72vh] w-full rounded-lg border bg-black"
+                            >
+                                <source
+                                    src={preview.url(args)}
+                                    type={mimeType}
+                                />
+                            </video>
+                        ) : isAudio ? (
+                            <audio
+                                controls
+                                controlsList="nodownload"
+                                preload="metadata"
+                                aria-label={`Preview of ${meta.title ?? 'document'}`}
+                                className="w-full"
+                            >
+                                <source
+                                    src={preview.url(args)}
+                                    type={mimeType}
+                                />
+                            </audio>
+                        ) : (
+                            <iframe
+                                title={`Preview of ${meta.title ?? 'document'}`}
+                                src={preview.url(args)}
+                                className="h-[72vh] w-full rounded-lg border bg-muted"
+                            />
+                        )}
                         {meta.extractedTextPreview && (
                             <section className="flex flex-col gap-2">
                                 <h3 className="font-semibold">

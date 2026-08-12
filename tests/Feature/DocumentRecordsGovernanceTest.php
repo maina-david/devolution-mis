@@ -231,6 +231,69 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->actingAs($admin)->get(route('evidence.versions.download', [$admin->currentTeam->slug, $document, $version]))->assertStatus(409);
     }
 
+    public function test_retained_media_versions_support_authorized_range_preview(): void
+    {
+        Storage::fake('local');
+        $county = County::factory()->create();
+        $otherCounty = County::factory()->create();
+        $admin = User::factory()->countyAdmin($county)->create();
+        $assessment = Assessment::factory()->create(['county_id' => $county->id]);
+        $otherAssessment = Assessment::factory()->create(['county_id' => $otherCounty->id]);
+        $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $county->id]);
+        $hiddenDocument = AssessmentDocument::factory()->create(['assessment_id' => $otherAssessment->id, 'county_id' => $otherCounty->id]);
+        $content = str_repeat('media-range-', 128);
+
+        Storage::put('assessment-evidence/briefing.mp4', $content);
+        Storage::put('assessment-evidence/hidden.mp4', $content);
+        $version = DocumentVersion::factory()->create([
+            'assessment_document_id' => $document->id,
+            'storage_disk' => 'local',
+            'path' => 'assessment-evidence/briefing.mp4',
+            'original_name' => 'county-briefing.mp4',
+            'mime_type' => 'video/mp4',
+            'size_bytes' => strlen($content),
+            'content_checksum' => hash('sha256', $content),
+            'scan_status' => 'clean',
+            'uploaded_by' => $admin->id,
+        ]);
+        $hiddenVersion = DocumentVersion::factory()->create([
+            'assessment_document_id' => $hiddenDocument->id,
+            'storage_disk' => 'local',
+            'path' => 'assessment-evidence/hidden.mp4',
+            'original_name' => 'hidden-briefing.mp4',
+            'mime_type' => 'video/mp4',
+            'size_bytes' => strlen($content),
+            'content_checksum' => hash('sha256', $content),
+            'scan_status' => 'clean',
+        ]);
+
+        $this->actingAs($admin)
+            ->withHeader('Range', 'bytes=0-9')
+            ->get(route('evidence.versions.preview', [$admin->currentTeam->slug, $document, $version]))
+            ->assertStatus(206)
+            ->assertHeader('Accept-Ranges', 'bytes')
+            ->assertHeader('Content-Range', 'bytes 0-9/'.strlen($content))
+            ->assertHeader('Content-Type', 'video/mp4');
+        $this->withoutHeader('Range');
+
+        $this->actingAs($admin)
+            ->get(route('evidence.versions.preview', [$admin->currentTeam->slug, $hiddenDocument, $hiddenVersion]))
+            ->assertForbidden();
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_previewed']);
+    }
+
+    public function test_shared_document_action_uses_native_audio_and_video_previews(): void
+    {
+        $source = file_get_contents(base_path('resources/js/components/evidence-row-action.tsx'));
+        $this->assertIsString($source);
+        $this->assertStringContainsString("const isVideo = mimeType.startsWith('video/')", $source);
+        $this->assertStringContainsString("const isAudio = mimeType.startsWith('audio/')", $source);
+        $this->assertStringContainsString('<video', $source);
+        $this->assertStringContainsString('<audio', $source);
+        $this->assertStringContainsString('preload="metadata"', $source);
+        $this->assertStringContainsString('controlsList="nodownload"', $source);
+    }
+
     public function test_workspace_exposes_complete_version_and_legal_hold_history_with_governed_release(): void
     {
         $county = County::factory()->create();

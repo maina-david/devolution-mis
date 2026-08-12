@@ -6,6 +6,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | --- | --- |
 | app/Console/Commands/MonitorSupportTicketSlas.php,config/service-desk.php,tests/Feature/{SupportDeskWorkflowTest,PerformanceAssuranceTest}.php | .ai/rules/commands-feature.md |
 | app/{Actions,Console/Commands}/**/*IdentityLifecycle*.php | .ai/rules/commands.md |
+| app/Http/Controllers/EvidenceController.php,resources/js/components/evidence-row-action.tsx,tests/Feature/DocumentRecordsGovernanceTest.php | .ai/rules/components-feature.md |
 | app/Jobs/ExtractDocumentText.php,app/Models/DocumentExtraction*.php,database/migrations/*document_extraction*,app/Services/ProgrammeWorkspaceData.php,resources/js/components/evidence-row-action.tsx | .ai/rules/components.md |
 | app/Actions/PublishWorkflowVersion.php,app/Models/WorkflowVersion.php,database/migrations/*workflow_versions*,app/Http/Controllers/WorkflowDefinitionController.php | .ai/rules/controllers.md |
 | app/Models/County.php,app/**/**County*,resources/js/**,database/data/county-identity.json,public/images/counties/** | .ai/rules/counties.md |
