@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -118,12 +118,6 @@ export default function CitizenCasesIndex({
     cases,
     options,
 }: Props) {
-    const team = usePage().props.routeContext;
-
-    if (!team) {
-        return null;
-    }
-
     const lookup = new Map(cases.map((item) => [item.id, item]));
 
     return (
@@ -240,13 +234,11 @@ export default function CitizenCasesIndex({
     );
 }
 
-CitizenCasesIndex.layout = (props: {
-    routeContext?: { key: any; slug: any } | null;
-}) => ({
+CitizenCasesIndex.layout = () => ({
     breadcrumbs: [
         {
             title: 'Citizen cases',
-            href: props.routeContext ? index() : '/',
+            href: index(),
         },
     ],
 });

@@ -256,12 +256,8 @@ export default function DataGovernance({
     capabilities,
     targets,
 }: Props) {
-    const { routeContext, localization } = usePage().props;
+    const { localization } = usePage().props;
     const governanceCopy = localization.dataGovernance;
-
-    if (!routeContext) {
-        return null;
-    }
 
     const activityRows: WorkspaceRow[] = activities.data.map((activity) => ({
         id: activity.id,

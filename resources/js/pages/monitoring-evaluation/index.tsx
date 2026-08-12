@@ -88,11 +88,7 @@ export default function MonitoringEvaluationIndex({
     options,
     catalogue,
 }: Props) {
-    const { auth, routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
+    const { auth } = usePage().props;
 
     const badges = [
         capabilities.manageIndicators && 'Manage indicators',

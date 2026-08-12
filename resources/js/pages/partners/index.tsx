@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { Download, Handshake, Radar } from 'lucide-react';
 import {
     analyze,
@@ -115,12 +115,6 @@ export default function PartnerCoordinationIndex({
     catalogue,
     options,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     return (
         <>
             <Head title="Partner coordination" />

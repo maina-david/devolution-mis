@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     ClockAlert,
     ClipboardCheck,
@@ -248,14 +248,9 @@ export default function SupportDesk({
     policyOptions,
     capabilities,
 }: Props) {
-    const { routeContext } = usePage().props;
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
         null,
     );
-
-    if (!routeContext) {
-        return null;
-    }
 
     const selectedTicket = selectedTicketId
         ? details[selectedTicketId]

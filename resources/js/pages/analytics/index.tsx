@@ -1,4 +1,4 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     BarChart3,
     CalendarClock,
@@ -162,12 +162,6 @@ export default function AnalyticsReporting({
     catalogue,
     capabilities,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const runRows: WorkspaceRow[] =
         runs?.data.map((report) => ({
             id: report.id,

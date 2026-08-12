@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     CheckCircle2,
     DatabaseBackup,
@@ -127,15 +127,10 @@ export default function HistoricalDataMigrations({
     filters,
     capabilities,
 }: Props) {
-    const { routeContext } = usePage().props;
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
         'details',
     );
-
-    if (!routeContext) {
-        return null;
-    }
 
     const rows: WorkspaceRow[] = batches.data.map((batch) => ({
         id: batch.id,

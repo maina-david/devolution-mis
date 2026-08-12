@@ -1,4 +1,4 @@
-import { Head, router, usePage, usePoll } from '@inertiajs/react';
+import { Head, router, usePoll } from '@inertiajs/react';
 import { Activity, Clock3, MonitorDot, Users } from 'lucide-react';
 import DateRangeFilter from '@/components/date-range-filter';
 import { Badge } from '@/components/ui/badge';
@@ -84,14 +84,9 @@ export default function UserActivityIndex({
     };
     onlineWindowMinutes: number;
 }) {
-    const { routeContext } = usePage().props;
     usePoll(15000, {
         only: ['activeSessions', 'sessions', 'events', 'pageViews'],
     });
-
-    if (!routeContext) {
-        return null;
-    }
 
     const openUser = (userId: string, sessionId?: string) =>
         router.get(

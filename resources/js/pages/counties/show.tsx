@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeftIcon,
     BanknoteIcon,
@@ -74,12 +74,6 @@ export default function CountyShow({
     capabilities,
     cycles,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const cards = [
         {
             label: 'Assessment cycles',

@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     ArrowLeft,
     Banknote,
@@ -256,13 +256,8 @@ export default function ProjectShow({
         counties: Array<{ id: string; name: string; logoUrl?: string | null }>;
     };
 }) {
-    const { routeContext } = usePage().props;
     const [previewDocument, setPreviewDocument] =
         useState<ProjectDocument | null>(null);
-
-    if (!routeContext) {
-        return null;
-    }
 
     const args = { project: project.id };
 

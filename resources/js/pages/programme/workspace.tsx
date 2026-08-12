@@ -97,7 +97,7 @@ export default function ProgrammeWorkspace({
     cycles = [],
 }: Props) {
     const page = usePage();
-    const { auth, routeContext } = page.props;
+    const { auth } = page.props;
     const enabledCapabilities = Object.entries(capabilities).filter(
         ([, enabled]) => enabled,
     );
@@ -117,78 +117,75 @@ export default function ProgrammeWorkspace({
                 capabilities.manage ||
                 capabilities.configure,
             ));
-    const renderActions =
-        hasActions && routeContext
-            ? (row: WorkspaceRow) => {
-                  if (workspaceType === 'assessments') {
-                      return (
-                          <AssessmentRowAction
-                              assessmentId={row.id}
-                              status={row.status}
-                              capabilities={capabilities}
-                          />
-                      );
-                  }
-
-                  if (workspaceType === 'evidence' && capabilities.download) {
-                      return (
-                          <EvidenceRowAction
-                              documentId={row.id}
-                              status={row.status}
-                              canVerify={Boolean(capabilities.verify)}
-                              canManage={Boolean(capabilities.upload)}
-                              canManageRecords={Boolean(
-                                  capabilities.manageRecords,
-                              )}
-                              meta={row.meta}
-                          />
-                      );
-                  }
-
-                  if (
-                      workspaceType === 'audit-assurance' &&
-                      capabilities.download
-                  ) {
-                      return (
-                          <AuditAssuranceRowAction
-                              runId={row.id}
-                              status={row.status}
-                              meta={row.meta}
-                          />
-                      );
-                  }
-
-                  if (workspaceType === 'grants' && capabilities.manage) {
-                      return (
-                          <GrantRowAction
-                              grantId={row.id}
-                              meta={row.meta}
-                              status={row.status}
-                          />
-                      );
-                  }
-
-                  if (workspaceType === 'users' && capabilities.manage) {
-                      return (
-                          <ProgrammeUserRowAction
-                              userId={row.id}
-                              isCurrentUser={row.id === auth.user.id}
-                          />
-                      );
-                  }
-
-                  if (workspaceType === 'platform' && capabilities.configure) {
-                      return (
-                          <PlatformSettingRowAction
-                              settingId={row.id}
-                              value={row.meta?.value}
-                          />
-                      );
-                  }
-
-                  return null;
+    const renderActions = hasActions
+        ? (row: WorkspaceRow) => {
+              if (workspaceType === 'assessments') {
+                  return (
+                      <AssessmentRowAction
+                          assessmentId={row.id}
+                          status={row.status}
+                          capabilities={capabilities}
+                      />
+                  );
               }
-            : undefined;
+
+              if (workspaceType === 'evidence' && capabilities.download) {
+                  return (
+                      <EvidenceRowAction
+                          documentId={row.id}
+                          status={row.status}
+                          canVerify={Boolean(capabilities.verify)}
+                          canManage={Boolean(capabilities.upload)}
+                          canManageRecords={Boolean(capabilities.manageRecords)}
+                          meta={row.meta}
+                      />
+                  );
+              }
+
+              if (
+                  workspaceType === 'audit-assurance' &&
+                  capabilities.download
+              ) {
+                  return (
+                      <AuditAssuranceRowAction
+                          runId={row.id}
+                          status={row.status}
+                          meta={row.meta}
+                      />
+                  );
+              }
+
+              if (workspaceType === 'grants' && capabilities.manage) {
+                  return (
+                      <GrantRowAction
+                          grantId={row.id}
+                          meta={row.meta}
+                          status={row.status}
+                      />
+                  );
+              }
+
+              if (workspaceType === 'users' && capabilities.manage) {
+                  return (
+                      <ProgrammeUserRowAction
+                          userId={row.id}
+                          isCurrentUser={row.id === auth.user.id}
+                      />
+                  );
+              }
+
+              if (workspaceType === 'platform' && capabilities.configure) {
+                  return (
+                      <PlatformSettingRowAction
+                          settingId={row.id}
+                          value={row.meta?.value}
+                      />
+                  );
+              }
+
+              return null;
+          }
+        : undefined;
 
     return (
         <>
@@ -221,16 +218,13 @@ export default function ProgrammeWorkspace({
                     </div>
                 </section>
 
-                {workspaceType === 'evidence' &&
-                    capabilities.upload &&
-                    routeContext && (
-                        <EvidenceUploadForm
-                            assessments={workspace.assessmentOptions ?? []}
-                        />
-                    )}
+                {workspaceType === 'evidence' && capabilities.upload && (
+                    <EvidenceUploadForm
+                        assessments={workspace.assessmentOptions ?? []}
+                    />
+                )}
                 {workspaceType === 'users' &&
                     capabilities.manage &&
-                    routeContext &&
                     workspace.accessOptions && (
                         <div className="flex flex-wrap items-center gap-2">
                             <ProgrammeUserAccessForm
@@ -247,9 +241,9 @@ export default function ProgrammeWorkspace({
                             )}
                         </div>
                     )}
-                {workspaceType === 'audit-assurance' &&
-                    capabilities.run &&
-                    routeContext && <AuditAssuranceRunControl />}
+                {workspaceType === 'audit-assurance' && capabilities.run && (
+                    <AuditAssuranceRunControl />
+                )}
 
                 <DateRangeFilter
                     initialFrom={filters.from}
@@ -288,64 +282,59 @@ export default function ProgrammeWorkspace({
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            {workspaceType === 'assessments' &&
-                                routeContext && (
-                                    <>
-                                        {capabilities.create &&
-                                            workspace.assessmentCreationOptions && (
-                                                <AssessmentCreateForm
-                                                    options={
-                                                        workspace.assessmentCreationOptions
-                                                    }
-                                                />
-                                            )}
-                                        <Button variant="outline" asChild>
-                                            <Link
-                                                href={assessmentAnalytics.url()}
-                                            >
-                                                <ChartNoAxesCombined data-icon="inline-start" />
-                                                Compare results
-                                            </Link>
-                                        </Button>
-                                    </>
-                                )}
-                            {routeContext && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="outline">
-                                            <DownloadIcon data-icon="inline-start" />
-                                            Export
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuGroup>
-                                            {['csv', 'xlsx', 'pdf', 'json'].map(
-                                                (format) => (
-                                                    <DropdownMenuItem
-                                                        key={format}
-                                                        asChild
-                                                    >
-                                                        <a
-                                                            href={exportMethod.url(
-                                                                {
-                                                                    workspace:
-                                                                        workspaceType,
-                                                                    format,
-                                                                },
-                                                                {
-                                                                    query: filters,
-                                                                },
-                                                            )}
-                                                        >
-                                                            {format.toUpperCase()}
-                                                        </a>
-                                                    </DropdownMenuItem>
-                                                ),
-                                            )}
-                                        </DropdownMenuGroup>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                            {workspaceType === 'assessments' && (
+                                <>
+                                    {capabilities.create &&
+                                        workspace.assessmentCreationOptions && (
+                                            <AssessmentCreateForm
+                                                options={
+                                                    workspace.assessmentCreationOptions
+                                                }
+                                            />
+                                        )}
+                                    <Button variant="outline" asChild>
+                                        <Link href={assessmentAnalytics.url()}>
+                                            <ChartNoAxesCombined data-icon="inline-start" />
+                                            Compare results
+                                        </Link>
+                                    </Button>
+                                </>
                             )}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        <DownloadIcon data-icon="inline-start" />
+                                        Export
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuGroup>
+                                        {['csv', 'xlsx', 'pdf', 'json'].map(
+                                            (format) => (
+                                                <DropdownMenuItem
+                                                    key={format}
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={exportMethod.url(
+                                                            {
+                                                                workspace:
+                                                                    workspaceType,
+                                                                format,
+                                                            },
+                                                            {
+                                                                query: filters,
+                                                            },
+                                                        )}
+                                                    >
+                                                        {format.toUpperCase()}
+                                                    </a>
+                                                </DropdownMenuItem>
+                                            ),
+                                        )}
+                                    </DropdownMenuGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <Database
                                 className="size-5 text-[#147a55]"
                                 aria-hidden="true"
@@ -358,14 +347,10 @@ export default function ProgrammeWorkspace({
                             columns={workspace.columns}
                             rows={workspace.rows}
                             pagination={workspace.pagination}
-                            bulkExport={
-                                routeContext
-                                    ? {
-                                          workspace: workspaceType,
-                                          filters,
-                                      }
-                                    : undefined
-                            }
+                            bulkExport={{
+                                workspace: workspaceType,
+                                filters,
+                            }}
                             renderActions={
                                 ['evidence', 'audit-assurance'].includes(
                                     workspaceType,
@@ -382,86 +367,72 @@ export default function ProgrammeWorkspace({
                                     ? renderActions
                                     : undefined
                             }
-                            renderBulkActions={
-                                routeContext
-                                    ? (selectedRows, clearSelection) => (
-                                          <>
-                                              {workspaceType ===
-                                                  'assessments' && (
-                                                  <AssessmentBulkActions
-                                                      rows={selectedRows}
-                                                      capabilities={
-                                                          capabilities
-                                                      }
-                                                      clearSelection={
-                                                          clearSelection
-                                                      }
-                                                  />
-                                              )}
-                                              {workspaceType === 'evidence' &&
-                                                  capabilities.verify && (
-                                                      <EvidenceBulkActions
-                                                          rows={selectedRows}
-                                                          clearSelection={
-                                                              clearSelection
-                                                          }
-                                                      />
-                                                  )}
-                                              {workspaceType === 'users' &&
-                                                  capabilities.manage && (
-                                                      <ProgrammeUserBulkActions
-                                                          rows={selectedRows}
-                                                          clearSelection={
-                                                              clearSelection
-                                                          }
-                                                      />
-                                                  )}
-                                          </>
-                                      )
-                                    : undefined
-                            }
+                            renderBulkActions={(
+                                selectedRows,
+                                clearSelection,
+                            ) => (
+                                <>
+                                    {workspaceType === 'assessments' && (
+                                        <AssessmentBulkActions
+                                            rows={selectedRows}
+                                            capabilities={capabilities}
+                                            clearSelection={clearSelection}
+                                        />
+                                    )}
+                                    {workspaceType === 'evidence' &&
+                                        capabilities.verify && (
+                                            <EvidenceBulkActions
+                                                rows={selectedRows}
+                                                clearSelection={clearSelection}
+                                            />
+                                        )}
+                                    {workspaceType === 'users' &&
+                                        capabilities.manage && (
+                                            <ProgrammeUserBulkActions
+                                                rows={selectedRows}
+                                                clearSelection={clearSelection}
+                                            />
+                                        )}
+                                </>
+                            )}
                             canSelectRow={
                                 workspaceType === 'users'
                                     ? (row) => row.id !== auth.user.id
                                     : undefined
                             }
-                            getRowHref={
-                                routeContext
-                                    ? (row) => {
-                                          if (workspaceType === 'assessments') {
-                                              return preserveDrilldownFilters(
-                                                  showAssessment.url({
-                                                      assessment: row.id,
-                                                  }),
-                                                  page.url,
-                                              );
-                                          }
+                            getRowHref={(row) => {
+                                if (workspaceType === 'assessments') {
+                                    return preserveDrilldownFilters(
+                                        showAssessment.url({
+                                            assessment: row.id,
+                                        }),
+                                        page.url,
+                                    );
+                                }
 
-                                          if (
-                                              workspaceType === 'counties' &&
-                                              row.meta?.countyId
-                                          ) {
-                                              return preserveDrilldownFilters(
-                                                  showCounty.url({
-                                                      county: row.meta.countyId,
-                                                  }),
-                                                  page.url,
-                                              );
-                                          }
+                                if (
+                                    workspaceType === 'counties' &&
+                                    row.meta?.countyId
+                                ) {
+                                    return preserveDrilldownFilters(
+                                        showCounty.url({
+                                            county: row.meta.countyId,
+                                        }),
+                                        page.url,
+                                    );
+                                }
 
-                                          if (workspaceType === 'users') {
-                                              return preserveDrilldownFilters(
-                                                  showProgrammeUser.url({
-                                                      programmeUser: row.id,
-                                                  }),
-                                                  page.url,
-                                              );
-                                          }
+                                if (workspaceType === 'users') {
+                                    return preserveDrilldownFilters(
+                                        showProgrammeUser.url({
+                                            programmeUser: row.id,
+                                        }),
+                                        page.url,
+                                    );
+                                }
 
-                                          return undefined;
-                                      }
-                                    : undefined
-                            }
+                                return undefined;
+                            }}
                         />
                     ) : (
                         <Empty className="min-h-72 border-0">

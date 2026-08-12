@@ -172,11 +172,7 @@ export default function TravelClearance({
     options,
     analytics,
 }: Props) {
-    const { routeContext, auth } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
+    const { auth } = usePage().props;
 
     const rows: WorkspaceRow[] = requests.data.map((request) => ({
         id: request.id,

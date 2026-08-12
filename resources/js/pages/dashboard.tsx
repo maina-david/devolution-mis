@@ -144,7 +144,6 @@ export default function Dashboard({
     filters,
 }: Props) {
     const page = usePage();
-    const { routeContext } = page.props;
     const [selectedCounty, setSelectedCounty] = useState<CountyMetric | null>(
         counties.length === 1 ? counties[0] : null,
     );
@@ -528,24 +527,22 @@ export default function Dashboard({
                                                         </div>
                                                     ))}
                                                 </dl>
-                                                {routeContext && (
-                                                    <Button
-                                                        asChild
-                                                        className="w-full"
+                                                <Button
+                                                    asChild
+                                                    className="w-full"
+                                                >
+                                                    <Link
+                                                        href={preserveDrilldownFilters(
+                                                            showCounty.url({
+                                                                county: selectedCounty.id,
+                                                            }),
+                                                            page.url,
+                                                        )}
                                                     >
-                                                        <Link
-                                                            href={preserveDrilldownFilters(
-                                                                showCounty.url({
-                                                                    county: selectedCounty.id,
-                                                                }),
-                                                                page.url,
-                                                            )}
-                                                        >
-                                                            Open complete county
-                                                            record
-                                                        </Link>
-                                                    </Button>
-                                                )}
+                                                        Open complete county
+                                                        record
+                                                    </Link>
+                                                </Button>
                                             </div>
                                         ) : (
                                             <p className="text-sm text-muted-foreground">
@@ -627,27 +624,23 @@ export default function Dashboard({
                                                             )}
                                                         </strong>
                                                     </div>
-                                                    {routeContext && (
-                                                        <Button
-                                                            asChild
-                                                            variant="outline"
-                                                            size="icon"
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        size="icon"
+                                                    >
+                                                        <Link
+                                                            href={preserveDrilldownFilters(
+                                                                showCounty.url({
+                                                                    county: county.id,
+                                                                }),
+                                                                page.url,
+                                                            )}
+                                                            aria-label={`Open ${county.name} county record`}
                                                         >
-                                                            <Link
-                                                                href={preserveDrilldownFilters(
-                                                                    showCounty.url(
-                                                                        {
-                                                                            county: county.id,
-                                                                        },
-                                                                    ),
-                                                                    page.url,
-                                                                )}
-                                                                aria-label={`Open ${county.name} county record`}
-                                                            >
-                                                                <ArrowRight />
-                                                            </Link>
-                                                        </Button>
-                                                    )}
+                                                            <ArrowRight />
+                                                        </Link>
+                                                    </Button>
                                                 </div>
                                             ),
                                         )}
@@ -1006,13 +999,11 @@ function OperationalSignal({
     );
 }
 
-Dashboard.layout = (props: {
-    routeContext?: { key: any; slug: any } | null;
-}) => ({
+Dashboard.layout = () => ({
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: props.routeContext ? dashboard() : '/',
+            href: dashboard(),
         },
     ],
 });

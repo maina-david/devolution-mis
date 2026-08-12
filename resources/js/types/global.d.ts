@@ -75,7 +75,6 @@ declare module '@inertiajs/core' {
             };
             auth: Auth;
             sidebarOpen: boolean;
-            routeContext: { key: string } | null;
             assessmentCycles: Array<{ id: string; name: string }>;
             notificationSummary: {
                 unread: number;

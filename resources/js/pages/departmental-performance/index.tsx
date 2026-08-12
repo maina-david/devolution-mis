@@ -203,11 +203,7 @@ export default function DepartmentalPerformance({
     options,
     analytics,
 }: Props) {
-    const { routeContext, auth } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
+    const { auth } = usePage().props;
 
     const rows: WorkspaceRow[] = plans.data.map((plan) => ({
         id: plan.id,

@@ -493,13 +493,11 @@ function humanize(value: string): string {
         .replace(/\b\w/gu, (letter) => letter.toUpperCase());
 }
 
-AccessControl.layout = (props: {
-    routeContext?: { key: any; slug: any } | null;
-}) => ({
+AccessControl.layout = () => ({
     breadcrumbs: [
         {
             title: 'Roles & permissions',
-            href: props.routeContext ? index() : '/',
+            href: index(),
         },
     ],
 });

@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Activity,
     ArchiveRestore,
@@ -230,12 +230,6 @@ export default function Operations({
     filters,
     capabilities,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const rows: WorkspaceRow[] = backups.data.map((backup) => ({
         id: backup.id,
         status: backup.status,

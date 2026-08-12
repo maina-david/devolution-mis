@@ -50,13 +50,11 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const page = usePage();
-    const { auth, routeContext, localization, notificationSummary } =
-        page.props;
+    const { auth, localization, notificationSummary } = page.props;
     const user = auth.user;
     const { appearance, updateAppearance } = useAppearance();
     const { currentUrl } = useCurrentUrl();
-    const groups =
-        routeContext && user ? appNavigationGroups(user.permissions) : [];
+    const groups = user ? appNavigationGroups(user.permissions) : [];
     const activeGroup =
         settingsNavigationGroup(currentUrl) ??
         activeNavigationGroup(groups, currentUrl);
@@ -92,7 +90,7 @@ export function AppSidebarHeader({
                 <div className="min-w-0 flex-1">
                     <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} inverse />
                 </div>
-                {routeContext && <GlobalSearchDialog />}
+                <GlobalSearchDialog />
                 <HeaderLink href={help()} label={localization.copy.help}>
                     <CircleHelp />
                 </HeaderLink>
@@ -105,12 +103,10 @@ export function AppSidebarHeader({
                     copy={localization.copy}
                 />
                 <LocaleMenu inverse />
-                {routeContext && (
-                    <NotificationMenu
-                        summary={notificationSummary}
-                        copy={localization.copy}
-                    />
-                )}
+                <NotificationMenu
+                    summary={notificationSummary}
+                    copy={localization.copy}
+                />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button

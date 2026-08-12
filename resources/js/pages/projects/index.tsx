@@ -62,12 +62,6 @@ export default function ProjectIndex({
     options,
 }: Props) {
     const page = usePage();
-    const { routeContext } = page.props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const rows: WorkspaceRow[] = projects.data.map((project) => ({
         id: project.id,
         status: project.status,

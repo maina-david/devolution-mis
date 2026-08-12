@@ -120,12 +120,7 @@ export default function DswgIndex({
     options,
 }: Props) {
     const page = usePage();
-    const team = page.props.routeContext;
     const currentUserId = page.props.auth.user.id;
-
-    if (!team) {
-        return null;
-    }
 
     return (
         <>

@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { Bell, BellRing, CheckCheck } from 'lucide-react';
 import DateRangeFilter from '@/components/date-range-filter';
 import { Badge } from '@/components/ui/badge';
@@ -32,12 +32,6 @@ export default function NotificationIndex({
     pagination: { currentPage: number; lastPage: number; total: number };
     filters: { from?: string; to?: string; search?: string };
 }) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const unread = notifications.filter(
         (notification) => !notification.readAt,
     ).length;

@@ -45,10 +45,10 @@ const activeItemStyles =
 
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
-    const { auth, routeContext } = page.props;
+    const { auth } = page.props;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
-    const dashboardUrl = routeContext ? dashboard() : home();
+    const dashboardUrl = auth.user ? dashboard() : home();
 
     const mainNavItems: NavItem[] = [
         {

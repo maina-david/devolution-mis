@@ -119,7 +119,6 @@ class HandleInertiaRequests extends Middleware
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'routeContext' => $user ? ['key' => ''] : null,
             'assessmentCycles' => fn () => $user
                 ? AssessmentCycle::query()
                     ->orderByDesc('period_start')

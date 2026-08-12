@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import {
     ArrowLeft,
     KeyRound,
@@ -114,12 +114,7 @@ function DataSection({
 }
 
 export default function ProgrammeUserProfile(props: Props) {
-    const { routeContext } = usePage().props;
     const { profile, summary, capabilities } = props;
-
-    if (!routeContext) {
-        return null;
-    }
 
     return (
         <>

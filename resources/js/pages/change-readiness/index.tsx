@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     BookOpenCheck,
     Download,
@@ -158,12 +158,6 @@ export default function ChangeReadiness({
     capabilities,
     catalogue,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const targetCount = waves.reduce(
         (sum, wave) => sum + wave.plannedParticipants,
         0,

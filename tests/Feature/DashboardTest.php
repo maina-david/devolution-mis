@@ -40,6 +40,7 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('dashboard')
+                ->missing('routeContext')
                 ->missing('pendingInvitations'));
     }
 

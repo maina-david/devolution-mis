@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -378,12 +378,6 @@ export default function SecurityGovernance({
     filters,
     capabilities,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const threatRows: WorkspaceRow[] = threats.data.map((threat) => ({
         id: threat.id,
         status: threat.status,

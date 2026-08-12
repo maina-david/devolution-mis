@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Download,
     Landmark,
@@ -214,12 +214,6 @@ export default function IgrResolutionsIndex({
     resolutions,
     options,
 }: Props) {
-    const team = usePage().props.routeContext;
-
-    if (!team) {
-        return null;
-    }
-
     return (
         <>
             <Head title="IGR resolutions" />

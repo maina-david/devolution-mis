@@ -16,9 +16,9 @@ import { index as citizenEngagement } from '@/routes/citizen-engagement';
 import { verify as verifyCertificate } from '@/routes/learning/certificates';
 
 export default function Welcome() {
-    const { auth, routeContext, localization } = usePage().props;
+    const { auth, localization } = usePage().props;
     const copy = localization.welcome;
-    const dashboardUrl = routeContext ? dashboard() : login();
+    const dashboardUrl = auth.user ? dashboard() : login();
     const workAreas = [
         {
             icon: Building2,

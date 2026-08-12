@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     Award,
     BookOpen,
@@ -283,12 +283,6 @@ export default function Learning({
     catalogue,
     options,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const rows: WorkspaceRow[] = courses.data.map((course) => ({
         id: course.id,
         status: course.status,

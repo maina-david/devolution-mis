@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -191,12 +191,6 @@ export default function IntegrationManagement({
     catalogue,
     options,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const exchangeRows: WorkspaceRow[] = exchanges.data.map((exchange) => ({
         id: exchange.id,
         status: exchange.status,

@@ -25,7 +25,7 @@ type SearchResult = {
 };
 
 export function GlobalSearchDialog() {
-    const { auth, routeContext } = usePage().props;
+    const { auth } = usePage().props;
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -33,15 +33,13 @@ export function GlobalSearchDialog() {
     const [failed, setFailed] = useState(false);
     const pages = useMemo(
         () =>
-            routeContext
-                ? appNavigationGroups(auth.user.permissions).flatMap((group) =>
-                      group.items.map((item) => ({
-                          ...item,
-                          group: group.title,
-                      })),
-                  )
-                : [],
-        [auth.user.permissions, routeContext],
+            appNavigationGroups(auth.user.permissions).flatMap((group) =>
+                group.items.map((item) => ({
+                    ...item,
+                    group: group.title,
+                })),
+            ),
+        [auth.user.permissions],
     );
     const matchingPages = pages.filter((item) =>
         `${item.title} ${item.group}`
@@ -69,7 +67,7 @@ export function GlobalSearchDialog() {
     }, []);
 
     useEffect(() => {
-        if (!open || !routeContext || query.trim().length < 2) {
+        if (!open || query.trim().length < 2) {
             return;
         }
 
@@ -115,7 +113,7 @@ export function GlobalSearchDialog() {
             window.clearTimeout(timeout);
             controller.abort();
         };
-    }, [routeContext, open, query]);
+    }, [open, query]);
 
     const visit = (url: string) => {
         setOpen(false);

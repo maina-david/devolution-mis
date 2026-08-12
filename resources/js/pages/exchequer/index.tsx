@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     Banknote,
     Clock,
@@ -155,12 +155,6 @@ export default function ExchequerTracking({
     options,
     catalogue,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const rows: WorkspaceRow[] = requests.data.map((request) => ({
         id: request.id,
         status: request.overdue ? 'overdue' : request.status,

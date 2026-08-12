@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, DownloadIcon, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
@@ -78,12 +78,6 @@ export default function ClassroomAttendance({
     roster,
     filters,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const exportQuery = { ...filters, classroom_id: classroom.id };
 
     return (

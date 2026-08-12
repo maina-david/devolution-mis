@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import {
     BookOpen,
     Bell,
@@ -287,12 +287,6 @@ export default function KnowledgeManagement({
     catalogue,
     options,
 }: Props) {
-    const { routeContext } = usePage().props;
-
-    if (!routeContext) {
-        return null;
-    }
-
     const itemRows: WorkspaceRow[] = items.data.map((item) => ({
         id: item.id,
         status: item.status,
