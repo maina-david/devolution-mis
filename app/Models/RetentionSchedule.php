@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $approved_at
  * @property CarbonImmutable|null $next_review_at
  * @property User|null $approver
+ * @property RetentionScheduleApproval|null $approval
  */
 #[Fillable(['approved_by', 'code', 'record_class', 'trigger_event', 'retention_months', 'disposition_action', 'legal_authority', 'legal_hold_rule', 'status', 'effective_from', 'approved_at', 'next_review_at'])]
 class RetentionSchedule extends Model
@@ -51,5 +53,26 @@ class RetentionSchedule extends Model
     public function processingActivities(): HasMany
     {
         return $this->hasMany(ProcessingActivity::class);
+    }
+
+    /** @return HasOne<RetentionScheduleApproval, $this> */
+    public function approval(): HasOne
+    {
+        return $this->hasOne(RetentionScheduleApproval::class);
+    }
+
+    /** @return array<string, int|string|null> */
+    public function approvalSnapshot(): array
+    {
+        return [
+            'code' => $this->code,
+            'record_class' => $this->record_class,
+            'trigger_event' => $this->trigger_event,
+            'retention_months' => $this->retention_months,
+            'disposition_action' => $this->disposition_action,
+            'legal_authority' => $this->legal_authority,
+            'legal_hold_rule' => $this->legal_hold_rule,
+            'next_review_at' => $this->next_review_at?->toDateString(),
+        ];
     }
 }

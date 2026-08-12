@@ -6,10 +6,13 @@ use App\Actions\AdvanceDataSubjectRequest;
 use App\Actions\AdvancePrivacyIncident;
 use App\Actions\ReceiveDataSubjectRequest;
 use App\Actions\ReviewProcessingActivity;
+use App\Actions\ReviewRetentionSchedule;
+use App\Actions\SubmitRetentionSchedule;
 use App\Enums\ProgrammePermission;
 use App\Http\Requests\AdvanceDataSubjectRequestRequest;
 use App\Http\Requests\AdvancePrivacyIncidentRequest;
 use App\Http\Requests\ReviewProcessingActivityRequest;
+use App\Http\Requests\ReviewRetentionScheduleRequest;
 use App\Http\Requests\StoreDataAssetRequest;
 use App\Http\Requests\StoreDataSubjectRequestRequest;
 use App\Http\Requests\StorePrivacyIncidentRequest;
@@ -48,7 +51,7 @@ class DataGovernanceController extends Controller
 
         return Inertia::render('data-governance/index', [
             'assets' => DataAsset::query()->with(['dataOwner:id,name', 'steward:id,name'])->withCount('processingActivities')->orderBy('code')->get()->map(fn (DataAsset $asset): array => ['id' => $asset->id, 'code' => $asset->code, 'name' => $asset->name, 'description' => $asset->description, 'module' => $asset->module, 'authoritativeSource' => $asset->authoritative_source, 'classification' => $asset->classification, 'containsPersonalData' => $asset->contains_personal_data, 'containsSensitivePersonalData' => $asset->contains_sensitive_personal_data, 'personalDataCategories' => $asset->personal_data_categories ?? [], 'dataSubjectCategories' => $asset->data_subject_categories ?? [], 'storageLocations' => $asset->storage_locations, 'residencyCountry' => $asset->residency_country, 'qualityStandard' => $asset->quality_standard, 'status' => $asset->status, 'owner' => $asset->dataOwner?->name, 'steward' => $asset->steward?->name, 'processingActivityCount' => $asset->processing_activities_count])->values(),
-            'retentionSchedules' => RetentionSchedule::query()->with('approver:id,name')->orderBy('code')->get()->map(fn (RetentionSchedule $schedule): array => ['id' => $schedule->id, 'code' => $schedule->code, 'recordClass' => $schedule->record_class, 'triggerEvent' => $schedule->trigger_event, 'retentionMonths' => $schedule->retention_months, 'dispositionAction' => $schedule->disposition_action, 'legalAuthority' => $schedule->legal_authority, 'legalHoldRule' => $schedule->legal_hold_rule, 'status' => $schedule->status, 'effectiveFrom' => $schedule->effective_from?->toIso8601String(), 'nextReviewAt' => $schedule->next_review_at?->toDateString(), 'approver' => $schedule->approver?->name])->values(),
+            'retentionSchedules' => RetentionSchedule::query()->with(['approver:id,name', 'approval.submitter:id,name', 'approval.reviewer:id,name'])->orderBy('code')->get()->map(fn (RetentionSchedule $schedule): array => ['id' => $schedule->id, 'code' => $schedule->code, 'recordClass' => $schedule->record_class, 'triggerEvent' => $schedule->trigger_event, 'retentionMonths' => $schedule->retention_months, 'dispositionAction' => $schedule->disposition_action, 'legalAuthority' => $schedule->legal_authority, 'legalHoldRule' => $schedule->legal_hold_rule, 'status' => $schedule->status, 'effectiveFrom' => $schedule->effective_from?->toIso8601String(), 'nextReviewAt' => $schedule->next_review_at?->toDateString(), 'approver' => $schedule->approver?->name, 'submission' => $schedule->approval ? ['id' => $schedule->approval->id, 'submitter' => $schedule->approval->submitter->name, 'reviewer' => $schedule->approval->reviewer?->name, 'snapshotChecksum' => $schedule->approval->snapshot_checksum, 'decisionReason' => $schedule->approval->decision_reason, 'submittedAt' => $schedule->approval->submitted_at->toIso8601String(), 'reviewedAt' => $schedule->approval->reviewed_at?->toIso8601String()] : null])->values(),
             'activities' => $activities->through(fn (ProcessingActivity $activity): array => ['id' => $activity->id, 'reference' => $activity->reference, 'name' => $activity->name, 'purpose' => $activity->purpose, 'lawfulBasis' => $activity->lawful_basis, 'lawfulBasisReference' => $activity->lawful_basis_reference, 'controllerName' => $activity->controller_name, 'processorNames' => $activity->processor_names ?? [], 'recipientCategories' => $activity->recipient_categories ?? [], 'processingOperations' => $activity->processing_operations, 'automatedDecisionMaking' => $activity->automated_decision_making, 'crossBorderTransfer' => $activity->cross_border_transfer, 'transferCountries' => $activity->transfer_countries ?? [], 'transferSafeguards' => $activity->transfer_safeguards, 'dpiaStatus' => $activity->dpia_status, 'dpiaReference' => $activity->dpia_reference, 'riskSummary' => $activity->risk_summary, 'securityMeasures' => $activity->security_measures, 'status' => $activity->status, 'submittedAt' => $activity->submitted_at?->toIso8601String(), 'reviewedAt' => $activity->reviewed_at?->toIso8601String(), 'nextReviewAt' => $activity->next_review_at?->toDateString(), 'asset' => ['id' => $activity->dataAsset->id, 'code' => $activity->dataAsset->code, 'name' => $activity->dataAsset->name, 'classification' => $activity->dataAsset->classification, 'personal' => $activity->dataAsset->contains_personal_data, 'sensitive' => $activity->dataAsset->contains_sensitive_personal_data], 'retentionSchedule' => ['id' => $activity->retentionSchedule?->id, 'code' => $activity->retentionSchedule?->code, 'name' => $activity->retentionSchedule?->record_class], 'submitter' => $activity->submitter?->name, 'reviewer' => $activity->reviewer?->name]),
             'dataSubjectRequests' => $dataRequests->through(fn (DataSubjectRequest $privacyRequest): array => ['id' => $privacyRequest->id, 'reference' => $privacyRequest->reference, 'requestType' => $privacyRequest->request_type, 'requesterName' => $canManage ? $privacyRequest->requester_name : Str::mask($privacyRequest->requester_name, '*', 1), 'requesterContact' => $canManage ? $privacyRequest->requester_contact : 'Restricted', 'contactChannel' => $privacyRequest->contact_channel, 'scope' => $privacyRequest->scope, 'identityStatus' => $privacyRequest->identity_status, 'identityEvidenceReference' => $privacyRequest->identity_evidence_reference, 'status' => $privacyRequest->status, 'receivedAt' => $privacyRequest->received_at->toIso8601String(), 'dueAt' => $privacyRequest->due_at->toIso8601String(), 'acknowledgedAt' => $privacyRequest->acknowledged_at?->toIso8601String(), 'decidedAt' => $privacyRequest->decided_at?->toIso8601String(), 'decision' => $privacyRequest->decision, 'decisionReason' => $privacyRequest->decision_reason, 'responseEvidenceReference' => $privacyRequest->response_evidence_reference, 'assignee' => $privacyRequest->assignee?->name, 'identityVerifier' => $privacyRequest->identityVerifier?->name, 'decisionMaker' => $privacyRequest->decisionMaker?->name, 'overdue' => $privacyRequest->due_at->isPast() && ! in_array($privacyRequest->status, ['completed', 'rejected'], true)]),
             'privacyIncidents' => $incidents->through(fn (PrivacyIncident $incident): array => $this->privacyIncidentPayload($incident, $canManage)),
@@ -69,13 +72,18 @@ class DataGovernanceController extends Controller
         return back()->with('success', 'Data asset registered.');
     }
 
-    public function storeRetentionSchedule(StoreRetentionScheduleRequest $request): RedirectResponse
+    public function storeRetentionSchedule(StoreRetentionScheduleRequest $request, SubmitRetentionSchedule $action): RedirectResponse
     {
-        $user = $this->user($request);
-        $schedule = RetentionSchedule::create([...$request->validated(), 'approved_by' => $user->id, 'status' => 'approved', 'approved_at' => now(), 'effective_from' => now()]);
-        $this->auditLogger->record($user, $schedule, 'privacy.retention-schedule.approved', "Retention schedule {$schedule->code} approved.");
+        $action->handle($request->validated(), $this->user($request));
 
-        return back()->with('success', 'Retention schedule approved and recorded.');
+        return back()->with('success', __('data-governance.retention_submitted'));
+    }
+
+    public function reviewRetentionSchedule(ReviewRetentionScheduleRequest $request, string $currentTeam, RetentionSchedule $retentionSchedule, ReviewRetentionSchedule $action): RedirectResponse
+    {
+        $action->handle($retentionSchedule, $this->user($request), $request->reviewData());
+
+        return back()->with('success', __('data-governance.retention_reviewed'));
     }
 
     public function storeProcessingActivity(StoreProcessingActivityRequest $request): RedirectResponse

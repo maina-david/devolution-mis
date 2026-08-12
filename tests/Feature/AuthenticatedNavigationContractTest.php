@@ -142,7 +142,7 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('onPointerDownOutside={dismissMenu}', $header);
         $this->assertStringContainsString('<DropdownMenuGroup>', $header);
         $this->assertStringContainsString('aria-label={localization.copy.openAccountMenu}', $header);
-        $this->assertStringContainsString('<UserInfo user={auth.user} showRole', $header);
+        $this->assertStringContainsString('<UserInfo user={user} showRole', $header);
         $this->assertStringContainsString('aria-label={copy.chooseTheme}', $header);
         $this->assertStringContainsString('label={localization.copy.faqs}', $header);
         $this->assertStringContainsString('target="_blank"', $header);
@@ -225,6 +225,12 @@ class AuthenticatedNavigationContractTest extends TestCase
         $sidebarLayout = $this->source('resources/js/layouts/app/app-sidebar-layout.tsx');
         $this->assertStringContainsString('overflow-x-clip', $sidebarLayout);
         $this->assertStringNotContainsString('overflow-x-hidden', $sidebarLayout);
+        $this->assertStringContainsString('if (!user)', $sidebarLayout);
+        $this->assertStringContainsString('return children;', $sidebarLayout);
+
+        $sidebar = $this->source('resources/js/components/app-sidebar.tsx');
+        $this->assertStringContainsString('const user = page.props.auth.user;', $sidebar);
+        $this->assertStringContainsString('if (!user)', $sidebar);
     }
 
     public function test_authenticated_workspace_heroes_and_sheet_actions_have_consistent_contrast(): void

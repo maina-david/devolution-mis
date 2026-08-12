@@ -61,7 +61,10 @@ import {
     review,
     store as storeProcessingActivity,
 } from '@/routes/data-governance/processing-activities';
-import { store as storeRetentionSchedule } from '@/routes/data-governance/retention-schedules';
+import {
+    review as reviewRetentionSchedule,
+    store as storeRetentionSchedule,
+} from '@/routes/data-governance/retention-schedules';
 import { exportMethod } from '@/routes/workspace';
 
 type Option = { value: string; label: string };
@@ -98,6 +101,15 @@ type RetentionSchedule = {
     effectiveFrom: string | null;
     nextReviewAt: string | null;
     approver: string | null;
+    submission: {
+        id: string;
+        submitter: string;
+        reviewer: string | null;
+        snapshotChecksum: string;
+        decisionReason: string | null;
+        submittedAt: string;
+        reviewedAt: string | null;
+    } | null;
 };
 type Activity = {
     id: string;
@@ -244,7 +256,8 @@ export default function DataGovernance({
     capabilities,
     targets,
 }: Props) {
-    const { currentTeam } = usePage().props;
+    const { currentTeam, localization } = usePage().props;
+    const governanceCopy = localization.dataGovernance;
 
     if (!currentTeam) {
         return null;
@@ -326,11 +339,17 @@ export default function DataGovernance({
                                     teamSlug={currentTeam.slug}
                                     users={users}
                                 />
-                                <RetentionForm teamSlug={currentTeam.slug} />
+                                <RetentionForm
+                                    teamSlug={currentTeam.slug}
+                                    copy={governanceCopy}
+                                />
                                 <ActivityForm
                                     teamSlug={currentTeam.slug}
                                     assets={assets}
-                                    schedules={retentionSchedules}
+                                    schedules={retentionSchedules.filter(
+                                        (schedule) =>
+                                            schedule.status === 'approved',
+                                    )}
                                 />
                                 <DataRequestForm
                                     teamSlug={currentTeam.slug}
@@ -590,7 +609,7 @@ export default function DataGovernance({
                     </div>
                     <div className="grid content-start gap-3">
                         <h2 className="font-bold">
-                            Approved retention schedules
+                            {governanceCopy.retention_section}
                         </h2>
                         {retentionSchedules.map((schedule) => (
                             <Card key={schedule.id}>
@@ -611,25 +630,76 @@ export default function DataGovernance({
                                         </Badge>
                                     </div>
                                     <p className="text-muted-foreground">
-                                        Trigger: {schedule.triggerEvent}
+                                        {governanceCopy.retention_trigger_label}
+                                        : {schedule.triggerEvent}
                                     </p>
                                     <p className="text-muted-foreground">
-                                        Legal hold: {schedule.legalHoldRule}
+                                        {governanceCopy.retention_hold_label}:{' '}
+                                        {schedule.legalHoldRule}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Approved by{' '}
-                                        {schedule.approver ?? 'Pending'} ·
-                                        review{' '}
+                                        {schedule.status === 'approved'
+                                            ? `${governanceCopy.retention_approved_by} ${schedule.approver ?? '—'}`
+                                            : governanceCopy.retention_pending}{' '}
+                                        · {governanceCopy.retention_review_due}{' '}
                                         {schedule.nextReviewAt ??
-                                            'not scheduled'}
+                                            governanceCopy.retention_not_scheduled}
                                     </p>
+                                    {schedule.submission ? (
+                                        <div className="grid gap-1 border-t pt-3 text-xs text-muted-foreground">
+                                            <p>
+                                                {
+                                                    governanceCopy.retention_submitter
+                                                }
+                                                :{' '}
+                                                {schedule.submission.submitter}
+                                            </p>
+                                            <p className="font-mono break-all">
+                                                {
+                                                    governanceCopy.retention_checksum
+                                                }
+                                                :{' '}
+                                                {
+                                                    schedule.submission
+                                                        .snapshotChecksum
+                                                }
+                                            </p>
+                                            {schedule.submission.reviewer && (
+                                                <p>
+                                                    {
+                                                        governanceCopy.retention_reviewer
+                                                    }
+                                                    :{' '}
+                                                    {
+                                                        schedule.submission
+                                                            .reviewer
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">
+                                            {governanceCopy.retention_legacy}
+                                        </p>
+                                    )}
+                                    {capabilities.manage &&
+                                        schedule.status === 'submitted' &&
+                                        schedule.submission && (
+                                            <RetentionReviewForm
+                                                teamSlug={currentTeam.slug}
+                                                schedule={schedule}
+                                                copy={governanceCopy}
+                                            />
+                                        )}
                                 </CardContent>
                             </Card>
                         ))}
                         {retentionSchedules.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No retention schedules"
-                                description="Approve a disposition rule before a processing activity can be approved."
+                                title={governanceCopy.retention_empty_title}
+                                description={
+                                    governanceCopy.retention_empty_description
+                                }
                                 className="min-h-56"
                             />
                         )}
@@ -1141,12 +1211,18 @@ function AssetForm({ teamSlug, users }: { teamSlug: string; users: Option[] }) {
     );
 }
 
-function RetentionForm({ teamSlug }: { teamSlug: string }) {
+function RetentionForm({
+    teamSlug,
+    copy,
+}: {
+    teamSlug: string;
+    copy: Record<string, string>;
+}) {
     return (
         <FormSheet
-            title="Approve retention schedule"
-            description="Record the trigger, minimum period, disposition, legal authority and legal-hold override."
-            triggerLabel="Retention"
+            title={copy.retention_submit_title}
+            description={copy.retention_submit_description}
+            triggerLabel={copy.retention_trigger}
             icon={FileClock}
             size="xl"
         >
@@ -1191,7 +1267,47 @@ function RetentionForm({ teamSlug }: { teamSlug: string }) {
                     name="legal_hold_rule"
                     label="Legal-hold suspension rule"
                 />
-                <Button type="submit">Approve schedule</Button>
+                <Button type="submit">{copy.retention_submit_button}</Button>
+            </Form>
+        </FormSheet>
+    );
+}
+
+function RetentionReviewForm({
+    teamSlug,
+    schedule,
+    copy,
+}: {
+    teamSlug: string;
+    schedule: RetentionSchedule;
+    copy: Record<string, string>;
+}) {
+    return (
+        <FormSheet
+            title={copy.retention_review_title}
+            description={copy.retention_review_description}
+            triggerLabel={copy.retention_review_action}
+            icon={ShieldCheck}
+        >
+            <Form
+                action={reviewRetentionSchedule([teamSlug, schedule.id])}
+                className="grid gap-4 pt-4"
+            >
+                <SearchableSelect
+                    id={`retention-decision-${schedule.id}`}
+                    name="decision"
+                    label={copy.retention_decision}
+                    options={[
+                        { id: 'approved', name: copy.retention_approve },
+                        { id: 'rejected', name: copy.retention_reject },
+                    ]}
+                    defaultValue="approved"
+                />
+                <TextField
+                    name="decision_reason"
+                    label={copy.retention_decision_reason}
+                />
+                <Button type="submit">{copy.retention_record_decision}</Button>
             </Form>
         </FormSheet>
     );

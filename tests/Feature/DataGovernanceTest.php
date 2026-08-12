@@ -6,8 +6,12 @@ use App\Models\DataAsset;
 use App\Models\DataSubjectRequest;
 use App\Models\ProcessingActivity;
 use App\Models\RetentionSchedule;
+use App\Models\RetentionScheduleApproval;
 use App\Models\User;
+use App\Support\CanonicalJson;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -20,6 +24,7 @@ class DataGovernanceTest extends TestCase
         $manager = User::factory()->devolutionAdmin()->create();
         $owner = User::factory()->platformAdmin()->create();
         $steward = User::factory()->devolutionAdmin()->create();
+        $retentionReviewer = User::factory()->platformAdmin()->create();
         $countyUser = User::factory()->countyAdmin()->create();
 
         $this->actingAs($countyUser)->get(route('data-governance.index', $countyUser->currentTeam->slug))->assertForbidden();
@@ -31,13 +36,81 @@ class DataGovernanceTest extends TestCase
 
         $this->actingAs($manager)->post(route('data-governance.retention-schedules.store', $manager->currentTeam->slug), $this->retentionPayload())->assertRedirect();
         $schedule = RetentionSchedule::query()->sole();
+        $approval = RetentionScheduleApproval::query()->sole();
         $this->assertTrue(Str::isUuid($schedule->id));
-        $this->assertSame('approved', $schedule->status);
-        $this->assertSame($manager->id, $schedule->approved_by);
+        $this->assertTrue(Str::isUuid($approval->id));
+        $this->assertSame('submitted', $schedule->status);
+        $this->assertSame($manager->id, $approval->submitted_by);
+        $this->actingAs($manager)->patch(route('data-governance.retention-schedules.review', [$manager->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'The submitting officer cannot approve this schedule.'])->assertForbidden();
+        $this->actingAs($retentionReviewer)->patch(route('data-governance.retention-schedules.review', [$retentionReviewer->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'The retention trigger, authority, hold rule and disposition have been independently reviewed.'])->assertRedirect();
+        $this->assertSame('approved', $schedule->refresh()->status);
+        $this->assertSame($retentionReviewer->id, $schedule->approved_by);
+        $this->assertSame('approved', $approval->refresh()->status);
+        $this->assertSame($retentionReviewer->id, $approval->reviewed_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $asset->id, 'action' => 'privacy.data-asset.registered']);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $schedule->id, 'action' => 'privacy.retention-schedule.approved']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $approval->id, 'action' => 'privacy.retention-schedule.submitted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $approval->id, 'action' => 'privacy.retention-schedule.approved']);
+        $this->actingAs($retentionReviewer)->get(route('data-governance.index', $retentionReviewer->currentTeam->slug))->assertOk()->assertInertia(fn ($page) => $page
+            ->where('retentionSchedules.0.status', 'approved')
+            ->where('retentionSchedules.0.submission.submitter', $manager->name)
+            ->where('retentionSchedules.0.submission.reviewer', $retentionReviewer->name)
+            ->where('retentionSchedules.0.submission.snapshotChecksum', $approval->snapshot_checksum));
         $asset->delete();
         $this->assertSoftDeleted($asset);
+    }
+
+    public function test_retention_review_detects_post_submission_change_and_terminal_evidence_is_immutable(): void
+    {
+        $submitter = User::factory()->devolutionAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $this->actingAs($submitter)->post(route('data-governance.retention-schedules.store', $submitter->currentTeam->slug), $this->retentionPayload())->assertRedirect();
+        $schedule = RetentionSchedule::query()->sole();
+        $approval = RetentionScheduleApproval::query()->sole();
+        $asset = DataAsset::factory()->create();
+        $this->actingAs($submitter)->post(route('data-governance.processing-activities.store', $submitter->currentTeam->slug), $this->processingPayload($asset, $schedule))->assertSessionHasErrors('retention_schedule_id');
+
+        $schedule->update(['retention_months' => 96]);
+        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$reviewer->currentTeam->slug, $schedule]), ['decision' => 'approved', 'decision_reason' => 'This changed schedule must fail its submission checksum.'])->assertStatus(409);
+        $schedule->update(['retention_months' => 84]);
+        $this->actingAs($reviewer)->patch(route('data-governance.retention-schedules.review', [$reviewer->currentTeam->slug, $schedule]), ['decision' => 'rejected', 'decision_reason' => 'The records authority reference remains a draft and is not sufficient for approval.'])->assertRedirect();
+        $this->assertSame('rejected', $schedule->refresh()->status);
+        $this->assertSame('rejected', $approval->refresh()->status);
+
+        $this->expectException(QueryException::class);
+        DB::table('retention_schedule_approvals')->where('id', $approval->id)->update(['decision_reason' => 'Tampered terminal decision']);
+    }
+
+    public function test_retention_approval_factory_and_database_guard_preserve_submission_evidence(): void
+    {
+        $approval = RetentionScheduleApproval::factory()->create();
+
+        $this->assertTrue(Str::isUuid($approval->id));
+        $this->assertSame('submitted', $approval->retentionSchedule->status);
+        $this->assertSame(
+            app(CanonicalJson::class)->checksum($approval->retentionSchedule->approvalSnapshot()),
+            $approval->snapshot_checksum,
+        );
+
+        $this->expectException(QueryException::class);
+        DB::table('retention_schedule_approvals')->where('id', $approval->id)->delete();
+    }
+
+    public function test_retention_governance_catalogues_and_operator_contract_remain_synchronized(): void
+    {
+        $english = require lang_path('en/data-governance.php');
+        $swahili = require lang_path('sw/data-governance.php');
+        $french = require lang_path('fr/data-governance.php');
+
+        $this->assertSame(array_keys($english), array_keys($swahili));
+        $this->assertSame(array_keys($english), array_keys($french));
+
+        $page = file_get_contents(resource_path('js/pages/data-governance/index.tsx'));
+        $this->assertIsString($page);
+        $this->assertStringContainsString('reviewRetentionSchedule([', $page);
+        $this->assertStringContainsString('schedule.status === \'submitted\'', $page);
+        $this->assertStringContainsString("schedule.status === 'approved'", $page);
+        $this->assertStringContainsString('governanceCopy.retention_empty_title', $page);
+        $this->assertStringNotContainsString('Approve retention schedule', $page);
     }
 
     public function test_sensitive_processing_requires_completed_dpia_and_independent_review(): void

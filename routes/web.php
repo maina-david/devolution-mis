@@ -255,6 +255,7 @@ Route::prefix('{current_team}')
         Route::get('data-governance', [DataGovernanceController::class, 'index'])->name('data-governance.index');
         Route::post('data-governance/assets', [DataGovernanceController::class, 'storeAsset'])->name('data-governance.assets.store');
         Route::post('data-governance/retention-schedules', [DataGovernanceController::class, 'storeRetentionSchedule'])->name('data-governance.retention-schedules.store');
+        Route::patch('data-governance/retention-schedules/{retentionSchedule}/review', [DataGovernanceController::class, 'reviewRetentionSchedule'])->name('data-governance.retention-schedules.review');
         Route::post('data-governance/processing-activities', [DataGovernanceController::class, 'storeProcessingActivity'])->name('data-governance.processing-activities.store');
         Route::patch('data-governance/processing-activities/{processingActivity}/review', [DataGovernanceController::class, 'reviewProcessingActivity'])->name('data-governance.processing-activities.review');
         Route::post('data-governance/data-subject-requests', [DataGovernanceController::class, 'storeDataSubjectRequest'])->name('data-governance.data-subject-requests.store');

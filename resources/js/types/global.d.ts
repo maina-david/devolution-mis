@@ -71,6 +71,7 @@ declare module '@inertiajs/core' {
                 };
                 citizen: Record<string, string>;
                 dataRights: Record<string, string>;
+                dataGovernance: Record<string, string>;
                 welcome: Record<string, string>;
             };
             auth: Auth;

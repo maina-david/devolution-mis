@@ -26,11 +26,11 @@ import { edit as profileEdit } from '@/routes/profile';
 export function AppSidebar() {
     const page = usePage();
     const { currentUrl, isCurrentUrl } = useCurrentUrl();
+    const user = page.props.auth.user;
     const teamSlug = page.props.currentTeam?.slug;
     const dashboardUrl = teamSlug ? dashboard(teamSlug) : home();
-    const navigationGroups = teamSlug
-        ? appNavigationGroups(teamSlug, page.props.auth.user.permissions)
-        : [];
+    const navigationGroups =
+        teamSlug && user ? appNavigationGroups(teamSlug, user.permissions) : [];
     const activeGroup = activeNavigationGroup(navigationGroups, currentUrl);
     const groups = navigationGroups.map((group) => ({
         title: group.title,
@@ -40,6 +40,10 @@ export function AppSidebar() {
         badge: group.showChildren === false ? undefined : group.items.length,
         subItems: group.showChildren === false ? undefined : group.items,
     }));
+
+    if (!user) {
+        return null;
+    }
 
     return (
         <>
@@ -58,11 +62,7 @@ export function AppSidebar() {
                                 className="h-13 rounded-md hover:bg-sidebar-foreground/10"
                             >
                                 <Link href={dashboardUrl} prefetch>
-                                    <AppLogo
-                                        county={
-                                            page.props.auth.user.county_identity
-                                        }
-                                    />
+                                    <AppLogo county={user.county_identity} />
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

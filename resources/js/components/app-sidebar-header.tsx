@@ -51,11 +51,13 @@ export function AppSidebarHeader({
 }) {
     const page = usePage();
     const { auth, currentTeam, localization, notificationSummary } = page.props;
+    const user = auth.user;
     const { appearance, updateAppearance } = useAppearance();
     const { currentUrl } = useCurrentUrl();
-    const groups = currentTeam
-        ? appNavigationGroups(currentTeam.slug, auth.user.permissions)
-        : [];
+    const groups =
+        currentTeam && user
+            ? appNavigationGroups(currentTeam.slug, user.permissions)
+            : [];
     const activeGroup =
         settingsNavigationGroup(currentUrl) ??
         activeNavigationGroup(groups, currentUrl);
@@ -75,6 +77,10 @@ export function AppSidebarHeader({
         (section): section is typeof section & { title: string } =>
             section.title !== null,
     );
+
+    if (!user) {
+        return null;
+    }
 
     return (
         <header className="app-sidebar-header sticky top-0 z-50 w-full shrink-0 border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
@@ -114,11 +120,11 @@ export function AppSidebarHeader({
                             className="h-10 w-10 gap-2 px-1 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground sm:h-auto sm:min-h-10 sm:w-auto sm:max-w-64 sm:px-2 sm:py-1 [&>div:last-child]:hidden sm:[&>div:last-child]:grid"
                             aria-label={localization.copy.openAccountMenu}
                         >
-                            <UserInfo user={auth.user} showRole />
+                            <UserInfo user={user} showRole />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent className="w-64" align="end">
-                        <UserMenuContent user={auth.user} />
+                        <UserMenuContent user={user} />
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
