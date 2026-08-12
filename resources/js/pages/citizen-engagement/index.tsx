@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     Accessibility,
     BarChart3,
@@ -35,6 +35,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { show as privacyNotice } from '@/routes/privacy-notice';
 
 type Option = { id: string; name: string };
 type Props = {
@@ -52,6 +53,7 @@ type Props = {
         satisfaction: string | null;
         recurringIssues: Array<{ category: string; total: number }>;
     };
+    privacyNoticeVersion: string;
 };
 
 export default function CitizenEngagementIndex({
@@ -59,6 +61,7 @@ export default function CitizenEngagementIndex({
     sectors,
     catalogue,
     dashboard,
+    privacyNoticeVersion,
 }: Props) {
     const copy = usePage().props.localization.citizen;
 
@@ -82,6 +85,7 @@ export default function CitizenEngagementIndex({
                                 counties={counties}
                                 sectors={sectors}
                                 catalogue={catalogue}
+                                privacyNoticeVersion={privacyNoticeVersion}
                                 copy={copy}
                             />
                             <TrackingSheet copy={copy} />
@@ -209,11 +213,13 @@ function IntakeSheet({
     counties,
     sectors,
     catalogue,
+    privacyNoticeVersion,
     copy,
 }: {
     counties: CountyIdentityValue[];
     sectors: Option[];
     catalogue: Props['catalogue'];
+    privacyNoticeVersion: string;
     copy: Record<string, string>;
 }) {
     return (
@@ -392,7 +398,7 @@ function IntakeSheet({
                             <input
                                 type="hidden"
                                 name="privacy_notice_version"
-                                value="2026-08"
+                                value={privacyNoticeVersion}
                             />
                             <div className="flex items-start gap-3">
                                 <Checkbox
@@ -415,7 +421,14 @@ function IntakeSheet({
                                         id="consent-description"
                                         className="text-xs text-muted-foreground"
                                     >
-                                        {copy.consent_description}
+                                        {copy.consent_description}{' '}
+                                        <Link
+                                            href={privacyNotice()}
+                                            target="_blank"
+                                            className="font-medium text-foreground underline underline-offset-4"
+                                        >
+                                            {copy.read_privacy_notice}
+                                        </Link>
                                     </p>
                                     {errors.consent_given && (
                                         <p

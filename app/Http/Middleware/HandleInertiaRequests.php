@@ -91,6 +91,7 @@ class HandleInertiaRequests extends Middleware
                     'postalAddress' => __('idmis.public.postal_address'),
                     'copyright' => __('idmis.public.copyright', ['year' => now()->year]),
                     'complaints' => __('idmis.public.complaints'),
+                    'privacyNotice' => __('idmis.public.privacy_notice'),
                     'authorizedAccessOnly' => __('idmis.public.authorized_access_only'),
                     'secureGovernmentAccess' => __('idmis.public.secure_government_access'),
                     'secureGovernmentAccessDescription' => __('idmis.public.secure_government_access_description'),

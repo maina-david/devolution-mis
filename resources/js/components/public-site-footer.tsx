@@ -5,6 +5,7 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import { faqs, help, home, login } from '@/routes';
 import { index as citizenEngagement } from '@/routes/citizen-engagement';
 import { verify as verifyCertificate } from '@/routes/learning/certificates';
+import { show as privacyNotice } from '@/routes/privacy-notice';
 
 const linkClass =
     'rounded-sm text-sm text-primary-foreground/75 underline-offset-4 transition-colors hover:text-primary-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring';
@@ -76,6 +77,11 @@ export function PublicSiteFooter() {
                         <li>
                             <Link href={faqs()} className={linkClass}>
                                 {copy.faqs}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href={privacyNotice()} className={linkClass}>
+                                {copy.privacyNotice}
                             </Link>
                         </li>
                     </ul>

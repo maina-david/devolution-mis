@@ -56,6 +56,7 @@ return [
     'supporting_document' => 'Supporting document (optional, max 10 MB)',
     'consent' => 'I consent to case processing',
     'consent_description' => 'I understand my information will be used to route, investigate and respond to this case under applicable government records and privacy controls.',
+    'read_privacy_notice' => 'Read privacy notice',
     'upload_progress' => 'Upload progress',
     'submitting' => 'Submitting securely…',
     'submit_securely' => 'Submit securely',

@@ -57,6 +57,7 @@ declare module '@inertiajs/core' {
                     postalAddress: string;
                     copyright: string;
                     complaints: string;
+                    privacyNotice: string;
                     authorizedAccessOnly: string;
                     secureGovernmentAccess: string;
                     secureGovernmentAccessDescription: string;

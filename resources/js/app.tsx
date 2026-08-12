@@ -20,6 +20,7 @@ createInertiaApp({
             case name === 'welcome':
             case name === 'faqs':
             case name === 'help':
+            case name === 'privacy-notice':
             case name === 'learning/certificate-verification':
             case name.startsWith('citizen-engagement/'):
                 return null;

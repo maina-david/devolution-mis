@@ -45,6 +45,7 @@ return [
         'postal_address' => 'Teleposta Towers, Kenyatta Avenue, S.L.P. 30004–00100, Nairobi',
         'copyright' => '© :year Idara ya Serikali ya Ugatuzi',
         'complaints' => 'Malalamiko',
+        'privacy_notice' => 'Ilani ya faragha',
         'authorized_access_only' => 'Ufikiaji ulioidhinishwa pekee',
         'secure_government_access' => 'Ufikiaji salama wa rekodi ya kitaifa ya uendeshaji wa ugatuzi',
         'secure_government_access_description' => 'Jukumu lako, taasisi na kaunti au jalada ulilopewa huamua rekodi na vitendo vinavyopatikana baada ya kuingia.',

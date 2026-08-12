@@ -45,6 +45,7 @@ return [
         'postal_address' => 'Teleposta Towers, Kenyatta Avenue, B.P. 30004–00100, Nairobi',
         'copyright' => '© :year Département d’État chargé de la Dévolution',
         'complaints' => 'Réclamations',
+        'privacy_notice' => 'Avis de confidentialité',
         'authorized_access_only' => 'Accès autorisé uniquement',
         'secure_government_access' => 'Accès sécurisé au registre opérationnel national de la dévolution',
         'secure_government_access_description' => 'Votre rôle, votre institution et le comté ou portefeuille attribué déterminent les dossiers et actions disponibles après connexion.',

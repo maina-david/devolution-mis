@@ -29,6 +29,7 @@ class PublicCitizenCaseController extends Controller
             'counties' => County::query()->whereIn('id', $countyIds)->orderBy('code')->get()->map->identityCell()->values(),
             'sectors' => Sector::query()->whereIn('id', $sectorIds)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'catalogue' => ['available' => $release !== null, 'version' => $release?->version, 'effectiveFrom' => $release?->effective_from?->toIso8601String()],
+            'privacyNoticeVersion' => (string) config('privacy.public_notice.version'),
             'dashboard' => $this->dashboardData(),
         ]);
     }
