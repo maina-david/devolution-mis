@@ -9,6 +9,8 @@ use App\Models\AssessmentCycle;
 use App\Models\BusinessCalendar;
 use App\Models\County;
 use App\Models\IdentityLifecycleRequest;
+use App\Models\IgrForum;
+use App\Models\IgrGapCategory;
 use App\Models\PerformanceTestRun;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
@@ -142,7 +144,11 @@ class PerformanceAssuranceTest extends TestCase
         $service = User::factory()->platformAdmin()->create();
         config()->set('security-governance.identity_lifecycle_service_user_email', $service->email);
         $assessorRole = app(ProgrammeAuthorization::class)->ensureRole(UserRole::Assessor);
-        $targetUserIds = $this->insertIdentityLifecycleVolume($requester->id, $decider->id, $assessorRole->id, 336);
+        $assessorRoleId = $assessorRole->id;
+        if (! is_string($assessorRoleId)) {
+            $this->fail('The UUID-backed assessor role must expose a string identifier.');
+        }
+        $targetUserIds = $this->insertIdentityLifecycleVolume($requester->id, $decider->id, $assessorRoleId, 336);
 
         [$firstExitCode, $firstQueries, $firstMilliseconds] = $this->measureOperation(fn (): int => Artisan::call('security:apply-due-identity-lifecycle', ['--limit' => 250]));
         $this->assertSame(0, $firstExitCode);
@@ -409,6 +415,45 @@ class PerformanceAssuranceTest extends TestCase
         Notification::assertCount(600);
     }
 
+    public function test_reference_volume_igr_gap_analytics_are_bounded_and_county_scoped(): void
+    {
+        $nationalUser = User::factory()->devolutionAdmin()->create();
+        $homeCounty = County::factory()->create(['code' => 1]);
+        $counties = collect([$homeCounty])
+            ->merge(County::factory()->count(46)->sequence(fn ($sequence): array => ['code' => $sequence->index + 2])->create())
+            ->values();
+        $countyUser = User::factory()->countyAdmin($homeCounty)->create();
+        $forum = IgrForum::factory()->create(['created_by' => $nationalUser->id]);
+        $category = IgrGapCategory::factory()->create(['created_by' => $nationalUser->id]);
+        $this->insertIgrGapAnalyticsVolume(array_values($counties->all()), $forum->id, $category->id, $nationalUser->id, 4700);
+
+        $nationalUrl = route('igr-resolutions.index', $nationalUser->currentTeam->slug);
+        $this->actingAs($nationalUser)->get($nationalUrl)->assertOk();
+        [$nationalResponse, $nationalQueries, $nationalMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($nationalUser)->get($nationalUrl));
+        $nationalResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('gapAnalytics.summary.total', 4700)
+            ->where('gapWorkspace.pagination.total', 4700)
+            ->has('gapWorkspace.rows', 15)
+            ->has('resolutions', 47));
+        $this->assertLessThanOrEqual(60, $nationalQueries, "National IGR gap analytics used {$nationalQueries} database queries at reference volume.");
+        $this->assertLessThanOrEqual(3000, $nationalMilliseconds, "National IGR gap analytics took {$nationalMilliseconds} ms at reference volume.");
+
+        $countyUrl = route('igr-resolutions.index', $countyUser->currentTeam->slug);
+        $this->actingAs($countyUser)->get($countyUrl)->assertOk();
+        [$countyResponse, $countyQueries, $countyMilliseconds] = $this->measure(fn (): TestResponse => $this->actingAs($countyUser)->get($countyUrl));
+        $countyResponse->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('gapAnalytics.summary.total', 100)
+            ->where('gapWorkspace.pagination.total', 100)
+            ->has('gapWorkspace.rows', 15)
+            ->has('resolutions', 1)
+            ->where('gapWorkspace.rows.0.cells.3.id', $homeCounty->id));
+        foreach ($countyResponse->viewData('page')['props']['gapWorkspace']['rows'] as $row) {
+            $this->assertSame($homeCounty->id, $row['cells'][3]['id']);
+        }
+        $this->assertLessThanOrEqual(60, $countyQueries, "County IGR gap analytics used {$countyQueries} database queries at reference volume.");
+        $this->assertLessThanOrEqual(3000, $countyMilliseconds, "County IGR gap analytics took {$countyMilliseconds} ms at reference volume.");
+    }
+
     public function test_http_probe_records_passing_immutable_percentile_evidence(): void
     {
         config()->set('operations.performance.allowed_hosts', ['devolution-mis.test']);
@@ -502,6 +547,78 @@ OUTPUT;
         }
 
         DB::statement('UPDATE assessment_documents SET current_version_id = document_versions.id FROM document_versions WHERE document_versions.assessment_document_id = assessment_documents.id AND document_versions.version_number = 1 AND assessment_documents.current_version_id IS NULL');
+    }
+
+    /** @param list<County> $counties */
+    private function insertIgrGapAnalyticsVolume(array $counties, string $forumId, string $categoryId, string $ownerId, int $gapCount): void
+    {
+        $createdAt = now();
+        $resolutions = [];
+        $assignments = [];
+        foreach ($counties as $countyIndex => $county) {
+            $resolutionId = (string) Str::uuid7();
+            $resolutions[] = [
+                'id' => $resolutionId,
+                'igr_forum_id' => $forumId,
+                'resolution_number' => 'PERF-IGR-'.str_pad((string) ($countyIndex + 1), 3, '0', STR_PAD_LEFT),
+                'title' => "Reference county resolution {$county->code}",
+                'resolution_text' => 'Synthetic non-production resolution for repeatable IGR gap analytics assurance.',
+                'resolved_on' => '2026-01-01',
+                'due_on' => '2027-06-30',
+                'priority' => 'high',
+                'status' => 'in_progress',
+                'progress_percentage' => 50,
+                'implementation_gap' => 'Reference implementation constraint',
+                'created_by' => $ownerId,
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ];
+            $assignments[] = [
+                'id' => (string) Str::uuid7(),
+                'igr_resolution_id' => $resolutionId,
+                'user_id' => $ownerId,
+                'county_id' => $county->id,
+                'responsibility_role' => 'lead',
+                'is_lead' => true,
+                'status' => 'active',
+                'created_at' => $createdAt,
+                'updated_at' => $createdAt,
+            ];
+        }
+        DB::table('igr_resolutions')->insert($resolutions);
+        DB::table('igr_resolution_assignments')->insert($assignments);
+
+        foreach (array_chunk(range(1, $gapCount), 200) as $sequenceChunk) {
+            $gaps = [];
+            foreach ($sequenceChunk as $sequence) {
+                $countyIndex = ($sequence - 1) % count($counties);
+                $resolution = $resolutions[$countyIndex];
+                $county = $counties[$countyIndex];
+                $isAccepted = $sequence % 4 === 0;
+                $gapCreatedAt = $createdAt->copy()->subDays($sequence % 120);
+                $gaps[] = [
+                    'id' => (string) Str::uuid7(),
+                    'igr_resolution_id' => $resolution['id'],
+                    'igr_gap_category_id' => $categoryId,
+                    'county_id' => $county->id,
+                    'owner_user_id' => $ownerId,
+                    'title' => "Reference implementation constraint {$sequence}",
+                    'description' => 'Synthetic non-production implementation constraint for representative-volume analytics assurance.',
+                    'impact' => 'The synthetic constraint models a bounded intergovernmental implementation risk.',
+                    'severity' => ['low', 'medium', 'high', 'critical'][($sequence - 1) % 4],
+                    'status' => $isAccepted ? 'accepted' : ['open', 'mitigating', 'resolved'][($sequence - 1) % 3],
+                    'due_on' => $sequence % 3 === 0 ? '2026-01-31' : '2027-06-30',
+                    'reported_by' => $ownerId,
+                    'resolved_by' => $isAccepted ? $ownerId : null,
+                    'accepted_by' => $isAccepted ? $ownerId : null,
+                    'resolved_at' => $isAccepted ? $createdAt->copy()->subDay() : null,
+                    'accepted_at' => $isAccepted ? $createdAt : null,
+                    'created_at' => $gapCreatedAt,
+                    'updated_at' => $createdAt,
+                ];
+            }
+            DB::table('igr_resolution_gaps')->insert($gaps);
+        }
     }
 
     /** @return list<string> */
