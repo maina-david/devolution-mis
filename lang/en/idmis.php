@@ -44,5 +44,13 @@ return [
         'postal_address' => 'Teleposta Towers, Kenyatta Avenue, P.O. Box 30004–00100, Nairobi',
         'copyright' => '© :year State Department for Devolution',
         'complaints' => 'Complaints',
+        'authorized_access_only' => 'Authorized access only',
+        'secure_government_access' => 'Secure access to the national devolution operating record',
+        'secure_government_access_description' => 'Your role, organization and assigned county or portfolio determine the records and actions available after sign-in.',
+        'account_provisioning' => 'Administrator-issued accounts',
+        'account_provisioning_description' => 'There is no public registration. Use the official work account granted for your responsibilities.',
+        'protect_credentials' => 'Protect your credentials',
+        'protect_credentials_description' => 'IDMIS support will never ask for your password, recovery code or one-time verification code.',
+        'authentication_help' => 'Authentication help',
     ],
 ];

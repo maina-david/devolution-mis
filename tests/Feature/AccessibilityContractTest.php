@@ -10,7 +10,7 @@ class AccessibilityContractTest extends TestCase
     {
         $authLayout = $this->source('resources/js/layouts/auth/auth-simple-layout.tsx');
         $this->assertStringContainsString('href="#main-content"', $authLayout);
-        $this->assertStringContainsString('Skip to main content', $authLayout);
+        $this->assertStringContainsString('{copy.skipToMainContent}', $authLayout);
         $this->assertStringContainsString('id="main-content"', $authLayout);
         $this->assertStringContainsString('tabIndex={-1}', $authLayout);
 
@@ -34,7 +34,8 @@ class AccessibilityContractTest extends TestCase
     public function test_citizen_journey_has_focusable_bypass_and_announced_async_feedback(): void
     {
         $shell = $this->source('resources/js/components/citizen-engagement-shell.tsx');
-        $this->assertStringContainsString('href="#main-content"', $shell);
+        $publicLayout = $this->source('resources/js/layouts/public-layout.tsx');
+        $this->assertStringContainsString('href="#main-content"', $publicLayout);
         $this->assertStringContainsString('<main id="main-content" tabIndex={-1}>', $shell);
 
         $intake = $this->source('resources/js/pages/citizen-engagement/index.tsx');

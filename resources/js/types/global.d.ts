@@ -56,6 +56,14 @@ declare module '@inertiajs/core' {
                     postalAddress: string;
                     copyright: string;
                     complaints: string;
+                    authorizedAccessOnly: string;
+                    secureGovernmentAccess: string;
+                    secureGovernmentAccessDescription: string;
+                    accountProvisioning: string;
+                    accountProvisioningDescription: string;
+                    protectCredentials: string;
+                    protectCredentialsDescription: string;
+                    authenticationHelp: string;
                 };
                 citizen: Record<string, string>;
                 welcome: Record<string, string>;

@@ -39,11 +39,19 @@ export function AppSidebar() {
     return (
         <>
             <NotificationRealtimeSync />
-            <Sidebar collapsible="icon" variant="inset">
-                <SidebarHeader>
+            <Sidebar
+                collapsible="icon"
+                variant="inset"
+                className="border-r border-sidebar-border"
+            >
+                <SidebarHeader className="gap-2 border-b border-sidebar-border p-3">
                     <SidebarMenu>
                         <SidebarMenuItem>
-                            <SidebarMenuButton size="lg" asChild>
+                            <SidebarMenuButton
+                                size="lg"
+                                asChild
+                                className="h-13 rounded-md hover:bg-sidebar-foreground/10"
+                            >
                                 <Link href={dashboardUrl} prefetch>
                                     <AppLogo
                                         county={
@@ -58,7 +66,7 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarHeader>
-                <SidebarContent>
+                <SidebarContent className="py-3">
                     <NavMain items={groups} label="Work areas" />
                 </SidebarContent>
             </Sidebar>

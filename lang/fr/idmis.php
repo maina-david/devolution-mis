@@ -44,5 +44,13 @@ return [
         'postal_address' => 'Teleposta Towers, Kenyatta Avenue, B.P. 30004–00100, Nairobi',
         'copyright' => '© :year Département d’État chargé de la Dévolution',
         'complaints' => 'Réclamations',
+        'authorized_access_only' => 'Accès autorisé uniquement',
+        'secure_government_access' => 'Accès sécurisé au registre opérationnel national de la dévolution',
+        'secure_government_access_description' => 'Votre rôle, votre institution et le comté ou portefeuille attribué déterminent les dossiers et actions disponibles après connexion.',
+        'account_provisioning' => 'Comptes créés par un administrateur',
+        'account_provisioning_description' => 'Il n’existe aucune inscription publique. Utilisez le compte professionnel officiel attribué à vos responsabilités.',
+        'protect_credentials' => 'Protégez vos identifiants',
+        'protect_credentials_description' => 'L’assistance IDMIS ne demandera jamais votre mot de passe, code de récupération ou code de vérification à usage unique.',
+        'authentication_help' => 'Aide à l’authentification',
     ],
 ];

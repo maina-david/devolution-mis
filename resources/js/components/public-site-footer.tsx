@@ -22,7 +22,9 @@ export function PublicSiteFooter() {
                         className="inline-flex items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
                         aria-label={`IDMIS ${copy.home}`}
                     >
-                        <AppLogoIcon className="size-11 brightness-0 invert" />
+                        <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-white p-1">
+                            <AppLogoIcon className="size-10" />
+                        </span>
                         <span>
                             <span className="block text-lg leading-none font-bold">
                                 IDMIS

@@ -13,7 +13,7 @@ import { faqs, login } from '@/routes';
 import { request } from '@/routes/password';
 
 const focusClass =
-    'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0f2230]';
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 export default function Help() {
     return (
@@ -27,15 +27,15 @@ export default function Help() {
 
             <PublicLayout>
                 <main id="main-content" tabIndex={-1}>
-                    <section className="border-b border-[#dce3df] bg-white dark:border-white/10 dark:bg-[#0f2230]">
-                        <div className="mx-auto max-w-[90rem] px-6 py-14 sm:px-10 sm:py-20 lg:px-12">
-                            <p className="text-sm font-semibold text-[#147a55] dark:text-[#78c7a4]">
+                    <section className="border-b bg-background">
+                        <div className="mx-auto max-w-360 px-5 py-14 sm:px-8 sm:py-18 lg:px-10">
+                            <p className="text-sm font-semibold text-primary">
                                 Support and contact
                             </p>
-                            <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.035em] text-balance text-[#12304a] sm:text-5xl dark:text-white">
+                            <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
                                 Get help with IDMIS
                             </h1>
-                            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#52636f] dark:text-[#aebfc7]">
+                            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
                                 Choose the route that matches your issue. Never
                                 share your password, recovery codes, or one-time
                                 verification code with support personnel.
@@ -43,22 +43,22 @@ export default function Help() {
                         </div>
                     </section>
 
-                    <section className="mx-auto grid max-w-[90rem] gap-12 px-6 py-12 sm:px-10 lg:grid-cols-[1fr_.85fr] lg:px-12 lg:py-16">
+                    <section className="mx-auto grid max-w-360 gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[1fr_.85fr] lg:px-10 lg:py-16">
                         <div>
-                            <h2 className="text-2xl font-semibold tracking-[-0.025em] text-[#12304a] dark:text-white">
+                            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
                                 System access
                             </h2>
-                            <div className="mt-6 divide-y divide-[#cbd6d0] border-y border-[#cbd6d0] dark:divide-white/15 dark:border-white/15">
+                            <div className="mt-6 divide-y border-y">
                                 <div className="grid gap-4 py-6 sm:grid-cols-[2.75rem_1fr]">
                                     <KeyRound
-                                        className="size-6 text-[#147a55] dark:text-[#78c7a4]"
+                                        className="size-6 text-primary"
                                         aria-hidden="true"
                                     />
                                     <div>
-                                        <h3 className="font-semibold text-[#12304a] dark:text-white">
+                                        <h3 className="font-semibold text-foreground">
                                             I already have an account
                                         </h3>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52636f] dark:text-[#aebfc7]">
+                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                                             Sign in with your approved work
                                             email. If you have forgotten your
                                             password, request a secure reset
@@ -67,13 +67,13 @@ export default function Help() {
                                         <div className="mt-4 flex flex-wrap gap-3">
                                             <Link
                                                 href={login()}
-                                                className={`inline-flex min-h-10 items-center rounded-md bg-[#147a55] px-4 text-sm font-semibold text-white hover:bg-[#0d6143] dark:bg-[#57b58e] dark:text-[#092019] ${focusClass}`}
+                                                className={`inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 ${focusClass}`}
                                             >
                                                 Sign in
                                             </Link>
                                             <Link
                                                 href={request()}
-                                                className={`inline-flex min-h-10 items-center rounded-md border border-[#9eada6] px-4 text-sm font-semibold text-[#12304a] hover:border-[#147a55] hover:bg-white dark:border-white/25 dark:text-white dark:hover:bg-white/5 ${focusClass}`}
+                                                className={`inline-flex min-h-10 items-center rounded-md border px-4 text-sm font-semibold text-foreground hover:bg-accent ${focusClass}`}
                                             >
                                                 Reset password
                                             </Link>
@@ -82,14 +82,14 @@ export default function Help() {
                                 </div>
                                 <div className="grid gap-4 py-6 sm:grid-cols-[2.75rem_1fr]">
                                     <ShieldCheck
-                                        className="size-6 text-[#147a55] dark:text-[#78c7a4]"
+                                        className="size-6 text-primary"
                                         aria-hidden="true"
                                     />
                                     <div>
-                                        <h3 className="font-semibold text-[#12304a] dark:text-white">
+                                        <h3 className="font-semibold text-foreground">
                                             I need access
                                         </h3>
-                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#52636f] dark:text-[#aebfc7]">
+                                        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
                                             IDMIS does not allow public
                                             registration. Ask your designated
                                             county, national, verification, or
@@ -103,14 +103,14 @@ export default function Help() {
 
                             <Link
                                 href={faqs()}
-                                className={`mt-8 inline-flex rounded-sm text-sm font-semibold text-[#147a55] underline-offset-4 hover:underline dark:text-[#78c7a4] ${focusClass}`}
+                                className={`mt-8 inline-flex rounded-sm text-sm font-semibold text-primary underline-offset-4 hover:underline ${focusClass}`}
                             >
                                 Browse frequently asked questions
                             </Link>
                         </div>
 
                         <aside
-                            className="bg-[#12304a] p-7 text-white sm:p-9"
+                            className="bg-primary p-7 text-primary-foreground sm:p-9"
                             aria-labelledby="department-contact"
                         >
                             <h2
@@ -128,7 +128,7 @@ export default function Help() {
                                 <ul className="grid gap-5 text-sm">
                                     <li className="flex gap-3">
                                         <MapPin
-                                            className="mt-0.5 size-5 shrink-0 text-[#78c7a4]"
+                                            className="mt-0.5 size-5 shrink-0"
                                             aria-hidden="true"
                                         />
                                         <span>
@@ -145,7 +145,7 @@ export default function Help() {
                                             className={`inline-flex items-center gap-3 hover:underline ${focusClass}`}
                                         >
                                             <Phone
-                                                className="size-5 text-[#78c7a4]"
+                                                className="size-5"
                                                 aria-hidden="true"
                                             />
                                             +254 020 225 0645
@@ -157,7 +157,7 @@ export default function Help() {
                                             className={`inline-flex items-center gap-3 hover:underline ${focusClass}`}
                                         >
                                             <Mail
-                                                className="size-5 text-[#78c7a4]"
+                                                className="size-5"
                                                 aria-hidden="true"
                                             />
                                             info@devolution.go.ke
@@ -169,7 +169,7 @@ export default function Help() {
                                             className={`inline-flex items-center gap-3 hover:underline ${focusClass}`}
                                         >
                                             <Mail
-                                                className="size-5 text-[#78c7a4]"
+                                                className="size-5"
                                                 aria-hidden="true"
                                             />
                                             complaints@devolution.go.ke
@@ -181,7 +181,7 @@ export default function Help() {
                                 href="https://www.devolution.go.ke/contact-us"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`mt-9 inline-flex min-h-11 items-center gap-2 rounded-md bg-white px-4 text-sm font-semibold text-[#12304a] hover:bg-[#edf2ef] ${focusClass}`}
+                                className={`mt-9 inline-flex min-h-11 items-center gap-2 rounded-md bg-primary-foreground px-4 text-sm font-semibold text-primary hover:bg-primary-foreground/90 ${focusClass}`}
                             >
                                 Official contact page
                                 <ExternalLink

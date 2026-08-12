@@ -18,7 +18,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 <div
                     role="status"
                     aria-live="polite"
-                    className="mb-4 text-center text-sm font-medium text-green-700 dark:text-green-400"
+                    className="mb-4 text-center text-sm font-medium text-primary"
                 >
                     {status}
                 </div>

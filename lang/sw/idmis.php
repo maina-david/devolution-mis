@@ -44,5 +44,13 @@ return [
         'postal_address' => 'Teleposta Towers, Kenyatta Avenue, S.L.P. 30004–00100, Nairobi',
         'copyright' => '© :year Idara ya Serikali ya Ugatuzi',
         'complaints' => 'Malalamiko',
+        'authorized_access_only' => 'Ufikiaji ulioidhinishwa pekee',
+        'secure_government_access' => 'Ufikiaji salama wa rekodi ya kitaifa ya uendeshaji wa ugatuzi',
+        'secure_government_access_description' => 'Jukumu lako, taasisi na kaunti au jalada ulilopewa huamua rekodi na vitendo vinavyopatikana baada ya kuingia.',
+        'account_provisioning' => 'Akaunti zinazotolewa na msimamizi',
+        'account_provisioning_description' => 'Hakuna usajili wa umma. Tumia akaunti rasmi ya kazi uliyopewa kwa majukumu yako.',
+        'protect_credentials' => 'Linda taarifa zako za kuingia',
+        'protect_credentials_description' => 'Usaidizi wa IDMIS hautawahi kuomba nywila, msimbo wa urejeshaji au msimbo wa uthibitishaji wa mara moja.',
+        'authentication_help' => 'Msaada wa uthibitishaji',
     ],
 ];

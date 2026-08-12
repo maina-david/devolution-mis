@@ -40,8 +40,13 @@ class WelcomePageTest extends TestCase
     {
         foreach ([
             'resources/js/pages/welcome.tsx',
+            'resources/js/pages/help.tsx',
+            'resources/js/pages/faqs.tsx',
+            'resources/js/pages/learning/certificate-verification.tsx',
             'resources/js/components/public-site-header.tsx',
             'resources/js/components/public-site-footer.tsx',
+            'resources/js/layouts/public-layout.tsx',
+            'resources/js/layouts/auth/auth-simple-layout.tsx',
         ] as $path) {
             $source = file_get_contents(base_path($path));
             $this->assertIsString($source);

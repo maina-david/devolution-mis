@@ -41,13 +41,13 @@ export default function CertificateVerification({
             <main id="main-content" tabIndex={-1}>
                 <section className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[minmax(0,.8fr)_minmax(0,1.2fr)] lg:px-12 lg:py-20">
                     <div>
-                        <div className="flex size-12 items-center justify-center rounded-xl bg-[#147a55] text-white">
+                        <div className="flex size-12 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                             <Award aria-hidden="true" />
                         </div>
-                        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-[#12304a] dark:text-white">
+                        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground">
                             Verify a learning certificate
                         </h1>
-                        <p className="mt-4 max-w-xl leading-7 text-[#52636f] dark:text-[#aebfc7]">
+                        <p className="mt-4 max-w-xl leading-7 text-muted-foreground">
                             Enter the 24-character verification code printed on
                             the certificate. Results come directly from the
                             governed IDMIS certificate register.
@@ -123,11 +123,11 @@ export default function CertificateVerification({
                         )}
 
                         {certificate && (
-                            <Card className="border-[#147a55]/40">
+                            <Card className="border-primary/40">
                                 <CardHeader className="border-b">
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
-                                            <p className="text-sm font-medium text-[#147a55] dark:text-[#78c7a4]">
+                                            <p className="text-sm font-medium text-primary">
                                                 IDMIS certificate register
                                             </p>
                                             <CardTitle className="mt-1">

@@ -105,7 +105,7 @@ export default function Login({
 
                             <Button
                                 type="submit"
-                                className="mt-4 min-h-11 w-full bg-[#147a55] font-semibold text-white hover:bg-[#0d6143]"
+                                className="mt-4 min-h-11 w-full font-semibold"
                                 disabled={processing}
                                 data-test="login-button"
                             >
@@ -126,7 +126,7 @@ export default function Login({
                 <div
                     role="status"
                     aria-live="polite"
-                    className="mb-4 text-center text-sm font-medium text-green-700 dark:text-green-400"
+                    className="mb-4 text-center text-sm font-medium text-primary"
                 >
                     {status}
                 </div>

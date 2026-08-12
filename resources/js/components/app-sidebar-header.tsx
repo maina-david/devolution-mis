@@ -77,8 +77,8 @@ export function AppSidebarHeader({
     );
 
     return (
-        <header className="app-sidebar-header sticky top-0 z-50 w-full shrink-0 border-b border-sidebar-border bg-sidebar text-sidebar-foreground shadow-xs">
-            <div className="flex h-16 items-center gap-2 px-4 sm:px-6">
+        <header className="app-sidebar-header sticky top-0 z-50 w-full shrink-0 border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
+            <div className="flex h-15 items-center gap-2 px-4 sm:px-6">
                 <SidebarTrigger className="-ml-1 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" />
                 <div className="min-w-0 flex-1">
                     <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} inverse />
@@ -176,7 +176,7 @@ function ContextualNavigation({
     return (
         <nav
             aria-label={label}
-            className="relative overflow-x-auto border-t border-primary-foreground/15 px-4 sm:px-6"
+            className="relative overflow-x-auto border-t border-sidebar-foreground/15 px-4 sm:px-6"
         >
             <div
                 ref={measurementRef}

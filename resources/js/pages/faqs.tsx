@@ -51,15 +51,15 @@ export default function Faqs() {
 
             <PublicLayout>
                 <main id="main-content" tabIndex={-1}>
-                    <section className="border-b border-[#dce3df] bg-white dark:border-white/10 dark:bg-[#0f2230]">
-                        <div className="mx-auto max-w-5xl px-6 py-14 sm:px-10 sm:py-20">
-                            <p className="text-sm font-semibold text-[#147a55] dark:text-[#78c7a4]">
+                    <section className="border-b bg-background">
+                        <div className="mx-auto max-w-5xl px-5 py-14 sm:px-8 sm:py-18">
+                            <p className="text-sm font-semibold text-primary">
                                 IDMIS guidance
                             </p>
-                            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.035em] text-balance text-[#12304a] sm:text-5xl dark:text-white">
+                            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
                                 Frequently asked questions
                             </h1>
-                            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#52636f] dark:text-[#aebfc7]">
+                            <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
                                 Find quick answers about system access,
                                 permitted users, information handling, and
                                 support.
@@ -67,34 +67,34 @@ export default function Faqs() {
                         </div>
                     </section>
 
-                    <section className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
-                        <div className="divide-y divide-[#cbd6d0] border-y border-[#cbd6d0] dark:divide-white/15 dark:border-white/15">
+                    <section className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-16">
+                        <div className="divide-y border-y">
                             {questions.map((item, index) => (
                                 <details
                                     key={item.question}
                                     className="group py-1"
                                     open={index === 0}
                                 >
-                                    <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 rounded-md px-3 text-base font-semibold text-[#12304a] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] dark:text-white dark:hover:bg-white/5 [&::-webkit-details-marker]:hidden">
+                                    <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 rounded-md px-3 text-base font-semibold text-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
                                         {item.question}
                                         <ChevronDown
-                                            className="size-5 shrink-0 text-[#147a55] transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none dark:text-[#78c7a4]"
+                                            className="size-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
                                             aria-hidden="true"
                                         />
                                     </summary>
-                                    <p className="max-w-3xl px-3 pb-6 text-sm leading-7 text-[#52636f] dark:text-[#aebfc7]">
+                                    <p className="max-w-3xl px-3 pb-6 text-sm leading-7 text-muted-foreground">
                                         {item.answer}
                                     </p>
                                 </details>
                             ))}
                         </div>
 
-                        <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t border-[#cbd6d0] pt-8 sm:flex-row sm:items-center dark:border-white/15">
+                        <div className="mt-12 flex flex-col items-start justify-between gap-6 border-t pt-8 sm:flex-row sm:items-center">
                             <div>
-                                <h2 className="text-lg font-semibold text-[#12304a] dark:text-white">
+                                <h2 className="text-lg font-semibold text-foreground">
                                     Still need help?
                                 </h2>
-                                <p className="mt-1 text-sm text-[#52636f] dark:text-[#aebfc7]">
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     See the support channels or return to sign
                                     in.
                                 </p>
@@ -102,13 +102,13 @@ export default function Faqs() {
                             <div className="flex flex-wrap gap-3">
                                 <Link
                                     href={help()}
-                                    className="inline-flex min-h-11 items-center rounded-md border border-[#9eada6] px-4 text-sm font-semibold text-[#12304a] hover:border-[#147a55] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] dark:border-white/25 dark:text-white dark:hover:bg-white/5"
+                                    className="inline-flex min-h-11 items-center rounded-md border px-4 text-sm font-semibold text-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                                 >
                                     Help and support
                                 </Link>
                                 <Link
                                     href={login()}
-                                    className="inline-flex min-h-11 items-center rounded-md bg-[#147a55] px-4 text-sm font-semibold text-white hover:bg-[#0d6143] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] focus-visible:ring-offset-2 dark:bg-[#57b58e] dark:text-[#092019]"
+                                    className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                 >
                                     Sign in
                                 </Link>
@@ -119,7 +119,7 @@ export default function Faqs() {
                             href="https://www.devolution.go.ke/faqs"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-8 inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-[#147a55] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] dark:text-[#78c7a4]"
+                            className="mt-8 inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                             Read general devolution FAQs
                             <ExternalLink

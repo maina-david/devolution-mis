@@ -33,9 +33,11 @@ export function NavMain({
     const { isCurrentUrl } = useCurrentUrl();
 
     return (
-        <SidebarGroup className="px-2 py-0">
-            <SidebarGroupLabel>{label}</SidebarGroupLabel>
-            <SidebarMenu>
+        <SidebarGroup className="px-3 py-0">
+            <SidebarGroupLabel className="px-2 text-[0.68rem] font-semibold tracking-wide text-sidebar-foreground/65 uppercase">
+                {label}
+            </SidebarGroupLabel>
+            <SidebarMenu className="gap-1">
                 {items.map((item) => (
                     <NavMainRow
                         key={item.title}
@@ -143,7 +145,7 @@ function NavMainRow({
                         asChild
                         isActive={active}
                         tooltip={{ children: item.title }}
-                        className="text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+                        className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
                     >
                         <Link
                             ref={triggerRef}
@@ -207,7 +209,7 @@ function NavMainRow({
                 </DropdownMenuContent>
             </DropdownMenu>
             {!!item.badge && (
-                <SidebarMenuBadge className="bg-sidebar-foreground/10 text-sidebar-foreground">
+                <SidebarMenuBadge className="right-2 bg-sidebar-foreground/12 text-sidebar-foreground">
                     {item.badge}
                 </SidebarMenuBadge>
             )}

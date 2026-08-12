@@ -10,12 +10,12 @@ export default function AppLogo({
 }) {
     return (
         <>
-            <div className="flex aspect-square size-9 items-center justify-center text-sidebar-foreground">
-                <AppLogoIcon className="size-8" />
+            <div className="flex aspect-square size-10 items-center justify-center rounded-md bg-sidebar-foreground text-sidebar">
+                <AppLogoIcon className="size-9" />
             </div>
             <div className="ml-1 grid flex-1 text-left">
                 <span className="flex min-w-0 items-center gap-1.5">
-                    <span className="shrink-0 text-sm leading-tight font-bold tracking-[-0.01em] text-sidebar-foreground">
+                    <span className="shrink-0 text-base leading-tight font-bold tracking-tight text-sidebar-foreground">
                         IDMIS
                     </span>
                     {county ? (
@@ -31,7 +31,7 @@ export default function AppLogo({
                         </Badge>
                     ) : null}
                 </span>
-                <span className="truncate text-[0.65rem] leading-tight text-sidebar-foreground/75">
+                <span className="truncate text-[0.68rem] leading-tight text-sidebar-foreground/75">
                     State Department for Devolution
                 </span>
             </div>

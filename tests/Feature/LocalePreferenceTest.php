@@ -76,7 +76,7 @@ class LocalePreferenceTest extends TestCase
     public function test_header_locale_selector_has_screen_reader_and_wayfinder_contracts(): void
     {
         $source = file_get_contents(resource_path('js/components/locale-menu.tsx'));
-        $publicShell = file_get_contents(resource_path('js/components/citizen-engagement-shell.tsx'));
+        $publicShell = file_get_contents(resource_path('js/components/public-site-header.tsx'));
 
         $this->assertIsString($source);
         $this->assertIsString($publicShell);
@@ -86,8 +86,7 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('aria-live="polite"', $source);
         $this->assertStringContainsString('lang={locale.code}', $source);
         $this->assertStringContainsString('aria-hidden="true">{locale.flag}', $source);
-        $this->assertStringContainsString('<LocaleMenu />', $publicShell);
-        $this->assertStringContainsString('{copy.skipToMainContent}', $publicShell);
+        $this->assertStringContainsString('<LocaleMenu inverse />', $publicShell);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
