@@ -20,6 +20,16 @@ class AccessibilityContractTest extends TestCase
         }
     }
 
+    public function test_public_header_remains_visible_without_obscuring_the_skip_link(): void
+    {
+        $publicHeader = $this->source('resources/js/components/public-site-header.tsx');
+        $publicLayout = $this->source('resources/js/layouts/public-layout.tsx');
+
+        $this->assertStringContainsString('sticky top-0', $publicHeader);
+        $this->assertStringContainsString('isolate z-40', $publicHeader);
+        $this->assertStringContainsString('fixed top-3 left-3 z-50', $publicLayout);
+    }
+
     public function test_authenticated_workspaces_have_a_keyboard_bypass_target(): void
     {
         $appShell = $this->source('resources/js/components/app-shell.tsx');

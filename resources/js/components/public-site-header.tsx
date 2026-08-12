@@ -18,7 +18,7 @@ export function PublicSiteHeader() {
     const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : login();
 
     return (
-        <header className="border-b bg-background">
+        <header className="sticky top-0 isolate z-40 border-b bg-background">
             <div className="bg-primary text-primary-foreground">
                 <div className="mx-auto flex min-h-9 max-w-360 items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
                     <div className="flex items-center gap-2 text-xs font-medium">
