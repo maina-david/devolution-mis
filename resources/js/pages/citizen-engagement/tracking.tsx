@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { CalendarClock, MessageSquare, Star } from 'lucide-react';
 import { rate } from '@/actions/App/Http/Controllers/PublicCitizenCaseController';
 import CitizenEngagementShell from '@/components/citizen-engagement-shell';
@@ -50,16 +50,32 @@ export default function CitizenCaseTracking({
 }: {
     case: Case;
 }) {
+    const { current: locale, citizen: copy } = usePage().props.localization;
+    const localizedDate = (value: string) =>
+        new Date(value).toLocaleString(locale);
+
     return (
         <CitizenEngagementShell>
-            <Head title={`Track ${citizenCase.reference}`} />
+            <Head
+                title={copy.track_reference_title.replace(
+                    ':reference',
+                    citizenCase.reference,
+                )}
+            />
             <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-12 sm:px-6">
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="outline">
-                        {citizenCase.status.replaceAll('_', ' ')}
+                        {copy[citizenCase.status] ??
+                            citizenCase.status.replaceAll('_', ' ')}
                     </Badge>
-                    <Badge variant="secondary">{citizenCase.type}</Badge>
-                    <Badge variant="secondary">{citizenCase.category}</Badge>
+                    <Badge variant="secondary">
+                        {citizenCase.type === 'feedback'
+                            ? copy.citizen_feedback
+                            : copy.formal_grievance}
+                    </Badge>
+                    <Badge variant="secondary">
+                        {copy[citizenCase.category] ?? citizenCase.category}
+                    </Badge>
                 </div>
                 <div>
                     <p className="font-mono text-sm text-muted-foreground">
@@ -77,27 +93,26 @@ export default function CitizenCaseTracking({
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <CalendarClock aria-hidden="true" />
-                            Case status
+                            {copy.case_status}
                         </CardTitle>
                         <CardDescription>
-                            Target resolution date:{' '}
-                            {new Date(
-                                citizenCase.resolutionDueAt,
-                            ).toLocaleString()}
+                            {copy.target_resolution.replace(
+                                ':date',
+                                localizedDate(citizenCase.resolutionDueAt),
+                            )}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {citizenCase.resolutionSummary ? (
                             <div>
-                                <p className="font-medium">Resolution</p>
+                                <p className="font-medium">{copy.resolution}</p>
                                 <p className="mt-2 text-sm text-muted-foreground">
                                     {citizenCase.resolutionSummary}
                                 </p>
                             </div>
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                The responsible team is processing this case.
-                                Public updates appear below.
+                                {copy.processing_case}
                             </p>
                         )}
                     </CardContent>
@@ -106,11 +121,10 @@ export default function CitizenCaseTracking({
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <MessageSquare aria-hidden="true" />
-                            Public updates
+                            {copy.public_updates}
                         </CardTitle>
                         <CardDescription>
-                            Internal investigation notes are never displayed
-                            here.
+                            {copy.internal_notes_hidden}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -124,13 +138,13 @@ export default function CitizenCaseTracking({
                                         <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
                                             <span>
                                                 {message.direction === 'inbound'
-                                                    ? 'Your submission'
-                                                    : 'Official response'}
+                                                    ? copy.your_submission
+                                                    : copy.official_response}
                                             </span>
                                             <time dateTime={message.postedAt}>
-                                                {new Date(
+                                                {localizedDate(
                                                     message.postedAt,
-                                                ).toLocaleString()}
+                                                )}
                                             </time>
                                         </div>
                                         <p className="mt-2 text-sm">
@@ -141,44 +155,43 @@ export default function CitizenCaseTracking({
                             </ol>
                         ) : (
                             <p className="text-sm text-muted-foreground">
-                                No public updates have been posted.
+                                {copy.no_public_updates}
                             </p>
                         )}
                     </CardContent>
                 </Card>
                 {['resolved', 'closed'].includes(citizenCase.status) &&
-                    !citizenCase.satisfactionRating && <RatingSheet />}
+                    !citizenCase.satisfactionRating && (
+                        <RatingSheet copy={copy} />
+                    )}
                 <Button asChild variant="outline">
-                    <Link href={index()}>Return to citizen engagement</Link>
+                    <Link href={index()}>{copy.return_to_engagement}</Link>
                 </Button>
             </div>
         </CitizenEngagementShell>
     );
 }
 
-function RatingSheet() {
+function RatingSheet({ copy }: { copy: Record<string, string> }) {
     return (
         <Sheet>
             <SheetTrigger asChild>
                 <Button>
                     <Star aria-hidden="true" />
-                    Rate this resolution
+                    {copy.rate_resolution}
                 </Button>
             </SheetTrigger>
             <SheetContent>
                 <SheetHeader>
-                    <SheetTitle>Rate your experience</SheetTitle>
-                    <SheetDescription>
-                        Your aggregate rating helps identify satisfaction
-                        trends.
-                    </SheetDescription>
+                    <SheetTitle>{copy.rate_experience}</SheetTitle>
+                    <SheetDescription>{copy.rating_help}</SheetDescription>
                 </SheetHeader>
                 <Form action={rate()} className="flex flex-col gap-5 px-4">
                     {({ errors, processing }) => (
                         <>
                             <div className="flex flex-col gap-2">
                                 <Label htmlFor="satisfaction_rating">
-                                    Rating from 1 to 5
+                                    {copy.rating_label}
                                 </Label>
                                 <Input
                                     id="satisfaction_rating"
@@ -208,7 +221,7 @@ function RatingSheet() {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <Label htmlFor="satisfaction_comment">
-                                    Comment (optional)
+                                    {copy.comment_optional}
                                 </Label>
                                 <Textarea
                                     id="satisfaction_comment"
@@ -220,7 +233,7 @@ function RatingSheet() {
                                 disabled={processing}
                                 aria-busy={processing}
                             >
-                                Submit rating
+                                {copy.submit_rating}
                             </Button>
                         </>
                     )}

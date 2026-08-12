@@ -3,81 +3,87 @@ import { ArrowRight, ExternalLink } from 'lucide-react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
 import KenyaFlag from '@/components/kenya-flag';
+import { LocaleMenu } from '@/components/locale-menu';
+import { Button } from '@/components/ui/button';
 import { dashboard, faqs, help, home, login } from '@/routes';
+import { index as citizenEngagement } from '@/routes/citizen-engagement';
 import { verify as verifyCertificate } from '@/routes/learning/certificates';
 
+const navigationLink =
+    'inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+
 export function PublicSiteHeader() {
-    const { auth, currentTeam } = usePage().props;
+    const { auth, currentTeam, localization } = usePage().props;
+    const { copy } = localization;
     const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : login();
 
     return (
-        <header className="border-b border-[#dce3df] bg-white dark:border-white/10 dark:bg-[#0f2230]">
-            <div className="mx-auto flex min-h-20 max-w-[90rem] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
+        <header className="border-b bg-background">
+            <div className="bg-primary text-primary-foreground">
+                <div className="mx-auto flex min-h-9 max-w-360 items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
+                    <div className="flex items-center gap-2 text-xs font-medium">
+                        <KenyaFlag className="h-3.5 w-5" />
+                        <span>{copy.republic}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <a
+                            href="https://www.devolution.go.ke"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden min-h-9 items-center gap-1.5 rounded-sm px-2 text-xs font-medium text-primary-foreground/85 hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none sm:inline-flex"
+                        >
+                            {copy.departmentWebsite}
+                            <ExternalLink
+                                className="size-3"
+                                aria-hidden="true"
+                            />
+                        </a>
+                        <LocaleMenu inverse />
+                    </div>
+                </div>
+            </div>
+
+            <div className="mx-auto flex min-h-18 max-w-360 items-center gap-5 px-4 sm:px-6 lg:px-10">
                 <Link
                     href={home()}
-                    className="flex items-center gap-3 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] focus-visible:ring-offset-4 dark:focus-visible:ring-offset-[#0f2230]"
-                    aria-label="IDMIS home"
+                    className="flex min-w-0 items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:outline-none"
+                    aria-label={`IDMIS ${copy.home}`}
                 >
-                    <AppLogoIcon className="size-10 text-[#12304a] dark:text-white" />
-                    <span className="border-l border-[#d7dfdb] pl-3 dark:border-white/20">
-                        <span className="block text-lg leading-none font-bold tracking-[-0.02em] text-[#12304a] dark:text-white">
+                    <AppLogoIcon className="size-11 shrink-0" />
+                    <span className="min-w-0">
+                        <span className="block text-lg leading-none font-bold tracking-tight text-foreground">
                             IDMIS
                         </span>
-                        <span className="mt-1 hidden text-[0.68rem] leading-none font-medium text-[#52636f] sm:block dark:text-[#aebfc7]">
-                            State Department for Devolution
-                        </span>
-                    </span>
-                    <span className="hidden items-center gap-2 border-l border-[#d7dfdb] pl-3 lg:flex dark:border-white/20">
-                        <KenyaFlag className="h-4 w-6 rounded-[1px] shadow-sm" />
-                        <span className="text-[0.62rem] leading-tight font-semibold tracking-[0.08em] text-[#52636f] uppercase dark:text-[#aebfc7]">
-                            Republic of Kenya
+                        <span className="mt-1 hidden truncate text-xs font-medium text-muted-foreground sm:block">
+                            {copy.departmentName}
                         </span>
                     </span>
                 </Link>
 
                 <nav
-                    aria-label="Primary navigation"
-                    className="flex items-center gap-1 sm:gap-2"
+                    aria-label={copy.primaryNavigation}
+                    className="ml-auto hidden items-center gap-1 md:flex"
                 >
-                    <Link
-                        href={verifyCertificate()}
-                        prefetch
-                        className="hidden min-h-11 items-center rounded-md px-3 text-sm font-semibold text-[#40525f] transition-colors hover:bg-[#edf2ef] hover:text-[#12304a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] xl:inline-flex dark:text-[#bdcbd1] dark:hover:bg-white/10 dark:hover:text-white"
-                    >
-                        Verify certificate
+                    <Link href={citizenEngagement()} className={navigationLink}>
+                        {copy.citizenEngagement}
                     </Link>
-                    <Link
-                        href={faqs()}
-                        prefetch
-                        className="hidden min-h-11 items-center rounded-md px-3 text-sm font-semibold text-[#40525f] transition-colors hover:bg-[#edf2ef] hover:text-[#12304a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] sm:inline-flex dark:text-[#bdcbd1] dark:hover:bg-white/10 dark:hover:text-white"
-                    >
-                        FAQs
+                    <Link href={verifyCertificate()} className={navigationLink}>
+                        {copy.verifyCertificate}
                     </Link>
-                    <Link
-                        href={help()}
-                        prefetch
-                        className="hidden min-h-11 items-center rounded-md px-3 text-sm font-semibold text-[#40525f] transition-colors hover:bg-[#edf2ef] hover:text-[#12304a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] md:inline-flex dark:text-[#bdcbd1] dark:hover:bg-white/10 dark:hover:text-white"
-                    >
-                        Help
+                    <Link href={faqs()} className={navigationLink}>
+                        {copy.faqs}
                     </Link>
-                    <a
-                        href="https://www.devolution.go.ke"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden min-h-11 items-center gap-1.5 rounded-md px-3 text-sm font-semibold text-[#40525f] transition-colors hover:bg-[#edf2ef] hover:text-[#12304a] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] lg:inline-flex dark:text-[#bdcbd1] dark:hover:bg-white/10 dark:hover:text-white"
-                    >
-                        Department website
-                        <ExternalLink className="size-3.5" aria-hidden="true" />
-                    </a>
-                    <Link
-                        href={auth.user ? dashboardUrl : login()}
-                        prefetch
-                        className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#147a55] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#0d6143] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1769aa] focus-visible:ring-offset-2 dark:bg-[#57b58e] dark:text-[#092019] dark:hover:bg-[#74c7a5]"
-                    >
-                        {auth.user ? 'Dashboard' : 'Sign in'}
-                        <ArrowRight className="size-4" aria-hidden="true" />
+                    <Link href={help()} className={navigationLink}>
+                        {copy.help}
                     </Link>
                 </nav>
+
+                <Button asChild className="ml-auto shrink-0 md:ml-2">
+                    <Link href={auth.user ? dashboardUrl : login()} prefetch>
+                        {auth.user ? copy.dashboard : copy.signIn}
+                        <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                    </Link>
+                </Button>
             </div>
         </header>
     );

@@ -60,6 +60,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::inertia('faqs', 'faqs')->name('faqs');
 Route::inertia('help', 'help')->name('help');
 Route::get('health/ready', HealthController::class)->name('health.ready');
+Route::patch('locale', LocaleController::class)->middleware('throttle:20,1')->name('locale.update');
 Route::get('learning/certificates/verify', PublicLearningCertificateController::class)->middleware('throttle:certificate-verification')->name('learning.certificates.verify');
 Route::get('citizen-engagement', [PublicCitizenCaseController::class, 'index'])->name('citizen-engagement.index');
 Route::post('citizen-engagement/cases', [PublicCitizenCaseController::class, 'store'])->middleware('throttle:citizen-intake')->name('citizen-engagement.store');
@@ -397,7 +398,6 @@ Route::prefix('{current_team}')
     });
 
 Route::middleware(['auth'])->group(function () {
-    Route::patch('locale', LocaleController::class)->name('locale.update');
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 });

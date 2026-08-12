@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { CheckCircle2, Copy, Printer } from 'lucide-react';
 import { useState } from 'react';
 import CitizenEngagementShell from '@/components/citizen-engagement-shell';
@@ -18,51 +18,48 @@ export default function CitizenCaseReceipt({
 }: {
     receipt: { reference: string; trackingToken: string };
 }) {
+    const copyText = usePage().props.localization.citizen;
     const [copyStatus, setCopyStatus] = useState('');
     const copy = async () => {
         try {
             await navigator.clipboard.writeText(
-                `Reference: ${receipt.reference}\nPrivate tracking code: ${receipt.trackingToken}`,
+                `${copyText.case_reference}: ${receipt.reference}\n${copyText.tracking_code}: ${receipt.trackingToken}`,
             );
-            setCopyStatus('Receipt copied to clipboard.');
+            setCopyStatus(copyText.receipt_copied);
         } catch {
-            setCopyStatus(
-                'The receipt could not be copied. Select the reference and tracking code manually.',
-            );
+            setCopyStatus(copyText.receipt_copy_failed);
         }
     };
 
     return (
         <CitizenEngagementShell>
-            <Head title="Case receipt" />
+            <Head title={copyText.receipt_title} />
             <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-16 sm:px-6">
                 <div className="flex items-center gap-3 text-primary">
                     <CheckCircle2 aria-hidden="true" />
-                    <p className="font-semibold">Submitted securely</p>
+                    <p className="font-semibold">
+                        {copyText.submitted_securely}
+                    </p>
                 </div>
-                <h1 className="text-4xl font-bold">Keep this receipt.</h1>
+                <h1 className="text-4xl font-bold">{copyText.keep_receipt}</h1>
                 <Alert>
-                    <AlertTitle>
-                        The tracking code is displayed only on this receipt
-                    </AlertTitle>
+                    <AlertTitle>{copyText.receipt_private_title}</AlertTitle>
                     <AlertDescription>
-                        Save or print it now. Staff cannot recover the original
-                        private code because IDMIS stores only a cryptographic
-                        hash.
+                        {copyText.receipt_private_description}
                     </AlertDescription>
                 </Alert>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Citizen case receipt</CardTitle>
+                        <CardTitle>{copyText.citizen_case_receipt}</CardTitle>
                         <CardDescription>
-                            Use both values when checking your case.
+                            {copyText.receipt_values_help}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <dl className="flex flex-col gap-5">
                             <div>
                                 <dt className="text-sm text-muted-foreground">
-                                    Case reference
+                                    {copyText.case_reference}
                                 </dt>
                                 <dd className="mt-1 font-mono text-lg font-bold">
                                     {receipt.reference}
@@ -70,7 +67,7 @@ export default function CitizenCaseReceipt({
                             </div>
                             <div>
                                 <dt className="text-sm text-muted-foreground">
-                                    Private tracking code
+                                    {copyText.tracking_code}
                                 </dt>
                                 <dd className="mt-1 font-mono text-lg font-bold break-all">
                                     {receipt.trackingToken}
@@ -80,7 +77,7 @@ export default function CitizenCaseReceipt({
                         <div className="mt-6 flex flex-wrap gap-3">
                             <Button type="button" onClick={copy}>
                                 <Copy aria-hidden="true" />
-                                Copy receipt
+                                {copyText.copy_receipt}
                             </Button>
                             <Button
                                 type="button"
@@ -88,7 +85,7 @@ export default function CitizenCaseReceipt({
                                 onClick={() => window.print()}
                             >
                                 <Printer aria-hidden="true" />
-                                Print
+                                {copyText.print}
                             </Button>
                         </div>
                         <p
@@ -101,7 +98,7 @@ export default function CitizenCaseReceipt({
                     </CardContent>
                 </Card>
                 <Button asChild variant="outline">
-                    <Link href={index()}>Return to citizen engagement</Link>
+                    <Link href={index()}>{copyText.return_to_engagement}</Link>
                 </Button>
             </div>
         </CitizenEngagementShell>

@@ -33,7 +33,8 @@ class PublicCitizenCaseTest extends TestCase
         ])->assertRedirect(route('citizen-engagement.receipt'));
 
         $case = CitizenCase::query()->sole();
-        $receipt = $response->getSession()->get('case_receipt');
+        $receipt = session('case_receipt');
+        $this->assertIsArray($receipt);
         $this->assertTrue(Str::isUuid($case->id));
         $this->assertSame('received', $case->status);
         $this->assertSame($release->id, $case->intake_reference_data_release_id);
@@ -86,6 +87,46 @@ class PublicCitizenCaseTest extends TestCase
             'is_anonymous' => true, 'preferred_contact' => 'none', 'consent_given' => true, 'privacy_notice_version' => '2026-08',
         ])->assertConflict();
         $this->assertSame(1, CitizenCase::query()->count());
+    }
+
+    public function test_public_citizen_journey_is_localized_without_exposing_private_case_data(): void
+    {
+        $county = County::factory()->create();
+        $this->publishedReferenceRelease([$county]);
+
+        $this->withSession(['locale' => 'sw'])
+            ->get(route('citizen-engagement.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.citizen.page_title', 'Maoni ya wananchi na utatuzi wa malalamiko')
+                ->where('localization.citizen.submit_action', 'Wasilisha maoni au malalamiko')
+                ->missing('cases'));
+
+        $this->withSession(['locale' => 'fr'])
+            ->post(route('citizen-engagement.track'), [
+                'reference' => 'CFM-UNKNOWN',
+                'tracking_token' => Str::random(48),
+            ])
+            ->assertSessionHasErrors([
+                'reference' => 'La référence et le code de suivi privé ne correspondent pas.',
+            ]);
+    }
+
+    public function test_citizen_translation_catalogues_remain_synchronized_and_surfaces_use_translation_props(): void
+    {
+        $english = require lang_path('en/citizen.php');
+        $swahili = require lang_path('sw/citizen.php');
+        $french = require lang_path('fr/citizen.php');
+
+        $this->assertSame(array_keys($english), array_keys($swahili));
+        $this->assertSame(array_keys($english), array_keys($french));
+
+        foreach (['index.tsx', 'receipt.tsx', 'tracking.tsx'] as $page) {
+            $source = file_get_contents(resource_path("js/pages/citizen-engagement/{$page}"));
+            $this->assertIsString($source);
+            $this->assertStringContainsString('citizen', $source);
+        }
     }
 
     public function test_public_intake_rejects_records_outside_the_effective_snapshot_and_a_tampered_release(): void

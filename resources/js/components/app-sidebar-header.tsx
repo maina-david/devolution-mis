@@ -12,6 +12,7 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { GlobalSearchDialog } from '@/components/global-search-dialog';
+import { LocaleMenu } from '@/components/locale-menu';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -40,7 +41,6 @@ import {
 import type { ContextualNavigationSection } from '@/lib/app-navigation';
 import { cn } from '@/lib/utils';
 import { faqs, help } from '@/routes';
-import { update as updateLocale } from '@/routes/locale';
 import { index as notificationsIndex } from '@/routes/notifications';
 import type { BreadcrumbItem as BreadcrumbItemType, NavItem } from '@/types';
 
@@ -95,7 +95,7 @@ export function AppSidebarHeader({
                     updateAppearance={updateAppearance}
                     copy={localization.copy}
                 />
-                <LocaleMenu localization={localization} />
+                <LocaleMenu inverse />
                 {currentTeam && (
                     <NotificationMenu
                         teamSlug={currentTeam.slug}
@@ -128,74 +128,6 @@ export function AppSidebarHeader({
                 />
             )}
         </header>
-    );
-}
-
-function LocaleMenu({
-    localization,
-}: {
-    localization: ReturnType<typeof usePage>['props']['localization'];
-}) {
-    const selectedLocale = localization.supported.find(
-        (locale) => locale.code === localization.current,
-    );
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    className="h-9 gap-1.5 px-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                    title={localization.copy.chooseLanguage}
-                    aria-label={`${localization.copy.chooseLanguage}. ${localization.copy.currentLanguage}: ${selectedLocale?.nativeLabel ?? localization.current}`}
-                >
-                    <span aria-hidden="true">{selectedLocale?.flag}</span>
-                    <span className="hidden text-sm font-medium sm:inline">
-                        {selectedLocale?.nativeLabel ?? localization.current}
-                    </span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                    {localization.copy.language}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {localization.supported.map((locale) => {
-                    const active = locale.code === localization.current;
-
-                    return (
-                        <DropdownMenuItem key={locale.code} asChild>
-                            <Link
-                                href={updateLocale()}
-                                method="patch"
-                                data={{ locale: locale.code }}
-                                preserveScroll
-                                aria-current={active ? 'true' : undefined}
-                                lang={locale.code}
-                            >
-                                <span aria-hidden="true">{locale.flag}</span>
-                                <span>{locale.nativeLabel}</span>
-                                {locale.label !== locale.nativeLabel && (
-                                    <span className="text-muted-foreground">
-                                        {locale.label}
-                                    </span>
-                                )}
-                                {active && (
-                                    <Check
-                                        className="ml-auto"
-                                        aria-hidden="true"
-                                    />
-                                )}
-                            </Link>
-                        </DropdownMenuItem>
-                    );
-                })}
-            </DropdownMenuContent>
-            <span className="sr-only" role="status" aria-live="polite">
-                {localization.copy.currentLanguage}:{' '}
-                {selectedLocale?.nativeLabel ?? localization.current}
-            </span>
-        </DropdownMenu>
     );
 }
 

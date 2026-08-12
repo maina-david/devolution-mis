@@ -54,7 +54,7 @@ class PublicCitizenCaseController extends Controller
     {
         $case = CitizenCase::query()->where('reference', $request->validated('reference'))->where('tracking_token_hash', hash('sha256', $request->validated('tracking_token')))->first();
         if (! $case) {
-            return back()->withErrors(['reference' => 'The reference and private tracking code do not match.']);
+            return back()->withErrors(['reference' => __('citizen.tracking_mismatch')]);
         }
         $request->session()->put('tracked_case_id', $case->id);
 
@@ -77,12 +77,12 @@ class PublicCitizenCaseController extends Controller
         $caseId = $request->session()->get('tracked_case_id');
         abort_unless(is_string($caseId), 403);
         $case = CitizenCase::query()->findOrFail($caseId);
-        abort_unless(in_array($case->status, ['resolved', 'closed'], true), 409, 'Satisfaction can be recorded after resolution.');
-        abort_if($case->satisfaction_recorded_at !== null, 409, 'Satisfaction has already been recorded.');
+        abort_unless(in_array($case->status, ['resolved', 'closed'], true), 409, __('citizen.rating_after_resolution'));
+        abort_if($case->satisfaction_recorded_at !== null, 409, __('citizen.rating_already_recorded'));
         $case->update([...$request->validated(), 'satisfaction_recorded_at' => now()]);
-        $auditLogger->record(null, $case, 'citizen_case.satisfaction_recorded', "Satisfaction recorded for {$case->reference}.", $case->county_id, ['rating' => $case->satisfaction_rating]);
+        $auditLogger->record(null, $case, 'citizen_case.satisfaction_recorded', __('citizen.rating_audit', ['reference' => $case->reference]), $case->county_id, ['rating' => $case->satisfaction_rating]);
 
-        return back()->with('success', 'Thank you. Your satisfaction rating has been recorded.');
+        return back()->with('success', __('citizen.rating_recorded'));
     }
 
     /** @return array<string, mixed> */

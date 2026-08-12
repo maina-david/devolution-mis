@@ -45,7 +45,7 @@ class AccessibilityContractTest extends TestCase
         $receipt = $this->source('resources/js/pages/citizen-engagement/receipt.tsx');
         $this->assertStringContainsString('role="status"', $receipt);
         $this->assertStringContainsString('aria-live="polite"', $receipt);
-        $this->assertStringContainsString('The receipt could not be copied.', $receipt);
+        $this->assertStringContainsString('copyText.receipt_copy_failed', $receipt);
     }
 
     public function test_global_theme_respects_reduced_motion_and_destructive_contrast(): void

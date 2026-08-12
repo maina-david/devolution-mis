@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Accessibility,
     BarChart3,
@@ -60,54 +60,49 @@ export default function CitizenEngagementIndex({
     catalogue,
     dashboard,
 }: Props) {
+    const copy = usePage().props.localization.citizen;
+
     return (
         <CitizenEngagementShell>
-            <Head title="Citizen feedback and grievance redress" />
+            <Head title={copy.page_title} />
             <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 sm:px-6 lg:py-16">
                 <section className="grid items-end gap-8 lg:grid-cols-[1fr_0.7fr]">
                     <div>
                         <p className="text-sm font-semibold tracking-[0.14em] text-primary uppercase">
-                            Your voice in devolution
+                            {copy.eyebrow}
                         </p>
                         <h1 className="mt-4 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">
-                            Submit feedback or a grievance, then follow every
-                            public update.
+                            {copy.hero_title}
                         </h1>
                         <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
-                            Use an accessible, private channel to report a
-                            complaint, suggestion, compliment, inquiry or formal
-                            grievance. You may submit anonymously.
+                            {copy.hero_description}
                         </p>
                         <div className="mt-7 flex flex-wrap gap-3">
                             <IntakeSheet
                                 counties={counties}
                                 sectors={sectors}
                                 catalogue={catalogue}
+                                copy={copy}
                             />
-                            <TrackingSheet />
+                            <TrackingSheet copy={copy} />
                         </div>
                         {!catalogue.available && (
                             <Alert className="mt-5" variant="destructive">
                                 <LockKeyhole aria-hidden="true" />
                                 <AlertTitle>
-                                    New submissions are temporarily unavailable
+                                    {copy.intake_unavailable_title}
                                 </AlertTitle>
                                 <AlertDescription>
-                                    The governed county and sector catalogue is
-                                    unavailable or failed integrity validation.
-                                    Case tracking and the public accountability
-                                    dashboard remain available.
+                                    {copy.intake_unavailable_description}
                                 </AlertDescription>
                             </Alert>
                         )}
                     </div>
                     <Alert>
                         <LockKeyhole aria-hidden="true" />
-                        <AlertTitle>Your tracking code is private</AlertTitle>
+                        <AlertTitle>{copy.private_code_title}</AlertTitle>
                         <AlertDescription>
-                            Personal contact details are encrypted. Your receipt
-                            provides a one-time tracking code; IDMIS never
-                            publishes case-level personal information.
+                            {copy.private_code_description}
                         </AlertDescription>
                     </Alert>
                 </section>
@@ -119,26 +114,32 @@ export default function CitizenEngagementIndex({
                                 id="public-dashboard-heading"
                                 className="text-2xl font-bold"
                             >
-                                Public accountability snapshot
+                                {copy.dashboard_title}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Aggregate resolved and pending cases only.
+                                {copy.dashboard_description}
                             </p>
                         </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <Metric
-                            label="Cases received"
+                            label={copy.cases_received}
                             value={dashboard.total}
                         />
-                        <Metric label="Resolved" value={dashboard.resolved} />
-                        <Metric label="Pending" value={dashboard.pending} />
                         <Metric
-                            label="Average satisfaction"
+                            label={copy.resolved}
+                            value={dashboard.resolved}
+                        />
+                        <Metric
+                            label={copy.pending}
+                            value={dashboard.pending}
+                        />
+                        <Metric
+                            label={copy.average_satisfaction}
                             value={
                                 dashboard.satisfaction
                                     ? `${dashboard.satisfaction} / 5`
-                                    : 'Not yet rated'
+                                    : copy.not_yet_rated
                             }
                         />
                     </div>
@@ -148,24 +149,21 @@ export default function CitizenEngagementIndex({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Accessibility aria-hidden="true" />
-                                Accessible participation
+                                {copy.accessible_participation}
                             </CardTitle>
                             <CardDescription>
-                                Tell us what support you need.
+                                {copy.support_prompt}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="text-sm text-muted-foreground">
-                            The intake form supports keyboard navigation and
-                            screen readers. Record sign-language, large-print,
-                            call-back or other assistance needs in the
-                            accessibility field.
+                            {copy.accessibility_description}
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Recurring issue signals</CardTitle>
+                            <CardTitle>{copy.recurring_signals}</CardTitle>
                             <CardDescription>
-                                Aggregate complaint and grievance categories.
+                                {copy.recurring_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -185,7 +183,7 @@ export default function CitizenEngagementIndex({
                                 </ul>
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    No recurring issue pattern is available yet.
+                                    {copy.no_recurring_signals}
                                 </p>
                             )}
                         </CardContent>
@@ -211,29 +209,28 @@ function IntakeSheet({
     counties,
     sectors,
     catalogue,
+    copy,
 }: {
     counties: CountyIdentityValue[];
     sectors: Option[];
     catalogue: Props['catalogue'];
+    copy: Record<string, string>;
 }) {
     return (
         <Sheet>
             <SheetTrigger asChild>
                 <Button size="lg" disabled={!catalogue.available}>
                     <MessageSquarePlus aria-hidden="true" />
-                    Submit feedback or grievance
+                    {copy.submit_action}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-xl">
                 <SheetHeader>
-                    <SheetTitle>Submit a citizen case</SheetTitle>
+                    <SheetTitle>{copy.submit_title}</SheetTitle>
                     <SheetDescription>
-                        Required fields are marked. Do not include passwords,
-                        banking PINs or unnecessary sensitive information.
+                        {copy.submit_description}
                         {catalogue.available && catalogue.version
-                            ? ' County and sector choices use governed catalogue v' +
-                              catalogue.version +
-                              '.'
+                            ? ` ${copy.catalogue_version.replace(':version', String(catalogue.version))}`
                             : ''}
                     </SheetDescription>
                 </SheetHeader>
@@ -255,16 +252,16 @@ function IntakeSheet({
                             <LabeledSelect
                                 id="case_type"
                                 name="case_type"
-                                label="Case type"
+                                label={copy.case_type}
                                 error={errors.case_type}
                                 options={[
                                     {
                                         id: 'feedback',
-                                        name: 'Citizen feedback',
+                                        name: copy.citizen_feedback,
                                     },
                                     {
                                         id: 'grievance',
-                                        name: 'Formal grievance',
+                                        name: copy.formal_grievance,
                                     },
                                 ]}
                                 defaultValue="feedback"
@@ -272,14 +269,14 @@ function IntakeSheet({
                             <LabeledSelect
                                 id="category"
                                 name="category"
-                                label="Category"
+                                label={copy.category}
                                 error={errors.category}
                                 options={[
-                                    { id: 'complaint', name: 'Complaint' },
-                                    { id: 'suggestion', name: 'Suggestion' },
-                                    { id: 'compliment', name: 'Compliment' },
-                                    { id: 'inquiry', name: 'Inquiry' },
-                                    { id: 'grievance', name: 'Grievance' },
+                                    { id: 'complaint', name: copy.complaint },
+                                    { id: 'suggestion', name: copy.suggestion },
+                                    { id: 'compliment', name: copy.compliment },
+                                    { id: 'inquiry', name: copy.inquiry },
+                                    { id: 'grievance', name: copy.grievance },
                                 ]}
                                 defaultValue="complaint"
                             />
@@ -287,14 +284,14 @@ function IntakeSheet({
                             <LabeledSelect
                                 id="county_id"
                                 name="county_id"
-                                label="County"
+                                label={copy.county}
                                 error={errors.county_id}
                                 options={counties}
                             />
                             <LabeledSelect
                                 id="sector_id"
                                 name="sector_id"
-                                label="Sector (optional)"
+                                label={copy.sector_optional}
                                 error={errors.sector_id}
                                 options={sectors}
                                 optional
@@ -302,14 +299,14 @@ function IntakeSheet({
                             <LabeledInput
                                 id="subject"
                                 name="subject"
-                                label="Subject"
+                                label={copy.subject}
                                 error={errors.subject}
                                 required
                             />
                             <LabeledTextarea
                                 id="description"
                                 name="description"
-                                label="What happened or what would you like to share?"
+                                label={copy.description}
                                 error={errors.description}
                                 required
                             />
@@ -321,66 +318,65 @@ function IntakeSheet({
                                 />
                                 <div>
                                     <Label htmlFor="is_anonymous">
-                                        Submit anonymously
+                                        {copy.anonymous}
                                     </Label>
                                     <p className="text-xs text-muted-foreground">
-                                        Leave this unchecked if you want a
-                                        direct response.
+                                        {copy.anonymous_help}
                                     </p>
                                 </div>
                             </div>
                             <LabeledInput
                                 id="citizen_name"
                                 name="citizen_name"
-                                label="Your name (required when not anonymous)"
+                                label={copy.citizen_name}
                                 error={errors.citizen_name}
                             />
                             <LabeledInput
                                 id="citizen_email"
                                 name="citizen_email"
                                 type="email"
-                                label="Email (optional)"
+                                label={copy.email_optional}
                                 error={errors.citizen_email}
                             />
                             <LabeledInput
                                 id="citizen_phone"
                                 name="citizen_phone"
                                 type="tel"
-                                label="Phone (optional)"
+                                label={copy.phone_optional}
                                 error={errors.citizen_phone}
                             />
                             <LabeledSelect
                                 id="preferred_contact"
                                 name="preferred_contact"
-                                label="Preferred contact"
+                                label={copy.preferred_contact}
                                 error={errors.preferred_contact}
                                 options={[
-                                    { id: 'none', name: 'No direct contact' },
-                                    { id: 'email', name: 'Email' },
+                                    { id: 'none', name: copy.no_contact },
+                                    { id: 'email', name: copy.email },
                                     { id: 'sms', name: 'SMS' },
-                                    { id: 'phone', name: 'Phone call' },
+                                    { id: 'phone', name: copy.phone_call },
                                 ]}
                                 defaultValue="none"
                             />
                             <LabeledTextarea
                                 id="accessibility_needs"
                                 name="accessibility_needs"
-                                label="Accessibility or communication support (optional)"
+                                label={copy.accessibility_optional}
                                 error={errors.accessibility_needs}
                             />
                             <LabeledSelect
                                 id="source_type"
                                 name="source_type"
-                                label="Attachment source"
+                                label={copy.attachment_source}
                                 error={errors.source_type}
                                 options={[
                                     {
                                         id: 'born_digital',
-                                        name: 'Born-digital file',
+                                        name: copy.born_digital,
                                     },
                                     {
                                         id: 'scanned',
-                                        name: 'Scanned paper record',
+                                        name: copy.scanned,
                                     },
                                 ]}
                                 defaultValue="born_digital"
@@ -389,7 +385,7 @@ function IntakeSheet({
                                 id="attachment"
                                 name="attachment"
                                 type="file"
-                                label="Supporting document (optional, max 10 MB)"
+                                label={copy.supporting_document}
                                 error={errors.attachment}
                                 accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.doc,.docx"
                             />
@@ -413,16 +409,13 @@ function IntakeSheet({
                                 />
                                 <div>
                                     <Label htmlFor="consent_given">
-                                        I consent to case processing
+                                        {copy.consent}
                                     </Label>
                                     <p
                                         id="consent-description"
                                         className="text-xs text-muted-foreground"
                                     >
-                                        I understand my information will be used
-                                        to route, investigate and respond to
-                                        this case under applicable government
-                                        records and privacy controls.
+                                        {copy.consent_description}
                                     </p>
                                     {errors.consent_given && (
                                         <p
@@ -439,7 +432,7 @@ function IntakeSheet({
                                 <progress
                                     value={progress.percentage}
                                     max="100"
-                                    aria-label="Upload progress"
+                                    aria-label={copy.upload_progress}
                                     className="w-full"
                                 >
                                     {progress.percentage}%
@@ -451,8 +444,8 @@ function IntakeSheet({
                                 aria-busy={processing}
                             >
                                 {processing
-                                    ? 'Submitting securely…'
-                                    : 'Submit securely'}
+                                    ? copy.submitting
+                                    : copy.submit_securely}
                             </Button>
                         </>
                     )}
@@ -462,20 +455,20 @@ function IntakeSheet({
     );
 }
 
-function TrackingSheet() {
+function TrackingSheet({ copy }: { copy: Record<string, string> }) {
     return (
         <Sheet>
             <SheetTrigger asChild>
                 <Button size="lg" variant="outline">
                     <Search aria-hidden="true" />
-                    Track a case
+                    {copy.track_action}
                 </Button>
             </SheetTrigger>
             <SheetContent>
                 <SheetHeader>
-                    <SheetTitle>Track your case</SheetTitle>
+                    <SheetTitle>{copy.track_title}</SheetTitle>
                     <SheetDescription>
-                        Enter the reference and private code from your receipt.
+                        {copy.track_description}
                     </SheetDescription>
                 </SheetHeader>
                 <Form action={track()} className="flex flex-col gap-5 px-4">
@@ -484,14 +477,14 @@ function TrackingSheet() {
                             <LabeledInput
                                 id="tracking-reference"
                                 name="reference"
-                                label="Case reference"
+                                label={copy.case_reference}
                                 error={errors.reference}
                                 required
                             />
                             <LabeledInput
                                 id="tracking-token"
                                 name="tracking_token"
-                                label="Private tracking code"
+                                label={copy.tracking_code}
                                 error={errors.tracking_token}
                                 required
                             />
@@ -500,7 +493,7 @@ function TrackingSheet() {
                                 disabled={processing}
                                 aria-busy={processing}
                             >
-                                Open case status
+                                {copy.open_status}
                             </Button>
                         </>
                     )}

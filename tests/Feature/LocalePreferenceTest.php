@@ -43,10 +43,30 @@ class LocalePreferenceTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('localization.current', 'sw'));
     }
 
-    public function test_locale_change_requires_authentication_and_a_supported_locale(): void
+    public function test_guest_can_change_session_locale_without_creating_a_profile_preference(): void
     {
-        $this->patch(route('locale.update'), ['locale' => 'sw'])
-            ->assertRedirect(route('login'));
+        $this->from(route('citizen-engagement.index'))
+            ->patch(route('locale.update'), ['locale' => 'sw'])
+            ->assertRedirect(route('citizen-engagement.index'))
+            ->assertSessionHas('locale', 'sw')
+            ->assertSessionHas('status', 'Lugha ya kuonyesha imesasishwa kwa kivinjari hiki.');
+
+        $this->assertDatabaseCount('user_locale_preferences', 0);
+        $this->assertDatabaseCount('audit_events', 0);
+
+        $this->withSession(['locale' => 'sw'])
+            ->get(route('citizen-engagement.index'))
+            ->assertOk()
+            ->assertSee('lang="sw"', false)
+            ->assertInertia(fn ($page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.copy.citizenEngagement', 'Ushirikishwaji wa wananchi'));
+    }
+
+    public function test_locale_change_rejects_an_unsupported_locale(): void
+    {
+        $this->patch(route('locale.update'), ['locale' => 'de'])
+            ->assertSessionHasErrors('locale');
 
         $this->actingAs(User::factory()->create())
             ->patch(route('locale.update'), ['locale' => 'de'])
@@ -55,15 +75,19 @@ class LocalePreferenceTest extends TestCase
 
     public function test_header_locale_selector_has_screen_reader_and_wayfinder_contracts(): void
     {
-        $source = file_get_contents(resource_path('js/components/app-sidebar-header.tsx'));
+        $source = file_get_contents(resource_path('js/components/locale-menu.tsx'));
+        $publicShell = file_get_contents(resource_path('js/components/citizen-engagement-shell.tsx'));
 
         $this->assertIsString($source);
+        $this->assertIsString($publicShell);
         $this->assertStringContainsString("import { update as updateLocale } from '@/routes/locale';", $source);
         $this->assertStringContainsString('aria-label={`${localization.copy.chooseLanguage}', $source);
         $this->assertStringContainsString('role="status"', $source);
         $this->assertStringContainsString('aria-live="polite"', $source);
         $this->assertStringContainsString('lang={locale.code}', $source);
         $this->assertStringContainsString('aria-hidden="true">{locale.flag}', $source);
+        $this->assertStringContainsString('<LocaleMenu />', $publicShell);
+        $this->assertStringContainsString('{copy.skipToMainContent}', $publicShell);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
