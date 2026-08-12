@@ -38,12 +38,16 @@ class ProgrammeRbacTest extends TestCase
         $this->assertFalse(Gate::forUser($countyAdmin)->allows(ProgrammePermission::ScoreAssessment->value));
         $this->assertTrue(Gate::forUser($assessor)->allows(ProgrammePermission::ScoreAssessment->value));
         $this->assertFalse(Gate::forUser($assessor)->allows(ProgrammePermission::ApproveAssessment->value));
+        $this->assertFalse(Gate::forUser($assessor)->allows(ProgrammePermission::ViewAuditTrail->value));
         $this->assertTrue(Gate::forUser($topManagement)->allows(ProgrammePermission::ApproveAssessment->value));
         $this->assertFalse(Gate::forUser($topManagement)->allows(ProgrammePermission::ConfigurePlatform->value));
+        $this->assertFalse(Gate::forUser($topManagement)->allows(ProgrammePermission::ViewAuditTrail->value));
         $this->assertTrue(Gate::forUser($devolutionAdmin)->allows(ProgrammePermission::ManageGrants->value));
         $this->assertFalse(Gate::forUser($devolutionAdmin)->allows(ProgrammePermission::ConfigurePlatform->value));
+        $this->assertTrue(Gate::forUser($devolutionAdmin)->allows(ProgrammePermission::ViewAuditTrail->value));
         $this->assertTrue(Gate::forUser($platformAdmin)->allows(ProgrammePermission::ConfigurePlatform->value));
         $this->assertFalse(Gate::forUser($platformAdmin)->allows(ProgrammePermission::ApproveAssessment->value));
+        $this->assertTrue(Gate::forUser($platformAdmin)->allows(ProgrammePermission::ViewAuditTrail->value));
     }
 
     public function test_permission_does_not_bypass_county_scope(): void

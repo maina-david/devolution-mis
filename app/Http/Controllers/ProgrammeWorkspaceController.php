@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProgrammePermission;
+use App\Enums\UserRole;
 use App\Http\Requests\WorkspaceIndexRequest;
 use App\Models\AssessmentCycle;
 use App\Models\User;
@@ -95,6 +96,8 @@ class ProgrammeWorkspaceController extends Controller
 
     public function audit(WorkspaceIndexRequest $request): Response
     {
+        abort_unless(in_array($this->user($request)->programmeRole(), [UserRole::DevolutionAdmin, UserRole::PlatformAdmin], true), 403);
+
         return $this->render($request, ProgrammePermission::ViewAuditTrail, 'audit');
     }
 

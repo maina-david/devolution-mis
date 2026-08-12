@@ -15,6 +15,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | {routes/**,resources/js/**,app/Enums/ProgrammePermission.php,database/migrations/**,database/seeders/**} | .ai/rules/enums-migrations-seeders.md |
 | {resources/js/**,lang/**,app/Http/**,app/Enums/SupportedLocale.php,tests/**} | .ai/rules/enums.md |
 | {app/Actions/**,routes/**,resources/js/**,database/factories/**} | .ai/rules/factories.md |
+| {app/Enums/UserRole.php,app/Http/Controllers/ProgrammeWorkspaceController.php,app/Http/Controllers/WorkspaceExportController.php,tests/Feature/Audit*Test.php,tests/Feature/ProgrammeRbacTest.php} | .ai/rules/feature-feature.md |
 | resources/js/components/{app-content,app-shell,input-error}.tsx,resources/js/layouts/auth/**,resources/js/pages/{welcome,help,faqs}.tsx,resources/js/pages/auth/**,tests/Feature/AccessibilityContractTest.php | .ai/rules/feature.md |
 | {resources/js/**,lang/**,app/Http/**,routes/**,tests/**} | .ai/rules/http.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*Audit*.php,database/migrations/*audit_assurance*,resources/js/**/*audit-assurance*,tests/Feature/{AuditTrailTest,AuditAssuranceTest}.php | .ai/rules/js-feature.md |

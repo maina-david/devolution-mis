@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\AssessmentStatus;
+use App\Enums\ProgrammePermission;
 use App\Models\Assessment;
 use App\Models\AuditEvent;
 use App\Models\County;
@@ -10,7 +11,6 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AuditTrailTest extends TestCase
@@ -54,18 +54,22 @@ class AuditTrailTest extends TestCase
         $secondEvent->update(['description' => 'Tampered']);
     }
 
-    public function test_audit_view_is_filtered_to_assigned_counties(): void
+    public function test_only_devolution_and_platform_administrators_can_view_or_export_the_audit_trail(): void
     {
-        $assigned = County::factory()->create();
-        $hidden = County::factory()->create();
         $assessor = User::factory()->assessor()->create();
-        $assessor->assignedCounties()->attach($assigned);
-        AuditEvent::factory()->create(['county_id' => $assigned->id, 'action' => 'visible.event']);
-        AuditEvent::factory()->create(['county_id' => $hidden->id, 'action' => 'hidden.event']);
+        $topManagement = User::factory()->topManagement()->create();
+        $devolutionAdmin = User::factory()->devolutionAdmin()->create();
+        $platformAdmin = User::factory()->platformAdmin()->create();
+        $assessor->givePermissionTo(ProgrammePermission::ViewAuditTrail->value);
 
-        $this->actingAs($assessor)->get(route('audit.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->has('workspace.rows', 1)
-            ->where('workspace.rows.0.cells.0', 'visible.event')
-        );
+        foreach ([$assessor, $topManagement] as $unauthorizedUser) {
+            $this->actingAs($unauthorizedUser)->get(route('audit.index'))->assertForbidden();
+            $this->actingAs($unauthorizedUser)->get(route('workspace.export', ['workspace' => 'audit', 'format' => 'csv']))->assertForbidden();
+        }
+
+        foreach ([$devolutionAdmin, $platformAdmin] as $authorizedUser) {
+            $this->actingAs($authorizedUser)->get(route('audit.index'))->assertOk();
+            $this->actingAs($authorizedUser)->get(route('workspace.export', ['workspace' => 'audit', 'format' => 'csv']))->assertDownload();
+        }
     }
 }

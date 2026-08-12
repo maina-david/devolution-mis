@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProgrammePermission;
+use App\Enums\UserRole;
 use App\Http\Requests\WorkspaceIndexRequest;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -22,6 +23,12 @@ class WorkspaceExportController extends Controller
 {
     public function __invoke(WorkspaceIndexRequest $request, string $workspace, string $format, ProgrammeWorkspaceData $workspaceData, MonitoringEvaluationResults $monitoringResults, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): Response
     {
+        $user = $this->user($request);
+
+        if (in_array($workspace, ['audit', 'audit-assurance'], true)) {
+            abort_unless(in_array($user->programmeRole(), [UserRole::DevolutionAdmin, UserRole::PlatformAdmin], true), 403);
+        }
+
         if ($workspace === 'users') {
             abort_unless($request->user()?->can(ProgrammePermission::ManageCountyUsers->value) || $request->user()?->can(ProgrammePermission::ManageUserAccess->value), 403);
         } else {
@@ -29,7 +36,6 @@ class WorkspaceExportController extends Controller
         }
         $requestedFilters = WorkspaceFilters::fromRequest($request);
         $filters = new WorkspaceFilters($requestedFilters->from, $requestedFilters->to, $requestedFilters->search, 5000, $requestedFilters->cycleId, $requestedFilters->countyId, $requestedFilters->sectorId, $requestedFilters->status, $requestedFilters->classroomId, $requestedFilters->severity, $requestedFilters->gapCategoryId);
-        $user = $this->user($request);
         if ($filters->countyId !== null) {
             abort_unless($countyScope->query($user)->whereKey($filters->countyId)->exists(), 403);
         }
