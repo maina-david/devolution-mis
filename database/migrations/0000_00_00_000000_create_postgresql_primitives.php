@@ -1931,13 +1931,6 @@ SET default_table_access_method = heap;
 
 
 --
--- Name: team_invitations; Type: TABLE; Schema: public; Owner: -
---
-
-
-
-
---
 -- Name: team_members; Type: TABLE; Schema: public; Owner: -
 --
 

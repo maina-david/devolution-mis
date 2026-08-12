@@ -57,7 +57,6 @@ use App\Models\Sector;
 use App\Models\ServiceDeskPolicy;
 use App\Models\ServiceDeskRosterMember;
 use App\Models\Team;
-use App\Models\TeamInvitation;
 use App\Models\TrainingAssessment;
 use App\Models\TrainingCohort;
 use App\Models\TrainingParticipant;
@@ -88,7 +87,6 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             AssessmentDocument::class,
             CountyGrant::class,
             Team::class,
-            TeamInvitation::class,
             Role::class,
             Permission::class,
             DatabaseNotification::class,

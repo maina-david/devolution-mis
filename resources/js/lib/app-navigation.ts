@@ -46,7 +46,6 @@ import { index as reportsIndex } from '@/routes/reports';
 import { edit as securityEdit } from '@/routes/security';
 import { index as securityGovernanceIndex } from '@/routes/security-governance';
 import { index as supportDeskIndex } from '@/routes/support-desk';
-import { index as teamsIndex } from '@/routes/teams';
 import { index as travelClearanceIndex } from '@/routes/travel-clearance';
 import { index as userActivityIndex } from '@/routes/user-activity';
 import { index as workflowsIndex } from '@/routes/workflows';
@@ -477,7 +476,6 @@ export function settingsNavigationGroup(
         items: [
             { title: 'Profile', href: profileEdit() },
             { title: 'Security', href: securityEdit() },
-            { title: 'Teams', href: teamsIndex() },
             { title: 'Appearance', href: appearanceEdit() },
         ],
     };

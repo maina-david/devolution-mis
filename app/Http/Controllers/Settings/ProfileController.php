@@ -31,7 +31,6 @@ class ProfileController extends Controller
                 'role' => $this->user($request)->programmeRole()->label(),
                 'county' => $this->user($request)->county?->identityCell(),
                 'assignedCounties' => $this->user($request)->assignedCounties()->orderBy('code')->get()->map->identityCell()->values(),
-                'teams' => $this->user($request)->teams()->orderBy('name')->get(['teams.id', 'teams.name'])->map(fn ($team): array => ['id' => $team->id, 'name' => $team->name])->values(),
                 'hasPhoto' => $this->user($request)->profile_photo_path !== null,
                 'photoUpdatedAt' => $this->user($request)->profile_photo_updated_at?->toIso8601String(),
                 'accountCreatedAt' => $this->user($request)->created_at?->toIso8601String(),

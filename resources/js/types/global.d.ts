@@ -77,7 +77,6 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarOpen: boolean;
             currentTeam: Team | null;
-            teams: Team[];
             assessmentCycles: Array<{ id: string; name: string }>;
             notificationSummary: {
                 unread: number;

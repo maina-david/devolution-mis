@@ -49,7 +49,6 @@ use App\Http\Controllers\PublicPrivacyNoticeController;
 use App\Http\Controllers\ReferenceDataController;
 use App\Http\Controllers\SecurityGovernanceController;
 use App\Http\Controllers\SupportDeskController;
-use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Controllers\TravelClearanceController;
 use App\Http\Controllers\UniqueValueController;
 use App\Http\Controllers\UserActivityController;
@@ -403,10 +402,5 @@ Route::prefix('{current_team}')
         Route::delete('users/{programmeUser}', [ProgrammeUserController::class, 'destroy'])->name('programme-users.destroy');
         Route::patch('platform/settings/{setting}', [PlatformSettingController::class, 'update'])->name('platform-settings.update');
     });
-
-Route::middleware(['auth'])->group(function () {
-    Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
-    Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
-});
 
 require __DIR__.'/settings.php';

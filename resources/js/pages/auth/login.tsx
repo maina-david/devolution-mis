@@ -2,7 +2,6 @@ import { Form, Head } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasskeyVerify from '@/components/passkey-verify';
 import PasswordInput from '@/components/password-input';
-import TeamInvitationAlert from '@/components/team-invitation-alert';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,29 +11,16 @@ import { Spinner } from '@/components/ui/spinner';
 import { help } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import type { TeamInvitationContext } from '@/types';
 
 type Props = {
     status?: string;
     canResetPassword: boolean;
-    teamInvitation?: TeamInvitationContext | null;
 };
 
-export default function Login({
-    status,
-    canResetPassword,
-    teamInvitation,
-}: Props) {
+export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
             <Head title="Log in" />
-
-            {teamInvitation && (
-                <TeamInvitationAlert
-                    invitation={teamInvitation}
-                    action="Log in"
-                />
-            )}
 
             <PasskeyVerify />
 

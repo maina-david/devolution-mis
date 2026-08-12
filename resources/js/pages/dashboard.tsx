@@ -25,7 +25,6 @@ import {
 import CountyIdentity from '@/components/county-identity';
 import DateRangeFilter from '@/components/date-range-filter';
 import KenyaCountyMap from '@/components/kenya-county-map';
-import PendingInvitationsModal from '@/components/pending-invitations-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,7 +48,6 @@ import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { formatCurrency } from '@/lib/reference-catalog';
 import { dashboard } from '@/routes';
 import { show as showCounty } from '@/routes/counties';
-import type { DashboardInvitation } from '@/types';
 
 type CountyMetric = {
     id: string;
@@ -84,7 +82,6 @@ type CycleMetric = {
 };
 
 type Props = {
-    pendingInvitations?: DashboardInvitation[];
     dashboardProfile: {
         role: string;
         roleLabel: string;
@@ -138,7 +135,6 @@ const evidenceChartConfig = {
 } satisfies ChartConfig;
 
 export default function Dashboard({
-    pendingInvitations = [],
     dashboardProfile,
     stats,
     counties,
@@ -149,9 +145,6 @@ export default function Dashboard({
 }: Props) {
     const page = usePage();
     const { currentTeam } = page.props;
-    const [showInvitations, setShowInvitations] = useState(
-        pendingInvitations.length > 0,
-    );
     const [selectedCounty, setSelectedCounty] = useState<CountyMetric | null>(
         counties.length === 1 ? counties[0] : null,
     );
@@ -282,11 +275,6 @@ export default function Dashboard({
     return (
         <>
             <Head title={`${dashboardProfile.roleLabel} dashboard`} />
-            <PendingInvitationsModal
-                invitations={pendingInvitations}
-                open={pendingInvitations.length > 0 && showInvitations}
-                onOpenChange={setShowInvitations}
-            />
             <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="max-w-3xl">

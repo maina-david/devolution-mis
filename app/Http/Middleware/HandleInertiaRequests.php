@@ -120,7 +120,6 @@ class HandleInertiaRequests extends Middleware
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
-            'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
             'assessmentCycles' => fn () => $user
                 ? AssessmentCycle::query()
                     ->orderByDesc('period_start')

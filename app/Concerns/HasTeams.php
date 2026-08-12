@@ -2,9 +2,7 @@
 
 namespace App\Concerns;
 
-use App\Data\TeamPermissions;
 use App\Data\UserTeam;
-use App\Enums\TeamPermission;
 use App\Enums\TeamRole;
 use App\Models\Membership;
 use App\Models\Team;
@@ -160,37 +158,11 @@ trait HasTeams
         );
     }
 
-    /**
-     * Get the standard permissions for a team as a TeamPermissions object.
-     */
-    public function toTeamPermissions(Team $team): TeamPermissions
-    {
-        $role = $this->teamRole($team);
-
-        return new TeamPermissions(
-            canUpdateTeam: $role?->hasPermission(TeamPermission::UpdateTeam) ?? false,
-            canDeleteTeam: $role?->hasPermission(TeamPermission::DeleteTeam) ?? false,
-            canAddMember: $role?->hasPermission(TeamPermission::AddMember) ?? false,
-            canUpdateMember: $role?->hasPermission(TeamPermission::UpdateMember) ?? false,
-            canRemoveMember: $role?->hasPermission(TeamPermission::RemoveMember) ?? false,
-            canCreateInvitation: $role?->hasPermission(TeamPermission::CreateInvitation) ?? false,
-            canCancelInvitation: $role?->hasPermission(TeamPermission::CancelInvitation) ?? false,
-        );
-    }
-
     public function fallbackTeam(?Team $excluding = null): ?Team
     {
         return $this->teams()
             ->when($excluding, fn ($query) => $query->where('teams.id', '!=', $excluding->id))
             ->orderByRaw('LOWER(teams.name)')
             ->first();
-    }
-
-    /**
-     * Determine if the user has the given permission on the team.
-     */
-    public function hasTeamPermission(Team $team, TeamPermission $permission): bool
-    {
-        return $this->teamRole($team)?->hasPermission($permission) ?? false;
     }
 }

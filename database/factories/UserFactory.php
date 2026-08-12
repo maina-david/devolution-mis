@@ -2,10 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Enums\TeamRole;
+use App\Actions\ProvisionUserWorkspace;
 use App\Enums\UserRole;
 use App\Models\County;
-use App\Models\Team;
 use App\Models\User;
 use App\Services\ProgrammeAuthorization;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -89,16 +88,8 @@ class UserFactory extends Factory
      */
     public function configure(): static
     {
-        return $this->afterCreating(function ($user) {
-            $team = Team::factory()->personal()->create([
-                'name' => $user->name."'s Team",
-            ]);
-
-            $team->members()->attach($user, [
-                'role' => TeamRole::Owner->value,
-            ]);
-
-            $user->switchTeam($team);
+        return $this->afterCreating(function (User $user): void {
+            app(ProvisionUserWorkspace::class)->handle($user, $user->name."'s Workspace");
 
             if ($user->roles()->doesntExist()) {
                 app(ProgrammeAuthorization::class)->assignRole($user, UserRole::CountyOfficial);

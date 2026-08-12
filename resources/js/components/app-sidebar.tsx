@@ -3,7 +3,6 @@ import { Bell, Settings2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import NotificationRealtimeSync from '@/components/notification-realtime-sync';
-import { TeamSwitcher } from '@/components/team-switcher';
 import {
     Sidebar,
     SidebarContent,
@@ -65,9 +64,6 @@ export function AppSidebar() {
                                     <AppLogo county={user.county_identity} />
                                 </Link>
                             </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        <SidebarMenuItem>
-                            <TeamSwitcher />
                         </SidebarMenuItem>
                     </SidebarMenu>
                 </SidebarHeader>

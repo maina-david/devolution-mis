@@ -1,5 +1,5 @@
 import { Form, Head, Link, usePage } from '@inertiajs/react';
-import { BadgeCheck, Building2, Pencil, ShieldCheck } from 'lucide-react';
+import { BadgeCheck, Pencil, ShieldCheck } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
@@ -33,7 +33,6 @@ import {
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import { index as teamsIndex } from '@/routes/teams';
 import { send } from '@/routes/verification';
 import type { Auth } from '@/types';
 
@@ -44,7 +43,6 @@ type Props = {
         role: string;
         county: CountyIdentityValue | null;
         assignedCounties: CountyIdentityValue[];
-        teams: Array<{ id: string; name: string }>;
         hasPhoto: boolean;
         photoUpdatedAt: string | null;
         accountCreatedAt: string | null;
@@ -310,16 +308,6 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                                     : 'None'}
                             </p>
                         </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">
-                                Workspaces
-                            </p>
-                            <p className="mt-1 font-medium">
-                                {profile.teams
-                                    .map((team) => team.name)
-                                    .join(', ') || 'None'}
-                            </p>
-                        </div>
                     </CardContent>
                 </Card>
 
@@ -331,17 +319,11 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                             display controls for this account.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-3 md:grid-cols-3">
+                    <CardContent className="grid gap-3 md:grid-cols-2">
                         <Button variant="outline" asChild>
                             <Link href={editSecurity()}>
                                 <ShieldCheck data-icon="inline-start" />
                                 Password, MFA and passkeys
-                            </Link>
-                        </Button>
-                        <Button variant="outline" asChild>
-                            <Link href={teamsIndex()}>
-                                <Building2 data-icon="inline-start" />
-                                Teams and memberships
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>

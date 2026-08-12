@@ -33,7 +33,6 @@ class ProgrammeUserController extends Controller
             'county:id,name,code,logo_path',
             'assignedCounties:id,name,code,logo_path',
             'roles:id,name',
-            'teams:id,name',
         ])->loadCount('passkeys');
 
         $canViewActivity = $actor->can(ProgrammePermission::ViewUserActivity->value);
@@ -77,7 +76,6 @@ class ProgrammeUserController extends Controller
                 'homeCounty' => $programmeUser->county?->identityCell(),
                 'assignedCounties' => $programmeUser->assignedCounties->map->identityCell()->values(),
                 'permissions' => $programmeUser->programmePermissionValues(),
-                'teams' => $programmeUser->teams->map(fn ($team): array => ['id' => $team->id, 'name' => $team->name])->values(),
                 'emailVerifiedAt' => $programmeUser->email_verified_at?->toIso8601String(),
                 'twoFactorEnabled' => $programmeUser->two_factor_confirmed_at !== null,
                 'passkeyCount' => $programmeUser->passkeys_count,

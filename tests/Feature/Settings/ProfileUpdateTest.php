@@ -26,7 +26,7 @@ class ProfileUpdateTest extends TestCase
             ->component('settings/profile')
             ->where('profile.role', $user->programmeRole()->label())
             ->where('profile.hasPhoto', false)
-            ->has('profile.teams', 1));
+            ->missing('profile.teams'));
     }
 
     public function test_profile_information_can_be_updated()

@@ -34,7 +34,6 @@ type Props = {
         homeCounty: CountyIdentityValue | null;
         assignedCounties: CountyIdentityValue[];
         permissions: string[];
-        teams: Array<{ id: string; name: string }>;
         emailVerifiedAt: string | null;
         twoFactorEnabled: boolean;
         passkeyCount: number;
@@ -276,14 +275,6 @@ export default function ProgrammeUserProfile(props: Props) {
                                                       )
                                                       .join(', ')
                                                 : 'None'
-                                        }
-                                    />
-                                    <Detail
-                                        label="Teams"
-                                        value={
-                                            profile.teams
-                                                .map((team) => team.name)
-                                                .join(', ') || 'None'
                                         }
                                     />
                                 </CardContent>
