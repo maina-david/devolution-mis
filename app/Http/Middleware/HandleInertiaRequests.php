@@ -98,6 +98,7 @@ class HandleInertiaRequests extends Middleware
                     'protectCredentials' => __('idmis.public.protect_credentials'),
                     'protectCredentialsDescription' => __('idmis.public.protect_credentials_description'),
                     'authenticationHelp' => __('idmis.public.authentication_help'),
+                    'toggleNavigation' => __('idmis.public.toggle_navigation'),
                 ],
                 'citizen' => __('citizen'),
                 'welcome' => __('welcome'),

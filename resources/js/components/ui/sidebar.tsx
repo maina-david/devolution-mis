@@ -1,7 +1,6 @@
 import { Slot } from "@radix-ui/react-slot"
 import type { VariantProps} from "class-variance-authority";
 import { cva } from "class-variance-authority"
-import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
@@ -266,9 +265,36 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      {isMobile || state === "collapsed" ? <PanelLeftOpenIcon /> : <PanelLeftCloseIcon />}
+      <IdmisSidebarToggleIcon
+        expanded={!isMobile && state === "expanded"}
+        aria-hidden="true"
+      />
       <span className="sr-only">Toggle sidebar</span>
     </Button>
+  )
+}
+
+function IdmisSidebarToggleIcon({
+  expanded,
+  ...props
+}: React.ComponentProps<"svg"> & { expanded: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M5 5.5v13M5 8.5l5-3 4 3 5-3v13l-5-3-4 3-5-3" />
+      <circle cx="10" cy="5.5" r="1.25" fill="currentColor" stroke="none" />
+      <circle cx="14" cy="8.5" r="1.25" fill="currentColor" stroke="none" />
+      <path
+        d={expanded ? "m15.5 11.5-2 2 2 2" : "m12.5 11.5 2 2-2 2"}
+      />
+    </svg>
   )
 }
 

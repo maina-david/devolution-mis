@@ -31,6 +31,23 @@ class AccessibilityContractTest extends TestCase
         $this->assertSame(2, substr_count($appContent, 'tabIndex={-1}'));
     }
 
+    public function test_sidebar_toggle_uses_the_idmis_mark_and_a_localized_accessible_name(): void
+    {
+        $sidebar = $this->source('resources/js/components/ui/sidebar.tsx');
+        $this->assertStringContainsString('function IdmisSidebarToggleIcon', $sidebar);
+        $this->assertStringNotContainsString('PanelLeftOpenIcon', $sidebar);
+        $this->assertStringNotContainsString('PanelLeftCloseIcon', $sidebar);
+
+        $header = $this->source('resources/js/components/app-sidebar-header.tsx');
+        $this->assertStringContainsString('aria-label={localization.copy.toggleNavigation}', $header);
+        $this->assertStringContainsString('title={localization.copy.toggleNavigation}', $header);
+
+        foreach (['en', 'sw', 'fr'] as $locale) {
+            $catalogue = $this->source("lang/{$locale}/idmis.php");
+            $this->assertStringContainsString("'toggle_navigation' =>", $catalogue);
+        }
+    }
+
     public function test_citizen_journey_has_focusable_bypass_and_announced_async_feedback(): void
     {
         $shell = $this->source('resources/js/components/citizen-engagement-shell.tsx');

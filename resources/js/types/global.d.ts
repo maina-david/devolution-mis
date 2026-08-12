@@ -64,6 +64,7 @@ declare module '@inertiajs/core' {
                     protectCredentials: string;
                     protectCredentialsDescription: string;
                     authenticationHelp: string;
+                    toggleNavigation: string;
                 };
                 citizen: Record<string, string>;
                 welcome: Record<string, string>;

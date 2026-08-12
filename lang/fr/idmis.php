@@ -52,5 +52,6 @@ return [
         'protect_credentials' => 'Protégez vos identifiants',
         'protect_credentials_description' => 'L’assistance IDMIS ne demandera jamais votre mot de passe, code de récupération ou code de vérification à usage unique.',
         'authentication_help' => 'Aide à l’authentification',
+        'toggle_navigation' => 'Ouvrir ou fermer la navigation',
     ],
 ];

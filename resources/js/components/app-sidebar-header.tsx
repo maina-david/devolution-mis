@@ -79,7 +79,11 @@ export function AppSidebarHeader({
     return (
         <header className="app-sidebar-header sticky top-0 z-50 w-full shrink-0 border-b border-sidebar-border bg-sidebar text-sidebar-foreground">
             <div className="flex h-15 items-center gap-2 px-4 sm:px-6">
-                <SidebarTrigger className="-ml-1 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" />
+                <SidebarTrigger
+                    className="-ml-1 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                    aria-label={localization.copy.toggleNavigation}
+                    title={localization.copy.toggleNavigation}
+                />
                 <div className="min-w-0 flex-1">
                     <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} inverse />
                 </div>

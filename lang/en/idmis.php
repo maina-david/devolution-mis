@@ -52,5 +52,6 @@ return [
         'protect_credentials' => 'Protect your credentials',
         'protect_credentials_description' => 'IDMIS support will never ask for your password, recovery code or one-time verification code.',
         'authentication_help' => 'Authentication help',
+        'toggle_navigation' => 'Toggle navigation',
     ],
 ];

@@ -52,5 +52,6 @@ return [
         'protect_credentials' => 'Linda taarifa zako za kuingia',
         'protect_credentials_description' => 'Usaidizi wa IDMIS hautawahi kuomba nywila, msimbo wa urejeshaji au msimbo wa uthibitishaji wa mara moja.',
         'authentication_help' => 'Msaada wa uthibitishaji',
+        'toggle_navigation' => 'Fungua au funga urambazaji',
     ],
 ];
