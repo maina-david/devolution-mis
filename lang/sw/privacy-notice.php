@@ -31,4 +31,5 @@ return [
     'legal_title' => 'Marejeo ya kisheria',
     'legal_body' => 'Rasimu hii imeongozwa na Kifungu cha 31 cha Katiba ya Kenya, vifungu vya 25, 26, 28 na 29 vya Sheria ya Ulinzi wa Data ya 2019, na mwongozo wa sasa wa ODPC kwa sekta ya umma. Sheria rasmi na sera iliyoidhinishwa ya Idara ndizo zenye mamlaka.',
     'back_to_case' => 'Rudi kwenye maoni ya wananchi',
+    'exercise_rights' => 'Tumia haki ya ulinzi wa data',
 ];

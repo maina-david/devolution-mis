@@ -92,6 +92,7 @@ class HandleInertiaRequests extends Middleware
                     'copyright' => __('idmis.public.copyright', ['year' => now()->year]),
                     'complaints' => __('idmis.public.complaints'),
                     'privacyNotice' => __('idmis.public.privacy_notice'),
+                    'dataRights' => __('idmis.public.data_rights'),
                     'authorizedAccessOnly' => __('idmis.public.authorized_access_only'),
                     'secureGovernmentAccess' => __('idmis.public.secure_government_access'),
                     'secureGovernmentAccessDescription' => __('idmis.public.secure_government_access_description'),
@@ -103,6 +104,7 @@ class HandleInertiaRequests extends Middleware
                     'toggleNavigation' => __('idmis.public.toggle_navigation'),
                 ],
                 'citizen' => __('citizen'),
+                'dataRights' => __('data-rights'),
                 'welcome' => __('welcome'),
             ],
             'auth' => [

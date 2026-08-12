@@ -31,4 +31,5 @@ return [
     'legal_title' => 'Références juridiques',
     'legal_body' => 'Ce projet s’appuie sur l’article 31 de la Constitution du Kenya, les articles 25, 26, 28 et 29 de la loi de 2019 sur la protection des données et les orientations publiques actuelles de l’ODPC. La législation officielle et la politique approuvée du Département prévalent.',
     'back_to_case' => 'Retour aux avis citoyens',
+    'exercise_rights' => 'Exercer un droit relatif aux données',
 ];

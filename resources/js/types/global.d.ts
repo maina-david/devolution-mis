@@ -58,6 +58,7 @@ declare module '@inertiajs/core' {
                     copyright: string;
                     complaints: string;
                     privacyNotice: string;
+                    dataRights: string;
                     authorizedAccessOnly: string;
                     secureGovernmentAccess: string;
                     secureGovernmentAccessDescription: string;
@@ -69,6 +70,7 @@ declare module '@inertiajs/core' {
                     toggleNavigation: string;
                 };
                 citizen: Record<string, string>;
+                dataRights: Record<string, string>;
                 welcome: Record<string, string>;
             };
             auth: Auth;

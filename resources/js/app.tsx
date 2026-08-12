@@ -22,6 +22,7 @@ createInertiaApp({
             case name === 'help':
             case name === 'privacy-notice':
             case name === 'learning/certificate-verification':
+            case name.startsWith('data-rights/'):
             case name.startsWith('citizen-engagement/'):
                 return null;
             case name.startsWith('auth/'):

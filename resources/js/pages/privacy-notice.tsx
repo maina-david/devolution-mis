@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, ExternalLink, ShieldCheck } from 'lucide-react';
 import PublicLayout from '@/layouts/public-layout';
 import { index as citizenEngagement } from '@/routes/citizen-engagement';
+import { index as dataRights } from '@/routes/data-rights';
 
 type Props = {
     notice: {
@@ -120,6 +121,14 @@ export default function PrivacyNotice({ notice }: Props) {
                                 </div>
                             </section>
                         ))}
+                    </div>
+                    <div className="mt-8">
+                        <Link
+                            href={dataRights()}
+                            className="inline-flex min-h-11 items-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        >
+                            {copy.exercise_rights}
+                        </Link>
                     </div>
                 </div>
             </main>

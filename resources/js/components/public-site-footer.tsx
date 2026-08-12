@@ -4,6 +4,7 @@ import { ExternalLink, Mail, MapPin, Phone } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { faqs, help, home, login } from '@/routes';
 import { index as citizenEngagement } from '@/routes/citizen-engagement';
+import { index as dataRights } from '@/routes/data-rights';
 import { verify as verifyCertificate } from '@/routes/learning/certificates';
 import { show as privacyNotice } from '@/routes/privacy-notice';
 
@@ -82,6 +83,11 @@ export function PublicSiteFooter() {
                         <li>
                             <Link href={privacyNotice()} className={linkClass}>
                                 {copy.privacyNotice}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href={dataRights()} className={linkClass}>
+                                {copy.dataRights}
                             </Link>
                         </li>
                     </ul>

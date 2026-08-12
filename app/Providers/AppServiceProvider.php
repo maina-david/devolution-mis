@@ -39,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::before(fn (User $user, string $ability): ?bool => app(DelegatedAccessResolver::class)->allows($user, $ability) ? true : null);
         RateLimiter::for('citizen-intake', fn (Request $request) => [Limit::perMinute(10)->by($request->ip()), Limit::perDay(50)->by($request->ip())]);
         RateLimiter::for('citizen-tracking', fn (Request $request) => Limit::perMinute(12)->by($request->ip()));
+        RateLimiter::for('data-rights-intake', fn (Request $request) => [Limit::perMinute(5)->by($request->ip()), Limit::perDay(20)->by($request->ip())]);
         RateLimiter::for('global-search', fn (Request $request) => Limit::perMinute(60)->by((string) ($request->user()->id ?? $request->ip())));
         RateLimiter::for('unique-value', fn (Request $request) => Limit::perMinute(120)->by((string) ($request->user()->id ?? $request->ip())));
         RateLimiter::for('certificate-verification', fn (Request $request) => Limit::perMinute(30)->by($request->ip()));

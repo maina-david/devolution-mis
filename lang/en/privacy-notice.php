@@ -31,4 +31,5 @@ return [
     'legal_title' => 'Legal references',
     'legal_body' => 'This draft is informed by Article 31 of the Constitution of Kenya, sections 25, 26, 28 and 29 of the Data Protection Act, 2019, and current ODPC public-sector guidance. The authoritative legislation and approved State Department policy prevail.',
     'back_to_case' => 'Return to citizen feedback',
+    'exercise_rights' => 'Exercise a data-protection right',
 ];

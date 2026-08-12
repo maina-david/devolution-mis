@@ -46,6 +46,7 @@ return [
         'copyright' => '© :year State Department for Devolution',
         'complaints' => 'Complaints',
         'privacy_notice' => 'Privacy notice',
+        'data_rights' => 'Exercise data rights',
         'authorized_access_only' => 'Authorized access only',
         'secure_government_access' => 'Secure access to the national devolution operating record',
         'secure_government_access_description' => 'Your role, organization and assigned county or portfolio determine the records and actions available after sign-in.',

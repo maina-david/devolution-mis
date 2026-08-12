@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\AdvanceDataSubjectRequest;
 use App\Actions\AdvancePrivacyIncident;
+use App\Actions\ReceiveDataSubjectRequest;
 use App\Actions\ReviewProcessingActivity;
 use App\Enums\ProgrammePermission;
 use App\Http\Requests\AdvanceDataSubjectRequestRequest;
@@ -94,12 +95,11 @@ class DataGovernanceController extends Controller
         return back()->with('success', 'Processing activity review recorded.');
     }
 
-    public function storeDataSubjectRequest(StoreDataSubjectRequestRequest $request): RedirectResponse
+    public function storeDataSubjectRequest(StoreDataSubjectRequestRequest $request, ReceiveDataSubjectRequest $action): RedirectResponse
     {
         $user = $this->user($request);
         $receivedAt = $request->date('received_at');
-        $privacyRequest = DataSubjectRequest::create([...$request->validated(), 'reference' => 'DSR-'.now()->format('Y').'-'.mb_strtoupper(Str::random(8)), 'received_at' => $receivedAt, 'due_at' => $receivedAt->copy()->addDays((int) config('privacy.data_subject_request_target_days')), 'status' => 'received', 'metadata' => ['intake_actor_id' => $user->id]]);
-        $this->auditLogger->record($user, $privacyRequest, 'privacy.data-subject-request.received', "Privacy request {$privacyRequest->reference} received.");
+        $action->handle($request->safe()->except('received_at'), $receivedAt, $user, ['intake_channel' => 'internal']);
 
         return back()->with('success', 'Privacy request recorded with a controlled due date.');
     }
