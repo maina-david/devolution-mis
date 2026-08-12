@@ -177,12 +177,10 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('data-[active=true]:text-sidebar-accent-foreground', $navMain);
 
         $styles = $this->source('resources/css/app.css');
-        $this->assertStringContainsString('--sidebar: oklch(0.49 0.105 158)', $styles);
-        $this->assertStringContainsString('--primary: oklch(0.3 0.07 158)', $styles);
+        $this->assertSame(2, substr_count($styles, '--sidebar: oklch(0.442 0.15 142.495)'));
+        $this->assertSame(2, substr_count($styles, '--primary: oklch(0.442 0.15 142.495)'));
         $this->assertStringContainsString('html.dark {', $styles);
-        $this->assertStringContainsString('--primary: oklch(0.205 0.035 158)', $styles);
-        $this->assertStringContainsString('--sidebar: oklch(0.115 0.025 158)', $styles);
-        $this->assertStringContainsString('--sidebar-accent: oklch(0.31 0.075 158)', $styles);
+        $this->assertStringContainsString('--sidebar-accent: oklch(0.32 0.105 142.495)', $styles);
 
         $appearance = $this->source('resources/js/hooks/use-appearance.tsx');
         $this->assertStringContainsString("document.documentElement.classList.toggle('dark', isDark)", $appearance);
