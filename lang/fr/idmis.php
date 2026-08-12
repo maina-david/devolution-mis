@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'errors' => [
+        'actions' => ['go_back' => 'Retour'],
+        '401' => ['title' => 'Authentification requise', 'description' => 'Connectez-vous avec un compte gouvernemental autorisé pour continuer.'],
+        '402' => ['title' => 'Demande non traitable', 'description' => 'IDMIS ne peut pas traiter cette demande par le canal de service actuel.'],
+        '403' => ['title' => 'Accès restreint', 'description' => 'Votre compte est connecté, mais votre rôle ou le périmètre de comté attribué ne permet pas d’accéder à ce dossier.'],
+        '404' => ['title' => 'Page introuvable', 'description' => 'L’adresse est peut-être incorrecte, ou le dossier demandé a été déplacé ou n’est plus disponible.'],
+        '419' => ['title' => 'Session expirée', 'description' => 'Pour votre sécurité, cette session ne peut plus envoyer la demande. Actualisez la page puis réessayez.'],
+        '429' => ['title' => 'Trop de demandes', 'description' => 'Le service a temporairement limité les demandes de votre session. Patientez avant de réessayer.'],
+        '500' => ['title' => 'Interruption du service', 'description' => 'IDMIS n’a pas pu traiter la demande. L’incident a été enregistré pour examen technique.'],
+        '503' => ['title' => 'Service temporairement indisponible', 'description' => 'IDMIS fait l’objet d’une maintenance ou d’une interruption temporaire. Veuillez réessayer prochainement.'],
+    ],
+    'mail' => [
+        'kenyan_flag' => 'Drapeau du Kenya',
+        'official_notice' => 'Communication officielle du Système intégré d’information de gestion de la dévolution.',
+        'rights_reserved' => 'Tous droits réservés.',
+    ],
     'header' => [
         'choose_theme' => 'Choisir le thème',
         'dark' => 'Sombre',

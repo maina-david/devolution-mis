@@ -21,6 +21,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*Audit*.php,database/migrations/*audit_assurance*,resources/js/**/*audit-assurance*,tests/Feature/{AuditTrailTest,AuditAssuranceTest}.php | .ai/rules/js-feature.md |
 | routes/**,resources/js/** | .ai/rules/js.md |
 | app/{Actions,Models,Http/Controllers,Http/Requests}/**/*Learning*.php,database/migrations/*learning_offline_package*,resources/js/pages/learning/**,tests/Feature/LearningOfflinePackageTest.php | .ai/rules/learning-feature.md |
+| {bootstrap/app.php,resources/js/pages/error.tsx,resources/views/errors/**,resources/views/vendor/mail/**,lang/**,tests/Feature/BrandedErrorAndMailTemplateTest.php} | .ai/rules/mail-feature.md |
 | app/{Actions,Models,Services,Http/Controllers}/**,database/migrations/**,tests/Feature/** | .ai/rules/migrations-feature.md |
 | {routes/**,app/Http/Responses/**,app/Models/User.php,database/migrations/**,resources/js/**,tests/**} | .ai/rules/migrations-js.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*{ServiceDesk,SupportTicket}*.php,resources/js/pages/support-desk/**,database/migrations/*service_desk*,database/migrations/*support_ticket*,database/seeders/ServiceDeskPolicySeeder.php | .ai/rules/migrations-migrations-seeders.md |

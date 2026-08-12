@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'errors' => [
+        'actions' => ['go_back' => 'Go back'],
+        '401' => ['title' => 'Authentication required', 'description' => 'Sign in with an authorized government account to continue.'],
+        '402' => ['title' => 'Request cannot be processed', 'description' => 'IDMIS cannot process this request through the current service channel.'],
+        '403' => ['title' => 'Access is restricted', 'description' => 'Your account is signed in, but your assigned role or county scope does not permit access to this record.'],
+        '404' => ['title' => 'Page not found', 'description' => 'The address may be incorrect, or the requested record may have moved or is no longer available.'],
+        '419' => ['title' => 'Session expired', 'description' => 'For your security, this session can no longer submit the request. Refresh the page and try again.'],
+        '429' => ['title' => 'Too many requests', 'description' => 'This service has temporarily limited requests from your session. Wait briefly before trying again.'],
+        '500' => ['title' => 'Service interruption', 'description' => 'IDMIS could not complete the request. The incident has been recorded for technical review.'],
+        '503' => ['title' => 'Service temporarily unavailable', 'description' => 'IDMIS is undergoing maintenance or a temporary service interruption. Please try again shortly.'],
+    ],
+    'mail' => [
+        'kenyan_flag' => 'Flag of Kenya',
+        'official_notice' => 'Official system communication from the Integrated Devolution Management Information System.',
+        'rights_reserved' => 'All rights reserved.',
+    ],
     'header' => [
         'choose_theme' => 'Choose theme',
         'dark' => 'Dark',

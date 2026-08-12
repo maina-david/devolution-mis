@@ -1,6 +1,22 @@
 <?php
 
 return [
+    'errors' => [
+        'actions' => ['go_back' => 'Rudi nyuma'],
+        '401' => ['title' => 'Uthibitishaji unahitajika', 'description' => 'Ingia kwa akaunti ya serikali iliyoidhinishwa ili kuendelea.'],
+        '402' => ['title' => 'Ombi haliwezi kushughulikiwa', 'description' => 'IDMIS haiwezi kushughulikia ombi hili kupitia njia ya sasa ya huduma.'],
+        '403' => ['title' => 'Ufikiaji umezuiliwa', 'description' => 'Akaunti yako imeingia, lakini jukumu au wigo wa kaunti uliopewa hauruhusu ufikiaji wa rekodi hii.'],
+        '404' => ['title' => 'Ukurasa haujapatikana', 'description' => 'Anwani inaweza kuwa si sahihi, au rekodi iliyoombwa imehamishwa au haipatikani tena.'],
+        '419' => ['title' => 'Kipindi kimeisha', 'description' => 'Kwa usalama wako, kipindi hiki hakiwezi tena kuwasilisha ombi. Onyesha upya ukurasa kisha ujaribu tena.'],
+        '429' => ['title' => 'Maombi ni mengi mno', 'description' => 'Huduma hii imezuia kwa muda maombi kutoka kipindi chako. Subiri kidogo kabla ya kujaribu tena.'],
+        '500' => ['title' => 'Hitilafu ya huduma', 'description' => 'IDMIS haikuweza kukamilisha ombi. Tukio limerekodiwa kwa ukaguzi wa kiufundi.'],
+        '503' => ['title' => 'Huduma haipatikani kwa muda', 'description' => 'IDMIS inafanyiwa matengenezo au ina hitilafu ya muda. Tafadhali jaribu tena hivi karibuni.'],
+    ],
+    'mail' => [
+        'kenyan_flag' => 'Bendera ya Kenya',
+        'official_notice' => 'Mawasiliano rasmi ya mfumo kutoka Mfumo Jumuishi wa Taarifa za Usimamizi wa Ugatuzi.',
+        'rights_reserved' => 'Haki zote zimehifadhiwa.',
+    ],
     'header' => [
         'choose_theme' => 'Chagua mandhari',
         'dark' => 'Giza',
