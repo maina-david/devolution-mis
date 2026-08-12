@@ -10,7 +10,9 @@ Before planning or editing, find the row whose globs match the file's path and r
 | app/Actions/PublishWorkflowVersion.php,app/Models/WorkflowVersion.php,database/migrations/*workflow_versions*,app/Http/Controllers/WorkflowDefinitionController.php | .ai/rules/controllers.md |
 | app/Models/County.php,app/**/**County*,resources/js/**,database/data/county-identity.json,public/images/counties/** | .ai/rules/counties.md |
 | app/{Actions,Services,Http/Controllers,Http/Requests}/**/*{Import,Migration,Tabular}*.php,resources/js/pages/data-migrations/**,tests/Feature/*{Import,Migration}*Test.php | .ai/rules/data-migrations-feature.md |
+| {resources/js/**,lang/**,app/Http/**,app/Enums/SupportedLocale.php,tests/**} | .ai/rules/enums.md |
 | resources/js/components/{app-content,app-shell,input-error}.tsx,resources/js/layouts/auth/**,resources/js/pages/{welcome,help,faqs}.tsx,resources/js/pages/auth/**,tests/Feature/AccessibilityContractTest.php | .ai/rules/feature.md |
+| {resources/js/**,lang/**,app/Http/**,routes/**,tests/**} | .ai/rules/http.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*Audit*.php,database/migrations/*audit_assurance*,resources/js/**/*audit-assurance*,tests/Feature/{AuditTrailTest,AuditAssuranceTest}.php | .ai/rules/js-feature.md |
 | routes/**,resources/js/** | .ai/rules/js.md |
 | app/{Actions,Models,Http/Controllers,Http/Requests}/**/*Learning*.php,database/migrations/*learning_offline_package*,resources/js/pages/learning/**,tests/Feature/LearningOfflinePackageTest.php | .ai/rules/learning-feature.md |

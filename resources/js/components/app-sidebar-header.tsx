@@ -40,6 +40,7 @@ import {
 import type { ContextualNavigationSection } from '@/lib/app-navigation';
 import { cn } from '@/lib/utils';
 import { faqs, help } from '@/routes';
+import { update as updateLocale } from '@/routes/locale';
 import { index as notificationsIndex } from '@/routes/notifications';
 import type { BreadcrumbItem as BreadcrumbItemType, NavItem } from '@/types';
 
@@ -49,7 +50,7 @@ export function AppSidebarHeader({
     breadcrumbs?: BreadcrumbItemType[];
 }) {
     const page = usePage();
-    const { auth, currentTeam, notificationSummary } = page.props;
+    const { auth, currentTeam, localization, notificationSummary } = page.props;
     const { appearance, updateAppearance } = useAppearance();
     const { currentUrl } = useCurrentUrl();
     const groups = currentTeam
@@ -83,20 +84,23 @@ export function AppSidebarHeader({
                     <Breadcrumbs breadcrumbs={resolvedBreadcrumbs} inverse />
                 </div>
                 {currentTeam && <GlobalSearchDialog />}
-                <HeaderLink href={help()} label="Help">
+                <HeaderLink href={help()} label={localization.copy.help}>
                     <CircleHelp />
                 </HeaderLink>
-                <HeaderLink href={faqs()} label="Frequently asked questions">
+                <HeaderLink href={faqs()} label={localization.copy.faqs}>
                     <MessageCircleQuestion />
                 </HeaderLink>
                 <ThemeMenu
                     appearance={appearance}
                     updateAppearance={updateAppearance}
+                    copy={localization.copy}
                 />
+                <LocaleMenu localization={localization} />
                 {currentTeam && (
                     <NotificationMenu
                         teamSlug={currentTeam.slug}
                         summary={notificationSummary}
+                        copy={localization.copy}
                     />
                 )}
                 <DropdownMenu>
@@ -104,7 +108,7 @@ export function AppSidebarHeader({
                         <Button
                             variant="ghost"
                             className="h-10 w-10 gap-2 px-1 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground sm:h-auto sm:min-h-10 sm:w-auto sm:max-w-64 sm:px-2 sm:py-1 [&>div:last-child]:hidden sm:[&>div:last-child]:grid"
-                            aria-label="Open account menu"
+                            aria-label={localization.copy.openAccountMenu}
                         >
                             <UserInfo user={auth.user} showRole />
                         </Button>
@@ -124,6 +128,74 @@ export function AppSidebarHeader({
                 />
             )}
         </header>
+    );
+}
+
+function LocaleMenu({
+    localization,
+}: {
+    localization: ReturnType<typeof usePage>['props']['localization'];
+}) {
+    const selectedLocale = localization.supported.find(
+        (locale) => locale.code === localization.current,
+    );
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="ghost"
+                    className="h-9 gap-1.5 px-2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                    title={localization.copy.chooseLanguage}
+                    aria-label={`${localization.copy.chooseLanguage}. ${localization.copy.currentLanguage}: ${selectedLocale?.nativeLabel ?? localization.current}`}
+                >
+                    <span aria-hidden="true">{selectedLocale?.flag}</span>
+                    <span className="hidden text-sm font-medium sm:inline">
+                        {selectedLocale?.nativeLabel ?? localization.current}
+                    </span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                    {localization.copy.language}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {localization.supported.map((locale) => {
+                    const active = locale.code === localization.current;
+
+                    return (
+                        <DropdownMenuItem key={locale.code} asChild>
+                            <Link
+                                href={updateLocale()}
+                                method="patch"
+                                data={{ locale: locale.code }}
+                                preserveScroll
+                                aria-current={active ? 'true' : undefined}
+                                lang={locale.code}
+                            >
+                                <span aria-hidden="true">{locale.flag}</span>
+                                <span>{locale.nativeLabel}</span>
+                                {locale.label !== locale.nativeLabel && (
+                                    <span className="text-muted-foreground">
+                                        {locale.label}
+                                    </span>
+                                )}
+                                {active && (
+                                    <Check
+                                        className="ml-auto"
+                                        aria-hidden="true"
+                                    />
+                                )}
+                            </Link>
+                        </DropdownMenuItem>
+                    );
+                })}
+            </DropdownMenuContent>
+            <span className="sr-only" role="status" aria-live="polite">
+                {localization.copy.currentLanguage}:{' '}
+                {selectedLocale?.nativeLabel ?? localization.current}
+            </span>
+        </DropdownMenu>
     );
 }
 
@@ -431,18 +503,20 @@ function HeaderLink({
 function ThemeMenu({
     appearance,
     updateAppearance,
+    copy,
 }: {
     appearance: Appearance;
     updateAppearance: (appearance: Appearance) => void;
+    copy: ReturnType<typeof usePage>['props']['localization']['copy'];
 }) {
     const options: Array<{
         value: Appearance;
         label: string;
         icon: typeof Sun;
     }> = [
-        { value: 'light', label: 'Light', icon: Sun },
-        { value: 'dark', label: 'Dark', icon: Moon },
-        { value: 'system', label: 'System', icon: Monitor },
+        { value: 'light', label: copy.light, icon: Sun },
+        { value: 'dark', label: copy.dark, icon: Moon },
+        { value: 'system', label: copy.system, icon: Monitor },
     ];
 
     return (
@@ -452,14 +526,14 @@ function ThemeMenu({
                     variant="ghost"
                     size="icon"
                     className="text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                    title="Theme"
-                    aria-label="Choose theme"
+                    title={copy.theme}
+                    aria-label={copy.chooseTheme}
                 >
                     {appearance === 'dark' ? <Moon /> : <Sun />}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Theme</DropdownMenuLabel>
+                <DropdownMenuLabel>{copy.theme}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {options.map(({ value, label, icon: Icon }) => (
                     <DropdownMenuItem
@@ -479,9 +553,11 @@ function ThemeMenu({
 function NotificationMenu({
     teamSlug,
     summary,
+    copy,
 }: {
     teamSlug: string;
     summary: ReturnType<typeof usePage>['props']['notificationSummary'];
+    copy: ReturnType<typeof usePage>['props']['localization']['copy'];
 }) {
     return (
         <DropdownMenu>
@@ -490,8 +566,8 @@ function NotificationMenu({
                     variant="ghost"
                     size="icon"
                     className="relative text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-                    title="Notifications"
-                    aria-label={`Notifications${summary.unread ? `, ${summary.unread} unread` : ''}`}
+                    title={copy.notifications}
+                    aria-label={`${copy.notifications}${summary.unread ? `, ${summary.unread} ${copy.unread}` : ''}`}
                 >
                     <Bell />
                     {summary.unread > 0 && (
@@ -503,15 +579,15 @@ function NotificationMenu({
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-80" align="end">
                 <DropdownMenuLabel className="flex items-center justify-between">
-                    <span>Notifications</span>
+                    <span>{copy.notifications}</span>
                     <span className="text-xs font-normal text-muted-foreground">
-                        {summary.unread} unread
+                        {summary.unread} {copy.unread}
                     </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {summary.recent.length === 0 ? (
                     <div className="px-3 py-6 text-center text-sm text-muted-foreground">
-                        No notifications yet.
+                        {copy.noNotifications}
                     </div>
                 ) : (
                     summary.recent.map((notification) => (
@@ -541,7 +617,7 @@ function NotificationMenu({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                     <Link href={notificationsIndex(teamSlug)}>
-                        View all notifications
+                        {copy.viewAllNotifications}
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuContent>

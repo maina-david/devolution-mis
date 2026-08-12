@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\SupportedLocale;
 use App\Enums\UserRole;
 use App\Models\AssessmentCycle;
 use App\Models\DatabaseNotification;
@@ -44,6 +45,33 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'localization' => [
+                'current' => app()->getLocale(),
+                'supported' => collect(SupportedLocale::cases())
+                    ->map(fn (SupportedLocale $locale): array => [
+                        'code' => $locale->value,
+                        'label' => $locale->label(),
+                        'nativeLabel' => $locale->label(),
+                        'flag' => $locale->flag(),
+                    ])->values()->all(),
+                'copy' => [
+                    'chooseLanguage' => __('idmis.locale.choose_language'),
+                    'language' => __('idmis.locale.language'),
+                    'currentLanguage' => __('idmis.locale.current_language'),
+                    'help' => __('idmis.header.help'),
+                    'faqs' => __('idmis.header.faqs'),
+                    'openAccountMenu' => __('idmis.header.open_account_menu'),
+                    'theme' => __('idmis.header.theme'),
+                    'chooseTheme' => __('idmis.header.choose_theme'),
+                    'light' => __('idmis.header.light'),
+                    'dark' => __('idmis.header.dark'),
+                    'system' => __('idmis.header.system'),
+                    'notifications' => __('idmis.header.notifications'),
+                    'unread' => __('idmis.header.unread'),
+                    'noNotifications' => __('idmis.header.no_notifications'),
+                    'viewAllNotifications' => __('idmis.header.view_all_notifications'),
+                ],
+            ],
             'auth' => [
                 'user' => $user ? [
                     ...$user->toArray(),

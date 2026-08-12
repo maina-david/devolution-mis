@@ -33,6 +33,7 @@ use App\Http\Controllers\KnowledgeManagementController;
 use App\Http\Controllers\LearningAnalyticsController;
 use App\Http\Controllers\LearningController;
 use App\Http\Controllers\LinkedDocumentController;
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MonitoringEvaluationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OperationsController;
@@ -396,6 +397,7 @@ Route::prefix('{current_team}')
     });
 
 Route::middleware(['auth'])->group(function () {
+    Route::patch('locale', LocaleController::class)->name('locale.update');
     Route::post('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
     Route::delete('invitations/{invitation}', [TeamInvitationController::class, 'decline'])->name('invitations.decline');
 });

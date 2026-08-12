@@ -12,6 +12,32 @@ declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
+            localization: {
+                current: string;
+                supported: Array<{
+                    code: string;
+                    label: string;
+                    nativeLabel: string;
+                    flag: string;
+                }>;
+                copy: {
+                    chooseLanguage: string;
+                    language: string;
+                    currentLanguage: string;
+                    help: string;
+                    faqs: string;
+                    openAccountMenu: string;
+                    theme: string;
+                    chooseTheme: string;
+                    light: string;
+                    dark: string;
+                    system: string;
+                    notifications: string;
+                    unread: string;
+                    noNotifications: string;
+                    viewAllNotifications: string;
+                };
+            };
             auth: Auth;
             sidebarOpen: boolean;
             currentTeam: Team | null;

@@ -29,8 +29,9 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertSame(1, substr_count($sidebar, '<NavMain'));
         $this->assertStringNotContainsString('group.items.map', $sidebar);
         $this->assertStringContainsString('href: group.items[0].href', $sidebar);
-        $this->assertStringContainsString('badge: group.items.length', $sidebar);
-        $this->assertStringContainsString('subItems: group.items', $sidebar);
+        $this->assertStringContainsString('group.showChildren === false ? undefined : group.items.length', $sidebar);
+        $this->assertStringContainsString('group.showChildren === false ? undefined : group.items', $sidebar);
+        $this->assertStringContainsString('showChildren: false', $this->source('resources/js/lib/app-navigation.ts'));
 
         $this->assertStringContainsString('<SidebarMenuBadge', $navMain);
         $this->assertStringContainsString('bg-sidebar-foreground/10', $navMain);
@@ -133,13 +134,13 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('onEscapeKeyDown={dismissMenu}', $header);
         $this->assertStringContainsString('onPointerDownOutside={dismissMenu}', $header);
         $this->assertStringContainsString('<DropdownMenuGroup>', $header);
-        $this->assertStringContainsString('aria-label="Open account menu"', $header);
+        $this->assertStringContainsString('aria-label={localization.copy.openAccountMenu}', $header);
         $this->assertStringContainsString('<UserInfo user={auth.user} showRole', $header);
-        $this->assertStringContainsString('aria-label="Choose theme"', $header);
-        $this->assertStringContainsString('Frequently asked questions', $header);
+        $this->assertStringContainsString('aria-label={copy.chooseTheme}', $header);
+        $this->assertStringContainsString('label={localization.copy.faqs}', $header);
         $this->assertStringContainsString('target="_blank"', $header);
         $this->assertStringContainsString('rel="noopener noreferrer"', $header);
-        $this->assertStringContainsString('View all notifications', $header);
+        $this->assertStringContainsString('{copy.viewAllNotifications}', $header);
         $this->assertStringContainsString('summary.recent.map', $header);
         $this->assertStringContainsString('sticky top-0 z-50', $header);
         $this->assertStringContainsString('bg-sidebar text-sidebar-foreground', $header);
@@ -163,6 +164,9 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('county={', $sidebar);
         $this->assertStringContainsString('.county_identity', $sidebar);
         $appLogo = $this->source('resources/js/components/app-logo.tsx');
+        $appLogoIcon = $this->source('resources/js/components/app-logo-icon.tsx');
+        $this->assertStringContainsString('/images/branding/devolution-emblem.png', $appLogoIcon);
+        $this->assertStringContainsString('aria-hidden="true"', $appLogoIcon);
         $this->assertStringContainsString('county?: CountyIdentityValue | null', $appLogo);
         $this->assertStringContainsString('<CountyIdentity', $appLogo);
         $this->assertStringContainsString('variant="outline"', $appLogo);

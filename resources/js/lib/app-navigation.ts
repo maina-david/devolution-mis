@@ -56,6 +56,7 @@ export type AppNavigationGroup = {
     title: string;
     icon: LucideIcon;
     items: NavItem[];
+    showChildren?: boolean;
     contextualSubgroups?: Array<{
         title: string;
         itemTitles: string[];
@@ -83,6 +84,7 @@ export function appNavigationGroups(
         {
             title: 'Dashboard',
             icon: LayoutGrid,
+            showChildren: false,
             items: [{ title: 'Dashboard', href: dashboard(teamSlug) }],
         },
         {
