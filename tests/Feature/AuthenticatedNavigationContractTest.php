@@ -29,6 +29,16 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertSame(1, substr_count($sidebar, '<NavMain'));
         $this->assertStringNotContainsString('group.items.map', $sidebar);
         $this->assertStringContainsString('href: group.items[0].href', $sidebar);
+        $this->assertStringContainsString('badge: group.items.length', $sidebar);
+        $this->assertStringContainsString('subItems: group.items', $sidebar);
+
+        $this->assertStringContainsString('<SidebarMenuBadge', $navMain);
+        $this->assertStringContainsString('bg-sidebar-foreground/10', $navMain);
+        $this->assertStringContainsString('side="right"', $navMain);
+        $this->assertStringContainsString('item.subItems?.map', $navMain);
+        $this->assertStringContainsString('onPointerEnter={openOnHover}', $navMain);
+        $this->assertStringContainsString('onPointerEnter={retainOnContentHover}', $navMain);
+        $this->assertStringContainsString('mouseHoverSession.current', $navMain);
     }
 
     public function test_sidebar_contexts_reference_all_fourteen_tor_modules(): void
@@ -294,7 +304,10 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('<CardContent className="p-0">', $dashboard);
         $this->assertStringContainsString('<CardHeader className="py-6">', $dashboard);
         $this->assertStringContainsString('className="rounded-none border-x-0 border-b-0"', $dashboard);
+        $this->assertStringContainsString('counties.length === 1 ? counties[0] : null', $dashboard);
+        $this->assertStringContainsString("'Select an authorized county'", $dashboard);
         $this->assertStringNotContainsString('max-w-xl', $partnerMap);
+        $this->assertStringContainsString('counties.length === 1 ? counties[0] : null', $partnerMap);
         $this->assertStringContainsString('<CardContent className="p-0">', $partnerMap);
         $this->assertStringContainsString('<CardHeader className="py-6">', $partnerMap);
         $this->assertStringContainsString('className="rounded-none border-x-0 border-b-0"', $partnerMap);

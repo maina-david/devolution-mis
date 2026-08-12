@@ -1,4 +1,15 @@
 import { Link } from '@inertiajs/react';
+import { Check } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -10,11 +21,13 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
+type NavMainItem = NavItem & { subItems?: NavItem[] };
+
 export function NavMain({
     items = [],
     label = 'Platform',
 }: {
-    items: NavItem[];
+    items: NavMainItem[];
     label?: string;
 }) {
     const { isCurrentUrl } = useCurrentUrl();
@@ -24,24 +37,180 @@ export function NavMain({
             <SidebarGroupLabel>{label}</SidebarGroupLabel>
             <SidebarMenu>
                 {items.map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={item.isActive ?? isCurrentUrl(item.href)}
-                            tooltip={{ children: item.title }}
-                            className="text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
-                        >
-                            <Link href={item.href} prefetch>
-                                {item.icon && <item.icon />}
-                                <span>{item.title}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                        {!!item.badge && (
-                            <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
-                        )}
-                    </SidebarMenuItem>
+                    <NavMainRow
+                        key={item.title}
+                        item={item}
+                        active={item.isActive ?? isCurrentUrl(item.href)}
+                        isCurrentUrl={isCurrentUrl}
+                    />
                 ))}
             </SidebarMenu>
         </SidebarGroup>
+    );
+}
+
+function NavMainRow({
+    item,
+    active,
+    isCurrentUrl,
+}: {
+    item: NavMainItem;
+    active: boolean;
+    isCurrentUrl: (href: NavItem['href']) => boolean;
+}) {
+    const [open, setOpen] = useState(false);
+    const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const triggerRef = useRef<HTMLAnchorElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const pointerWithinMenu = useRef(false);
+    const mouseHoverSession = useRef(false);
+    const hasSubItems = (item.subItems?.length ?? 0) > 0;
+    const cancelClose = () => {
+        if (closeTimeout.current !== null) {
+            clearTimeout(closeTimeout.current);
+            closeTimeout.current = null;
+        }
+    };
+    const pointerIsOverMenu = () =>
+        pointerWithinMenu.current ||
+        triggerRef.current?.matches(':hover') === true ||
+        contentRef.current?.matches(':hover') === true;
+    const openOnHover = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse' || !hasSubItems) {
+            return;
+        }
+
+        cancelClose();
+        pointerWithinMenu.current = true;
+        mouseHoverSession.current = true;
+        setOpen(true);
+    };
+    const retainOnContentHover = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        cancelClose();
+        pointerWithinMenu.current = true;
+        mouseHoverSession.current = true;
+    };
+    const scheduleClose = (event: React.PointerEvent) => {
+        if (event.pointerType !== 'mouse') {
+            return;
+        }
+
+        pointerWithinMenu.current = false;
+        cancelClose();
+        closeTimeout.current = setTimeout(() => {
+            if (!pointerIsOverMenu()) {
+                mouseHoverSession.current = false;
+                setOpen(false);
+            }
+        }, 200);
+    };
+    const dismissMenu = () => {
+        cancelClose();
+        pointerWithinMenu.current = false;
+        mouseHoverSession.current = false;
+        setOpen(false);
+    };
+    const handleOpenChange = (nextOpen: boolean) => {
+        if (!nextOpen && mouseHoverSession.current) {
+            return;
+        }
+
+        setOpen(nextOpen);
+    };
+
+    useEffect(
+        () => () => {
+            if (closeTimeout.current !== null) {
+                clearTimeout(closeTimeout.current);
+            }
+        },
+        [],
+    );
+
+    return (
+        <SidebarMenuItem>
+            <DropdownMenu
+                modal={false}
+                open={open}
+                onOpenChange={handleOpenChange}
+            >
+                <DropdownMenuTrigger asChild disabled={!hasSubItems}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={{ children: item.title }}
+                        className="text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground"
+                    >
+                        <Link
+                            ref={triggerRef}
+                            href={item.href}
+                            prefetch
+                            onPointerEnter={openOnHover}
+                            onPointerLeave={scheduleClose}
+                            onFocus={() => hasSubItems && setOpen(true)}
+                        >
+                            {item.icon && <item.icon />}
+                            <span>{item.title}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                    ref={contentRef}
+                    side="right"
+                    align="start"
+                    sideOffset={8}
+                    className="min-w-60"
+                    onPointerEnter={retainOnContentHover}
+                    onPointerLeave={scheduleClose}
+                    onFocusOutside={(event) => {
+                        if (pointerIsOverMenu()) {
+                            event.preventDefault();
+                        }
+                    }}
+                    onCloseAutoFocus={(event) => event.preventDefault()}
+                    onEscapeKeyDown={dismissMenu}
+                    onPointerDownOutside={dismissMenu}
+                >
+                    <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        {item.subItems?.map((subItem) => {
+                            const subItemActive = isCurrentUrl(subItem.href);
+
+                            return (
+                                <DropdownMenuItem
+                                    key={subItem.title}
+                                    asChild
+                                    onSelect={dismissMenu}
+                                >
+                                    <Link
+                                        href={subItem.href}
+                                        prefetch
+                                        aria-current={
+                                            subItemActive ? 'page' : undefined
+                                        }
+                                    >
+                                        {subItem.icon && <subItem.icon />}
+                                        {subItem.title}
+                                        {subItemActive && (
+                                            <Check className="ml-auto" />
+                                        )}
+                                    </Link>
+                                </DropdownMenuItem>
+                            );
+                        })}
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            {!!item.badge && (
+                <SidebarMenuBadge className="bg-sidebar-foreground/10 text-sidebar-foreground">
+                    {item.badge}
+                </SidebarMenuBadge>
+            )}
+        </SidebarMenuItem>
     );
 }

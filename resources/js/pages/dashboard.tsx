@@ -153,7 +153,7 @@ export default function Dashboard({
         pendingInvitations.length > 0,
     );
     const [selectedCounty, setSelectedCounty] = useState<CountyMetric | null>(
-        dashboardProfile.mapScope === 'none' ? null : (counties[0] ?? null),
+        counties.length === 1 ? counties[0] : null,
     );
     const cycleTrend = useMemo(
         () => [...cycleOverview].reverse(),
@@ -470,7 +470,9 @@ export default function Dashboard({
                                         </CardDescription>
                                         <CardTitle>
                                             {selectedCounty?.name ??
-                                                'No county assigned'}
+                                                (counties.length === 0
+                                                    ? 'No county assigned'
+                                                    : 'Select an authorized county')}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
@@ -561,8 +563,9 @@ export default function Dashboard({
                                             </div>
                                         ) : (
                                             <p className="text-sm text-muted-foreground">
-                                                Contact an administrator to
-                                                assign county access.
+                                                {counties.length === 0
+                                                    ? 'Contact an administrator to assign county access.'
+                                                    : 'Select an authorized county on the map to inspect its assessment, evidence and grant details.'}
                                             </p>
                                         )}
                                     </CardContent>

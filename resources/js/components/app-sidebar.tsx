@@ -32,6 +32,8 @@ export function AppSidebar() {
         href: group.items[0].href,
         icon: group.icon,
         isActive: group === activeGroup,
+        badge: group.items.length,
+        subItems: group.items,
     }));
 
     return (
