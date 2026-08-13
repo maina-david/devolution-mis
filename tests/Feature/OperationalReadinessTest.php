@@ -17,6 +17,7 @@ use App\Services\OperationalReadinessCheck;
 use App\Services\PostgreSqlBackupManager;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -183,6 +184,27 @@ class OperationalReadinessTest extends TestCase
         $this->assertSame(array_keys($english['backup']['errors']), array_keys($french['backup']['errors']));
     }
 
+    public function test_operations_outcomes_follow_the_user_locale_and_catalogs_remain_in_parity(): void
+    {
+        Queue::fake();
+        $operator = User::factory()->platformAdmin()->create();
+        $operator->localePreference()->updateOrCreate([], ['locale' => 'fr']);
+
+        $this->actingAs($operator)
+            ->withSession(['locale' => 'fr'])
+            ->post(route('operations.backups.store'))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'La sauvegarde de la base de données a été mise en file.');
+
+        $englishKeys = array_keys(Arr::dot(require lang_path('en/operations.php')));
+        sort($englishKeys);
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedKeys = array_keys(Arr::dot(require lang_path("{$locale}/operations.php")));
+            sort($localizedKeys);
+            $this->assertSame($englishKeys, $localizedKeys, "Operations catalog keys differ for {$locale}.");
+        }
+    }
+
     public function test_operational_alert_event_history_and_alert_deletion_are_database_immutable(): void
     {
         $alert = OperationalAlert::factory()->create();
@@ -192,7 +214,7 @@ class OperationalReadinessTest extends TestCase
             $event->update(['narrative' => 'Attempted rewrite.']);
             $this->fail('Operational alert events must reject updates.');
         } catch (QueryException) {
-            $this->assertTrue(true);
+            $this->addToAssertionCount(1);
         }
 
         $this->expectException(QueryException::class);

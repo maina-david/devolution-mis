@@ -83,16 +83,16 @@ class OperationsController extends Controller
     {
         $user = $this->user($request);
         $release = ReleaseRecord::create([...$request->validated(), 'deployed_by' => $user->id, 'status' => 'deployed']);
-        $this->auditLogger->record($user, $release, 'operations.release.recorded', "Release {$release->version} recorded for {$release->environment}.");
+        $this->auditLogger->record($user, $release, 'operations.release.recorded', __('operations.audit.release_recorded', ['version' => $release->version, 'environment' => $release->environment]));
 
-        return back()->with('success', 'Deployment record created for independent validation.');
+        return back()->with('success', __('operations.outcomes.release_recorded'));
     }
 
     public function validateRelease(ValidateReleaseRequest $request, ReleaseRecord $release, ValidateRelease $action): RedirectResponse
     {
         $action->handle($release, $this->user($request), $request->validated('evidence'));
 
-        return back()->with('success', 'Release independently validated.');
+        return back()->with('success', __('operations.outcomes.release_validated'));
     }
 
     public function rollbackRelease(RollbackReleaseRequest $request, ReleaseRecord $release, RollbackRelease $action): RedirectResponse
@@ -102,7 +102,7 @@ class OperationsController extends Controller
         abort_unless(is_string($rollbackToVersion) && is_string($reason), 422);
         $action->handle($release, $this->user($request), ['rollback_to_version' => $rollbackToVersion, 'reason' => $reason]);
 
-        return back()->with('success', 'Rollback decision recorded. Execute the approved deployment runbook and attach platform evidence.');
+        return back()->with('success', __('operations.outcomes.rollback_recorded'));
     }
 
     public function createBackup(Request $request): RedirectResponse
@@ -110,7 +110,7 @@ class OperationsController extends Controller
         Gate::authorize(ProgrammePermission::ManageOperations->value);
         CreateOperationalBackupJob::dispatch($this->user($request)->id);
 
-        return back()->with('success', 'Database backup queued.');
+        return back()->with('success', __('operations.outcomes.backup_queued'));
     }
 
     public function verifyBackup(Request $request, OperationalBackup $backup): RedirectResponse
@@ -118,14 +118,14 @@ class OperationsController extends Controller
         Gate::authorize(ProgrammePermission::ManageOperations->value);
         VerifyOperationalBackupJob::dispatch($backup->id, $this->user($request)->id, true);
 
-        return back()->with('success', 'Isolated restore verification queued.');
+        return back()->with('success', __('operations.outcomes.restore_verification_queued'));
     }
 
     public function retryFailedJob(RetryFailedQueueJobRequest $request, string $failedJobUuid, RetryFailedQueueJob $action): RedirectResponse
     {
         $attempt = $action->handle($failedJobUuid, $this->user($request));
 
-        return back()->with($attempt->outcome === 'requeued' ? 'success' : 'error', $attempt->outcome === 'requeued' ? 'Failed job requeued with immutable recovery evidence.' : 'Queue provider rejected the recovery request; the failed job remains available.');
+        return back()->with($attempt->outcome === 'requeued' ? 'success' : 'error', __($attempt->outcome === 'requeued' ? 'operations.outcomes.failed_job_requeued' : 'operations.outcomes.failed_job_rejected'));
     }
 
     public function acknowledgeAlert(AcknowledgeOperationalAlertRequest $request, OperationalAlert $operationalAlert, AcknowledgeOperationalAlert $action): RedirectResponse
@@ -134,7 +134,7 @@ class OperationsController extends Controller
         abort_unless(is_string($note), 422);
         $action->handle($operationalAlert, $this->user($request), $note);
 
-        return back()->with('success', 'Operational alert acknowledged with immutable response evidence.');
+        return back()->with('success', __('operations.outcomes.alert_acknowledged'));
     }
 
     private function jobName(string $payload): string
@@ -142,7 +142,7 @@ class OperationsController extends Controller
         $decoded = json_decode($payload, true);
         $name = is_array($decoded) ? ($decoded['displayName'] ?? $decoded['job'] ?? null) : null;
 
-        return is_string($name) ? Str::limit($name, 255, '') : 'Unknown queued job';
+        return is_string($name) ? Str::limit($name, 255, '') : __('operations.labels.unknown_queued_job');
     }
 
     private function user(Request $request): User

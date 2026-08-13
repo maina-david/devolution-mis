@@ -22,6 +22,14 @@ return [
         'search_indexes_available' => ':count required discovery indexes are available.',
         'search_indexes_missing' => 'Required discovery indexes are unavailable: :indexes',
     ],
+    'labels' => ['unknown_queued_job' => 'Unknown queued job'],
+    'outcomes' => [
+        'release_recorded' => 'Deployment record created for independent validation.', 'release_validated' => 'Release independently validated.',
+        'rollback_recorded' => 'Rollback decision recorded. Execute the approved deployment runbook and attach platform evidence.', 'backup_queued' => 'Database backup queued.',
+        'restore_verification_queued' => 'Isolated restore verification queued.', 'failed_job_requeued' => 'Failed job requeued with immutable recovery evidence.',
+        'failed_job_rejected' => 'Queue provider rejected the recovery request; the failed job remains available.', 'alert_acknowledged' => 'Operational alert acknowledged with immutable response evidence.',
+    ],
+    'audit' => ['release_recorded' => 'Release :version recorded for :environment.'],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Unable to allocate a temporary backup path.', 'persist_backup' => 'Unable to persist the database backup on the configured backup disk.',
         'completed_required' => 'Only completed backups can be verified.', 'temporary_restore_path' => 'Unable to allocate a temporary restore path.',

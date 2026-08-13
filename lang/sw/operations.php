@@ -22,6 +22,14 @@ return [
         'search_indexes_available' => 'Faharasa :count zinazohitajika za utafutaji zinapatikana.',
         'search_indexes_missing' => 'Faharasa zinazohitajika za utafutaji hazipatikani: :indexes',
     ],
+    'labels' => ['unknown_queued_job' => 'Kazi ya foleni isiyojulikana'],
+    'outcomes' => [
+        'release_recorded' => 'Rekodi ya upelekaji imeundwa kwa uthibitishaji huru.', 'release_validated' => 'Toleo limethibitishwa kwa uhuru.',
+        'rollback_recorded' => 'Uamuzi wa urejeshaji umerekodiwa. Tekeleza mwongozo wa upelekaji ulioidhinishwa na uambatishe ushahidi wa jukwaa.', 'backup_queued' => 'Nakala rudufu ya hifadhidata imewekwa kwenye foleni.',
+        'restore_verification_queued' => 'Uthibitishaji wa urejeshaji uliotengwa umewekwa kwenye foleni.', 'failed_job_requeued' => 'Kazi iliyoshindwa imerudishwa kwenye foleni pamoja na ushahidi wa urejeshaji usiobadilika.',
+        'failed_job_rejected' => 'Mtoa huduma wa foleni amekataa ombi la urejeshaji; kazi iliyoshindwa bado inapatikana.', 'alert_acknowledged' => 'Tahadhari ya uendeshaji imethibitishwa pamoja na ushahidi wa jibu usiobadilika.',
+    ],
+    'audit' => ['release_recorded' => 'Toleo :version limerekodiwa kwa mazingira ya :environment.'],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Imeshindikana kutenga njia ya muda ya nakala rudufu.', 'persist_backup' => 'Imeshindikana kuhifadhi nakala rudufu ya hifadhidata kwenye diski iliyosanidiwa.',
         'completed_required' => 'Nakala rudufu zilizokamilika pekee ndizo zinaweza kuthibitishwa.', 'temporary_restore_path' => 'Imeshindikana kutenga njia ya muda ya urejeshaji.',

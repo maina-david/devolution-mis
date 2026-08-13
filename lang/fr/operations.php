@@ -22,6 +22,14 @@ return [
         'search_indexes_available' => ':count index de recherche requis sont disponibles.',
         'search_indexes_missing' => 'Les index de recherche requis sont indisponibles : :indexes',
     ],
+    'labels' => ['unknown_queued_job' => 'Tâche de file inconnue'],
+    'outcomes' => [
+        'release_recorded' => 'L’enregistrement du déploiement a été créé pour validation indépendante.', 'release_validated' => 'La version a été validée indépendamment.',
+        'rollback_recorded' => 'La décision de retour a été enregistrée. Exécutez le manuel de déploiement approuvé et joignez la preuve de plateforme.', 'backup_queued' => 'La sauvegarde de la base de données a été mise en file.',
+        'restore_verification_queued' => 'La vérification de restauration isolée a été mise en file.', 'failed_job_requeued' => 'La tâche échouée a été remise en file avec une preuve de récupération immuable.',
+        'failed_job_rejected' => 'Le fournisseur de file a rejeté la demande de récupération ; la tâche échouée reste disponible.', 'alert_acknowledged' => 'L’alerte opérationnelle a été acquittée avec une preuve de réponse immuable.',
+    ],
+    'audit' => ['release_recorded' => 'Version :version enregistrée pour l’environnement :environment.'],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Impossible d’allouer un chemin temporaire pour la sauvegarde.', 'persist_backup' => 'Impossible de conserver la sauvegarde de la base de données sur le disque configuré.',
         'completed_required' => 'Seules les sauvegardes terminées peuvent être vérifiées.', 'temporary_restore_path' => 'Impossible d’allouer un chemin temporaire pour la restauration.',
