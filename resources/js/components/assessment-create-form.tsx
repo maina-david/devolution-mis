@@ -1,10 +1,11 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ClipboardCheck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import FormSheet from '@/components/form-sheet';
 import SearchableSelect from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
+import { interpolate } from '@/hooks/use-localization';
 import { store } from '@/routes/assessments';
 
 type AssessmentCreationOptions = {
@@ -18,6 +19,7 @@ export default function AssessmentCreateForm({
 }: {
     options: AssessmentCreationOptions;
 }) {
+    const copy = usePage().props.localization.assessmentRecord;
     const [countyId, setCountyId] = useState('');
     const [cycleId, setCycleId] = useState('');
     const unavailable = options.pairs.length === 0;
@@ -50,14 +52,12 @@ export default function AssessmentCreateForm({
 
     return (
         <FormSheet
-            title="Initiate county assessment"
-            description="Create one governed assessment for a county and released cycle. The scorecard and effective reference catalogue are pinned automatically."
-            triggerLabel="Initiate assessment"
+            title={copy.initiate_county_assessment}
+            description={copy.initiate_county_assessment_description}
+            triggerLabel={copy.initiate_assessment}
             triggerDisabled={unavailable}
             triggerTitle={
-                unavailable
-                    ? 'No authorized county and released planned/open cycle are available.'
-                    : undefined
+                unavailable ? copy.no_available_assessment_cycle : undefined
             }
             icon={ClipboardCheck}
         >
@@ -67,37 +67,39 @@ export default function AssessmentCreateForm({
                         <SearchableSelect
                             id="assessment-county"
                             name="county_id"
-                            label="County"
+                            label={copy.county}
                             error={errors.county_id}
                             value={countyId}
                             onValueChange={selectCounty}
                             options={options.counties.map((county) => ({
                                 id: county.id,
-                                name: `${county.name} · County ${String(county.code).padStart(3, '0')}`,
+                                name: interpolate(copy.county_option, {
+                                    county: county.name,
+                                    code: String(county.code).padStart(3, '0'),
+                                }),
                                 logoUrl: county.logoUrl,
                             }))}
                         />
                         <SearchableSelect
                             id="assessment-cycle"
                             name="assessment_cycle_id"
-                            label="Assessment cycle"
+                            label={copy.assessment_cycle}
                             error={errors.assessment_cycle_id}
                             value={cycleId}
                             onValueChange={setCycleId}
                             options={cycles}
                         />
                         <p className="text-sm leading-6 text-muted-foreground">
-                            The county, cycle, released scorecard checksum,
-                            effective catalogue version, creator and audit event
-                            are retained as creation lineage.
+                            {copy.assessment_creation_lineage}
                         </p>
                         <Button
                             type="submit"
                             disabled={processing || !countyId || !cycleId}
+                            aria-busy={processing}
                         >
                             {processing
-                                ? 'Initiating assessment…'
-                                : 'Initiate assessment'}
+                                ? copy.initiating_assessment
+                                : copy.initiate_assessment}
                         </Button>
                     </>
                 )}

@@ -69,6 +69,7 @@ class AssessmentCreationWorkflowTest extends TestCase
                 ->where('workspace.rows.0.cells.2', "v{$release->version} · {$release->effective_from?->toDateString()}")
                 ->where('workspace.rows.0.cells.3', $release->checksum)
                 ->where('workspace.rows.0.cells.4', $administrator->name)
+                ->where('workspace.rows.0.meta.isLegacy', 'false')
                 ->has('workspace.assessmentCreationOptions.pairs', 0));
 
         $this->actingAs($administrator)->get(route('assessments.show', [$assessment]))

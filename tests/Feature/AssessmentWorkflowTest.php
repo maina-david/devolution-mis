@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class AssessmentWorkflowTest extends TestCase
@@ -56,6 +57,11 @@ class AssessmentWorkflowTest extends TestCase
         $this->assertSame('84.50', $assessment->score);
         $this->assertSame($assessor->id, $assessment->assessor_id);
         $this->assertNotNull($assessment->assessed_at);
+
+        $this->actingAs($assessor)->get(route('assessments.index'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('workspace.rows.0.meta.isLegacy', 'true'));
     }
 
     public function test_assessment_score_must_be_between_zero_and_one_hundred(): void

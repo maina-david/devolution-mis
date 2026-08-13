@@ -185,6 +185,17 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('focus-visible:ring-2', $countyDetail);
         $this->assertStringContainsString('localization.countyDetail', $countyDetail);
         $this->assertStringContainsString('aria-label={copy.county_summary}', $countyDetail);
+
+        $assessmentCreate = $this->source('resources/js/components/assessment-create-form.tsx');
+        $this->assertStringContainsString('props.localization.assessmentRecord', $assessmentCreate);
+        $this->assertStringContainsString('aria-busy={processing}', $assessmentCreate);
+
+        $assessmentActions = $this->source('resources/js/components/assessment-row-action.tsx');
+        $this->assertStringContainsString('props.localization.assessmentRecord', $assessmentActions);
+        $this->assertStringContainsString('status === \'under_assessment\' && !isLegacy', $assessmentActions);
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.score)}', $assessmentActions);
+        $this->assertStringContainsString('<InputError', $assessmentActions);
+        $this->assertStringContainsString('aria-busy={processing}', $assessmentActions);
     }
 
     private function source(string $path): string

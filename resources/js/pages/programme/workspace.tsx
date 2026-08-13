@@ -127,6 +127,7 @@ export default function ProgrammeWorkspace({
                           assessmentId={row.id}
                           status={row.status}
                           capabilities={capabilities}
+                          isLegacy={row.meta?.isLegacy === 'true'}
                       />
                   );
               }

@@ -24,6 +24,7 @@ class CountyDetailData
         $assessments = (clone $assessmentsQuery)->with(['county:id,name', 'assessor:id,name'])->withCount('documents')->latest()->paginate($filters->perPage, pageName: 'assessments_page')->withQueryString()->through(fn (Assessment $assessment): array => [
             'id' => $assessment->id,
             'status' => $assessment->status->value,
+            'meta' => ['isLegacy' => $assessment->assessment_scorecard_version_id === null ? 'true' : 'false'],
             'cells' => [$assessment->cycle, $assessment->status->value, $assessment->score ?? __('county-detail.empty_value'), $assessment->documents_count, $assessment->assessor_id ? $assessment->assessor->name : __('county-detail.unassigned')],
         ]);
         $documents = (clone $documentsQuery)->with(['county:id,name', 'assessment:id,cycle', 'uploader:id,name'])->latest()->paginate($filters->perPage, pageName: 'evidence_page')->withQueryString()->through(fn (AssessmentDocument $document): array => [

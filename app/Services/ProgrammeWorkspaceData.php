@@ -124,7 +124,10 @@ class ProgrammeWorkspaceData
         $workspace = $this->workspace('ACPA assessments', 'Track preparation, submission, independent verification, scoring, and approval by assessment cycle.', ['County', 'Cycle', 'Reference release', 'Reference checksum', 'Created by', 'Status', 'Score', 'Evidence', 'Assessor'], $assessments->through(fn (Assessment $assessment) => [
             'id' => $assessment->id,
             'status' => $assessment->status->value,
-            'meta' => ['countyId' => $assessment->county_id],
+            'meta' => [
+                'countyId' => $assessment->county_id,
+                'isLegacy' => $assessment->assessment_scorecard_version_id === null ? 'true' : 'false',
+            ],
             'cells' => [
                 $assessment->county->identityCell(),
                 $assessment->cycle,

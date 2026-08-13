@@ -359,6 +359,7 @@ export default function CountyShow({
                             assessmentId={row.id}
                             status={row.status}
                             capabilities={capabilities}
+                            isLegacy={row.meta?.isLegacy === 'true'}
                         />
                     )}
                 />

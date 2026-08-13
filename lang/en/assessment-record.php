@@ -13,4 +13,8 @@ return [
     'uphold' => 'Uphold', 'partially_uphold' => 'Partially uphold', 'record_decision' => 'Record decision', 'weight' => 'Weight',
     'percent' => '%', 'maximum' => 'maximum', 'slash' => '/', 'verified' => 'verified', 'submitted' => 'Submitted', 'override' => 'override',
     'weighted' => 'weighted', 'submit' => 'Submit', 'verify' => 'Verify',
+    'initiate_county_assessment' => 'Initiate county assessment', 'initiate_county_assessment_description' => 'Create one governed assessment for a county and released cycle. The scorecard and effective reference catalogue are pinned automatically.',
+    'initiate_assessment' => 'Initiate assessment', 'initiating_assessment' => 'Initiating assessment…', 'no_available_assessment_cycle' => 'No authorized county and released planned or open cycle are available.',
+    'assessment_cycle' => 'Assessment cycle', 'county_option' => ':county · County :code', 'assessment_creation_lineage' => 'The county, cycle, released scorecard checksum, effective catalogue version, creator and audit event are retained as creation lineage.',
+    'submit_assessment' => 'Submit', 'start_review' => 'Start review', 'assessment_score' => 'Assessment score', 'record_legacy_score' => 'Record legacy score', 'approve_assessment' => 'Approve', 'no_action' => 'No action', 'open_criteria' => 'Open criteria',
 ];

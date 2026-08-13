@@ -1,19 +1,23 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link, usePage } from '@inertiajs/react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { approve, review, score, submit } from '@/routes/assessments';
+import { approve, review, score, show, submit } from '@/routes/assessments';
 
 type Props = {
     assessmentId: string;
     status?: string;
     capabilities: Record<string, boolean>;
+    isLegacy: boolean;
 };
 
 export default function AssessmentRowAction({
     assessmentId,
     status,
     capabilities,
+    isLegacy,
 }: Props) {
+    const copy = usePage().props.localization.assessmentRecord;
     const routeArguments = { assessment: assessmentId };
 
     if (
@@ -23,8 +27,13 @@ export default function AssessmentRowAction({
         return (
             <Form {...submit.form(routeArguments)}>
                 {({ processing }) => (
-                    <Button type="submit" size="sm" disabled={processing}>
-                        Submit
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={processing}
+                        aria-busy={processing}
+                    >
+                        {copy.submit_assessment}
                     </Button>
                 )}
             </Form>
@@ -35,34 +44,64 @@ export default function AssessmentRowAction({
         return (
             <Form {...review.form(routeArguments)}>
                 {({ processing }) => (
-                    <Button type="submit" size="sm" disabled={processing}>
-                        Start review
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={processing}
+                        aria-busy={processing}
+                    >
+                        {copy.start_review}
                     </Button>
                 )}
             </Form>
         );
     }
 
-    if (capabilities.score && status === 'under_assessment') {
+    if (capabilities.score && status === 'under_assessment' && !isLegacy) {
+        return (
+            <Button asChild size="sm" variant="outline">
+                <Link href={show(routeArguments)}>{copy.open_criteria}</Link>
+            </Button>
+        );
+    }
+
+    if (capabilities.score && status === 'under_assessment' && isLegacy) {
         return (
             <Form
                 {...score.form(routeArguments)}
                 className="ml-auto flex w-40 gap-2"
             >
-                {({ processing }) => (
+                {({ processing, errors }) => (
                     <>
-                        <Input
-                            name="score"
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            aria-label="Assessment score"
-                            required
-                            className="h-8"
-                        />
-                        <Button type="submit" size="sm" disabled={processing}>
-                            Score
+                        <div>
+                            <Input
+                                name="score"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                aria-label={copy.assessment_score}
+                                aria-invalid={Boolean(errors.score)}
+                                aria-describedby={
+                                    errors.score
+                                        ? `assessment-${assessmentId}-score-error`
+                                        : undefined
+                                }
+                                required
+                                className="h-8"
+                            />
+                            <InputError
+                                id={`assessment-${assessmentId}-score-error`}
+                                message={errors.score}
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            size="sm"
+                            disabled={processing}
+                            aria-busy={processing}
+                        >
+                            {copy.record_legacy_score}
                         </Button>
                     </>
                 )}
@@ -74,13 +113,20 @@ export default function AssessmentRowAction({
         return (
             <Form {...approve.form(routeArguments)}>
                 {({ processing }) => (
-                    <Button type="submit" size="sm" disabled={processing}>
-                        Approve
+                    <Button
+                        type="submit"
+                        size="sm"
+                        disabled={processing}
+                        aria-busy={processing}
+                    >
+                        {copy.approve_assessment}
                     </Button>
                 )}
             </Form>
         );
     }
 
-    return <span className="text-xs text-muted-foreground">No action</span>;
+    return (
+        <span className="text-xs text-muted-foreground">{copy.no_action}</span>
+    );
 }
