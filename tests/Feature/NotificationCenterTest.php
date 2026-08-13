@@ -72,6 +72,24 @@ class NotificationCenterTest extends TestCase
         $this->assertSame(0, $user->unreadNotifications()->count());
     }
 
+    public function test_notification_centre_shares_localized_controls_without_mutating_payloads(): void
+    {
+        $county = County::factory()->create();
+        $user = User::factory()->countyOfficial($county)->create();
+        $user->notifyNow(new ProgrammeAlert('Immutable source title', 'Immutable source message.', 'evidence'));
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('notifications.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.notifications.activity_inbox', 'Kikasha cha shughuli')
+                ->where('localization.notifications.evidence', 'Ushahidi')
+                ->where('notifications.0.title', 'Immutable source title')
+                ->where('notifications.0.message', 'Immutable source message.'));
+    }
+
     public function test_programme_alert_has_database_and_reverb_delivery_with_safe_payload(): void
     {
         $alert = new ProgrammeAlert('Live update', 'A broadcast event.', 'assessment', '/assessments');

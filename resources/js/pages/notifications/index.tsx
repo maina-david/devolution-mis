@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { Bell, BellRing, CheckCheck } from 'lucide-react';
 import DateRangeFilter from '@/components/date-range-filter';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { read, readAll } from '@/routes/notifications';
 
 type ProgrammeNotification = {
@@ -32,26 +32,27 @@ export default function NotificationIndex({
     pagination: { currentPage: number; lastPage: number; total: number };
     filters: { from?: string; to?: string; search?: string };
 }) {
+    const page = usePage();
+    const { localization } = page.props;
+    const copy = localization.notifications;
     const unread = notifications.filter(
         (notification) => !notification.readAt,
     ).length;
 
     return (
         <>
-            <Head title="Notifications" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header flex flex-col justify-between gap-3 lg:flex-row lg:items-end">
                     <div className="max-w-2xl">
                         <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                            Live programme activity
+                            {copy.eyebrow}
                         </p>
                         <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                            Notifications
+                            {copy.title}
                         </h1>
                         <p className="mt-3 text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                            Assessment, evidence, funding, and access events
-                            update in real time through the secured notification
-                            channel.
+                            {copy.description}
                         </p>
                     </div>
                     {unread > 0 && (
@@ -63,7 +64,7 @@ export default function NotificationIndex({
                                     disabled={processing}
                                 >
                                     <CheckCheck aria-hidden="true" />
-                                    Mark all read
+                                    {copy.mark_all_read}
                                 </Button>
                             )}
                         </Form>
@@ -80,11 +81,22 @@ export default function NotificationIndex({
                     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
                         <div>
                             <h2 className="font-bold text-foreground">
-                                Activity inbox
+                                {copy.activity_inbox}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {unread} unread on this page ·{' '}
-                                {pagination.total} matching
+                                {copy.inbox_summary
+                                    .replace(
+                                        ':unread',
+                                        unread.toLocaleString(
+                                            localization.current,
+                                        ),
+                                    )
+                                    .replace(
+                                        ':total',
+                                        pagination.total.toLocaleString(
+                                            localization.current,
+                                        ),
+                                    )}
                             </p>
                         </div>
                         <BellRing
@@ -94,7 +106,10 @@ export default function NotificationIndex({
                     </div>
 
                     {notifications.length > 0 ? (
-                        <div className="divide-y divide-border">
+                        <div
+                            className="divide-y divide-border"
+                            aria-live="polite"
+                        >
                             {notifications.map((notification) => (
                                 <article
                                     key={notification.id}
@@ -114,11 +129,16 @@ export default function NotificationIndex({
                                                 {notification.title}
                                             </h3>
                                             <Badge variant="outline">
-                                                {notification.category}
+                                                {copy[
+                                                    notification.category.replaceAll(
+                                                        '-',
+                                                        '_',
+                                                    )
+                                                ] ?? notification.category}
                                             </Badge>
                                             {!notification.readAt && (
                                                 <Badge className="bg-[#147a55] text-white">
-                                                    New
+                                                    {copy.new}
                                                 </Badge>
                                             )}
                                         </div>
@@ -128,7 +148,7 @@ export default function NotificationIndex({
                                         {notification.createdAt && (
                                             <time className="mt-2 block text-xs text-muted-foreground">
                                                 {new Intl.DateTimeFormat(
-                                                    DEFAULT_LOCALE,
+                                                    localization.current,
                                                     {
                                                         dateStyle: 'medium',
                                                         timeStyle: 'short',
@@ -145,7 +165,7 @@ export default function NotificationIndex({
                                         {notification.url && (
                                             <Button variant="outline" asChild>
                                                 <Link href={notification.url}>
-                                                    Open
+                                                    {copy.open}
                                                 </Link>
                                             </Button>
                                         )}
@@ -161,8 +181,9 @@ export default function NotificationIndex({
                                                         type="submit"
                                                         variant="ghost"
                                                         disabled={processing}
+                                                        aria-busy={processing}
                                                     >
-                                                        Mark read
+                                                        {copy.mark_read}
                                                     </Button>
                                                 )}
                                             </Form>
@@ -172,19 +193,11 @@ export default function NotificationIndex({
                             ))}
                         </div>
                     ) : (
-                        <div className="px-6 py-16 text-center">
-                            <Bell
-                                className="mx-auto size-8 text-muted-foreground/60"
-                                aria-hidden="true"
-                            />
-                            <h2 className="mt-4 font-bold text-foreground">
-                                You are all caught up
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                New activity within your role and county scope
-                                will appear here.
-                            </p>
-                        </div>
+                        <WorkspaceEmptyState
+                            title={copy.empty_title}
+                            description={copy.empty_description}
+                            className="min-h-64"
+                        />
                     )}
                     {pagination.lastPage > 1 && (
                         <div className="border-t px-5 py-4">
@@ -192,7 +205,13 @@ export default function NotificationIndex({
                                 <PaginationContent>
                                     <PaginationItem>
                                         <PaginationPrevious
-                                            href={`?page=${Math.max(1, pagination.currentPage - 1)}`}
+                                            href={pageHref(
+                                                page.url,
+                                                Math.max(
+                                                    1,
+                                                    pagination.currentPage - 1,
+                                                ),
+                                            )}
                                             aria-disabled={
                                                 pagination.currentPage === 1
                                             }
@@ -200,7 +219,13 @@ export default function NotificationIndex({
                                     </PaginationItem>
                                     <PaginationItem>
                                         <PaginationNext
-                                            href={`?page=${Math.min(pagination.lastPage, pagination.currentPage + 1)}`}
+                                            href={pageHref(
+                                                page.url,
+                                                Math.min(
+                                                    pagination.lastPage,
+                                                    pagination.currentPage + 1,
+                                                ),
+                                            )}
                                             aria-disabled={
                                                 pagination.currentPage ===
                                                 pagination.lastPage
@@ -215,4 +240,12 @@ export default function NotificationIndex({
             </div>
         </>
     );
+}
+
+function pageHref(currentUrl: string, targetPage: number): string {
+    const [path, query = ''] = currentUrl.split('?');
+    const parameters = new URLSearchParams(query);
+    parameters.set('page', String(targetPage));
+
+    return `${path}?${parameters.toString()}`;
 }

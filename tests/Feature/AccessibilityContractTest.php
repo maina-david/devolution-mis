@@ -122,6 +122,11 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-expanded={codesAreVisible}', $recovery);
         $this->assertStringContainsString('aria-controls="recovery-codes-section"', $recovery);
         $this->assertStringContainsString('role="status"', $recovery);
+
+        $notifications = $this->source('resources/js/pages/notifications/index.tsx');
+        $this->assertStringContainsString('aria-live="polite"', $notifications);
+        $this->assertStringContainsString('aria-busy={processing}', $notifications);
+        $this->assertStringContainsString('pageHref(', $notifications);
     }
 
     private function source(string $path): string
