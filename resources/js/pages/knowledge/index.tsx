@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     Bell,
@@ -287,6 +287,7 @@ export default function KnowledgeManagement({
     catalogue,
     options,
 }: Props) {
+    const copy = usePage().props.localization.knowledge.ui;
     const itemRows: WorkspaceRow[] = items.data.map((item) => ({
         id: item.id,
         status: item.status,
@@ -351,16 +352,13 @@ export default function KnowledgeManagement({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Institutional memory and innovation
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Devolution knowledge commons
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Curate evidence-backed practices, connect
-                                repository records to learning, convene
-                                communities of practice, and govern innovations
-                                from concept to scale.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.contribute && (
@@ -524,20 +522,22 @@ function InnovationTable({
     filters: Props['filters'];
     options: Props['options'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
             <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
                 <div>
-                    <h2 className="font-bold">Innovations hub</h2>
+                    <h2 className="font-bold">{copy.innovations_hub}</h2>
                     <p className="text-sm text-muted-foreground">
-                        {innovations.total.toLocaleString()} concepts under
-                        governed screening, incubation, piloting, or scale-up
+                        {innovations.total.toLocaleString()}{' '}
+                        {copy.innovations_description}
                     </p>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                            <Download /> Export
+                            <Download /> {copy.export}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -618,6 +618,7 @@ function ModerationQueue({
     capabilities: Props['capabilities'];
     filters: Props['filters'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const exportFilters = {
         from: filters.from,
         to: filters.to,
@@ -629,16 +630,19 @@ function ModerationQueue({
         <section className="grid gap-4">
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                 <div>
-                    <h2 className="text-xl font-bold">Community moderation</h2>
+                    <h2 className="text-xl font-bold">
+                        {copy.community_moderation}
+                    </h2>
                     <p className="text-sm text-muted-foreground">
-                        {reports.total.toLocaleString()} scoped reports with
-                        independent triage, SLA tracking and final decisions
+                        {reports.total.toLocaleString()}{' '}
+                        {copy.community_moderation_description}
                     </p>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
-                            <Download data-icon="inline-start" /> Export queue
+                            <Download data-icon="inline-start" />{' '}
+                            {copy.export_queue}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -738,6 +742,7 @@ function CommunityReportActions({
     report: CommunityReport;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const [surface, setSurface] = useState<string | null>(null);
     const transitions = [
         ['triage', capabilities.curate && report.status === 'reported'],
@@ -759,7 +764,7 @@ function CommunityReportActions({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
-                        <Eye /> Open report
+                        <Eye /> {copy.open_report}
                     </DropdownMenuItem>
                     {transitions
                         .filter(([, visible]) => visible)
@@ -785,8 +790,9 @@ function CommunityReportActions({
                                 : `${humanize(surface ?? '')} ${report.reference}`}
                         </SheetTitle>
                         <SheetDescription>
-                            {humanize(report.category)} ·{' '}
-                            {humanize(report.severity)} severity ·{' '}
+                            {humanize(report.category)} {copy.separator}{' '}
+                            {humanize(report.severity)} {copy.severity}{' '}
+                            {copy.separator}{' '}
                             {humanize(report.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -801,7 +807,8 @@ function CommunityReportActions({
                                     )}
                                     <Badge>{humanize(report.status)}</Badge>
                                     <Badge variant="outline">
-                                        {humanize(report.severity)} severity
+                                        {humanize(report.severity)}{' '}
+                                        {copy.severity}
                                     </Badge>
                                 </div>
                                 <Detail
@@ -883,7 +890,8 @@ function CommunityReportActions({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Confirm {humanize(surface)}
+                                            {copy.confirm}{' '}
+                                            {humanize(surface)}
                                         </Button>
                                     </>
                                 )}
@@ -905,6 +913,8 @@ function TableHeader({
     description: string;
     filters: Props['filters'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
             <div>
@@ -914,7 +924,7 @@ function TableHeader({
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                        <Download /> Export
+                        <Download /> {copy.export}
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -943,6 +953,8 @@ function ItemForm({
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <FormSheet
             title="Contribute knowledge resource"
@@ -1043,7 +1055,7 @@ function ItemForm({
                             error={errors.content_body}
                         />
                         <Button type="submit" disabled={processing}>
-                            Save governed draft
+                            {copy.save_governed_draft}
                         </Button>
                     </>
                 )}
@@ -1059,6 +1071,8 @@ function DiscussionForm({
     items: KnowledgeItem[];
     counties: CountyIdentityValue[];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <FormSheet
             title="Open community discussion"
@@ -1098,7 +1112,7 @@ function DiscussionForm({
                             defaultValue="national"
                         />
                         <Button type="submit" disabled={processing}>
-                            Open discussion
+                            {copy.open_discussion}
                         </Button>
                     </>
                 )}
@@ -1116,6 +1130,8 @@ function InnovationForm({
     sectors: Option[];
     catalogue: Props['catalogue'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <FormSheet
             title="Submit devolution innovation"
@@ -1185,7 +1201,7 @@ function InnovationForm({
                             optional
                         />
                         <Button type="submit" disabled={processing}>
-                            Save innovation draft
+                            {copy.save_innovation_draft}
                         </Button>
                     </>
                 )}
@@ -1201,6 +1217,7 @@ function ItemActions({
     item: KnowledgeItem;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const [surface, setSurface] = useState<string | null>(null);
     const lifecycle = [
         ['submit_review', capabilities.contribute && item.status === 'draft'],
@@ -1223,7 +1240,7 @@ function ItemActions({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
-                        <Eye /> Open resource
+                        <Eye /> {copy.open_resource}
                     </DropdownMenuItem>
                     {lifecycle
                         .filter(([, visible]) => visible)
@@ -1249,7 +1266,7 @@ function ItemActions({
                                 : humanize(surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
-                            {item.reference} · {item.summary}
+                            {item.reference} {copy.separator} {item.summary}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pb-8">
@@ -1291,6 +1308,8 @@ function ItemDetails({
     item: KnowledgeItem;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <div className="grid gap-6 pt-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -1304,15 +1323,18 @@ function ItemDetails({
                 ))}
             </div>
             <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-                <p className="font-semibold">Reference-data lineage</p>
+                <p className="font-semibold">
+                    {copy.reference_data_lineage}
+                </p>
                 {item.referenceData ? (
                     <p className="mt-1 break-all text-muted-foreground">
-                        Release v{item.referenceData.version} ·{' '}
+                        {copy.release_version_prefix}
+                        {item.referenceData.version} {copy.separator}{' '}
                         {item.referenceData.checksum}
                     </p>
                 ) : (
                     <p className="mt-1 text-muted-foreground">
-                        Legacy record · unpinned
+                        {copy.legacy_unpinned}
                     </p>
                 )}
             </div>
@@ -1330,7 +1352,8 @@ function ItemDetails({
                             })}
                             target="_blank"
                         >
-                            <FileText /> Preview {item.document.title}
+                            <FileText /> {copy.preview}{' '}
+                            {item.document.title}
                         </a>
                     </Button>
                 )}
@@ -1341,7 +1364,7 @@ function ItemDetails({
                             target="_blank"
                             rel="noreferrer"
                         >
-                            <Eye /> Open source
+                            <Eye /> {copy.open_source}
                         </a>
                     </Button>
                 )}
@@ -1350,13 +1373,15 @@ function ItemDetails({
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
-                            <BookOpen className="size-4" /> Connected learning
+                            <BookOpen className="size-4" />{' '}
+                            {copy.connected_learning}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-2">
                         {item.courses.map((course) => (
                             <p key={course.id} className="text-sm">
-                                <strong>{course.code}</strong> · {course.title}
+                                <strong>{course.code}</strong> {copy.separator}{' '}
+                                {course.title}
                             </p>
                         ))}
                     </CardContent>
@@ -1386,19 +1411,20 @@ function ItemDetails({
                                         <p className="text-sm">{post.body}</p>
                                         {post.moderationStatus === 'hidden' && (
                                             <Badge variant="destructive">
-                                                Hidden
+                                                {copy.hidden}
                                             </Badge>
                                         )}
                                     </div>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        {post.author} ·{' '}
+                                        {post.author} {copy.separator}{' '}
                                         {new Date(post.postedAt).toLocaleString(
                                             DEFAULT_LOCALE,
                                         )}
                                     </p>
                                     {post.moderationReason && (
                                         <p className="mt-2 text-xs text-muted-foreground">
-                                            Moderation: {post.moderationReason}
+                                            {copy.moderation_label}{' '}
+                                            {post.moderationReason}
                                             {post.moderator
                                                 ? ` · ${post.moderator}`
                                                 : ''}
@@ -1471,6 +1497,7 @@ function PostActions({
     post: Discussion['posts'][number];
     canModerate: boolean;
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const [surface, setSurface] = useState<'report' | 'moderate' | null>(null);
     const nextStatus =
         post.moderationStatus === 'visible' ? 'hidden' : 'visible';
@@ -1490,7 +1517,7 @@ function PostActions({
                 <DropdownMenuContent align="end">
                     {post.canReport && (
                         <DropdownMenuItem onSelect={() => setSurface('report')}>
-                            <Flag /> Report contribution
+                            <Flag /> {copy.report_contribution}
                         </DropdownMenuItem>
                     )}
                     {canModerate && (
@@ -1564,7 +1591,7 @@ function PostActions({
                                     />
                                     <Button type="submit" disabled={processing}>
                                         <Flag data-icon="inline-start" />
-                                        Submit report
+                                        {copy.submit_report}
                                     </Button>
                                 </>
                             )}
@@ -1589,7 +1616,7 @@ function PostActions({
                                     />
                                     <Button type="submit" disabled={processing}>
                                         <ShieldCheck data-icon="inline-start" />
-                                        Confirm {nextStatus}
+                                        {copy.confirm} {nextStatus}
                                     </Button>
                                 </>
                             )}
@@ -1602,6 +1629,8 @@ function PostActions({
 }
 
 function PostForm({ discussion }: { discussion: Discussion }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <FormSheet
             title={`Contribute to ${discussion.title}`}
@@ -1614,7 +1643,7 @@ function PostForm({ discussion }: { discussion: Discussion }) {
                 className="grid gap-4 pt-4"
             >
                 <TextField name="body" label="Contribution" />
-                <Button type="submit">Post contribution</Button>
+                <Button type="submit">{copy.post_contribution}</Button>
             </Form>
         </FormSheet>
     );
@@ -1629,6 +1658,7 @@ function InnovationActions({
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const [surface, setSurface] = useState<string | null>(null);
     const transitions = [
         ['submit', capabilities.contribute && innovation.status === 'draft'],
@@ -1668,14 +1698,14 @@ function InnovationActions({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
-                        <Eye /> Open innovation
+                        <Eye /> {copy.open_innovation}
                     </DropdownMenuItem>
                     {capabilities.curate &&
                         innovation.status === 'screening' && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('panel')}
                             >
-                                <ShieldCheck /> Record panel review
+                                <ShieldCheck /> {copy.record_panel_review}
                             </DropdownMenuItem>
                         )}
                     {capabilities.manage &&
@@ -1683,7 +1713,7 @@ function InnovationActions({
                             <DropdownMenuItem
                                 onSelect={() => setSurface('funding')}
                             >
-                                <FileText /> Record funding decision
+                                <FileText /> {copy.record_funding_decision}
                             </DropdownMenuItem>
                         )}
                     {capabilities.manage &&
@@ -1691,7 +1721,7 @@ function InnovationActions({
                             <DropdownMenuItem
                                 onSelect={() => setSurface('milestone')}
                             >
-                                <Plus /> Define experiment milestone
+                                <Plus /> {copy.define_experiment_milestone}
                             </DropdownMenuItem>
                         )}
                     {transitions
@@ -1718,7 +1748,7 @@ function InnovationActions({
                                 : humanize(surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
-                            {innovation.reference} ·{' '}
+                            {innovation.reference} {copy.separator}{' '}
                             {humanize(innovation.stage)}
                         </SheetDescription>
                     </SheetHeader>
@@ -1766,21 +1796,22 @@ function InnovationActions({
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
-                                            Panel assurance
+                                            {copy.panel_assurance}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="grid gap-3 text-sm">
                                         <p>
                                             {innovation.panelSummary.count}{' '}
-                                            reviews · average{' '}
+                                            {copy.reviews} {copy.separator}{' '}
+                                            {copy.average}{' '}
                                             {innovation.panelSummary.average ??
                                                 'Pending'}{' '}
-                                            ·{' '}
+                                            {copy.separator}{' '}
                                             {
                                                 innovation.panelSummary
                                                     .advanceCount
                                             }{' '}
-                                            advance recommendations
+                                            {copy.advance_recommendations}
                                         </p>
                                         {innovation.panelReviews.map(
                                             (review) => (
@@ -1796,7 +1827,7 @@ function InnovationActions({
                                                             {
                                                                 review.weightedScore
                                                             }{' '}
-                                                            ·{' '}
+                                                            {copy.separator}{' '}
                                                             {humanize(
                                                                 review.recommendation,
                                                             )}
@@ -1806,7 +1837,8 @@ function InnovationActions({
                                                         {review.rationale}
                                                     </p>
                                                     <p className="mt-2 font-mono text-xs break-all text-muted-foreground">
-                                                        {review.rubricCode} ·{' '}
+                                                        {review.rubricCode}{' '}
+                                                        {copy.separator}{' '}
                                                         {
                                                             review.evidenceChecksum
                                                         }
@@ -1819,7 +1851,7 @@ function InnovationActions({
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
-                                            Funding decision chain
+                                            {copy.funding_decision_chain}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="grid gap-3">
@@ -1832,11 +1864,11 @@ function InnovationActions({
                                                     >
                                                         <div className="flex justify-between">
                                                             <strong>
-                                                                Version{' '}
+                                                                {copy.version}{' '}
                                                                 {
                                                                     decision.version
                                                                 }{' '}
-                                                                ·{' '}
+                                                                {copy.separator}{' '}
                                                                 {humanize(
                                                                     decision.decision,
                                                                 )}
@@ -1852,7 +1884,7 @@ function InnovationActions({
                                                         </div>
                                                         <p className="mt-2 text-muted-foreground">
                                                             {decision.reference}{' '}
-                                                            ·{' '}
+                                                            {copy.separator}{' '}
                                                             {
                                                                 decision.decisionMaker
                                                             }
@@ -1867,7 +1899,7 @@ function InnovationActions({
                                             )
                                         ) : (
                                             <p className="text-sm text-muted-foreground">
-                                                No funding decision recorded.
+                                                {copy.no_funding_decision}
                                             </p>
                                         )}
                                     </CardContent>
@@ -1875,7 +1907,7 @@ function InnovationActions({
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-base">
-                                            Experiment milestones
+                                            {copy.experiment_milestones}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="grid gap-3">
@@ -1895,8 +1927,7 @@ function InnovationActions({
                                             )
                                         ) : (
                                             <p className="text-sm text-muted-foreground">
-                                                No experiment milestones
-                                                defined.
+                                                {copy.no_experiment_milestones}
                                             </p>
                                         )}
                                     </CardContent>
@@ -1962,7 +1993,7 @@ function InnovationActions({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Save immutable review
+                                            {copy.save_immutable_review}
                                         </Button>
                                     </>
                                 )}
@@ -2031,7 +2062,7 @@ function InnovationActions({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Append funding decision
+                                            {copy.append_funding_decision}
                                         </Button>
                                     </>
                                 )}
@@ -2090,7 +2121,7 @@ function InnovationActions({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Create milestone
+                                            {copy.create_milestone}
                                         </Button>
                                     </>
                                 )}
@@ -2144,6 +2175,7 @@ function MilestoneCard({
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const [surface, setSurface] = useState<'update' | 'verify' | null>(null);
     const canUpdate =
         capabilities.manage &&
@@ -2161,7 +2193,8 @@ function MilestoneCard({
                 <div>
                     <strong>{milestone.title}</strong>
                     <p className="text-muted-foreground">
-                        {milestone.owner} · due {milestone.dueAt ?? 'Not set'}
+                        {milestone.owner} {copy.separator} {copy.due}{' '}
+                        {milestone.dueAt ?? 'Not set'}
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -2184,14 +2217,15 @@ function MilestoneCard({
                                     <DropdownMenuItem
                                         onSelect={() => setSurface('update')}
                                     >
-                                        <FileText /> Update result
+                                        <FileText /> {copy.update_result}
                                     </DropdownMenuItem>
                                 )}
                                 {canVerify && (
                                     <DropdownMenuItem
                                         onSelect={() => setSurface('verify')}
                                     >
-                                        <ShieldCheck /> Verify independently
+                                        <ShieldCheck />{' '}
+                                        {copy.verify_independently}
                                     </DropdownMenuItem>
                                 )}
                             </DropdownMenuContent>
@@ -2201,7 +2235,8 @@ function MilestoneCard({
             </div>
             <p className="mt-2">{milestone.hypothesis}</p>
             <p className="mt-2 text-muted-foreground">
-                {milestone.successMetric}: {milestone.baselineValue} →{' '}
+                {milestone.successMetric}
+                {copy.colon} {milestone.baselineValue} {copy.arrow}{' '}
                 {milestone.targetValue}
                 {milestone.actualValue
                     ? ` · actual ${milestone.actualValue}`
@@ -2214,7 +2249,8 @@ function MilestoneCard({
             )}
             <div className="mt-3 flex items-center justify-between gap-3">
                 <span>
-                    Verification: {humanize(milestone.verificationDecision)}
+                    {copy.verification_label}{' '}
+                    {humanize(milestone.verificationDecision)}
                 </span>
                 {milestone.document && (
                     <Button variant="outline" size="sm" asChild>
@@ -2225,7 +2261,7 @@ function MilestoneCard({
                             target="_blank"
                             rel="noreferrer"
                         >
-                            <Eye /> Preview evidence
+                            <Eye /> {copy.preview_evidence}
                         </a>
                     </Button>
                 )}
@@ -2242,7 +2278,8 @@ function MilestoneCard({
                                 : 'Update experiment result'}
                         </SheetTitle>
                         <SheetDescription>
-                            {milestone.title} · {innovation.reference}
+                            {milestone.title} {copy.separator}{' '}
+                            {innovation.reference}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pt-4 pb-8">
@@ -2298,7 +2335,7 @@ function MilestoneCard({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Save result
+                                            {copy.save_result}
                                         </Button>
                                     </>
                                 )}
@@ -2334,7 +2371,7 @@ function MilestoneCard({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Record verification
+                                            {copy.record_verification}
                                         </Button>
                                     </>
                                 )}

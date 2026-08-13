@@ -75,6 +75,10 @@ declare module '@inertiajs/core' {
                 dataGovernance: Record<string, string>;
                 evidence: Record<string, string>;
                 learning: Record<string, string>;
+                knowledge: {
+                    outcomes: Record<string, string>;
+                    ui: Record<string, string>;
+                };
                 analytics: Record<string, string>;
                 projects: Record<string, string>;
                 security: {
