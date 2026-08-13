@@ -1,10 +1,9 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ClipboardCheck, FileUp, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
 import SearchableSelect from '@/components/searchable-select';
-import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { formatDateTime } from '@/lib/reference-catalog';
 import { review, store } from '@/routes/assessments/corrective-plans';
 import {
     store as storeUpdate,
@@ -81,16 +81,16 @@ export default function AssessmentCorrectivePlans({
     options: { sources: Option[]; evidence: Option[]; owners: Option[] };
     capabilities: Record<string, boolean>;
 }) {
+    const copy = useCorrectivePlanCopy();
     const base = { assessment: assessmentId };
 
     return (
         <Card>
             <CardHeader className="gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <CardTitle>Corrective action register</CardTitle>
+                    <CardTitle>{copy.register_title}</CardTitle>
                     <CardDescription>
-                        Evidence-backed remediation, independent verification
-                        and controlled closure.
+                        {copy.register_description}
                     </CardDescription>
                 </div>
                 {capabilities.submit &&
@@ -102,8 +102,7 @@ export default function AssessmentCorrectivePlans({
             <CardContent className="grid gap-4">
                 {plans.length === 0 && (
                     <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                        No corrective plan is required or has been raised for
-                        this published assessment.
+                        {copy.empty_description}
                     </div>
                 )}
                 {plans.map((plan) => (
@@ -127,14 +126,15 @@ function CreatePlanSheet({
     base: { assessment: string };
     options: { sources: Option[]; owners: Option[] };
 }) {
+    const copy = useCorrectivePlanCopy();
     const [source, setSource] = useState('');
     const [sourceType, sourceId] = source.split(':');
 
     return (
         <FormSheet
-            title="Create corrective plan"
-            description="Link a major finding or accepted appeal to a time-bound, accountable action."
-            triggerLabel="Create plan"
+            title={copy.create_title}
+            description={copy.create_description}
+            triggerLabel={copy.create_plan}
             icon={ClipboardCheck}
             size="xl"
         >
@@ -148,7 +148,7 @@ function CreatePlanSheet({
                         <SearchableSelect
                             id="corrective-source"
                             name="source_selector"
-                            label="Finding or appeal"
+                            label={copy.finding_or_appeal}
                             value={source}
                             onValueChange={setSource}
                             options={options.sources.map((option) => ({
@@ -166,40 +166,40 @@ function CreatePlanSheet({
                             name="assessment_appeal_id"
                             value={sourceType === 'appeal' ? sourceId : ''}
                         />
-                        <Field label="Reference" error={errors.reference}>
+                        <Field label={copy.reference} error={errors.reference}>
                             <Input
                                 name="reference"
                                 placeholder="CAP-2026-001"
                                 required
                             />
                         </Field>
-                        <Field label="Plan title" error={errors.title}>
+                        <Field label={copy.plan_title} error={errors.title}>
                             <Input name="title" required />
                         </Field>
                         <TextField
                             name="root_cause"
-                            label="Root cause"
+                            label={copy.root_cause}
                             error={errors.root_cause}
                         />
                         <TextField
                             name="expected_outcome"
-                            label="Expected outcome"
+                            label={copy.expected_outcome}
                             error={errors.expected_outcome}
                         />
                         <DatePickerField
                             name="due_at"
-                            label="Plan due date"
+                            label={copy.plan_due_date}
                             error={errors.due_at}
                             min={new Date().toISOString().slice(0, 10)}
                             required
                         />
                         <div className="rounded-lg border p-4 md:col-span-2">
                             <h3 className="mb-4 font-medium">
-                                First accountable action
+                                {copy.first_accountable_action}
                             </h3>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Field
-                                    label="Action code"
+                                    label={copy.action_code}
                                     error={errors['actions.0.code']}
                                 >
                                     <Input
@@ -209,7 +209,7 @@ function CreatePlanSheet({
                                     />
                                 </Field>
                                 <Field
-                                    label="Action title"
+                                    label={copy.action_title}
                                     error={errors['actions.0.title']}
                                 >
                                     <Input name="actions[0][title]" required />
@@ -217,7 +217,7 @@ function CreatePlanSheet({
                                 <SearchableSelect
                                     id="corrective-owner"
                                     name="actions[0][accountable_owner_id]"
-                                    label="Accountable owner"
+                                    label={copy.accountable_owner}
                                     options={options.owners.map((option) => ({
                                         id: option.value,
                                         name: option.label,
@@ -225,25 +225,25 @@ function CreatePlanSheet({
                                 />
                                 <DatePickerField
                                     name="actions[0][due_at]"
-                                    label="Action due date"
+                                    label={copy.action_due_date}
                                     error={errors['actions.0.due_at']}
                                     min={new Date().toISOString().slice(0, 10)}
                                     required
                                 />
                                 <TextField
                                     name="actions[0][description]"
-                                    label="Action description"
+                                    label={copy.action_description}
                                     error={errors['actions.0.description']}
                                 />
                                 <TextField
                                     name="actions[0][success_indicator]"
-                                    label="Success indicator"
+                                    label={copy.success_indicator}
                                     error={
                                         errors['actions.0.success_indicator']
                                     }
                                 />
                                 <Field
-                                    label="Target"
+                                    label={copy.target}
                                     error={errors['actions.0.target']}
                                 >
                                     <Input name="actions[0][target]" required />
@@ -251,7 +251,7 @@ function CreatePlanSheet({
                             </div>
                         </div>
                         <Button className="md:col-span-2" disabled={processing}>
-                            Submit for independent review
+                            {copy.submit_for_review}
                         </Button>
                     </>
                 )}
@@ -271,6 +271,7 @@ function PlanCard({
     evidence: Option[];
     capabilities: Record<string, boolean>;
 }) {
+    const copy = useCorrectivePlanCopy();
     const args = { ...base, plan: plan.id };
     const complete =
         plan.actions.length > 0 &&
@@ -287,12 +288,13 @@ function PlanCard({
                         {plan.reference} · {plan.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        {plan.source.label} · due {plan.dueAt} · submitted by{' '}
-                        {plan.submittedBy}
+                        {plan.source.label} · {copy.due}{' '}
+                        {formatDateTime(plan.dueAt, { dateStyle: 'medium' })} ·{' '}
+                        {copy.submitted_by} {plan.submittedBy}
                     </p>
                 </div>
                 <Badge variant="outline">
-                    {plan.status.replaceAll('_', ' ')}
+                    {translateValue(copy, plan.status)}
                 </Badge>
             </div>
             <div className="mt-4 grid gap-3">
@@ -304,8 +306,11 @@ function PlanCard({
                                     {action.code} · {action.title}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Owner: {action.owner} · target:{' '}
-                                    {action.target} · due {action.dueAt}
+                                    {copy.owner}: {action.owner} · {copy.target}:{' '}
+                                    {action.target} · {copy.due}{' '}
+                                    {formatDateTime(action.dueAt, {
+                                        dateStyle: 'medium',
+                                    })}
                                 </p>
                             </div>
                             <Badge>{action.progress}%</Badge>
@@ -347,7 +352,7 @@ function PlanCard({
                                 className="mt-2 text-xs text-muted-foreground"
                             >
                                 {update.progress}% · {update.document.title} ·{' '}
-                                {update.status.replaceAll('_', ' ')} ·{' '}
+                                {translateValue(copy, update.status)} ·{' '}
                                 {update.submittedBy}
                             </p>
                         ))}
@@ -358,8 +363,8 @@ function PlanCard({
                 {capabilities.review &&
                     ['submitted', 'returned'].includes(plan.status) && (
                         <DecisionSheet
-                            title="Review corrective plan"
-                            trigger="Review plan"
+                            title={copy.review_title}
+                            trigger={copy.review_plan}
                             form={review.form(args)}
                             decisions={['activate', 'return']}
                             noteName="review_note"
@@ -369,14 +374,16 @@ function PlanCard({
                     plan.status === 'active' &&
                     complete && (
                         <Form {...requestClosure.form(args)}>
-                            <Button variant="outline">Request closure</Button>
+                            <Button variant="outline">
+                                {copy.request_closure}
+                            </Button>
                         </Form>
                     )}
                 {capabilities.approve &&
                     plan.status === 'closure_requested' && (
                         <DecisionSheet
-                            title="Decide closure"
-                            trigger="Decide closure"
+                            title={copy.decide_closure}
+                            trigger={copy.decide_closure}
                             form={decideClosure.form(args)}
                             decisions={['closed', 'returned']}
                             noteName="decision_reason"
@@ -396,11 +403,13 @@ function UpdateSheet({
     action: Action;
     evidence: Option[];
 }) {
+    const copy = useCorrectivePlanCopy();
+
     return (
         <FormSheet
-            title={`Update ${action.code}`}
-            description="Submit verified repository evidence for independent progress review."
-            triggerLabel="Submit progress"
+            title={`${copy.update} ${action.code}`}
+            description={copy.update_description}
+            triggerLabel={copy.submit_progress}
             icon={FileUp}
         >
             <Form
@@ -411,13 +420,13 @@ function UpdateSheet({
                 <SearchableSelect
                     id={`evidence-${action.id}`}
                     name="assessment_document_id"
-                    label="Verified evidence"
+                    label={copy.verified_evidence}
                     options={evidence.map((option) => ({
                         id: option.value,
                         name: option.label,
                     }))}
                 />
-                <Field label="Progress percentage">
+                <Field label={copy.progress_percentage}>
                     <Input
                         name="progress_percentage"
                         type="number"
@@ -427,8 +436,8 @@ function UpdateSheet({
                         required
                     />
                 </Field>
-                <TextField name="narrative" label="Progress narrative" />
-                <Button>Submit for verification</Button>
+                <TextField name="narrative" label={copy.progress_narrative} />
+                <Button>{copy.submit_for_verification}</Button>
             </Form>
         </FormSheet>
     );
@@ -443,10 +452,12 @@ function VerifySheet({
     action: Action;
     update: Update;
 }) {
+    const copy = useCorrectivePlanCopy();
+
     return (
         <DecisionSheet
-            title={`Verify ${action.code} progress`}
-            trigger={`Verify ${update.progress}% update`}
+            title={`${copy.verify} ${action.code} ${copy.progress}`}
+            trigger={`${copy.verify} ${update.progress}% ${copy.update_lowercase}`}
             form={verifyUpdate.form({
                 ...base,
                 correctiveAction: action.id,
@@ -471,24 +482,31 @@ function DecisionSheet({
     decisions: string[];
     noteName: string;
 }) {
+    const copy = useCorrectivePlanCopy();
+
     return (
         <FormSheet
             title={title}
-            description="Record a reasoned, auditable decision."
+            description={copy.decision_description}
             triggerLabel={trigger}
             icon={ShieldCheck}
         >
             <Form {...form} resetOnSuccess className="grid gap-4">
                 <div className="grid gap-2">
-                    <Label>Decision</Label>
-                    <StaticSearchableSelect
+                    <Label>{copy.decision}</Label>
+                    <SearchableSelect
                         id={`${noteName}-decision`}
                         name="decision"
-                        values={decisions}
+                        label=""
+                        options={decisions.map((decision) => ({
+                            id: decision,
+                            name: translateValue(copy, decision),
+                        }))}
+                        defaultValue={decisions[0]}
                     />
                 </div>
-                <TextField name={noteName} label="Decision note" />
-                <Button>Record decision</Button>
+                <TextField name={noteName} label={copy.decision_note} />
+                <Button>{copy.record_decision}</Button>
             </Form>
         </FormSheet>
     );
@@ -530,4 +548,12 @@ function TextField({
             />
         </Field>
     );
+}
+
+function useCorrectivePlanCopy(): Record<string, string> {
+    return usePage().props.localization.correctivePlans;
+}
+
+function translateValue(copy: Record<string, string>, value: string): string {
+    return copy[value] ?? value.replaceAll('_', ' ');
 }
