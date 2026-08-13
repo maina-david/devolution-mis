@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Download,
     Landmark,
@@ -242,22 +242,21 @@ export default function IgrResolutionsIndex({
     resolutions,
     options,
 }: Props) {
+    const copy = usePage().props.localization.igr.ui;
+
     return (
         <>
             <Head title="IGR resolutions" />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Intergovernmental accountability
+                        {copy.eyebrow}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold">
-                        IGR resolutions tracking
+                        {copy.title}
                     </h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
-                        Turn summit, council and committee resolutions into
-                        uniquely identified, deadline-bound commitments with
-                        named parties, implementation evidence, gap reporting,
-                        reminders and independent closure.
+                        {copy.description}
                     </p>
                 </section>
                 {capabilities.manage && <GovernanceForms options={options} />}
@@ -304,10 +303,9 @@ export default function IgrResolutionsIndex({
                 />
                 <Card>
                     <CardHeader>
-                        <CardTitle>Implementation-gap risk profile</CardTitle>
+                        <CardTitle>{copy.gap_risk_profile}</CardTitle>
                         <CardDescription>
-                            Filter-aware exposure across the resolutions and
-                            counties this role is authorized to see.
+                            {copy.gap_risk_profile_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -355,11 +353,9 @@ export default function IgrResolutionsIndex({
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Resolution dependency paths</CardTitle>
+                        <CardTitle>{copy.dependency_paths}</CardTitle>
                         <CardDescription>
-                            Scope-safe prerequisite chains and unresolved
-                            blocking relationships that determine whether a
-                            resolution can proceed to closure.
+                            {copy.dependency_paths_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,.8fr)]">
@@ -387,14 +383,14 @@ export default function IgrResolutionsIndex({
                                                             aria-hidden="true"
                                                             className="text-muted-foreground"
                                                         >
-                                                            →
+                                                            {copy.arrow}
                                                         </span>
                                                     )}
                                                     <span className="rounded-md bg-muted px-2 py-1 text-xs">
                                                         <strong>
                                                             {node.number}
                                                         </strong>{' '}
-                                                        ·{' '}
+                                                        {copy.separator}{' '}
                                                         {node.status.replaceAll(
                                                             '_',
                                                             ' ',
@@ -405,7 +401,7 @@ export default function IgrResolutionsIndex({
                                             {path.blocked && (
                                                 <li>
                                                     <Badge variant="destructive">
-                                                        Blocked
+                                                        {copy.blocked}
                                                     </Badge>
                                                 </li>
                                             )}
@@ -454,10 +450,9 @@ export default function IgrResolutionsIndex({
                 <section className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,1fr)]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Gap lifecycle trend</CardTitle>
+                            <CardTitle>{copy.gap_lifecycle_trend}</CardTitle>
                             <CardDescription>
-                                New gaps versus independently accepted
-                                resolutions over the latest six calendar months.
+                                {copy.gap_lifecycle_trend_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -496,10 +491,9 @@ export default function IgrResolutionsIndex({
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Active-gap aging</CardTitle>
+                            <CardTitle>{copy.active_gap_aging}</CardTitle>
                             <CardDescription>
-                                Time since reporting for gaps that still need
-                                independent acceptance.
+                                {copy.active_gap_aging_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-4">
@@ -537,10 +531,9 @@ export default function IgrResolutionsIndex({
                 </section>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Risk concentration</CardTitle>
+                        <CardTitle>{copy.risk_concentration}</CardTitle>
                         <CardDescription>
-                            Ranked categories, severities and affected counties
-                            for targeted intergovernmental intervention.
+                            {copy.risk_concentration_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-6 lg:grid-cols-3">
@@ -554,7 +547,7 @@ export default function IgrResolutionsIndex({
                         />
                         <div className="flex flex-col gap-3">
                             <h3 className="text-sm font-medium">
-                                County bottlenecks
+                                {copy.county_bottlenecks}
                             </h3>
                             {gapAnalytics.counties.length ? (
                                 gapAnalytics.counties.map((row) => (
@@ -568,20 +561,21 @@ export default function IgrResolutionsIndex({
                                                 compact
                                             />
                                         ) : (
-                                            <span>National / multi-county</span>
+                                            <span>{copy.national_multi_county}</span>
                                         )}
                                         <div className="text-right text-xs text-muted-foreground">
                                             <p className="font-medium text-foreground">
-                                                {row.active} active
+                                                {row.active} {copy.active}
                                             </p>
-                                            <p>{row.overdue} overdue</p>
+                                            <p>
+                                                {row.overdue} {copy.overdue}
+                                            </p>
                                         </div>
                                     </div>
                                 ))
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    No county-specific gaps match the selected
-                                    filters.
+                                    {copy.no_county_gaps}
                                 </p>
                             )}
                         </div>
@@ -596,11 +590,10 @@ export default function IgrResolutionsIndex({
                             />
                             <div>
                                 <CardTitle>
-                                    Resolution implementation workspace
+                                    {copy.implementation_workspace}
                                 </CardTitle>
                                 <CardDescription>
-                                    Current commitments and their recent
-                                    implementation history.
+                                    {copy.implementation_workspace_description}
                                 </CardDescription>
                             </div>
                         </div>
@@ -775,7 +768,7 @@ function AnalyticsRanking({
                 ))
             ) : (
                 <p className="text-sm text-muted-foreground">
-                    No data matches the selected filters.
+                                {copy.no_matching_data}
                 </p>
             )}
         </div>
@@ -783,6 +776,7 @@ function AnalyticsRanking({
 }
 
 function GovernanceForms({ options }: { options: Props['options'] }) {
+    const copy = usePage().props.localization.igr.ui;
     const [partyCount, setPartyCount] = useState(1);
     const [quorumConfirmed, setQuorumConfirmed] = useState(false);
 
@@ -837,7 +831,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                 />
                             </Field>
                             <Button type="submit" disabled={processing}>
-                                Create forum
+                                {copy.create_forum}
                             </Button>
                         </>
                     )}
@@ -911,12 +905,11 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                     htmlFor="igr-quorum-confirmed"
                                     className="text-sm leading-5"
                                 >
-                                    Confirm that the formal meeting achieved
-                                    quorum under the forum mandate.
+                                    {copy.confirm_quorum}
                                 </label>
                             </div>
                             <Button type="submit" disabled={processing}>
-                                Record meeting
+                                {copy.record_meeting}
                             </Button>
                         </>
                     )}
@@ -965,7 +958,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                 />
                             </Field>
                             <Button type="submit" disabled={processing}>
-                                Create category
+                                {copy.create_category}
                             </Button>
                         </>
                     )}
@@ -1041,7 +1034,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                             <div className="flex flex-col gap-3 rounded-lg border p-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <p className="font-medium">
-                                        Responsible parties
+                                    {copy.responsible_parties}
                                     </p>
                                     <Button
                                         type="button"
@@ -1054,7 +1047,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                         }
                                     >
                                         <Plus aria-hidden="true" />
-                                        Add party
+                                {copy.add_party}
                                     </Button>
                                 </div>
                                 {Array.from(
@@ -1121,7 +1114,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                 )}
                             </div>
                             <Button type="submit" disabled={processing}>
-                                Register and notify parties
+                                {copy.register_notify_parties}
                             </Button>
                         </>
                     )}
@@ -1144,6 +1137,7 @@ function ResolutionCard({
     gapCategories: Option[];
     countyOptions: Option[];
 }) {
+    const copy = usePage().props.localization.igr.ui;
     const overdue =
         resolution.status !== 'closed' &&
         new Date(resolution.dueOn) < new Date();
@@ -1180,22 +1174,23 @@ function ResolutionCard({
                         </Badge>
                         <Badge variant="secondary">{resolution.priority}</Badge>
                         {overdue && (
-                            <Badge variant="destructive">Overdue</Badge>
+                            <Badge variant="destructive">{copy.overdue}</Badge>
                         )}
                     </div>
                     <h3 className="mt-2 font-bold">
-                        {resolution.number} · {resolution.title}
+                        {resolution.number} {copy.separator} {resolution.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        {resolution.forum} · resolved{' '}
-                        {new Date(resolution.resolvedOn).toLocaleDateString()} ·
-                        due {new Date(resolution.dueOn).toLocaleDateString()}
+                        {resolution.forum} {copy.separator} {copy.resolved}{' '}
+                        {new Date(resolution.resolvedOn).toLocaleDateString()}{' '}
+                        {copy.separator} {copy.due}{' '}
+                        {new Date(resolution.dueOn).toLocaleDateString()}
                     </p>
                 </div>
                 <div className="min-w-44">
                     <div className="mb-1 flex justify-between text-xs">
-                        <span>Implementation</span>
-                        <span>{resolution.progress}%</span>
+                        <span>{copy.implementation}</span>
+                        <span>{resolution.progress}{copy.percent}</span>
                     </div>
                     <Progress value={resolution.progress} />
                 </div>
@@ -1215,9 +1210,9 @@ function ResolutionCard({
             {resolution.meeting ? (
                 <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 text-sm sm:grid-cols-2">
                     <div>
-                        <p className="font-medium">Formal meeting provenance</p>
+                        <p className="font-medium">{copy.formal_meeting_provenance}</p>
                         <p className="text-muted-foreground">
-                            {resolution.meeting.reference} ·{' '}
+                            {resolution.meeting.reference} {copy.separator}{' '}
                             {resolution.meeting.title}
                         </p>
                     </div>
@@ -1226,10 +1221,10 @@ function ResolutionCard({
                             {new Date(
                                 resolution.meeting.heldOn,
                             ).toLocaleDateString()}{' '}
-                            · {resolution.meeting.venue}
+                            {copy.separator} {resolution.meeting.venue}
                         </p>
                         <p className="text-muted-foreground">
-                            Minutes: {resolution.meeting.minutesReference}
+                            {copy.minutes_label} {resolution.meeting.minutesReference}
                             {resolution.meeting.chair
                                 ? ` · Chair: ${resolution.meeting.chair}`
                                 : ''}
@@ -1238,7 +1233,7 @@ function ResolutionCard({
                 </div>
             ) : (
                 <Badge variant="outline">
-                    Historical record — formal meeting not linked
+                    {copy.historical_meeting_unlinked}
                 </Badge>
             )}
             {(resolution.dependencies.length > 0 ||
@@ -1279,7 +1274,7 @@ function ResolutionCard({
                 <div className="flex gap-2 rounded-lg bg-muted p-3 text-sm">
                     <TriangleAlert aria-hidden="true" />
                     <div>
-                        <p className="font-medium">Implementation gap</p>
+                        <p className="font-medium">{copy.implementation_gap}</p>
                         <p className="text-muted-foreground">
                             {resolution.gap}
                         </p>
@@ -1288,7 +1283,7 @@ function ResolutionCard({
             )}
             {resolution.gaps.length > 0 && (
                 <div className="flex flex-col gap-3 rounded-lg border p-3">
-                    <p className="font-medium">Governed implementation gaps</p>
+                    <p className="font-medium">{copy.governed_implementation_gaps}</p>
                     {resolution.gaps.map((gap) => (
                         <ResolutionGapCard
                             key={gap.id}
@@ -1381,7 +1376,7 @@ function ResolutionCard({
                                             responsibleUsers.length === 0
                                         }
                                     >
-                                        Assign gap
+                                        {copy.assign_gap}
                                     </Button>
                                 </>
                             )}
@@ -1438,7 +1433,7 @@ function ResolutionCard({
                                         />
                                     </Field>
                                     <Button type="submit" disabled={processing}>
-                                        Add dependency
+                                        {copy.add_dependency}
                                     </Button>
                                 </>
                             )}
@@ -1482,7 +1477,7 @@ function ResolutionCard({
                                         />
                                     </Field>
                                     <Button type="submit" disabled={processing}>
-                                        Record progress
+                                        {copy.record_progress}
                                     </Button>
                                 </>
                             )}
@@ -1535,8 +1530,9 @@ function ResolutionCard({
             {resolution.updates.length > 0 && (
                 <details>
                     <summary className="cursor-pointer text-sm font-medium">
-                        Recent implementation history (
-                        {resolution.updates.length})
+                        {copy.recent_history_open}
+                        {resolution.updates.length}
+                        {copy.close_parenthesis}
                     </summary>
                     <div className="mt-3 flex flex-col gap-2">
                         {resolution.updates.map((update) => (
@@ -1545,7 +1541,8 @@ function ResolutionCard({
                                 className="rounded-md bg-muted/40 p-3 text-sm"
                             >
                                 <p className="font-medium">
-                                    {update.progress}% ·{' '}
+                                    {update.progress}{copy.percent}{' '}
+                                    {copy.separator}{' '}
                                     {new Date(
                                         update.reportedAt,
                                     ).toLocaleString()}
@@ -1553,7 +1550,7 @@ function ResolutionCard({
                                 <p>{update.narrative}</p>
                                 {update.evidence && (
                                     <p className="text-muted-foreground">
-                                        Evidence: {update.evidence}
+                                        {copy.evidence_label} {update.evidence}
                                     </p>
                                 )}
                             </div>
@@ -1572,11 +1569,15 @@ function DependencyList({
     title: string;
     dependencies: Dependency[];
 }) {
+    const copy = usePage().props.localization.igr.ui;
+
     return (
         <div>
             <p className="font-medium">{title}</p>
             {dependencies.length === 0 ? (
-                <p className="mt-1 text-muted-foreground">None recorded.</p>
+                <p className="mt-1 text-muted-foreground">
+                    {copy.none_recorded}
+                </p>
             ) : (
                 <ul className="mt-2 space-y-2">
                     {dependencies.map((dependency) => (
@@ -1618,6 +1619,8 @@ function ResolutionGapCard({
     resolutionId: string;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.igr.ui;
+
     return (
         <div className="rounded-lg bg-muted/40 p-3 text-sm">
             <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1635,24 +1638,31 @@ function ResolutionGapCard({
                         </Badge>
                         <Badge variant="outline">{gap.status}</Badge>
                         {gap.overdue && (
-                            <Badge variant="destructive">Overdue</Badge>
+                            <Badge variant="destructive">{copy.overdue}</Badge>
                         )}
                     </div>
                     <p className="mt-2 font-medium">{gap.title}</p>
                     <p className="text-muted-foreground">
-                        Owner: {gap.owner} · due{' '}
+                        {copy.owner_label} {gap.owner} {copy.separator}{' '}
+                        {copy.due}{' '}
                         {new Date(gap.dueOn).toLocaleDateString()}
                     </p>
                 </div>
                 {gap.county && <CountyIdentity county={gap.county} compact />}
             </div>
             <p className="mt-2">{gap.description}</p>
-            <p className="mt-1 text-muted-foreground">Impact: {gap.impact}</p>
+            <p className="mt-1 text-muted-foreground">
+                {copy.impact_label} {gap.impact}
+            </p>
             {gap.mitigationPlan && (
-                <p className="mt-2">Mitigation: {gap.mitigationPlan}</p>
+                <p className="mt-2">
+                    {copy.mitigation_label} {gap.mitigationPlan}
+                </p>
             )}
             {gap.resolutionNote && (
-                <p className="mt-1">Resolution: {gap.resolutionNote}</p>
+                <p className="mt-1">
+                    {copy.resolution_label} {gap.resolutionNote}
+                </p>
             )}
             <div className="mt-3 flex flex-wrap gap-2">
                 {gap.status === 'open' &&
