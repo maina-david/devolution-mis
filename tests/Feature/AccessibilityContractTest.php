@@ -156,6 +156,15 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString("'delete-password-error'", $accountDeletion);
         $this->assertStringContainsString('aria-busy={processing}', $accountDeletion);
         $this->assertStringContainsString('copy.confirm_account_deletion', $accountDeletion);
+
+        foreach (['evidence-upload-form.tsx', 'criterion-evidence-upload-form.tsx'] as $component) {
+            $upload = $this->source("resources/js/components/{$component}");
+            $this->assertStringContainsString('usePage().props.localization.evidence', $upload);
+            $this->assertStringContainsString('aria-describedby={', $upload);
+            $this->assertStringContainsString('<InputError', $upload);
+            $this->assertStringContainsString('aria-busy={processing}', $upload);
+            $this->assertStringContainsString('copy.uploading', $upload);
+        }
     }
 
     private function source(string $path): string

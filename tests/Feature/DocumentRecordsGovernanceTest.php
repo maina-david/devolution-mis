@@ -304,6 +304,20 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->assertStringContainsString("__('evidence.errors.preview_unavailable')", $controller);
     }
 
+    public function test_evidence_upload_copy_follows_the_active_locale(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.evidence.upload_evidence', 'Pakia ushahidi')
+                ->where('localization.evidence.evidence_requirement', 'Hitaji la ushahidi'));
+    }
+
     public function test_workspace_exposes_complete_version_and_legal_hold_history_with_governed_release(): void
     {
         $county = County::factory()->create();

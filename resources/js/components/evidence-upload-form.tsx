@@ -1,9 +1,11 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Upload } from 'lucide-react';
 import { useState } from 'react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { interpolate } from '@/hooks/use-localization';
 import { store } from '@/routes/evidence';
 
 export default function EvidenceUploadForm({
@@ -12,6 +14,7 @@ export default function EvidenceUploadForm({
     assessments: Array<{ id: string; label: string }>;
 }) {
     const [assessmentId, setAssessmentId] = useState(assessments[0]?.id ?? '');
+    const copy = usePage().props.localization.evidence;
 
     if (!assessmentId) {
         return null;
@@ -25,12 +28,10 @@ export default function EvidenceUploadForm({
                 </span>
                 <div>
                     <h2 className="font-bold text-foreground">
-                        Upload evidence
+                        {copy.upload_evidence}
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                        Upload a scanned copy or a born-digital file. Files are
-                        stored privately and linked to the selected assessment
-                        cycle.
+                        {copy.upload_evidence_description}
                     </p>
                 </div>
             </div>
@@ -42,7 +43,9 @@ export default function EvidenceUploadForm({
                 {({ processing, errors, progress }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="assessment">Assessment</Label>
+                            <Label htmlFor="assessment">
+                                {copy.assessment}
+                            </Label>
                             <select
                                 id="assessment"
                                 value={assessmentId}
@@ -62,41 +65,76 @@ export default function EvidenceUploadForm({
                             </select>
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="evidence-title">Title</Label>
+                            <Label htmlFor="evidence-title">{copy.title}</Label>
                             <Input
                                 id="evidence-title"
                                 name="title"
                                 required
                                 aria-invalid={!!errors.title}
+                                aria-describedby={
+                                    errors.title
+                                        ? 'evidence-title-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="evidence-title-error"
+                                message={errors.title}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="evidence-category">Category</Label>
+                            <Label htmlFor="evidence-category">
+                                {copy.category}
+                            </Label>
                             <Input
                                 id="evidence-category"
                                 name="category"
-                                placeholder="ADP, CIDP…"
+                                placeholder={copy.category_placeholder}
                                 required
                                 aria-invalid={!!errors.category}
+                                aria-describedby={
+                                    errors.category
+                                        ? 'evidence-category-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="evidence-category-error"
+                                message={errors.category}
                             />
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="evidence-source-type">
-                                Source type
+                                {copy.source_type}
                             </Label>
                             <select
                                 id="evidence-source-type"
                                 name="source_type"
                                 defaultValue="digital"
                                 aria-invalid={!!errors.source_type}
+                                aria-describedby={
+                                    errors.source_type
+                                        ? 'evidence-source-type-error'
+                                        : undefined
+                                }
                                 className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
                             >
-                                <option value="digital">Digital file</option>
-                                <option value="scanned">Scanned copy</option>
+                                <option value="digital">
+                                    {copy.digital_file}
+                                </option>
+                                <option value="scanned">
+                                    {copy.scanned_copy}
+                                </option>
                             </select>
+                            <InputError
+                                id="evidence-source-type-error"
+                                message={errors.source_type}
+                            />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="evidence-document">Document</Label>
+                            <Label htmlFor="evidence-document">
+                                {copy.document}
+                            </Label>
                             <Input
                                 id="evidence-document"
                                 name="document"
@@ -104,13 +142,28 @@ export default function EvidenceUploadForm({
                                 accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.doc,.docx,.xls,.xlsx,.csv,.txt"
                                 required
                                 aria-invalid={!!errors.document}
+                                aria-describedby={
+                                    errors.document
+                                        ? 'evidence-document-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="evidence-document-error"
+                                message={errors.document}
                             />
                         </div>
-                        <Button type="submit" disabled={processing}>
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            aria-busy={processing}
+                        >
                             <Upload aria-hidden="true" />
                             {progress
-                                ? `Uploading ${progress.percentage}%`
-                                : 'Upload'}
+                                ? interpolate(copy.uploading, {
+                                      percentage: progress.percentage ?? 0,
+                                  })
+                                : copy.upload}
                         </Button>
                     </>
                 )}
