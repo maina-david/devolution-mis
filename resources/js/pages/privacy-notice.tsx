@@ -25,6 +25,7 @@ const sectionKeys = [
     'contact',
     'legal',
 ] as const;
+const informationEmail = 'info@devolution.go.ke';
 
 export default function PrivacyNotice({ notice }: Props) {
     const { copy } = notice;
@@ -54,13 +55,15 @@ export default function PrivacyNotice({ notice }: Props) {
                         <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                             <span>
                                 <strong className="font-semibold text-foreground">
-                                    {copy.version}:
+                                    {copy.version}
+                                    {':'}
                                 </strong>{' '}
                                 {notice.version}
                             </span>
                             <span>
                                 <strong className="font-semibold text-foreground">
-                                    {copy.issued_on}:
+                                    {copy.issued_on}
+                                    {':'}
                                 </strong>{' '}
                                 {notice.issuedOn}
                             </span>
@@ -98,8 +101,9 @@ export default function PrivacyNotice({ notice }: Props) {
                                                     href="mailto:info@devolution.go.ke"
                                                     className="font-medium text-foreground underline underline-offset-4"
                                                 >
-                                                    {copy.department_contact}:
-                                                    info@devolution.go.ke
+                                                    {copy.department_contact}
+                                                    {': '}
+                                                    {informationEmail}
                                                 </a>
                                             </li>
                                             <li>

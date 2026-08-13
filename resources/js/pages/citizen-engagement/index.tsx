@@ -541,7 +541,8 @@ function IntakeSheet({
                                     aria-label={copy.upload_progress}
                                     className="w-full"
                                 >
-                                    {progress.percentage}%
+                                    {progress.percentage}
+                                    {'%'}
                                 </progress>
                             )}
                             <Button

@@ -10,6 +10,10 @@ import { show as privacyNotice } from '@/routes/privacy-notice';
 
 const linkClass =
     'rounded-sm text-sm text-primary-foreground/75 underline-offset-4 transition-colors hover:text-primary-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring';
+const productName = 'IDMIS';
+const officialPhone = '+254 020 225 0645';
+const informationEmail = 'info@devolution.go.ke';
+const complaintsEmail = 'complaints@devolution.go.ke';
 
 export function PublicSiteFooter() {
     const { localization } = usePage().props;
@@ -29,7 +33,7 @@ export function PublicSiteFooter() {
                         </span>
                         <span>
                             <span className="block text-lg leading-none font-bold">
-                                IDMIS
+                                {productName}
                             </span>
                             <span className="mt-1 block max-w-xs text-xs leading-5 text-primary-foreground/70">
                                 {copy.systemName}
@@ -111,7 +115,7 @@ export function PublicSiteFooter() {
                                 className={`${linkClass} inline-flex items-center gap-2.5`}
                             >
                                 <Phone className="size-4" aria-hidden="true" />
-                                +254 020 225 0645
+                                {officialPhone}
                             </a>
                         </li>
                         <li>
@@ -120,7 +124,7 @@ export function PublicSiteFooter() {
                                 className={`${linkClass} inline-flex items-center gap-2.5`}
                             >
                                 <Mail className="size-4" aria-hidden="true" />
-                                info@devolution.go.ke
+                                {informationEmail}
                             </a>
                         </li>
                         <li>
@@ -148,7 +152,8 @@ export function PublicSiteFooter() {
                         href="mailto:complaints@devolution.go.ke"
                         className={linkClass}
                     >
-                        {copy.complaints}: complaints@devolution.go.ke
+                        {copy.complaints}
+                        {': '} {complaintsEmail}
                     </a>
                 </div>
             </div>

@@ -138,7 +138,8 @@ export default function WorkflowSimulatorSheet({
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="outline" size="sm">
-                    <FlaskConical /> {copy.simulate} v{version.version}
+                    <FlaskConical /> {copy.simulate} {'v'}
+                    {version.version}
                 </Button>
             </SheetTrigger>
             <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
@@ -329,7 +330,8 @@ export default function WorkflowSimulatorSheet({
                             </Alert>
                             <div className="flex flex-wrap gap-2">
                                 <Badge>
-                                    {result.initialState} → {result.finalState}
+                                    {result.initialState} {'→'}{' '}
+                                    {result.finalState}
                                 </Badge>
                                 <Badge variant="outline">
                                     {result.completed
@@ -344,7 +346,8 @@ export default function WorkflowSimulatorSheet({
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <p className="font-semibold">
-                                            {step.index}. {step.transitionName}
+                                            {step.index}
+                                            {'.'} {step.transitionName}
                                         </p>
                                         <Badge
                                             variant={
@@ -357,8 +360,8 @@ export default function WorkflowSimulatorSheet({
                                         </Badge>
                                     </div>
                                     <p className="mt-2 text-sm">
-                                        {step.fromState} →{' '}
-                                        {step.toState ?? copy.blocked} ·{' '}
+                                        {step.fromState} {'→ '}
+                                        {step.toState ?? copy.blocked} {'· '}
                                         {step.actor?.name ?? copy.not_evaluated}
                                     </p>
                                     <p className="mt-1 text-sm text-muted-foreground">
@@ -369,11 +372,11 @@ export default function WorkflowSimulatorSheet({
                                         {step.authorized
                                             ? copy.passed
                                             : copy.failed}{' '}
-                                        · {copy.separation}{' '}
+                                        {'·'} {copy.separation}{' '}
                                         {step.separationPassed
                                             ? copy.passed
                                             : copy.failed}{' '}
-                                        · {copy.rules}{' '}
+                                        {'·'} {copy.rules}{' '}
                                         {step.ruleEvaluation.results.length
                                             ? `${step.ruleEvaluation.results.filter((rule) => rule.passed).length}/${step.ruleEvaluation.results.length}`
                                             : copy.not_configured}

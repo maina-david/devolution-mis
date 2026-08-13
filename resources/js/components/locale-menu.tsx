@@ -82,7 +82,8 @@ export function LocaleMenu({
                 })}
             </DropdownMenuContent>
             <span className="sr-only" role="status" aria-live="polite">
-                {localization.copy.currentLanguage}:{' '}
+                {localization.copy.currentLanguage}
+                {':' + ' '}
                 {selectedLocale?.nativeLabel ?? localization.current}
             </span>
         </DropdownMenu>

@@ -477,7 +477,7 @@ function ReplicationActions({
                                     : copy.update_replication_workflow}
                         </SheetTitle>
                         <SheetDescription>
-                            {replication.innovation.title} ·{' '}
+                            {replication.innovation.title} {'· '}
                             {replication.targetCounty.name}
                             {' · '}
                             {replication.referenceData
@@ -523,8 +523,10 @@ function ReplicationDetail({ replication }: { replication: Replication }) {
             <div>
                 <p className="font-medium">{copy.measure}</p>
                 <p className="text-muted-foreground">
-                    {replication.successMeasure}: {replication.baselineValue} →{' '}
-                    {replication.targetValue}; {copy.actual_lowercase}{' '}
+                    {replication.successMeasure}
+                    {': '} {replication.baselineValue} {'→ '}
+                    {replication.targetValue}
+                    {'; '} {copy.actual_lowercase}{' '}
                     {replication.actualValue ?? copy.pending}
                 </p>
             </div>
@@ -564,7 +566,7 @@ function ReplicationDetail({ replication }: { replication: Replication }) {
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                <Eye /> {document.title} ·{' '}
+                                <Eye /> {document.title} {'· '}
                                 {translateValue(copy, document.scanStatus)}
                             </a>
                         </Button>

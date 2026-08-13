@@ -461,7 +461,7 @@ function RequestActions({
                                 : request.reference}
                         </SheetTitle>
                         <SheetDescription>
-                            {request.county.name} · {request.grant} ·{' '}
+                            {request.county.name} {'·'} {request.grant} {'· '}
                             {translateValue(copy, request.stage)}
                         </SheetDescription>
                     </SheetHeader>
@@ -530,7 +530,8 @@ function RequestActions({
                                         <Card key={event.id}>
                                             <CardHeader>
                                                 <CardDescription>
-                                                    {copy.stage} {index + 1} ·{' '}
+                                                    {copy.stage} {index + 1}{' '}
+                                                    {'· '}
                                                     {event.source}
                                                 </CardDescription>
                                                 <CardTitle className="text-base">
@@ -545,15 +546,16 @@ function RequestActions({
                                                     {formatDateTime(
                                                         event.occurredAt,
                                                     )}{' '}
-                                                    · {event.recorder}
+                                                    {'·'} {event.recorder}
                                                 </p>
                                                 <p className="text-muted-foreground">
-                                                    {event.sourceReference} ·{' '}
+                                                    {event.sourceReference}{' '}
+                                                    {'· '}
                                                     {(
                                                         event.elapsedStageMinutes /
                                                         60
                                                     ).toFixed(1)}{' '}
-                                                    {copy.stage_hours} ·{' '}
+                                                    {copy.stage_hours} {'· '}
                                                     {(
                                                         event.elapsedTotalMinutes /
                                                         60

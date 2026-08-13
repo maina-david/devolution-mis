@@ -14,6 +14,9 @@ import { request } from '@/routes/password';
 
 const focusClass =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+const officialPhone = '+254 020 225 0645';
+const informationEmail = 'info@devolution.go.ke';
+const complaintsEmail = 'complaints@devolution.go.ke';
 
 export default function Help() {
     const copy = usePage().props.localization.help;
@@ -135,7 +138,7 @@ export default function Help() {
                                                 className="size-5"
                                                 aria-hidden="true"
                                             />
-                                            +254 020 225 0645
+                                            {officialPhone}
                                         </a>
                                     </li>
                                     <li>
@@ -147,7 +150,7 @@ export default function Help() {
                                                 className="size-5"
                                                 aria-hidden="true"
                                             />
-                                            info@devolution.go.ke
+                                            {informationEmail}
                                         </a>
                                     </li>
                                     <li>
@@ -159,7 +162,7 @@ export default function Help() {
                                                 className="size-5"
                                                 aria-hidden="true"
                                             />
-                                            complaints@devolution.go.ke
+                                            {complaintsEmail}
                                         </a>
                                     </li>
                                 </ul>

@@ -7,6 +7,8 @@ import { LocaleMenu } from '@/components/locale-menu';
 import { faqs, help, home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
+const productName = 'IDMIS';
+
 export default function AuthSimpleLayout({
     children,
     name,
@@ -47,7 +49,7 @@ export default function AuthSimpleLayout({
                         <AppLogoIcon className="size-11 shrink-0" />
                         <span>
                             <span className="block text-lg leading-none font-bold text-foreground">
-                                IDMIS
+                                {productName}
                             </span>
                             <span className="mt-1 hidden text-xs font-medium text-muted-foreground sm:block">
                                 {copy.departmentName}

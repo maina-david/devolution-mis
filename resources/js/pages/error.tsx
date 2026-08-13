@@ -10,6 +10,8 @@ type ErrorPageProps = {
     description: string;
     goBackLabel: string;
 };
+const productName = 'IDMIS';
+const protocolName = 'HTTP';
 
 export default function ErrorPage({
     status,
@@ -45,7 +47,7 @@ export default function ErrorPage({
                             />
                             <span>
                                 <strong className="block text-lg leading-tight">
-                                    IDMIS
+                                    {productName}
                                 </strong>
                                 <span className="block text-xs text-primary-foreground/80">
                                     {copy.departmentName}
@@ -60,7 +62,7 @@ export default function ErrorPage({
                     <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
                         <div className="max-w-2xl">
                             <p className="font-mono text-sm font-semibold text-primary">
-                                HTTP {status}
+                                {protocolName} {status}
                             </p>
                             <h1 className="mt-4 text-4xl font-semibold tracking-[-0.035em] text-balance sm:text-5xl">
                                 {title}

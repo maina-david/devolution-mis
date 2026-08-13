@@ -11,6 +11,7 @@ import { verify as verifyCertificate } from '@/routes/learning/certificates';
 
 const navigationLink =
     'inline-flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+const productName = 'IDMIS';
 
 export function PublicSiteHeader() {
     const { auth, localization } = usePage().props;
@@ -52,7 +53,7 @@ export function PublicSiteHeader() {
                     <AppLogoIcon className="size-11 shrink-0" />
                     <span className="min-w-0">
                         <span className="block text-lg leading-none font-bold tracking-tight text-foreground">
-                            IDMIS
+                            {productName}
                         </span>
                         <span className="mt-1 hidden truncate text-xs font-medium text-muted-foreground sm:block">
                             {copy.departmentName}
