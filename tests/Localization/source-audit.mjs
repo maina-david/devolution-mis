@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 
 const limits = {
-    frontendLiterals: 840,
+    frontendLiterals: 809,
     backendMessages: 654,
 };
 

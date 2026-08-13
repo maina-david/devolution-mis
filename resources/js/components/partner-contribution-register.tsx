@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -101,6 +101,7 @@ export default function PartnerContributionRegister({
 }: {
     contributions: PartnerContribution[];
 }) {
+    const copy = usePage().props.localization.partnerCoordination;
     const [detail, setDetail] = useState<PartnerContribution | null>(null);
     const [previewDocument, setPreviewDocument] =
         useState<ContributionDocument | null>(null);
@@ -112,31 +113,31 @@ export default function PartnerContributionRegister({
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileCheck2 aria-hidden="true" />
-                    Contribution reconciliation register
+                    {copy.contribution_register}
                 </CardTitle>
                 <CardDescription>
-                    Reported commitments are independently reconciled against
-                    clean DMS evidence and retained as a checksum-linked
-                    decision history.
+                    {copy.contribution_register_description}
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 {contributions.length === 0 ? (
                     <WorkspaceEmptyState
-                        title="No contributions registered"
-                        description="Record a partner contribution to begin evidence collection and reconciliation."
+                        title={copy.no_contributions}
+                        description={copy.no_contributions_description}
                         className="min-h-52 border-0"
                     />
                 ) : (
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Partner / project</TableHead>
-                                <TableHead>County</TableHead>
-                                <TableHead>Reported</TableHead>
-                                <TableHead>Decision</TableHead>
+                                <TableHead>{copy.partner_project}</TableHead>
+                                <TableHead>{copy.county}</TableHead>
+                                <TableHead>{copy.reported}</TableHead>
+                                <TableHead>{copy.decision}</TableHead>
                                 <TableHead className="w-12">
-                                    <span className="sr-only">Actions</span>
+                                    <span className="sr-only">
+                                        {copy.actions}
+                                    </span>
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -151,7 +152,8 @@ export default function PartnerContributionRegister({
                                                 {item.partner}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {item.project.code} ·{' '}
+                                                {item.project.code}{' '}
+                                                {copy.separator}{' '}
                                                 {item.financialYear}
                                             </p>
                                         </TableCell>
@@ -173,7 +175,7 @@ export default function PartnerContributionRegister({
                                                 )}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                of{' '}
+                                                {copy.of}{' '}
                                                 {money(
                                                     item.committedAmount,
                                                     item.currency,
@@ -211,7 +213,7 @@ export default function PartnerContributionRegister({
                                                         }
                                                     >
                                                         <Eye />
-                                                        View record
+                                                        {copy.view_record}
                                                     </DropdownMenuItem>
                                                     {item.canUpload && (
                                                         <DropdownMenuItem
@@ -232,14 +234,18 @@ export default function PartnerContributionRegister({
                                                                     className="grid gap-4"
                                                                 >
                                                                     <Label>
-                                                                        Title
+                                                                        {
+                                                                            copy.title_label
+                                                                        }
                                                                         <Input
                                                                             name="title"
                                                                             required
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Category
+                                                                        {
+                                                                            copy.category
+                                                                        }
                                                                         <Input
                                                                             name="category"
                                                                             defaultValue="financial-record"
@@ -252,7 +258,9 @@ export default function PartnerContributionRegister({
                                                                         value="uploaded"
                                                                     />
                                                                     <Label>
-                                                                        Document
+                                                                        {
+                                                                            copy.document
+                                                                        }
                                                                         <Input
                                                                             name="document"
                                                                             type="file"
@@ -262,8 +270,9 @@ export default function PartnerContributionRegister({
                                                                     </Label>
                                                                     <Button type="submit">
                                                                         <Upload />
-                                                                        Upload
-                                                                        securely
+                                                                        {
+                                                                            copy.upload_securely
+                                                                        }
                                                                     </Button>
                                                                 </Form>
                                                             </FormSheet>
@@ -288,7 +297,9 @@ export default function PartnerContributionRegister({
                                                                     className="grid gap-4"
                                                                 >
                                                                     <Label>
-                                                                        Decision
+                                                                        {
+                                                                            copy.decision
+                                                                        }
                                                                         <SearchableSelect
                                                                             id="reconciliation-decision"
                                                                             name="decision"
@@ -311,8 +322,9 @@ export default function PartnerContributionRegister({
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Verified
-                                                                        commitment
+                                                                        {
+                                                                            copy.verified_commitment
+                                                                        }
                                                                         <Input
                                                                             name="verified_committed_amount"
                                                                             inputMode="decimal"
@@ -323,8 +335,9 @@ export default function PartnerContributionRegister({
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Verified
-                                                                        disbursement
+                                                                        {
+                                                                            copy.verified_disbursement
+                                                                        }
                                                                         <Input
                                                                             name="verified_disbursed_amount"
                                                                             inputMode="decimal"
@@ -335,9 +348,9 @@ export default function PartnerContributionRegister({
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Verified
-                                                                        in-kind
-                                                                        value
+                                                                        {
+                                                                            copy.verified_in_kind
+                                                                        }
                                                                         <Input
                                                                             name="verified_in_kind_value"
                                                                             inputMode="decimal"
@@ -348,16 +361,18 @@ export default function PartnerContributionRegister({
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Source
-                                                                        reference
+                                                                        {
+                                                                            copy.source_reference
+                                                                        }
                                                                         <Input
                                                                             name="source_reference"
                                                                             required
                                                                         />
                                                                     </Label>
                                                                     <Label>
-                                                                        Review
-                                                                        note
+                                                                        {
+                                                                            copy.review_note
+                                                                        }
                                                                         <Textarea
                                                                             name="review_note"
                                                                             minLength={
@@ -367,8 +382,9 @@ export default function PartnerContributionRegister({
                                                                         />
                                                                     </Label>
                                                                     <Button type="submit">
-                                                                        Retain
-                                                                        decision
+                                                                        {
+                                                                            copy.retain_decision
+                                                                        }
                                                                     </Button>
                                                                 </Form>
                                                             </FormSheet>
@@ -392,15 +408,14 @@ export default function PartnerContributionRegister({
                     <SheetHeader>
                         <SheetTitle>{detail?.partner}</SheetTitle>
                         <SheetDescription>
-                            {detail?.project.code} contribution, evidence, and
-                            reconciliation chain.
+                            {detail?.project.code} {copy.contribution_chain}
                         </SheetDescription>
                     </SheetHeader>
                     {detail && (
                         <div className="grid gap-6 p-4">
                             <div className="grid grid-cols-2 gap-3 rounded-lg border p-4">
                                 <p className="text-sm text-muted-foreground">
-                                    Reported commitment
+                                    {copy.reported_commitment}
                                 </p>
                                 <p className="text-right font-medium">
                                     {money(
@@ -409,7 +424,7 @@ export default function PartnerContributionRegister({
                                     )}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    Reported disbursement
+                                    {copy.reported_disbursement}
                                 </p>
                                 <p className="text-right font-medium">
                                     {money(
@@ -419,7 +434,9 @@ export default function PartnerContributionRegister({
                                 </p>
                             </div>
                             <section>
-                                <h3 className="mb-2 font-semibold">Evidence</h3>
+                                <h3 className="mb-2 font-semibold">
+                                    {copy.evidence}
+                                </h3>
                                 {detail.documents.map((document) => (
                                     <div
                                         key={document.id}
@@ -430,9 +447,10 @@ export default function PartnerContributionRegister({
                                                 {document.title}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {document.scanStatus} ·{' '}
+                                                {document.scanStatus}{' '}
+                                                {copy.separator}{' '}
                                                 {document.checksum.slice(0, 12)}
-                                                …
+                                                {copy.ellipsis}
                                             </p>
                                         </div>
                                         <div className="flex">
@@ -466,11 +484,11 @@ export default function PartnerContributionRegister({
                             </section>
                             <section>
                                 <h3 className="mb-2 font-semibold">
-                                    Decision history
+                                    {copy.decision_history}
                                 </h3>
                                 {detail.reconciliations.length === 0 ? (
                                     <p className="text-sm text-muted-foreground">
-                                        No reconciliation decision yet.
+                                        {copy.no_reconciliation_decision}
                                     </p>
                                 ) : (
                                     detail.reconciliations.map((item) => (
@@ -481,7 +499,8 @@ export default function PartnerContributionRegister({
                                             <div className="flex justify-between">
                                                 <Badge>{item.decision}</Badge>
                                                 <span className="text-xs">
-                                                    v{item.version}
+                                                    {copy.version_prefix}
+                                                    {item.version}
                                                 </span>
                                             </div>
                                             <p className="mt-2 text-sm">
@@ -506,7 +525,7 @@ export default function PartnerContributionRegister({
                     <SheetHeader>
                         <SheetTitle>{previewDocument?.title}</SheetTitle>
                         <SheetDescription>
-                            Authorized preview of the private repository copy.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
