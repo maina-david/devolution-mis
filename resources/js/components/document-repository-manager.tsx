@@ -10,6 +10,8 @@ import {
     UploadIcon,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import CountyIdentity from '@/components/county-identity';
+import type { CountyIdentityValue } from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
 import InputError from '@/components/input-error';
 import SearchableSelect from '@/components/searchable-select';
@@ -54,7 +56,7 @@ export type RepositoryFolder = {
     parentId: string | null;
     name: string;
     countyId: string | null;
-    county: string | null;
+    county: CountyIdentityValue | null;
     documentCount: number;
 };
 
@@ -206,10 +208,16 @@ export default function DocumentRepositoryManager({
                                             <span className="block truncate font-medium">
                                                 {folder.name}
                                             </span>
-                                            <span className="block truncate text-xs text-muted-foreground">
-                                                {folder.county ??
-                                                    copy.national_scope}
-                                            </span>
+                                            {folder.county ? (
+                                                <CountyIdentity
+                                                    county={folder.county}
+                                                    compact
+                                                />
+                                            ) : (
+                                                <span className="block truncate text-xs text-muted-foreground">
+                                                    {copy.national_scope}
+                                                </span>
+                                            )}
                                         </span>
                                         <Badge variant="outline">
                                             {folder.documentCount}
@@ -306,7 +314,7 @@ function FolderCreateSheet({
                                 label={copy.parent_folder}
                                 options={folders.map((folder) => ({
                                     id: folder.id,
-                                    name: `${folder.county ?? copy.national_scope} · ${folder.name}`,
+                                    name: `${folder.county?.name ?? copy.national_scope} · ${folder.name}`,
                                 }))}
                                 optional
                                 value={parentId}
@@ -407,7 +415,7 @@ function RepositoryUploadSheet({
                                 label={copy.destination_folder}
                                 options={folders.map((folder) => ({
                                     id: folder.id,
-                                    name: `${folder.county ?? copy.national_scope} · ${folder.name}`,
+                                    name: `${folder.county?.name ?? copy.national_scope} · ${folder.name}`,
                                 }))}
                                 defaultValue={currentFolderId ?? ''}
                                 error={errors.folder_id}

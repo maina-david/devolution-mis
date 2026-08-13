@@ -37,6 +37,8 @@ class DocumentRepositoryTest extends TestCase
                 ->where('workspace.repository.currentFolderId', $ownFolder->id)
                 ->has('workspace.repository.folders', 1)
                 ->where('workspace.repository.folders.0.name', 'County plans')
+                ->where('workspace.repository.folders.0.county.kind', 'county')
+                ->where('workspace.repository.folders.0.county.name', $ownCounty->name)
                 ->has('workspace.rows', 1)
                 ->where('workspace.rows.0.id', $visible->id)
                 ->where('workspace.rows.0.meta.folderName', 'County plans'));

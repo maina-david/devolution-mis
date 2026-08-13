@@ -53,6 +53,17 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('page.props.localization.copy.settings', $sidebar);
     }
 
+    public function test_document_repository_renders_governed_county_identity_values(): void
+    {
+        $manager = $this->source('resources/js/components/document-repository-manager.tsx');
+
+        $this->assertStringContainsString('county: CountyIdentityValue | null', $manager);
+        $this->assertStringContainsString('<CountyIdentity', $manager);
+        $this->assertStringContainsString('county={folder.county}', $manager);
+        $this->assertStringContainsString('folder.county?.name', $manager);
+        $this->assertStringNotContainsString('{folder.county ??', $manager);
+    }
+
     public function test_sidebar_contexts_reference_all_fourteen_tor_modules(): void
     {
         $registry = $this->source('resources/js/lib/app-navigation.ts');
