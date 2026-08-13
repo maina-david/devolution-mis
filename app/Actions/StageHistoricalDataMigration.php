@@ -80,7 +80,7 @@ class StageHistoricalDataMigration
                     $batch->rows()->create($row);
                 }
 
-                $this->auditLogger->record($actor, $batch, 'data_migration.staged', "Historical {$datasetType} migration staged with ".count($parsedRows).' rows.', null, ['file_checksum' => $checksum, 'valid_rows' => $batch->valid_rows, 'invalid_rows' => $batch->invalid_rows]);
+                $this->auditLogger->record($actor, $batch, 'data_migration.staged', trans_choice('migration.audit.historical_staged', count($parsedRows), ['dataset' => $datasetType, 'count' => count($parsedRows)]), null, ['file_checksum' => $checksum, 'valid_rows' => $batch->valid_rows, 'invalid_rows' => $batch->invalid_rows]);
 
                 return $batch->load('rows.county');
             });

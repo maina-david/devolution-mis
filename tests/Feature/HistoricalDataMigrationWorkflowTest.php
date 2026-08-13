@@ -88,7 +88,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         $county = County::factory()->create(['code' => 1]);
         $submitter = User::factory()->platformAdmin()->create();
 
-        $this->actingAs($submitter)->post(route('data-migrations.store'), [
+        $this->withSession(['locale' => 'fr'])->actingAs($submitter)->post(route('data-migrations.store'), [
             'file' => $this->xlsx([
                 [1, new \DateTimeImmutable('2019-12-31'), 'PFM-KRA', 'Public financial management KRA score', 72.25, '', 'percent', 'ACPA-2019-FINAL'],
             ]),
@@ -97,7 +97,7 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
             'source_reference' => 'ACPA-HISTORICAL-XLSX-2019',
             'period_from' => '2019-01-01',
             'period_to' => '2019-12-31',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertInertiaFlash('toast.message', 'La source historique a été préparée et rapprochée. Examinez chaque exception signalée avant approbation.');
         $batch = DataMigrationBatch::query()->sole();
 
         $this->assertSame('validated', $batch->status);

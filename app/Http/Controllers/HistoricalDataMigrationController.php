@@ -150,10 +150,10 @@ class HistoricalDataMigrationController extends Controller
         $user = $request->user();
         $attributes = $request->validated();
         $file = $request->file('file');
-        abort_unless($file instanceof UploadedFile, 422, 'A CSV or XLSX source file is required.');
+        abort_unless($file instanceof UploadedFile, 422, __('migration.errors.source_required'));
         $stage->handle($user, $file, $attributes['dataset_type'], $attributes['source_name'], $attributes['source_reference'], $attributes['period_from'], $attributes['period_to']);
 
-        return $this->success('Historical source staged and reconciled. Review every reported exception before approval.');
+        return $this->success(__('migration.outcomes.historical_staged'));
     }
 
     public function storeReferenceData(StoreReferenceDataImportRequest $request, StageReferenceDataImport $stage): RedirectResponse
@@ -162,10 +162,10 @@ class HistoricalDataMigrationController extends Controller
         $user = $request->user();
         $attributes = $request->validated();
         $file = $request->file('file');
-        abort_unless($file instanceof UploadedFile, 422, 'A CSV or XLSX source file is required.');
+        abort_unless($file instanceof UploadedFile, 422, __('migration.errors.source_required'));
         $stage->handle($user, $file, $attributes['dataset_type'], $attributes['source_name'], $attributes['source_reference']);
 
-        return $this->success('Bulk import staged and validated. Review every reported exception before approval.');
+        return $this->success(__('migration.outcomes.bulk_staged'));
     }
 
     public function template(Request $request, string $datasetType): BinaryFileResponse|StreamedResponse
@@ -183,7 +183,7 @@ class HistoricalDataMigrationController extends Controller
 
         if ($format === 'xlsx') {
             $path = tempnam(sys_get_temp_dir(), 'idmis-import-template-');
-            abort_if($path === false, 500, 'The XLSX template could not be created.');
+            abort_if($path === false, 500, __('migration.errors.template_failed'));
             $writer = new Writer;
             $writer->openToFile($path);
             $writer->addRow(Row::fromValues($headers));
@@ -212,7 +212,7 @@ class HistoricalDataMigrationController extends Controller
         $attributes = $request->validated();
         $review->handle($dataMigrationBatch, $user, $attributes['decision'], $attributes['notes']);
 
-        return $this->success('Historical migration review decision recorded.');
+        return $this->success(__('migration.outcomes.review_recorded'));
     }
 
     public function apply(ApplyHistoricalDataMigrationRequest $request, DataMigrationBatch $dataMigrationBatch, ApplyHistoricalDataMigration $apply): RedirectResponse
@@ -221,14 +221,14 @@ class HistoricalDataMigrationController extends Controller
         $user = $request->user();
         $apply->handle($dataMigrationBatch, $user);
 
-        return $this->success('Historical records applied to the immutable provenance register.');
+        return $this->success(__('migration.outcomes.records_applied'));
     }
 
     public function download(DataMigrationBatch $dataMigrationBatch): StreamedResponse
     {
         $this->authorizeView();
-        abort_unless(Storage::disk('local')->exists($dataMigrationBatch->path), 404, 'The retained source file is unavailable.');
-        abort_unless(hash('sha256', Storage::disk('local')->get($dataMigrationBatch->path)) === $dataMigrationBatch->file_checksum, 409, 'The retained source file failed its integrity check.');
+        abort_unless(Storage::disk('local')->exists($dataMigrationBatch->path), 404, __('migration.errors.retained_source_unavailable'));
+        abort_unless(hash('sha256', Storage::disk('local')->get($dataMigrationBatch->path)) === $dataMigrationBatch->file_checksum, 409, __('migration.errors.retained_source_integrity'));
 
         return Storage::disk('local')->download($dataMigrationBatch->path, $dataMigrationBatch->original_name, ['Content-Type' => $dataMigrationBatch->mime_type]);
     }
@@ -236,7 +236,7 @@ class HistoricalDataMigrationController extends Controller
     public function downloadExceptions(DataMigrationBatch $dataMigrationBatch): StreamedResponse
     {
         $this->authorizeView();
-        abort_if($dataMigrationBatch->invalid_rows === 0, 404, 'This migration batch has no validation exceptions.');
+        abort_if($dataMigrationBatch->invalid_rows === 0, 404, __('migration.errors.no_validation_exceptions'));
 
         $firstException = $dataMigrationBatch->rows()
             ->where('validation_status', 'invalid')
