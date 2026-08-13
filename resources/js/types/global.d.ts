@@ -110,6 +110,7 @@ declare module '@inertiajs/core' {
                 correctivePlans: Record<string, string>;
                 evaluationPanel: Record<string, string>;
                 indicatorDefinitions: Record<string, string>;
+                programmeUserProfile: Record<string, string>;
                 evaluationDocuments: Record<string, string>;
                 help: Record<string, string>;
                 accessControl: Record<string, string>;

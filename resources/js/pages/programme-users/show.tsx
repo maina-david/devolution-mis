@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     KeyRound,
@@ -18,7 +18,6 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { index as usersIndex } from '@/routes/programme-users';
 
 type TableData = { rows: WorkspaceRow[]; pagination: WorkspacePagination };
@@ -69,10 +68,41 @@ function humanize(value: string): string {
     return value.replaceAll('_', ' ').replaceAll('-', ' ');
 }
 
-function dateTime(value: string | null): string {
-    return value
-        ? new Date(value).toLocaleString(DEFAULT_LOCALE)
-        : 'Not recorded';
+function dateTime(
+    value: string | null,
+    locale: string,
+    fallback: string,
+): string {
+    return value ? new Date(value).toLocaleString(locale) : fallback;
+}
+
+function localizedValue(value: string, copy: Record<string, string>): string {
+    return copy[value] ?? copy[value.replaceAll('-', '_')] ?? humanize(value);
+}
+
+function governanceValue(
+    key: string,
+    value: unknown,
+    locale: string,
+    copy: Record<string, string>,
+): string {
+    if (Array.isArray(value)) {
+        return value
+            .map((item) =>
+                typeof item === 'string'
+                    ? localizedValue(item, copy)
+                    : String(item),
+            )
+            .join(', ');
+    }
+
+    if (typeof value === 'string' && key.endsWith('At')) {
+        return dateTime(value, locale, copy.not_recorded);
+    }
+
+    return typeof value === 'string'
+        ? localizedValue(value, copy)
+        : String(value ?? '—');
 }
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
@@ -115,10 +145,16 @@ function DataSection({
 
 export default function ProgrammeUserProfile(props: Props) {
     const { profile, summary, capabilities } = props;
+    const { localization } = usePage().props;
+    const copy = localization.programmeUserProfile;
+    const formatCount = (value: number): string =>
+        value.toLocaleString(localization.current);
+    const formatDateTime = (value: string | null): string =>
+        dateTime(value, localization.current, copy.not_recorded);
 
     return (
         <>
-            <Head title={`${profile.name} · User record`} />
+            <Head title={`${profile.name} · ${copy.user_record}`} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <Button
@@ -127,13 +163,13 @@ export default function ProgrammeUserProfile(props: Props) {
                         className="mb-3 h-auto p-0 text-[#83d4ad]"
                     >
                         <Link href={usersIndex()}>
-                            <ArrowLeft aria-hidden="true" /> User access
+                            <ArrowLeft aria-hidden="true" /> {copy.user_access}
                         </Link>
                     </Button>
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div>
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Governed identity record
+                                {copy.governed_identity_record}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                                 {profile.name}
@@ -147,7 +183,7 @@ export default function ProgrammeUserProfile(props: Props) {
                                 {profile.role.label}
                             </Badge>
                             <Badge className="border-white/20 bg-white/10 text-white">
-                                {humanize(profile.status)}
+                                {localizedValue(profile.status, copy)}
                             </Badge>
                         </div>
                     </div>
@@ -161,10 +197,10 @@ export default function ProgrammeUserProfile(props: Props) {
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
-                        ['Recorded sessions', summary.sessionCount],
-                        ['Page accesses', summary.pageViewCount],
-                        ['Audit events', summary.auditEventCount],
-                        ['Last seen', dateTime(summary.lastSeenAt)],
+                        [copy.recorded_sessions, summary.sessionCount],
+                        [copy.page_accesses, summary.pageViewCount],
+                        [copy.audit_events, summary.auditEventCount],
+                        [copy.last_seen, formatDateTime(summary.lastSeenAt)],
                     ].map(([label, value]) => (
                         <Card key={String(label)}>
                             <CardContent className="p-5">
@@ -172,7 +208,9 @@ export default function ProgrammeUserProfile(props: Props) {
                                     {label}
                                 </p>
                                 <p className="mt-2 text-2xl font-bold text-foreground">
-                                    {value ?? 'Restricted'}
+                                    {typeof value === 'number'
+                                        ? formatCount(value)
+                                        : (value ?? copy.restricted)}
                                 </p>
                             </CardContent>
                         </Card>
@@ -181,21 +219,27 @@ export default function ProgrammeUserProfile(props: Props) {
 
                 <Tabs defaultValue="overview" className="gap-4">
                     <TabsList className="h-auto flex-wrap justify-start">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="overview">
+                            {copy.overview}
+                        </TabsTrigger>
                         {capabilities.viewActivity && (
-                            <TabsTrigger value="sessions">Sessions</TabsTrigger>
+                            <TabsTrigger value="sessions">
+                                {copy.sessions}
+                            </TabsTrigger>
                         )}
                         {capabilities.viewActivity && (
                             <TabsTrigger value="pages">
-                                Page history
+                                {copy.page_history}
                             </TabsTrigger>
                         )}
                         {capabilities.viewAudit && (
-                            <TabsTrigger value="audit">Audit trail</TabsTrigger>
+                            <TabsTrigger value="audit">
+                                {copy.audit_trail}
+                            </TabsTrigger>
                         )}
                         {capabilities.viewAccessGovernance && (
                             <TabsTrigger value="governance">
-                                Access governance
+                                {copy.access_governance}
                             </TabsTrigger>
                         )}
                     </TabsList>
@@ -205,35 +249,41 @@ export default function ProgrammeUserProfile(props: Props) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <UserRound /> Identity
+                                        <UserRound aria-hidden="true" />{' '}
+                                        {copy.identity}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <dl className="space-y-3">
                                         <Detail
-                                            label="Email verified"
-                                            value={dateTime(
+                                            label={copy.email_verified}
+                                            value={formatDateTime(
                                                 profile.emailVerifiedAt,
                                             )}
                                         />
                                         <Detail
-                                            label="Created"
-                                            value={dateTime(profile.createdAt)}
+                                            label={copy.created}
+                                            value={formatDateTime(
+                                                profile.createdAt,
+                                            )}
                                         />
                                         <Detail
-                                            label="Updated"
-                                            value={dateTime(profile.updatedAt)}
+                                            label={copy.updated}
+                                            value={formatDateTime(
+                                                profile.updatedAt,
+                                            )}
                                         />
                                         <Detail
-                                            label="Current activity"
+                                            label={copy.current_activity}
                                             value={
-                                                summary.currentPage ?? 'Offline'
+                                                summary.currentPage ??
+                                                copy.offline
                                             }
                                         />
                                         {profile.accessRevokedAt && (
                                             <Detail
-                                                label="Revocation"
-                                                value={`${dateTime(profile.accessRevokedAt)} · ${profile.accessRevocationReason ?? 'No reason recorded'}`}
+                                                label={copy.revocation}
+                                                value={`${formatDateTime(profile.accessRevokedAt)} · ${profile.accessRevocationReason ?? copy.no_reason_recorded}`}
                                             />
                                         )}
                                     </dl>
@@ -242,12 +292,13 @@ export default function ProgrammeUserProfile(props: Props) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <MapPin /> Scope
+                                        <MapPin aria-hidden="true" />{' '}
+                                        {copy.scope}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <Detail
-                                        label="Home county"
+                                        label={copy.home_county}
                                         value={
                                             profile.homeCounty ? (
                                                 <CountyIdentity
@@ -255,12 +306,12 @@ export default function ProgrammeUserProfile(props: Props) {
                                                     compact
                                                 />
                                             ) : (
-                                                'National / portfolio'
+                                                copy.national_portfolio
                                             )
                                         }
                                     />
                                     <Detail
-                                        label="Assigned counties"
+                                        label={copy.assigned_counties}
                                         value={
                                             profile.assignedCounties.length
                                                 ? profile.assignedCounties
@@ -269,7 +320,7 @@ export default function ProgrammeUserProfile(props: Props) {
                                                               county.name,
                                                       )
                                                       .join(', ')
-                                                : 'None'
+                                                : copy.none
                                         }
                                     />
                                 </CardContent>
@@ -277,30 +328,40 @@ export default function ProgrammeUserProfile(props: Props) {
                             <Card>
                                 <CardHeader>
                                     <CardTitle className="flex items-center gap-2">
-                                        <KeyRound /> Security
+                                        <KeyRound aria-hidden="true" />{' '}
+                                        {copy.security}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <dl className="space-y-3">
                                         <Detail
-                                            label="Role"
+                                            label={copy.role}
                                             value={profile.role.label}
                                         />
                                         <Detail
-                                            label="Two-factor authentication"
+                                            label={
+                                                copy.two_factor_authentication
+                                            }
                                             value={
                                                 profile.twoFactorEnabled
-                                                    ? 'Enabled'
-                                                    : 'Not enabled'
+                                                    ? copy.enabled
+                                                    : copy.not_enabled
                                             }
                                         />
                                         <Detail
-                                            label="Registered passkeys"
-                                            value={profile.passkeyCount.toLocaleString()}
+                                            label={copy.registered_passkeys}
+                                            value={formatCount(
+                                                profile.passkeyCount,
+                                            )}
                                         />
                                         <Detail
-                                            label="Effective permissions"
-                                            value={`${profile.permissions.length} permissions`}
+                                            label={copy.effective_permissions}
+                                            value={copy.permission_count.replace(
+                                                ':count',
+                                                formatCount(
+                                                    profile.permissions.length,
+                                                ),
+                                            )}
                                         />
                                     </dl>
                                 </CardContent>
@@ -309,13 +370,14 @@ export default function ProgrammeUserProfile(props: Props) {
                         <Card className="mt-4">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <ShieldCheck /> Effective permissions
+                                    <ShieldCheck aria-hidden="true" />{' '}
+                                    {copy.effective_permissions}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-wrap gap-2">
                                 {profile.permissions.map((permission) => (
                                     <Badge key={permission} variant="outline">
-                                        {humanize(permission)}
+                                        {localizedValue(permission, copy)}
                                     </Badge>
                                 ))}
                             </CardContent>
@@ -324,13 +386,13 @@ export default function ProgrammeUserProfile(props: Props) {
                     {props.sessions && (
                         <TabsContent value="sessions">
                             <DataSection
-                                title="Authentication sessions"
+                                title={copy.authentication_sessions}
                                 columns={[
-                                    'Current page',
-                                    'IP address',
-                                    'Logged in',
-                                    'Last seen',
-                                    'Logged out',
+                                    copy.current_page,
+                                    copy.ip_address,
+                                    copy.logged_in,
+                                    copy.last_seen,
+                                    copy.logged_out,
                                 ]}
                                 data={props.sessions}
                             />
@@ -339,13 +401,13 @@ export default function ProgrammeUserProfile(props: Props) {
                     {props.pageViews && (
                         <TabsContent value="pages">
                             <DataSection
-                                title="Authorized page history"
+                                title={copy.authorized_page_history}
                                 columns={[
-                                    'Page',
-                                    'Route',
-                                    'Path',
-                                    'IP address',
-                                    'Viewed',
+                                    copy.page,
+                                    copy.route,
+                                    copy.path,
+                                    copy.ip_address,
+                                    copy.viewed,
                                 ]}
                                 data={props.pageViews}
                             />
@@ -354,14 +416,14 @@ export default function ProgrammeUserProfile(props: Props) {
                     {props.auditEvents && (
                         <TabsContent value="audit">
                             <DataSection
-                                title="Correlated audit trail"
+                                title={copy.correlated_audit_trail}
                                 columns={[
-                                    'Action',
-                                    'Description',
-                                    'Actor',
-                                    'Method',
-                                    'IP address',
-                                    'Recorded',
+                                    copy.action,
+                                    copy.description,
+                                    copy.actor,
+                                    copy.method,
+                                    copy.ip_address,
+                                    copy.recorded,
                                 ]}
                                 data={props.auditEvents}
                             />
@@ -377,7 +439,7 @@ export default function ProgrammeUserProfile(props: Props) {
                                     <Card key={section}>
                                         <CardHeader>
                                             <CardTitle>
-                                                {humanize(section)}
+                                                {localizedValue(section, copy)}
                                             </CardTitle>
                                         </CardHeader>
                                         <CardContent className="space-y-3">
@@ -405,21 +467,20 @@ export default function ProgrammeUserProfile(props: Props) {
                                                                         className="break-words"
                                                                     >
                                                                         <span className="font-semibold">
-                                                                            {humanize(
+                                                                            {localizedValue(
                                                                                 key,
+                                                                                copy,
                                                                             )}
-                                                                            :
+                                                                            {
+                                                                                copy.field_separator
+                                                                            }
                                                                         </span>{' '}
-                                                                        {Array.isArray(
+                                                                        {governanceValue(
+                                                                            key,
                                                                             value,
-                                                                        )
-                                                                            ? value.join(
-                                                                                  ', ',
-                                                                              )
-                                                                            : String(
-                                                                                  value ??
-                                                                                      '—',
-                                                                              )}
+                                                                            localization.current,
+                                                                            copy,
+                                                                        )}
                                                                     </p>
                                                                 ),
                                                             )}
@@ -427,7 +488,7 @@ export default function ProgrammeUserProfile(props: Props) {
                                                 ))
                                             ) : (
                                                 <p className="text-sm text-muted-foreground">
-                                                    No governed records.
+                                                    {copy.no_governed_records}
                                                 </p>
                                             )}
                                         </CardContent>
