@@ -263,7 +263,7 @@ type OfflineSync = {
     reviewedAt: string | null;
     reviewer: string | null;
 };
-const statuses = [
+const statusIds = [
     'draft',
     'quality_review',
     'published',
@@ -272,7 +272,7 @@ const statuses = [
     'active',
     'completed',
     'cancelled',
-].map((id) => ({ id, name: humanize(id) }));
+];
 
 export default function Learning({
     courses,
@@ -286,6 +286,10 @@ export default function Learning({
     const { localization } = usePage().props;
     const copy = localization.learning;
     const locale = localization.current;
+    const statuses = statusIds.map((id) => ({
+        id,
+        name: displayValue(copy, id),
+    }));
     const rows: WorkspaceRow[] = courses.data.map((course) => ({
         id: course.id,
         status: course.status,
@@ -308,7 +312,7 @@ export default function Learning({
                 : interpolate(copy.enrolled_count, {
                       count: course.enrollmentCount,
                   }),
-            humanize(course.status),
+            displayValue(copy, course.status),
         ],
     }));
     const pagination: WorkspacePagination = {
@@ -328,7 +332,7 @@ export default function Learning({
             sync.eventCount,
             new Date(sync.submittedAt).toLocaleString(locale),
             sync.reviewer ?? copy.pending,
-            humanize(sync.status),
+            displayValue(copy, sync.status),
         ],
     }));
     const syncPagination: WorkspacePagination = {
@@ -350,7 +354,7 @@ export default function Learning({
             `${cohort.membersCount} / ${cohort.capacity}`,
             new Date(cohort.startsAt).toLocaleString(locale),
             new Date(cohort.endsAt).toLocaleString(locale),
-            humanize(cohort.status),
+            displayValue(copy, cohort.status),
         ],
     }));
     const cohortPagination: WorkspacePagination = {
@@ -844,7 +848,10 @@ function CohortActions({
                                     }
                                 >
                                     {interpolate(copy.transition_cohort, {
-                                        transition: humanize(transitionName),
+                                        transition: displayValue(
+                                            copy,
+                                            transitionName,
+                                        ),
                                     })}
                                 </DropdownMenuItem>
                             ))}
@@ -863,11 +870,15 @@ function CohortActions({
                                 : surface === 'member'
                                   ? copy.add_cohort_learner
                                   : interpolate(copy.transition_cohort, {
-                                        transition: humanize(surface ?? ''),
+                                        transition: displayValue(
+                                            copy,
+                                            surface ?? '',
+                                        ),
                                     })}
                         </SheetTitle>
                         <SheetDescription>
-                            {cohort.code} · {cohort.course.code} ·{' '}
+                            {cohort.code} {copy.separator}{' '}
+                            {cohort.course.code} {copy.separator}{' '}
                             {cohort.instructor}
                         </SheetDescription>
                     </SheetHeader>
@@ -876,7 +887,7 @@ function CohortActions({
                             <>
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline">
-                                        {humanize(cohort.status)}
+                                        {displayValue(copy, cohort.status)}
                                     </Badge>
                                     <Badge variant="outline">
                                         {interpolate(copy.roster_capacity, {
@@ -1028,7 +1039,10 @@ function CohortActions({
                                                       copy.transition_cohort,
                                                       {
                                                           transition:
-                                                              humanize(surface),
+                                                              displayValue(
+                                                                  copy,
+                                                                  surface,
+                                                              ),
                                                       },
                                                   )}
                                         </Button>
@@ -1103,7 +1117,10 @@ function OfflineSyncActions({
                             {surface === 'details'
                                 ? copy.offline_evidence
                                 : interpolate(copy.offline_progress_action, {
-                                      action: humanize(surface ?? ''),
+                                      action: displayValue(
+                                          copy,
+                                          surface ?? '',
+                                      ),
                                   })}
                         </SheetTitle>
                         <SheetDescription>
@@ -1119,7 +1136,7 @@ function OfflineSyncActions({
                             <>
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline">
-                                        {humanize(sync.status)}
+                                        {displayValue(copy, sync.status)}
                                     </Badge>
                                     <Badge variant="outline">
                                         {interpolate(copy.event_count, {
@@ -1218,7 +1235,8 @@ function OfflineSyncActions({
                                                 : interpolate(
                                                       copy.sync_action,
                                                       {
-                                                          action: humanize(
+                                                          action: displayValue(
+                                                              copy,
                                                               surface,
                                                           ),
                                                       },
@@ -1248,6 +1266,7 @@ function CourseForm({
         effectiveFrom: string | null;
     };
 }) {
+    const copy = usePage().props.localization.learning;
     const [lessons, setLessons] = useState([
         { key: 0, type: 'text' },
         { key: 1, type: 'quiz' },
@@ -1255,14 +1274,16 @@ function CourseForm({
 
     return (
         <FormSheet
-            title="Create learning course"
-            description="Build multimedia content and an interactive knowledge check before independent publication."
-            triggerLabel="New course"
+            title={copy.create_course}
+            description={copy.create_course_description}
+            triggerLabel={copy.new_course}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
-                    ? `Using governed catalogue release v${catalogue.version}`
-                    : 'A checksum-verified, effective reference-data release is required.'
+                    ? interpolate(copy.catalogue_release, {
+                          version: catalogue.version ?? '',
+                      })
+                    : copy.catalogue_required
             }
             icon={Plus}
             size="xl"
@@ -1273,89 +1294,95 @@ function CourseForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <Field
                                 name="code"
-                                label="Course code"
+                                label={copy.course_code}
                                 error={errors.code}
                             />
                             <Field
                                 name="title"
-                                label="Course title"
+                                label={copy.course_title}
                                 error={errors.title}
                             />
                             <Field
                                 name="category"
-                                label="Category"
+                                label={copy.category}
                                 error={errors.category}
                             />
                             <SearchableSelect
                                 id="course-level"
                                 name="level"
-                                label="Level"
+                                label={copy.level}
                                 options={[
                                     'foundation',
                                     'intermediate',
                                     'advanced',
-                                ].map((id) => ({ id, name: humanize(id) }))}
+                                ].map((id) => ({
+                                    id,
+                                    name: displayValue(copy, id),
+                                }))}
                                 defaultValue="foundation"
                             />
                             <SearchableSelect
                                 id="delivery-mode"
                                 name="delivery_mode"
-                                label="Delivery mode"
+                                label={copy.delivery_mode}
                                 options={[
                                     'self_paced',
                                     'blended',
                                     'instructor_led',
-                                ].map((id) => ({ id, name: humanize(id) }))}
+                                ].map((id) => ({
+                                    id,
+                                    name: displayValue(copy, id),
+                                }))}
                                 defaultValue="self_paced"
                             />
                             <SearchableSelect
                                 id="course-county"
                                 name="county_id"
-                                label="County scope"
+                                label={copy.county_scope}
                                 options={counties}
                                 optional
                             />
                             <SearchableSelect
                                 id="course-sector"
                                 name="sector_id"
-                                label="Sector"
+                                label={copy.sector}
                                 options={sectors}
                                 optional
                             />
                             <ReferenceCatalogSelect
                                 id="course-language"
                                 name="language"
-                                label="Language"
+                                label={copy.language}
                                 catalog="language"
                             />
                             <Field
                                 name="passing_score"
-                                label="Passing score (%)"
+                                label={copy.passing_score}
                                 type="number"
                                 defaultValue="70"
                             />
                             <Field
                                 name="maximum_attempts"
-                                label="Maximum attempts"
+                                label={copy.maximum_attempts}
                                 type="number"
                                 defaultValue="3"
                             />
                         </div>
                         <TextField
                             name="summary"
-                            label="Course summary"
+                            label={copy.course_summary}
                             error={errors.summary}
                         />
                         <TextField
                             name="description"
-                            label="Course description"
+                            label={copy.course_description}
                             error={errors.description}
                         />
                         <div className="grid gap-3 rounded-xl border p-4">
                             <div className="grid gap-4 md:grid-cols-3">
                                 <Field
                                     name="question_bank[selection_count]"
-                                    label="Questions per attempt"
+                                    label={copy.questions_per_attempt}
                                     type="number"
                                     defaultValue="1"
                                 />
@@ -1370,24 +1397,21 @@ function CourseForm({
                                     value="1"
                                 />
                                 <p className="self-end text-sm text-muted-foreground md:col-span-2">
-                                    Quiz variants are selected reproducibly,
-                                    one question per objective group, with a
-                                    checksum retained on every attempt.
+                                    {copy.variant_assurance}
                                 </p>
                             </div>
                             <input
                                 type="hidden"
                                 name="modules[0][title]"
-                                value="Core learning"
+                                value={copy.core_learning}
                             />
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold">
-                                        Core learning module
+                                        {copy.core_learning_module}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Add text, video, audio, toolkit, manual,
-                                        and quiz lessons.
+                                        {copy.lesson_types_description}
                                     </p>
                                 </div>
                                 <Button
@@ -1409,14 +1433,16 @@ function CourseForm({
                                         ])
                                     }
                                 >
-                                    Add lesson
+                                    {copy.add_lesson}
                                 </Button>
                             </div>
                             {lessons.map((lesson, index) => (
                                 <Card key={lesson.key}>
                                     <CardHeader className="flex-row items-center justify-between">
                                         <CardTitle className="text-base">
-                                            Lesson {index + 1}
+                                            {interpolate(copy.lesson_number, {
+                                                number: index + 1,
+                                            })}
                                         </CardTitle>
                                         {lessons.length > 2 && (
                                             <Button
@@ -1433,19 +1459,19 @@ function CourseForm({
                                                     )
                                                 }
                                             >
-                                                Remove
+                                                {copy.remove}
                                             </Button>
                                         )}
                                     </CardHeader>
                                     <CardContent className="grid gap-4 md:grid-cols-2">
                                         <Field
                                             name={`modules[0][lessons][${index}][title]`}
-                                            label="Lesson title"
+                                            label={copy.lesson_title}
                                         />
                                         <SearchableSelect
                                             id={`lesson-type-${lesson.key}`}
                                             name={`modules[0][lessons][${index}][content_type]`}
-                                            label="Content type"
+                                            label={copy.content_type}
                                             options={[
                                                 'text',
                                                 'video',
@@ -1455,7 +1481,7 @@ function CourseForm({
                                                 'quiz',
                                             ].map((id) => ({
                                                 id,
-                                                name: humanize(id),
+                                                name: displayValue(copy, id),
                                             }))}
                                             defaultValue={lesson.type}
                                             onValueChange={(value) =>
@@ -1473,18 +1499,18 @@ function CourseForm({
                                         />
                                         <Field
                                             name={`modules[0][lessons][${index}][estimated_minutes]`}
-                                            label="Estimated minutes"
+                                            label={copy.estimated_minutes}
                                             type="number"
                                             defaultValue="10"
                                         />
                                         <Field
                                             name={`modules[0][lessons][${index}][content_url]`}
-                                            label="Content or repository URL"
+                                            label={copy.content_url}
                                             optional
                                         />
                                         <div className="grid gap-2 md:col-span-2">
                                             <Label>
-                                                Text content / description
+                                                {copy.text_content}
                                             </Label>
                                             <Textarea
                                                 name={`modules[0][lessons][${index}][content_body]`}
@@ -1506,55 +1532,55 @@ function CourseForm({
                                             <div className="grid gap-4 rounded-lg border p-3 md:col-span-2">
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][question]`}
-                                                    label="Quiz question"
+                                                    label={copy.quiz_question}
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][options][A]`}
-                                                    label="Option A"
+                                                    label={copy.option_a}
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][options][B]`}
-                                                    label="Option B"
+                                                    label={copy.option_b}
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][correct_option]`}
-                                                    label="Correct option key"
+                                                    label={copy.correct_option}
                                                     defaultValue="A"
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][points]`}
-                                                    label="Points"
+                                                    label={copy.points}
                                                     type="number"
                                                     defaultValue="1"
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][variant_group]`}
-                                                    label="Objective / variant group"
+                                                    label={copy.variant_group}
                                                     defaultValue={`objective-${index + 1}`}
                                                 />
                                                 <SearchableSelect
                                                     id={`question-difficulty-${lesson.key}`}
                                                     name={`modules[0][lessons][${index}][questions][0][difficulty]`}
-                                                    label="Difficulty"
+                                                    label={copy.difficulty}
                                                     options={[
                                                         {
                                                             id: 'foundation',
-                                                            name: 'Foundation',
+                                                            name: copy.foundation,
                                                         },
                                                         {
                                                             id: 'standard',
-                                                            name: 'Standard',
+                                                            name: copy.standard,
                                                         },
                                                         {
                                                             id: 'advanced',
-                                                            name: 'Advanced',
+                                                            name: copy.advanced,
                                                         },
                                                     ]}
                                                     defaultValue="standard"
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][explanation]`}
-                                                    label="Explanation"
+                                                    label={copy.explanation}
                                                     optional
                                                 />
                                             </div>
@@ -1564,7 +1590,7 @@ function CourseForm({
                             ))}
                         </div>
                         <Button type="submit" disabled={processing}>
-                            Save draft course
+                            {copy.save_draft_course}
                         </Button>
                     </>
                 )}
@@ -1580,11 +1606,13 @@ function ClassroomForm({
     courses: Course[];
     facilitators: Option[];
 }) {
+    const copy = usePage().props.localization.learning;
+
     return (
         <FormSheet
-            title="Schedule virtual classroom"
-            description="Register a governed live webinar or workshop link."
-            triggerLabel="Schedule classroom"
+            title={copy.schedule_virtual_classroom}
+            description={copy.schedule_classroom_description}
+            triggerLabel={copy.schedule_classroom}
             icon={Video}
         >
             <Form action={storeClassroom()} className="grid gap-4 pt-4">
@@ -1593,7 +1621,7 @@ function ClassroomForm({
                         <SearchableSelect
                             id="classroom-course"
                             name="learning_course_id"
-                            label="Course"
+                            label={copy.course}
                             options={courses.map((course) => ({
                                 id: course.id,
                                 name: course.title,
@@ -1602,40 +1630,43 @@ function ClassroomForm({
                         <SearchableSelect
                             id="classroom-facilitator"
                             name="facilitator_id"
-                            label="Facilitator"
+                            label={copy.facilitator}
                             options={facilitators}
                         />
-                        <Field name="title" label="Session title" />
-                        <TextField name="description" label="Description" />
+                        <Field name="title" label={copy.session_title} />
+                        <TextField
+                            name="description"
+                            label={copy.description}
+                        />
                         <DatePickerField
                             name="starts_at"
-                            label="Starts at"
+                            label={copy.starts_at}
                             includeTime
                             required
                             error={errors.starts_at}
                         />
                         <DatePickerField
                             name="ends_at"
-                            label="Ends at"
+                            label={copy.ends_at}
                             includeTime
                             required
                             error={errors.ends_at}
                         />
                         <Field
                             name="platform"
-                            label="Platform"
+                            label={copy.platform}
                             defaultValue="Microsoft Teams"
                         />
-                        <Field name="join_url" label="Secure join URL" />
+                        <Field name="join_url" label={copy.secure_join_url} />
                         <Field
                             name="capacity"
-                            label="Capacity"
+                            label={copy.capacity}
                             type="number"
                             optional
                         />
                         <input type="hidden" name="status" value="scheduled" />
                         <Button type="submit" disabled={processing}>
-                            Schedule classroom
+                            {copy.schedule_classroom}
                         </Button>
                     </>
                 )}
@@ -1651,6 +1682,7 @@ function CourseActions({
     course: Course;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.learning;
     const [surface, setSurface] = useState<string | null>(null);
     const assetLesson = course.modules
         .flatMap((module) => module.lessons)
@@ -1658,22 +1690,22 @@ function CourseActions({
     const lifecycle = [
         [
             'submit_review',
-            'Submit quality review',
+            copy.submit_quality_review,
             capabilities.manage && course.status === 'draft',
         ],
         [
             'publish',
-            'Publish course',
+            copy.publish_course,
             capabilities.review && course.status === 'quality_review',
         ],
         [
             'return',
-            'Return to author',
+            copy.return_to_author,
             capabilities.review && course.status === 'quality_review',
         ],
         [
             'retire',
-            'Retire course',
+            copy.retire_course,
             capabilities.manage && course.status === 'published',
         ],
     ] as const;
@@ -1685,7 +1717,9 @@ function CourseActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${course.title}`}
+                        aria-label={interpolate(copy.course_actions, {
+                            course: course.title,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1693,7 +1727,7 @@ function CourseActions({
                 <DropdownMenuContent align="end" className="min-w-60">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
                         <Eye />
-                        Open course
+                        {copy.open_course}
                     </DropdownMenuItem>
                     {!course.enrollment &&
                         capabilities.enroll &&
@@ -1702,7 +1736,7 @@ function CourseActions({
                                 onSelect={() => setSurface('enroll')}
                             >
                                 <BookOpen />
-                                Enroll
+                                {copy.enroll}
                             </DropdownMenuItem>
                         )}
                     {lifecycle
@@ -1721,7 +1755,7 @@ function CourseActions({
                             onSelect={() => setSurface('offline_package')}
                         >
                             <DownloadIcon />
-                            Generate offline package
+                            {copy.generate_offline_package}
                         </DropdownMenuItem>
                     )}
                     {course.enrollment && course.offlinePackage && (
@@ -1729,7 +1763,7 @@ function CourseActions({
                             onSelect={() => setSurface('offline_sync')}
                         >
                             <FileUp />
-                            Import offline progress
+                            {copy.import_offline_progress}
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
@@ -1744,11 +1778,13 @@ function CourseActions({
                             {surface === 'details'
                                 ? course.title
                                 : assetLesson
-                                  ? `Upload asset · ${assetLesson.title}`
-                                  : humanize(surface ?? '')}
+                                  ? interpolate(copy.upload_asset_title, {
+                                        lesson: assetLesson.title,
+                                    })
+                                  : displayValue(copy, surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
-                            {course.code} · {course.summary}
+                            {course.code} {copy.separator} {course.summary}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pb-8">
@@ -1783,13 +1819,7 @@ function CourseActions({
                                 {({ processing }) => (
                                     <>
                                         <p className="text-sm leading-6 text-muted-foreground">
-                                            Generate an immutable ZIP containing
-                                            structured course content,
-                                            accessible alternatives, a
-                                            checksum-bound manifest, and only
-                                            clean assets approved for download.
-                                            Assessment answer keys and online
-                                            progress records are excluded.
+                                            {copy.offline_package_assurance}
                                         </p>
                                         <Button
                                             type="submit"
@@ -1797,8 +1827,8 @@ function CourseActions({
                                         >
                                             <DownloadIcon />
                                             {processing
-                                                ? 'Generating package…'
-                                                : 'Generate verified package'}
+                                                ? copy.generating_package
+                                                : copy.generate_verified_package}
                                         </Button>
                                     </>
                                 )}
@@ -1817,7 +1847,7 @@ function CourseActions({
                                     <>
                                         <div className="grid gap-2">
                                             <Label htmlFor="sync-file">
-                                                Package progress record
+                                                {copy.package_progress_record}
                                             </Label>
                                             <Input
                                                 id="sync-file"
@@ -1839,13 +1869,14 @@ function CourseActions({
                                             )}
                                         </div>
                                         <p className="text-sm leading-6 text-muted-foreground">
-                                            Upload the JSON record exported by
-                                            package v
-                                            {course.offlinePackage?.version}.
-                                            Its package checksum, lesson scope,
-                                            timestamps and replay identifier
-                                            will be verified before a separate
-                                            reviewer can reconcile progress.
+                                            {interpolate(
+                                                copy.offline_import_assurance,
+                                                {
+                                                    version:
+                                                        course.offlinePackage
+                                                            ?.version ?? '',
+                                                },
+                                            )}
                                         </p>
                                         <Button
                                             type="submit"
@@ -1853,8 +1884,8 @@ function CourseActions({
                                         >
                                             <FileUp />
                                             {processing
-                                                ? 'Submitting…'
-                                                : 'Submit for reconciliation'}
+                                                ? copy.submitting
+                                                : copy.submit_reconciliation}
                                         </Button>
                                     </>
                                 )}
@@ -1867,10 +1898,11 @@ function CourseActions({
                                     value={course.id}
                                 />
                                 <p>
-                                    Enroll in this course and begin tracked
-                                    learning?
+                                    {copy.enroll_confirmation}
                                 </p>
-                                <Button type="submit">Confirm enrolment</Button>
+                                <Button type="submit">
+                                    {copy.confirm_enrolment}
+                                </Button>
                             </Form>
                         ) : surface ? (
                             <Form
@@ -1884,10 +1916,10 @@ function CourseActions({
                                 />
                                 <TextField
                                     name="rationale"
-                                    label="Decision rationale"
+                                    label={copy.decision_rationale}
                                 />
                                 <Button type="submit">
-                                    {humanize(surface)}
+                                    {displayValue(copy, surface)}
                                 </Button>
                             </Form>
                         ) : null}
@@ -1909,7 +1941,9 @@ function CourseDetails({
     canAccessAssets: boolean;
     onUploadAsset: (lesson: Lesson) => void;
 }) {
-    const locale = usePage().props.localization.current;
+    const { localization } = usePage().props;
+    const copy = localization.learning;
+    const locale = localization.current;
     const enrollment = course.enrollment;
     const quizQuestions = course.modules
         .flatMap((module) => module.lessons)
@@ -1919,26 +1953,42 @@ function CourseDetails({
         <div className="grid gap-6 pt-4">
             <div className="flex flex-wrap items-center gap-2">
                 {course.county && <CountyIdentity county={course.county} />}
-                <Badge variant="outline">{humanize(course.level)}</Badge>
                 <Badge variant="outline">
-                    {course.estimatedMinutes} minutes
+                    {displayValue(copy, course.level)}
                 </Badge>
-                <Badge variant="outline">Pass {course.passingScore}%</Badge>
-                {enrollment && <Badge>{enrollment.progress}% complete</Badge>}
+                <Badge variant="outline">
+                    {interpolate(copy.minutes_count, {
+                        count: course.estimatedMinutes,
+                    })}
+                </Badge>
+                <Badge variant="outline">
+                    {interpolate(copy.pass_score, {
+                        score: course.passingScore,
+                    })}
+                </Badge>
+                {enrollment && (
+                    <Badge>
+                        {interpolate(copy.progress_complete, {
+                            progress: enrollment.progress,
+                        })}
+                    </Badge>
+                )}
             </div>
             <p className="text-sm leading-6 text-muted-foreground">
                 {course.description}
             </p>
             <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-                <p className="font-semibold">Reference-data lineage</p>
+                <p className="font-semibold">{copy.reference_lineage}</p>
                 {course.referenceData ? (
                     <p className="mt-1 break-all text-muted-foreground">
-                        Release v{course.referenceData.version} ·{' '}
-                        {course.referenceData.checksum}
+                        {interpolate(copy.reference_release_detail, {
+                            version: course.referenceData.version,
+                            checksum: course.referenceData.checksum,
+                        })}
                     </p>
                 ) : (
                     <p className="mt-1 text-muted-foreground">
-                        Legacy record · unpinned
+                        {copy.legacy_record_unpinned}
                     </p>
                 )}
             </div>
@@ -1946,7 +1996,7 @@ function CourseDetails({
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base">
-                            Recommended knowledge resources
+                            {copy.recommended_resources}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-3">
@@ -1960,7 +2010,10 @@ function CourseDetails({
                                         {item.title}
                                     </p>
                                     <p className="mt-1 text-sm text-muted-foreground">
-                                        {item.reference} · {humanize(item.type)}
+                                        {interpolate(copy.resource_summary, {
+                                            reference: item.reference,
+                                            type: displayValue(copy, item.type),
+                                        })}
                                     </p>
                                     <p className="mt-2 text-sm">
                                         {item.summary}
@@ -1974,7 +2027,7 @@ function CourseDetails({
                                             },
                                         })}
                                     >
-                                        <BookOpen /> Open resource
+                                        <BookOpen /> {copy.open_resource}
                                     </Link>
                                 </Button>
                             </div>
@@ -1986,14 +2039,14 @@ function CourseDetails({
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base">
-                            Offline package generation failed
+                            {copy.offline_generation_failed}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-2 text-sm text-muted-foreground">
                         <p>
-                            Attempt v{course.offlinePackageAttempt.version}{' '}
-                            failed closed. The last verified package remains
-                            available.
+                            {interpolate(copy.failed_attempt, {
+                                version: course.offlinePackageAttempt.version,
+                            })}
                         </p>
                         <p>{course.offlinePackageAttempt.failureMessage}</p>
                     </CardContent>
@@ -2004,36 +2057,40 @@ function CourseDetails({
                     <CardHeader className="flex-row items-start justify-between gap-4">
                         <div>
                             <CardTitle className="text-base">
-                                Constrained-connectivity package v
-                                {course.offlinePackage.version}
+                                {interpolate(copy.connectivity_package, {
+                                    version: course.offlinePackage.version,
+                                })}
                             </CardTitle>
                             <p className="mt-1 text-sm text-muted-foreground">
                                 {course.offlinePackage.generatedAt
                                     ? new Date(
                                           course.offlinePackage.generatedAt,
                                       ).toLocaleString(locale)
-                                    : 'Generation pending'}{' '}
-                                ·{' '}
+                                    : copy.generation_pending}{' '}
+                                {copy.separator}{' '}
                                 {course.offlinePackage.sizeBytes
-                                    ? `${Math.ceil(course.offlinePackage.sizeBytes / 1024).toLocaleString()} KB`
-                                    : 'Size pending'}
+                                    ? interpolate(copy.size_kb, {
+                                          size: Math.ceil(
+                                              course.offlinePackage.sizeBytes /
+                                                  1024,
+                                          ).toLocaleString(locale),
+                                      })
+                                    : copy.size_pending}
                             </p>
                         </div>
                         <Badge variant="outline">
-                            {humanize(course.offlinePackage.status)}
+                            {displayValue(copy, course.offlinePackage.status)}
                         </Badge>
                     </CardHeader>
                     <CardContent className="grid gap-3">
                         <p className="text-xs text-muted-foreground">
-                            Package SHA-256:{' '}
+                            {copy.package_checksum}{' '}
                             <code className="break-all">
-                                {course.offlinePackage.checksum ?? 'Pending'}
+                                {course.offlinePackage.checksum ?? copy.pending}
                             </code>
                         </p>
                         <p className="text-xs text-muted-foreground">
-                            Offline activity does not update the official
-                            learning record until the learner returns to an
-                            authorized IDMIS session.
+                            {copy.offline_progress_notice}
                         </p>
                         {course.offlinePackage.canDownload && (
                             <Button asChild variant="outline" className="w-fit">
@@ -2043,7 +2100,7 @@ function CourseDetails({
                                             course.offlinePackage.id,
                                     })}
                                 >
-                                    <DownloadIcon /> Download offline package
+                                    <DownloadIcon /> {copy.download_offline_package}
                                 </a>
                             </Button>
                         )}
@@ -2063,13 +2120,14 @@ function CourseDetails({
                                     {new Date(
                                         classroom.startsAt,
                                     ).toLocaleString(locale)}{' '}
-                                    · {classroom.facilitator} ·{' '}
+                                    {copy.separator}{' '}
+                                    {classroom.facilitator} {copy.separator}{' '}
                                     {classroom.platform}
                                 </p>
                             </div>
                         </div>
                         <Badge variant="outline">
-                            {humanize(classroom.status)}
+                            {displayValue(copy, classroom.status)}
                         </Badge>
                     </CardHeader>
                     <CardContent className="flex flex-wrap items-center gap-2">
@@ -2079,7 +2137,7 @@ function CourseDetails({
                                 target="_blank"
                                 rel="noreferrer"
                             >
-                                Join classroom
+                                {copy.join_classroom}
                             </a>
                         </Button>
                         {classroom.canRecordAttendance && (
@@ -2089,14 +2147,19 @@ function CourseDetails({
                                         classroom: classroom.id,
                                     })}
                                 >
-                                    Attendance register
+                                    {copy.attendance_register}
                                 </Link>
                             </Button>
                         )}
                         {classroom.attendance && (
                             <Badge>
-                                {humanize(classroom.attendance.status)} ·{' '}
-                                {classroom.attendance.minutes} minutes
+                                {interpolate(copy.attendance_summary, {
+                                    status: displayValue(
+                                        copy,
+                                        classroom.attendance.status,
+                                    ),
+                                    minutes: classroom.attendance.minutes,
+                                })}
                             </Badge>
                         )}
                     </CardContent>
@@ -2113,7 +2176,7 @@ function CourseDetails({
                                         {lesson.title}
                                     </CardTitle>
                                     <Badge variant="outline">
-                                        {humanize(lesson.contentType)}
+                                        {displayValue(copy, lesson.contentType)}
                                     </Badge>
                                 </CardHeader>
                                 <CardContent className="grid gap-3">
@@ -2133,8 +2196,8 @@ function CourseDetails({
                                                 rel="noreferrer"
                                             >
                                                 {lesson.downloadable
-                                                    ? 'Open resource'
-                                                    : 'Open learning content'}
+                                                    ? copy.open_resource
+                                                    : copy.open_learning_content}
                                             </a>
                                         </Button>
                                     )}
@@ -2149,18 +2212,22 @@ function CourseDetails({
                                                         {asset.title}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {humanize(
+                                                        {displayValue(
+                                                            copy,
                                                             asset.sourceType,
                                                         )}{' '}
-                                                        · {asset.scanStatus} ·{' '}
+                                                        {copy.separator}{' '}
+                                                        {asset.scanStatus}{' '}
+                                                        {copy.separator}{' '}
                                                         {lesson.assetMetadata
                                                             ?.licence
-                                                            ? humanize(
+                                                            ? displayValue(
+                                                                  copy,
                                                                   lesson
                                                                       .assetMetadata
                                                                       .licence,
                                                               )
-                                                            : 'Rights pending'}
+                                                            : copy.rights_pending}
                                                     </p>
                                                 </div>
                                                 {canAccessAssets && (
@@ -2180,7 +2247,8 @@ function CourseDetails({
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                             >
-                                                                <Eye /> Preview
+                                                                <Eye />{' '}
+                                                                {copy.preview}
                                                             </a>
                                                         </Button>
                                                         {lesson.downloadable && (
@@ -2198,7 +2266,7 @@ function CourseDetails({
                                                                     )}
                                                                 >
                                                                     <DownloadIcon />{' '}
-                                                                    Download
+                                                                    {copy.download}
                                                                 </a>
                                                             </Button>
                                                         )}
@@ -2208,7 +2276,7 @@ function CourseDetails({
                                             {lesson.assetMetadata
                                                 ?.accessible_alternative && (
                                                 <p className="text-xs text-muted-foreground">
-                                                    Accessible alternative:{' '}
+                                                    {copy.accessible_alternative}{' '}
                                                     {
                                                         lesson.assetMetadata
                                                             .accessible_alternative
@@ -2232,7 +2300,8 @@ function CourseDetails({
                                                     onUploadAsset(lesson)
                                                 }
                                             >
-                                                <Plus /> Upload governed asset
+                                                <Plus />{' '}
+                                                {copy.upload_governed_asset}
                                             </Button>
                                         )}
                                     {enrollment &&
@@ -2256,7 +2325,7 @@ function CourseDetails({
                                                     )}
                                                 />
                                                 <Button type="submit">
-                                                    Mark lesson complete
+                                                    {copy.mark_lesson_complete}
                                                 </Button>
                                             </Form>
                                         )}
@@ -2264,7 +2333,7 @@ function CourseDetails({
                                         lesson.id,
                                     ) && (
                                         <Badge className="w-fit">
-                                            Completed
+                                            {copy.completed}
                                         </Badge>
                                     )}
                                 </CardContent>
@@ -2280,7 +2349,9 @@ function CourseDetails({
                         action={storeAssessment({ enrollment: enrollment.id })}
                         className="grid gap-4 rounded-xl border p-4"
                     >
-                        <h3 className="font-semibold">Course assessment</h3>
+                        <h3 className="font-semibold">
+                            {copy.course_assessment}
+                        </h3>
                         {quizQuestions.map((question) => (
                             <SearchableSelect
                                 key={question.id}
@@ -2292,7 +2363,9 @@ function CourseDetails({
                                 )}
                             />
                         ))}
-                        <Button type="submit">Submit assessment</Button>
+                        <Button type="submit">
+                            {copy.submit_assessment}
+                        </Button>
                     </Form>
                 )}
             {enrollment?.certificate && (
@@ -2304,7 +2377,7 @@ function CourseDetails({
                         target="_blank"
                     >
                         <Award />
-                        Preview certificate
+                        {copy.preview_certificate}
                     </a>
                 </Button>
             )}
@@ -2319,6 +2392,7 @@ function LessonAssetForm({
     course: Course;
     lesson: Lesson;
 }) {
+    const copy = usePage().props.localization.learning;
     const isMedia = ['video', 'audio'].includes(lesson.contentType);
 
     return (
@@ -2330,49 +2404,55 @@ function LessonAssetForm({
             {({ errors, processing }) => (
                 <>
                     <p className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
-                        The asset is stored privately, malware-scanned,
-                        checksummed and available only to authorized course
-                        managers, reviewers and enrolled learners.
+                        {copy.asset_security_notice}
                     </p>
                     <Field
                         name="title"
-                        label="Asset title"
-                        defaultValue={`${lesson.title} asset`}
+                        label={copy.asset_title}
+                        defaultValue={interpolate(copy.asset_default_title, {
+                            lesson: lesson.title,
+                        })}
                         error={errors.title}
                     />
                     <SearchableSelect
                         id={`asset-source-${lesson.id}`}
                         name="source_type"
-                        label="Source type"
+                        label={copy.source_type}
                         options={(isMedia
                             ? ['digital']
                             : ['digital', 'scanned']
-                        ).map((id) => ({ id, name: humanize(id) }))}
+                        ).map((id) => ({
+                            id,
+                            name: displayValue(copy, id),
+                        }))}
                         defaultValue="digital"
                         error={errors.source_type}
                     />
                     <Field
                         name="rights_holder"
-                        label="Rights holder"
-                        defaultValue="State Department for Devolution"
+                        label={copy.rights_holder}
+                        defaultValue={copy.department_name}
                         error={errors.rights_holder}
                     />
                     <SearchableSelect
                         id={`asset-licence-${lesson.id}`}
                         name="licence"
-                        label="Licence / usage basis"
+                        label={copy.licence_basis}
                         options={[
                             'government_open',
                             'permission_granted',
                             'third_party_restricted',
                             'internal_training',
-                        ].map((id) => ({ id, name: humanize(id) }))}
+                        ].map((id) => ({
+                            id,
+                            name: displayValue(copy, id),
+                        }))}
                         defaultValue="government_open"
                         error={errors.licence}
                     />
                     <TextField
                         name="accessible_alternative"
-                        label="Accessible text alternative"
+                        label={copy.accessible_text_alternative}
                         error={errors.accessible_alternative}
                     />
                     <div className="grid gap-3 rounded-lg border p-3">
@@ -2387,7 +2467,7 @@ function LessonAssetForm({
                                 value="1"
                                 defaultChecked={isMedia}
                             />
-                            Transcript or equivalent is available
+                            {copy.transcript_available}
                         </label>
                         <input type="hidden" name="is_downloadable" value="0" />
                         <label className="flex items-center gap-3 text-sm">
@@ -2398,12 +2478,12 @@ function LessonAssetForm({
                                     lesson.contentType,
                                 )}
                             />
-                            Permit authorized enrolled learners to download
+                            {copy.permit_download}
                         </label>
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor={`asset-file-${lesson.id}`}>
-                            Learning asset
+                            {copy.learning_asset}
                         </Label>
                         <Input
                             id={`asset-file-${lesson.id}`}
@@ -2429,7 +2509,7 @@ function LessonAssetForm({
                         )}
                     </div>
                     <Button type="submit" disabled={processing}>
-                        Upload private learning asset
+                        {copy.upload_private_asset}
                     </Button>
                 </>
             )}
@@ -2498,4 +2578,8 @@ function humanize(value: string): string {
         .replaceAll('_', ' ')
         .replaceAll('-', ' ')
         .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function displayValue(copy: Record<string, string>, value: string): string {
+    return copy[`value_${value}`] ?? humanize(value);
 }

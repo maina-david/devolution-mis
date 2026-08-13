@@ -143,6 +143,22 @@ class LocalePreferenceTest extends TestCase
         }
     }
 
+    public function test_learning_workspace_uses_the_shared_catalogue_and_active_locale_without_inline_interface_copy(): void
+    {
+        $source = file_get_contents(resource_path('js/pages/learning/index.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('const copy = localization.learning;', $source);
+        $this->assertStringContainsString('toLocaleString(locale)', $source);
+        $this->assertStringContainsString('displayValue(copy,', $source);
+        $this->assertStringNotContainsString('DEFAULT_LOCALE', $source);
+
+        $english = $this->flattenTranslations(require lang_path('en/learning.php'));
+        $this->assertArrayHasKey('variant_assurance', $english);
+        $this->assertArrayHasKey('offline_package_assurance', $english);
+        $this->assertArrayHasKey('asset_security_notice', $english);
+    }
+
     /**
      * @param  array<string, mixed>  $translations
      * @return array<string, string>
