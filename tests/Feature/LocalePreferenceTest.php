@@ -47,6 +47,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.projects.investment_delivery_control', 'Udhibiti wa utekelezaji wa uwekezaji')
                 ->where('localization.accessControl.grant_programme_access', 'Toa ufikiaji wa programu')
                 ->where('localization.programmeWorkspace.setting_value', 'Thamani ya mpangilio')
+                ->where('localization.dswg.form_create_series_submit', 'Unda mfululizo na ratiba')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -95,6 +96,20 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('copy.save_grant', $grantAction);
         $this->assertStringNotContainsString('Update grant', $grantAction);
         $this->assertStringNotContainsString('Allocated amount', $grantAction);
+    }
+
+    public function test_dswg_creation_forms_use_the_shared_locale_catalogue(): void
+    {
+        $source = (string) file_get_contents(resource_path('js/components/dswg-coordination-forms.tsx'));
+
+        $this->assertStringContainsString('props.localization.dswg', $source);
+        $this->assertStringContainsString('copy.form_create_series_submit', $source);
+        $this->assertStringContainsString('copy.form_establish_group_submit', $source);
+        $this->assertStringContainsString('copy.form_schedule_meeting_submit', $source);
+
+        foreach (['Create a recurring meeting series', 'Establish a working group', 'Schedule and invite', 'Working group', 'Duration (minutes)'] as $literal) {
+            $this->assertStringNotContainsString($literal, $source);
+        }
     }
 
     public function test_guest_can_change_session_locale_without_creating_a_profile_preference(): void

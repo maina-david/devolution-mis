@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { CalendarClock, CalendarPlus, Network } from 'lucide-react';
 import {
     storeMeeting,
@@ -41,12 +41,14 @@ export default function DswgCoordinationForms(props: Props) {
 }
 
 function MeetingSeriesForm({ workingGroups, users }: Props) {
+    const copy = usePage().props.localization.dswg;
+
     return (
         <FormSheet
-            title="Create a recurring meeting series"
-            triggerLabel="Create recurring series"
+            title={copy.form_create_series_title}
+            triggerLabel={copy.form_create_series_trigger}
             icon={CalendarClock}
-            description="Generate an idempotent rolling schedule with governed workflows and tracked invitations."
+            description={copy.form_create_series_description}
         >
             <Form
                 action={storeMeetingSeries()}
@@ -56,7 +58,7 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                 {({ errors, processing }) => (
                     <>
                         <Field
-                            label="Working group"
+                            label={copy.form_working_group}
                             error={errors.dswg_working_group_id}
                         >
                             <Select
@@ -66,7 +68,7 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="Reference prefix"
+                                label={copy.form_reference_prefix}
                                 error={errors.reference_prefix}
                             >
                                 <Input
@@ -75,19 +77,28 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                                     required
                                 />
                             </Field>
-                            <Field label="Series title" error={errors.title}>
+                            <Field
+                                label={copy.form_series_title}
+                                error={errors.title}
+                            >
                                 <Input name="title" required />
                             </Field>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Frequency" error={errors.frequency}>
+                            <Field
+                                label={copy.form_frequency}
+                                error={errors.frequency}
+                            >
                                 <StaticSearchableSelect
                                     id="dswg-series-frequency"
                                     name="frequency"
                                     values={['weekly', 'monthly', 'quarterly']}
                                 />
                             </Field>
-                            <Field label="Every" error={errors.interval}>
+                            <Field
+                                label={copy.form_every}
+                                error={errors.interval}
+                            >
                                 <Input
                                     name="interval"
                                     type="number"
@@ -98,7 +109,7 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                                 />
                             </Field>
                             <Field
-                                label="Duration (minutes)"
+                                label={copy.form_duration_minutes}
                                 error={errors.duration_minutes}
                             >
                                 <Input
@@ -114,44 +125,50 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                         <ReferenceCatalogSelect
                             id="dswg-series-timezone"
                             name="timezone"
-                            label="Timezone"
+                            label={copy.form_timezone}
                             catalog="timezone"
                             error={errors.timezone}
                         />
                         <div className="grid gap-4 sm:grid-cols-2">
                             <DatePickerField
                                 name="first_starts_at"
-                                label="First meeting"
+                                label={copy.form_first_meeting}
                                 error={errors.first_starts_at}
                                 required
                                 includeTime
                             />
                             <DatePickerField
                                 name="ends_on"
-                                label="Series ends"
+                                label={copy.form_series_ends}
                                 error={errors.ends_on}
                                 required
                             />
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Mode" error={errors.meeting_mode}>
+                            <Field
+                                label={copy.form_mode}
+                                error={errors.meeting_mode}
+                            >
                                 <StaticSearchableSelect
                                     id="dswg-series-mode"
                                     name="meeting_mode"
                                     values={['physical', 'virtual', 'hybrid']}
                                 />
                             </Field>
-                            <Field label="Venue" error={errors.venue}>
+                            <Field label={copy.form_venue} error={errors.venue}>
                                 <Input name="venue" />
                             </Field>
                             <Field
-                                label="Virtual link"
+                                label={copy.form_virtual_link}
                                 error={errors.virtual_link}
                             >
                                 <Input name="virtual_link" type="url" />
                             </Field>
                         </div>
-                        <Field label="Standing agenda" error={errors.agenda}>
+                        <Field
+                            label={copy.form_standing_agenda}
+                            error={errors.agenda}
+                        >
                             <textarea
                                 name="agenda"
                                 required
@@ -159,11 +176,14 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Invitees" error={errors.invitee_ids}>
+                            <Field
+                                label={copy.form_invitees}
+                                error={errors.invitee_ids}
+                            >
                                 <Multi name="invitee_ids[]" options={users} />
                             </Field>
                             <Field
-                                label="Quorum"
+                                label={copy.form_quorum}
                                 error={errors.quorum_required}
                             >
                                 <Input
@@ -174,7 +194,7 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                                 />
                             </Field>
                             <Field
-                                label="Generate days ahead"
+                                label={copy.form_generate_days_ahead}
                                 error={errors.generation_horizon_days}
                             >
                                 <Input
@@ -190,8 +210,9 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
                         <Button
                             type="submit"
                             disabled={processing || workingGroups.length === 0}
+                            aria-busy={processing}
                         >
-                            Create series and schedule
+                            {copy.form_create_series_submit}
                         </Button>
                     </>
                 )}
@@ -201,12 +222,14 @@ function MeetingSeriesForm({ workingGroups, users }: Props) {
 }
 
 function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
+    const copy = usePage().props.localization.dswg;
+
     return (
         <FormSheet
-            title="Establish a working group"
-            triggerLabel="Establish working group"
+            title={copy.form_establish_group_title}
+            triggerLabel={copy.form_establish_group_trigger}
             icon={Network}
-            description="Define mandate, secretariat, membership, county reach and sector coverage."
+            description={copy.form_establish_group_description}
         >
             <Form
                 action={storeWorkingGroup()}
@@ -216,18 +239,18 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                 {({ errors, processing }) => (
                     <>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Code" error={errors.code}>
+                            <Field label={copy.form_code} error={errors.code}>
                                 <Input
                                     name="code"
                                     required
                                     placeholder="DSWG-WASH"
                                 />
                             </Field>
-                            <Field label="Name" error={errors.name}>
+                            <Field label={copy.form_name} error={errors.name}>
                                 <Input name="name" required />
                             </Field>
                         </div>
-                        <Field label="Mandate" error={errors.mandate}>
+                        <Field label={copy.form_mandate} error={errors.mandate}>
                             <textarea
                                 name="mandate"
                                 required
@@ -235,7 +258,7 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Scope" error={errors.scope}>
+                            <Field label={copy.form_scope} error={errors.scope}>
                                 <StaticSearchableSelect
                                     id="dswg-scope"
                                     name="scope"
@@ -248,7 +271,7 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                                 />
                             </Field>
                             <Field
-                                label="Meeting frequency"
+                                label={copy.form_meeting_frequency}
                                 error={errors.meeting_frequency}
                             >
                                 <Input
@@ -258,7 +281,7 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                             </Field>
                         </div>
                         <Field
-                            label="Lead organization"
+                            label={copy.form_lead_organization}
                             error={errors.lead_organization_id}
                         >
                             <Select
@@ -268,7 +291,7 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                             />
                         </Field>
                         <Field
-                            label="Secretariat lead"
+                            label={copy.form_secretariat_lead}
                             error={errors.secretariat_user_id}
                         >
                             <Select
@@ -277,18 +300,31 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Counties" error={errors.county_ids}>
+                            <Field
+                                label={copy.form_counties}
+                                error={errors.county_ids}
+                            >
                                 <Multi name="county_ids[]" options={counties} />
                             </Field>
-                            <Field label="Sectors" error={errors.sector_ids}>
+                            <Field
+                                label={copy.form_sectors}
+                                error={errors.sector_ids}
+                            >
                                 <Multi name="sector_ids[]" options={sectors} />
                             </Field>
-                            <Field label="Members" error={errors.member_ids}>
+                            <Field
+                                label={copy.form_members}
+                                error={errors.member_ids}
+                            >
                                 <Multi name="member_ids[]" options={users} />
                             </Field>
                         </div>
-                        <Button type="submit" disabled={processing}>
-                            Establish working group
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            aria-busy={processing}
+                        >
+                            {copy.form_establish_group_submit}
                         </Button>
                     </>
                 )}
@@ -298,18 +334,20 @@ function WorkingGroupForm({ counties, sectors, organizations, users }: Props) {
 }
 
 function MeetingForm({ workingGroups, users }: Props) {
+    const copy = usePage().props.localization.dswg;
+
     return (
         <FormSheet
-            title="Schedule a meeting"
-            triggerLabel="Schedule meeting"
+            title={copy.form_schedule_meeting_title}
+            triggerLabel={copy.form_schedule_meeting_trigger}
             icon={CalendarPlus}
-            description="Start the governed meeting lifecycle and send tracked invitations."
+            description={copy.form_schedule_meeting_description}
         >
             <Form action={storeMeeting()} className="grid gap-4" resetOnSuccess>
                 {({ errors, processing }) => (
                     <>
                         <Field
-                            label="Working group"
+                            label={copy.form_working_group}
                             error={errors.dswg_working_group_id}
                         >
                             <Select
@@ -318,48 +356,54 @@ function MeetingForm({ workingGroups, users }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Reference" error={errors.reference}>
+                            <Field
+                                label={copy.form_reference}
+                                error={errors.reference}
+                            >
                                 <Input name="reference" required />
                             </Field>
-                            <Field label="Title" error={errors.title}>
+                            <Field label={copy.form_title} error={errors.title}>
                                 <Input name="title" required />
                             </Field>
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <DatePickerField
                                 name="starts_at"
-                                label="Starts"
+                                label={copy.form_starts}
                                 error={errors.starts_at}
                                 required
                                 includeTime
                             />
                             <DatePickerField
                                 name="ends_at"
-                                label="Ends"
+                                label={copy.form_ends}
                                 error={errors.ends_at}
                                 required
                                 includeTime
                             />
                         </div>
                         <div className="grid gap-4 sm:grid-cols-3">
-                            <Field label="Mode" error={errors.meeting_mode}>
+                            <Field
+                                label={copy.form_mode}
+                                error={errors.meeting_mode}
+                            >
                                 <StaticSearchableSelect
                                     id="dswg-meeting-mode"
                                     name="meeting_mode"
                                     values={['physical', 'virtual', 'hybrid']}
                                 />
                             </Field>
-                            <Field label="Venue" error={errors.venue}>
+                            <Field label={copy.form_venue} error={errors.venue}>
                                 <Input name="venue" />
                             </Field>
                             <Field
-                                label="Virtual link"
+                                label={copy.form_virtual_link}
                                 error={errors.virtual_link}
                             >
                                 <Input name="virtual_link" type="url" />
                             </Field>
                         </div>
-                        <Field label="Agenda" error={errors.agenda}>
+                        <Field label={copy.form_agenda} error={errors.agenda}>
                             <textarea
                                 name="agenda"
                                 required
@@ -367,11 +411,14 @@ function MeetingForm({ workingGroups, users }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Invitees" error={errors.invitee_ids}>
+                            <Field
+                                label={copy.form_invitees}
+                                error={errors.invitee_ids}
+                            >
                                 <Multi name="invitee_ids[]" options={users} />
                             </Field>
                             <Field
-                                label="Quorum"
+                                label={copy.form_quorum}
                                 error={errors.quorum_required}
                             >
                                 <Input
@@ -385,8 +432,9 @@ function MeetingForm({ workingGroups, users }: Props) {
                         <Button
                             type="submit"
                             disabled={processing || workingGroups.length === 0}
+                            aria-busy={processing}
                         >
-                            Schedule and invite
+                            {copy.form_schedule_meeting_submit}
                         </Button>
                     </>
                 )}

@@ -157,6 +157,9 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('<InputError', $grantAction);
         $this->assertStringContainsString('aria-busy={processing}', $grantAction);
 
+        $dswgForms = $this->source('resources/js/components/dswg-coordination-forms.tsx');
+        $this->assertSame(3, substr_count($dswgForms, 'aria-busy={processing}'));
+
         $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
         $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
         $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);
