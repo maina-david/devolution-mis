@@ -1,4 +1,4 @@
-import { Form, Link, usePage } from '@inertiajs/react';
+import { Form, Link, router, usePage } from '@inertiajs/react';
 import {
     ChevronRightIcon,
     FileArchiveIcon,
@@ -6,10 +6,12 @@ import {
     FolderOpenIcon,
     FolderPenIcon,
     FolderPlusIcon,
+    Grid2X2Icon,
+    ListIcon,
     Trash2Icon,
     UploadIcon,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
@@ -42,9 +44,13 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { interpolate } from '@/hooks/use-localization';
 import { index as evidenceIndex } from '@/routes/evidence';
-import { store as storeDocument } from '@/routes/evidence/repository/documents';
+import {
+    move as moveDocuments,
+    store as storeDocument,
+} from '@/routes/evidence/repository/documents';
 import {
     destroy,
     store as storeFolder,
@@ -82,11 +88,15 @@ export default function DocumentRepositoryManager({
     filters,
     canUpload,
     canManage,
+    viewMode,
+    onViewModeChange,
 }: {
     repository: DocumentRepository;
     filters: RepositoryFilters;
     canUpload: boolean;
     canManage: boolean;
+    viewMode: 'grid' | 'list';
+    onViewModeChange: (mode: 'grid' | 'list') => void;
 }) {
     const copy = usePage().props.localization.documentRepository;
     const currentFolder = repository.folders.find(
@@ -110,6 +120,34 @@ export default function DocumentRepositoryManager({
                 page: undefined,
             },
         });
+    const moveDroppedDocuments = (
+        event: React.DragEvent<HTMLElement>,
+        folderId: string,
+    ) => {
+        event.preventDefault();
+        const serializedIds = event.dataTransfer.getData(
+            'application/x-idmis-document-ids',
+        );
+
+        try {
+            const ids: unknown = JSON.parse(serializedIds);
+
+            if (
+                !Array.isArray(ids) ||
+                !ids.every((id) => typeof id === 'string')
+            ) {
+                return;
+            }
+
+            router.patch(
+                moveDocuments.url(),
+                { ids, folder_id: folderId },
+                { preserveScroll: true },
+            );
+        } catch {
+            return;
+        }
+    };
 
     return (
         <Card>
@@ -128,6 +166,30 @@ export default function DocumentRepositoryManager({
                         </CardDescription>
                     </div>
                     <div className="flex flex-wrap gap-2">
+                        <ToggleGroup
+                            type="single"
+                            value={viewMode}
+                            onValueChange={(value) => {
+                                if (value === 'grid' || value === 'list') {
+                                    onViewModeChange(value);
+                                }
+                            }}
+                            variant="outline"
+                            aria-label={copy.view_layout}
+                        >
+                            <ToggleGroupItem
+                                value="grid"
+                                aria-label={copy.grid_view}
+                            >
+                                <Grid2X2Icon aria-hidden="true" />
+                            </ToggleGroupItem>
+                            <ToggleGroupItem
+                                value="list"
+                                aria-label={copy.list_view}
+                            >
+                                <ListIcon aria-hidden="true" />
+                            </ToggleGroupItem>
+                        </ToggleGroup>
                         {canManage && (
                             <FolderCreateSheet
                                 folders={repository.folders}
@@ -199,6 +261,21 @@ export default function DocumentRepositoryManager({
                                         key={folder.id}
                                         href={folderHref(folder.id)}
                                         className="group flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                        onDragOver={(event) => {
+                                            if (canManage) {
+                                                event.preventDefault();
+                                                event.dataTransfer.dropEffect =
+                                                    'move';
+                                            }
+                                        }}
+                                        onDrop={(event) => {
+                                            if (canManage) {
+                                                moveDroppedDocuments(
+                                                    event,
+                                                    folder.id,
+                                                );
+                                            }
+                                        }}
                                     >
                                         <FolderIcon
                                             className="size-5 shrink-0 text-primary"
@@ -385,6 +462,9 @@ function RepositoryUploadSheet({
 }) {
     const copy = usePage().props.localization.documentRepository;
     const [open, setOpen] = useState(false);
+    const [fileName, setFileName] = useState<string | null>(null);
+    const [dragActive, setDragActive] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
@@ -495,17 +575,66 @@ function RepositoryUploadSheet({
                                 />
                                 <InputError message={errors.tags} />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="repository-file">
-                                    {copy.file}
-                                </Label>
+                            <div
+                                className="grid gap-3 rounded-lg border border-dashed p-5 text-center data-[active=true]:border-primary data-[active=true]:bg-accent/50"
+                                data-active={dragActive}
+                                onDragEnter={(event) => {
+                                    event.preventDefault();
+                                    setDragActive(true);
+                                }}
+                                onDragOver={(event) => event.preventDefault()}
+                                onDragLeave={(event) => {
+                                    if (
+                                        !event.currentTarget.contains(
+                                            event.relatedTarget as Node,
+                                        )
+                                    ) {
+                                        setDragActive(false);
+                                    }
+                                }}
+                                onDrop={(event) => {
+                                    event.preventDefault();
+                                    setDragActive(false);
+
+                                    const file =
+                                        event.dataTransfer.files.item(0);
+
+                                    if (!file || !fileInputRef.current) {
+                                        return;
+                                    }
+
+                                    const transfer = new DataTransfer();
+                                    transfer.items.add(file);
+                                    fileInputRef.current.files = transfer.files;
+                                    setFileName(file.name);
+                                }}
+                            >
+                                <UploadIcon
+                                    className="mx-auto text-primary"
+                                    aria-hidden="true"
+                                />
+                                <div>
+                                    <p className="font-medium">
+                                        {copy.drop_file_here}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {fileName ?? copy.secure_upload_notice}
+                                    </p>
+                                </div>
                                 <Input
+                                    ref={fileInputRef}
                                     id="repository-file"
                                     name="document"
                                     type="file"
                                     required
                                     accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.doc,.docx,.xls,.xlsx,.csv,.txt,.mp3,.mp4,.webm,.ogg,.wav"
                                     aria-invalid={Boolean(errors.document)}
+                                    onChange={(event) =>
+                                        setFileName(
+                                            event.currentTarget.files?.item(0)
+                                                ?.name ?? null,
+                                        )
+                                    }
                                 />
                                 <InputError message={errors.document} />
                             </div>

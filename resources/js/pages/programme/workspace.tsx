@@ -7,6 +7,7 @@ import {
     SearchXIcon,
     ShieldCheck,
 } from 'lucide-react';
+import { useState } from 'react';
 import AssessmentCreateForm from '@/components/assessment-create-form';
 import AssessmentRowAction from '@/components/assessment-row-action';
 import {
@@ -104,6 +105,24 @@ export default function ProgrammeWorkspace({
     const page = usePage();
     const { auth, localization } = page.props;
     const copy = localization.programmeWorkspace;
+    const [evidenceViewMode, setEvidenceViewMode] = useState<'grid' | 'list'>(
+        () => {
+            if (typeof window === 'undefined') {
+                return 'grid';
+            }
+
+            const stored = window.localStorage.getItem(
+                'idmis-evidence-view-mode',
+            );
+
+            return stored === 'list' ? 'list' : 'grid';
+        },
+    );
+
+    const updateEvidenceViewMode = (mode: 'grid' | 'list') => {
+        setEvidenceViewMode(mode);
+        window.localStorage.setItem('idmis-evidence-view-mode', mode);
+    };
     const enabledCapabilities = Object.entries(capabilities).filter(
         ([, enabled]) => enabled,
     );
@@ -236,6 +255,8 @@ export default function ProgrammeWorkspace({
                             filters={filters}
                             canUpload={Boolean(capabilities.upload)}
                             canManage={Boolean(capabilities.manageRecords)}
+                            viewMode={evidenceViewMode}
+                            onViewModeChange={updateEvidenceViewMode}
                         />
                         {capabilities.upload &&
                             (workspace.assessmentOptions?.length ?? 0) > 0 && (
@@ -387,6 +408,15 @@ export default function ProgrammeWorkspace({
                             columns={workspace.columns}
                             rows={workspace.rows}
                             pagination={workspace.pagination}
+                            displayMode={
+                                workspaceType === 'evidence'
+                                    ? evidenceViewMode
+                                    : 'list'
+                            }
+                            draggableRows={
+                                workspaceType === 'evidence' &&
+                                Boolean(capabilities.manageRecords)
+                            }
                             bulkExport={{
                                 workspace: workspaceType,
                                 filters,

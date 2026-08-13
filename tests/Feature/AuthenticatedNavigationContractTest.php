@@ -64,6 +64,27 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringNotContainsString('{folder.county ??', $manager);
     }
 
+    public function test_document_repository_supports_grid_list_and_governed_drag_drop(): void
+    {
+        $workspace = $this->source('resources/js/pages/programme/workspace.tsx');
+        $manager = $this->source('resources/js/components/document-repository-manager.tsx');
+        $table = $this->source('resources/js/components/workspace-data-table.tsx');
+
+        $this->assertStringContainsString("useState<'grid' | 'list'>", $workspace);
+        $this->assertStringContainsString('localStorage.getItem(', $workspace);
+        $this->assertStringContainsString('localStorage.setItem(', $workspace);
+        $this->assertStringContainsString('idmis-evidence-view-mode', $workspace);
+        $this->assertStringContainsString('displayMode={', $workspace);
+        $this->assertStringContainsString('draggableRows={', $workspace);
+        $this->assertStringContainsString('<ToggleGroup', $manager);
+        $this->assertStringContainsString('moveDocuments.url()', $manager);
+        $this->assertStringContainsString('onDrop={(event)', $manager);
+        $this->assertStringContainsString('new DataTransfer()', $manager);
+        $this->assertStringContainsString("displayMode === 'grid'", $table);
+        $this->assertStringContainsString('application/x-idmis-document-ids', $table);
+        $this->assertStringContainsString('draggable={draggableRows}', $table);
+    }
+
     public function test_sidebar_contexts_reference_all_fourteen_tor_modules(): void
     {
         $registry = $this->source('resources/js/lib/app-navigation.ts');

@@ -13,7 +13,13 @@ import type {
     SortingFn,
     SortingState,
 } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    FileTextIcon,
+    MoreHorizontal,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import CountyIdentity, {
@@ -26,6 +32,7 @@ import type {
 import TableEmptyState from '@/components/table-empty-state';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
@@ -134,6 +141,8 @@ export default function WorkspaceDataTable({
     canSelectRow,
     bulkExport,
     allowFilteredBulkSelection = false,
+    displayMode = 'list',
+    draggableRows = false,
 }: {
     columns: string[];
     rows: WorkspaceRow[];
@@ -152,6 +161,8 @@ export default function WorkspaceDataTable({
         filters: Record<string, string | undefined>;
     };
     allowFilteredBulkSelection?: boolean;
+    displayMode?: 'grid' | 'list';
+    draggableRows?: boolean;
 }) {
     const page = usePage();
     const copy = useCommonCopy();
@@ -390,118 +401,280 @@ export default function WorkspaceDataTable({
                     </div>
                 </div>
             )}
-            <Table>
-                <TableHeader>
-                    {table.getHeaderGroups().map((group) => (
-                        <TableRow key={group.id}>
-                            {group.headers.map((header) => {
-                                const canSort = header.column.getCanSort();
-                                const direction = header.column.getIsSorted();
+            {displayMode === 'grid' ? (
+                <div className="grid gap-4 p-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                    {table.getRowModel().rows.map((row) => {
+                        const record = row.original;
+                        const selectedIds = selectedRows.some(
+                            (selected) => selected.id === record.id,
+                        )
+                            ? selectedRows.map((selected) => selected.id)
+                            : [record.id];
 
-                                return (
-                                    <TableHead key={header.id}>
-                                        {canSort ? (
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                className="-ml-3"
-                                                onClick={header.column.getToggleSortingHandler()}
-                                                aria-label={interpolate(
-                                                    copy.sort_by,
-                                                    {
-                                                        column: String(
-                                                            header.column
-                                                                .columnDef
-                                                                .header,
-                                                        ),
-                                                    },
-                                                )}
+                        return (
+                            <Card
+                                key={row.id}
+                                draggable={draggableRows}
+                                onDragStart={(event) => {
+                                    if (!draggableRows) {
+                                        return;
+                                    }
+
+                                    event.dataTransfer.effectAllowed = 'move';
+                                    event.dataTransfer.setData(
+                                        'application/x-idmis-document-ids',
+                                        JSON.stringify(selectedIds),
+                                    );
+                                }}
+                                aria-label={
+                                    draggableRows
+                                        ? page.props.localization
+                                              .documentRepository.drag_to_folder
+                                        : undefined
+                                }
+                                className="group relative gap-3 transition-colors hover:border-primary/40"
+                            >
+                                <CardHeader className="flex-row items-start gap-3 border-b pb-3">
+                                    {hasBulkActions && (
+                                        <Checkbox
+                                            checked={row.getIsSelected()}
+                                            disabled={!row.getCanSelect()}
+                                            onCheckedChange={(checked) =>
+                                                row.toggleSelected(
+                                                    Boolean(checked),
+                                                )
+                                            }
+                                            aria-label={interpolate(
+                                                copy.select_row,
+                                                { number: row.index + 1 },
+                                            )}
+                                        />
+                                    )}
+                                    <FileTextIcon
+                                        className="mt-0.5 text-primary"
+                                        aria-hidden="true"
+                                    />
+                                    <CardTitle className="min-w-0 flex-1 truncate text-base">
+                                        {String(record.cells[0] ?? '—')}
+                                    </CardTitle>
+                                    {renderActionControl ? (
+                                        renderActionControl(record)
+                                    ) : renderActions ? (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label={
+                                                        copy.open_row_actions
+                                                    }
+                                                >
+                                                    <MoreHorizontal aria-hidden="true" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {renderActions(record)}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    ) : null}
+                                </CardHeader>
+                                <CardContent className="grid gap-2 text-sm">
+                                    {record.cells
+                                        .slice(1, 5)
+                                        .map((value, index) => (
+                                            <div
+                                                key={`${record.id}-${index}`}
+                                                className="grid grid-cols-[minmax(6rem,0.4fr)_1fr] gap-2"
                                             >
-                                                {flexRender(
+                                                <span className="text-muted-foreground">
+                                                    {columns[index + 1]}
+                                                </span>
+                                                <span className="min-w-0 truncate font-medium">
+                                                    {isCountyIdentity(value) ? (
+                                                        <CountyIdentity
+                                                            county={value}
+                                                            compact
+                                                        />
+                                                    ) : isCountyIdentityGroup(
+                                                          value,
+                                                      ) ? (
+                                                        <CountyIdentityGroup
+                                                            counties={
+                                                                value.items
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        String(value ?? '—')
+                                                    )}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    {record.status && (
+                                        <Badge
+                                            variant="outline"
+                                            className="mt-1 w-fit"
+                                        >
+                                            {humanize(record.status)}
+                                        </Badge>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((group) => (
+                            <TableRow key={group.id}>
+                                {group.headers.map((header) => {
+                                    const canSort = header.column.getCanSort();
+                                    const direction =
+                                        header.column.getIsSorted();
+
+                                    return (
+                                        <TableHead key={header.id}>
+                                            {canSort ? (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    className="-ml-3"
+                                                    onClick={header.column.getToggleSortingHandler()}
+                                                    aria-label={interpolate(
+                                                        copy.sort_by,
+                                                        {
+                                                            column: String(
+                                                                header.column
+                                                                    .columnDef
+                                                                    .header,
+                                                            ),
+                                                        },
+                                                    )}
+                                                >
+                                                    {flexRender(
+                                                        header.column.columnDef
+                                                            .header,
+                                                        header.getContext(),
+                                                    )}
+                                                    {direction === 'asc' ? (
+                                                        <ArrowUp data-icon="inline-end" />
+                                                    ) : direction === 'desc' ? (
+                                                        <ArrowDown data-icon="inline-end" />
+                                                    ) : (
+                                                        <ArrowUpDown data-icon="inline-end" />
+                                                    )}
+                                                </Button>
+                                            ) : (
+                                                flexRender(
                                                     header.column.columnDef
                                                         .header,
                                                     header.getContext(),
-                                                )}
-                                                {direction === 'asc' ? (
-                                                    <ArrowUp data-icon="inline-end" />
-                                                ) : direction === 'desc' ? (
-                                                    <ArrowDown data-icon="inline-end" />
-                                                ) : (
-                                                    <ArrowUpDown data-icon="inline-end" />
-                                                )}
-                                            </Button>
-                                        ) : (
-                                            flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext(),
-                                            )
-                                        )}
-                                    </TableHead>
+                                                )
+                                            )}
+                                        </TableHead>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={definitions.length}>
+                                    <TableEmptyState />
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        {table
+                            .getRowModel()
+                            .rows.map((row, visibleRowIndex) => {
+                                const href = getRowHref?.(row.original);
+
+                                return (
+                                    <TableRow
+                                        key={row.id}
+                                        draggable={draggableRows}
+                                        aria-label={
+                                            draggableRows
+                                                ? page.props.localization
+                                                      .documentRepository
+                                                      .drag_to_folder
+                                                : undefined
+                                        }
+                                        onDragStart={(event) => {
+                                            if (!draggableRows) {
+                                                return;
+                                            }
+
+                                            const selectedIds =
+                                                selectedRows.some(
+                                                    (selected) =>
+                                                        selected.id ===
+                                                        row.original.id,
+                                                )
+                                                    ? selectedRows.map(
+                                                          (selected) =>
+                                                              selected.id,
+                                                      )
+                                                    : [row.original.id];
+                                            event.dataTransfer.effectAllowed =
+                                                'move';
+                                            event.dataTransfer.setData(
+                                                'application/x-idmis-document-ids',
+                                                JSON.stringify(selectedIds),
+                                            );
+                                        }}
+                                        tabIndex={href ? 0 : undefined}
+                                        role={href ? 'link' : undefined}
+                                        className={
+                                            href
+                                                ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset'
+                                                : undefined
+                                        }
+                                        onClick={(event) => {
+                                            if (
+                                                href &&
+                                                !(
+                                                    event.target as HTMLElement
+                                                ).closest(
+                                                    'a, button, input, select, textarea',
+                                                )
+                                            ) {
+                                                router.visit(href);
+                                            }
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (
+                                                href &&
+                                                (event.key === 'Enter' ||
+                                                    event.key === ' ')
+                                            ) {
+                                                event.preventDefault();
+                                                router.visit(href);
+                                            }
+                                        }}
+                                    >
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {cell.column.id === 'row-number'
+                                                    ? (pagination.currentPage -
+                                                          1) *
+                                                          pagination.perPage +
+                                                      visibleRowIndex +
+                                                      1
+                                                    : flexRender(
+                                                          cell.column.columnDef
+                                                              .cell,
+                                                          cell.getContext(),
+                                                      )}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
                                 );
                             })}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={definitions.length}>
-                                <TableEmptyState />
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    {table.getRowModel().rows.map((row, visibleRowIndex) => {
-                        const href = getRowHref?.(row.original);
-
-                        return (
-                            <TableRow
-                                key={row.id}
-                                tabIndex={href ? 0 : undefined}
-                                role={href ? 'link' : undefined}
-                                className={
-                                    href
-                                        ? 'cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset'
-                                        : undefined
-                                }
-                                onClick={(event) => {
-                                    if (
-                                        href &&
-                                        !(event.target as HTMLElement).closest(
-                                            'a, button, input, select, textarea',
-                                        )
-                                    ) {
-                                        router.visit(href);
-                                    }
-                                }}
-                                onKeyDown={(event) => {
-                                    if (
-                                        href &&
-                                        (event.key === 'Enter' ||
-                                            event.key === ' ')
-                                    ) {
-                                        event.preventDefault();
-                                        router.visit(href);
-                                    }
-                                }}
-                            >
-                                {row.getVisibleCells().map((cell) => (
-                                    <TableCell key={cell.id}>
-                                        {cell.column.id === 'row-number'
-                                            ? (pagination.currentPage - 1) *
-                                                  pagination.perPage +
-                                              visibleRowIndex +
-                                              1
-                                            : flexRender(
-                                                  cell.column.columnDef.cell,
-                                                  cell.getContext(),
-                                              )}
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        );
-                    })}
-                </TableBody>
-            </Table>
+                    </TableBody>
+                </Table>
+            )}
             <div className="flex flex-col justify-between gap-4 border-t px-5 py-4 lg:flex-row lg:items-center">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <p className="text-sm text-muted-foreground">

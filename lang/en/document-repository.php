@@ -40,6 +40,12 @@ return [
     'tags_placeholder' => 'planning, audit, FY2026',
     'file' => 'File',
     'uploading' => 'Uploading :percentage%',
+    'view_layout' => 'File display layout',
+    'grid_view' => 'Grid view',
+    'list_view' => 'List view',
+    'drag_to_folder' => 'Drag this file onto a folder to move it.',
+    'drop_file_here' => 'Drop a file here or use the picker below',
+    'secure_upload_notice' => 'The file will be scanned, checksummed and versioned before it becomes available.',
     'errors' => [
         'folder_cycle' => 'A folder cannot be moved into itself or one of its descendants.',
         'folder_scope_mismatch' => 'Parent and child folders must have the same county or national scope.',
