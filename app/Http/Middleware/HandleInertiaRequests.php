@@ -120,6 +120,7 @@ class HandleInertiaRequests extends Middleware
                 'dswg' => array_merge(__('dswg'), __('dswg-workspace')),
                 'integrationManagement' => __('integration-management'),
                 'workflowManagement' => __('workflow-management'),
+                'workflowSimulator' => __('workflow-simulator'),
                 'partnerCoordination' => __('partner-coordination'),
                 'dashboard' => __('dashboard'),
                 'migration' => __('migration.ui'),

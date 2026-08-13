@@ -1,4 +1,4 @@
-import { useHttp } from '@inertiajs/react';
+import { useHttp, usePage } from '@inertiajs/react';
 import { FlaskConical, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import DatePickerField from '@/components/date-picker-field';
@@ -16,6 +16,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDateTime } from '@/lib/reference-catalog';
 import { simulate } from '@/routes/workflows/versions';
 
 type UserOption = { id: string; name: string; email: string; roles: string[] };
@@ -66,6 +67,7 @@ export default function WorkflowSimulatorSheet({
     };
     users: UserOption[];
 }) {
+    const copy = usePage().props.localization.workflowSimulator;
     const [startedAt, setStartedAt] = useState(
         new Date().toISOString().slice(0, 16),
     );
@@ -128,7 +130,7 @@ export default function WorkflowSimulatorSheet({
         } catch {
             http.setError(
                 'initial_context',
-                'Initial and step context values must be valid JSON objects.',
+                copy.invalid_json,
             );
         }
     }
@@ -139,22 +141,24 @@ export default function WorkflowSimulatorSheet({
         <Sheet>
             <SheetTrigger asChild>
                 <Button variant="outline" size="sm">
-                    <FlaskConical /> Simulate v{version.version}
+                    <FlaskConical /> {copy.simulate} v{version.version}
                 </Button>
             </SheetTrigger>
             <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                 <SheetHeader>
-                    <SheetTitle>Workflow control simulation</SheetTitle>
+                    <SheetTitle>{copy.title}</SheetTitle>
                     <SheetDescription>
-                        Test {workflowName} version {version.version} without
-                        creating instances, transitions, audit events or alerts.
+                        {interpolate(copy.description, {
+                            workflow: workflowName,
+                            version: String(version.version),
+                        })}
                     </SheetDescription>
                 </SheetHeader>
                 <div className="grid gap-5 px-4 pb-8">
                     <div className="grid gap-4 md:grid-cols-2">
                         <DatePickerField
                             name="started_at"
-                            label="Scenario start"
+                            label={copy.scenario_start}
                             includeTime
                             required
                             defaultValue={startedAt}
@@ -163,19 +167,19 @@ export default function WorkflowSimulatorSheet({
                         <SearchableSelect
                             id={`simulation-starter-${version.id}`}
                             name="started_by"
-                            label="Starter identity"
+                            label={copy.starter_identity}
                             value={startedBy}
                             onValueChange={setStartedBy}
                             options={users.map((user) => ({
                                 id: user.id,
-                                name: `${user.name} · ${user.roles.join(', ') || 'No role'}`,
+                                name: `${user.name} · ${user.roles.join(', ') || copy.no_role}`,
                             }))}
                             error={http.errors.started_by as string | undefined}
                         />
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor={`simulation-context-${version.id}`}>
-                            Initial context (JSON)
+                            {copy.initial_context}
                         </Label>
                         <Textarea
                             id={`simulation-context-${version.id}`}
@@ -194,10 +198,11 @@ export default function WorkflowSimulatorSheet({
                     </div>
                     <div className="flex items-center justify-between gap-3">
                         <div>
-                            <h3 className="font-semibold">Scenario steps</h3>
+                            <h3 className="font-semibold">
+                                {copy.scenario_steps}
+                            </h3>
                             <p className="text-sm text-muted-foreground">
-                                Use distinct identities to prove maker-checker
-                                controls.
+                                {copy.scenario_steps_description}
                             </p>
                         </div>
                         <Button
@@ -217,7 +222,7 @@ export default function WorkflowSimulatorSheet({
                                 ])
                             }
                         >
-                            <Plus /> Add step
+                            <Plus /> {copy.add_step}
                         </Button>
                     </div>
                     {steps.map((step, index) => (
@@ -227,13 +232,15 @@ export default function WorkflowSimulatorSheet({
                         >
                             <div className="flex items-center justify-between">
                                 <Badge variant="outline">
-                                    Step {index + 1}
+                                    {copy.step} {index + 1}
                                 </Badge>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    aria-label={`Remove step ${index + 1}`}
+                                    aria-label={interpolate(copy.remove_step, {
+                                        number: String(index + 1),
+                                    })}
                                     onClick={() =>
                                         setSteps((current) =>
                                             current.filter(
@@ -250,7 +257,7 @@ export default function WorkflowSimulatorSheet({
                                 <SearchableSelect
                                     id={`simulation-transition-${version.id}-${index}`}
                                     name={`steps[${index}][transition_name]`}
-                                    label="Transition"
+                                    label={copy.transition}
                                     value={step.transition_name}
                                     onValueChange={(value) =>
                                         updateStep(index, {
@@ -267,14 +274,14 @@ export default function WorkflowSimulatorSheet({
                                 <SearchableSelect
                                     id={`simulation-actor-${version.id}-${index}`}
                                     name={`steps[${index}][actor_id]`}
-                                    label="Actor identity"
+                                    label={copy.actor_identity}
                                     value={step.actor_id}
                                     onValueChange={(value) =>
                                         updateStep(index, { actor_id: value })
                                     }
                                     options={users.map((user) => ({
                                         id: user.id,
-                                        name: `${user.name} · ${user.roles.join(', ') || 'No role'}`,
+                                        name: `${user.name} · ${user.roles.join(', ') || copy.no_role}`,
                                     }))}
                                 />
                             </div>
@@ -282,7 +289,7 @@ export default function WorkflowSimulatorSheet({
                                 <Label
                                     htmlFor={`simulation-step-context-${version.id}-${index}`}
                                 >
-                                    Context changes (JSON)
+                                    {copy.context_changes}
                                 </Label>
                                 <Textarea
                                     id={`simulation-step-context-${version.id}-${index}`}
@@ -304,8 +311,8 @@ export default function WorkflowSimulatorSheet({
                     >
                         <FlaskConical />{' '}
                         {http.processing
-                            ? 'Running controls…'
-                            : 'Run simulation'}
+                            ? copy.running_controls
+                            : copy.run_simulation}
                     </Button>
                     {result && (
                         <div className="grid gap-4 border-t pt-5">
@@ -316,8 +323,8 @@ export default function WorkflowSimulatorSheet({
                             >
                                 <AlertTitle>
                                     {result.passed
-                                        ? 'Control path passed'
-                                        : 'Control path failed'}
+                                        ? copy.control_path_passed
+                                        : copy.control_path_failed}
                                 </AlertTitle>
                                 <AlertDescription>
                                     {result.message}
@@ -329,8 +336,8 @@ export default function WorkflowSimulatorSheet({
                                 </Badge>
                                 <Badge variant="outline">
                                     {result.completed
-                                        ? 'Terminal reached'
-                                        : 'Remains active'}
+                                        ? copy.terminal_reached
+                                        : copy.remains_active}
                                 </Badge>
                             </div>
                             {result.steps.map((step) => (
@@ -349,43 +356,56 @@ export default function WorkflowSimulatorSheet({
                                                     : 'destructive'
                                             }
                                         >
-                                            {step.status}
+                                            {copy[step.status] ?? step.status}
                                         </Badge>
                                     </div>
                                     <p className="mt-2 text-sm">
                                         {step.fromState} →{' '}
-                                        {step.toState ?? 'blocked'} ·{' '}
-                                        {step.actor?.name ?? 'Not evaluated'}
+                                        {step.toState ?? copy.blocked} ·{' '}
+                                        {step.actor?.name ?? copy.not_evaluated}
                                     </p>
                                     <p className="mt-1 text-sm text-muted-foreground">
                                         {step.message}
                                     </p>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Permission{' '}
-                                        {step.authorized ? 'passed' : 'failed'}{' '}
-                                        · Separation{' '}
+                                        {copy.permission}{' '}
+                                        {step.authorized
+                                            ? copy.passed
+                                            : copy.failed}{' '}
+                                        · {copy.separation}{' '}
                                         {step.separationPassed
-                                            ? 'passed'
-                                            : 'failed'}{' '}
-                                        · Rules{' '}
+                                            ? copy.passed
+                                            : copy.failed}{' '}
+                                        · {copy.rules}{' '}
                                         {step.ruleEvaluation.results.length
                                             ? `${step.ruleEvaluation.results.filter((rule) => rule.passed).length}/${step.ruleEvaluation.results.length}`
-                                            : 'not configured'}
+                                            : copy.not_configured}
                                         {step.dueAt
-                                            ? ` · Due ${new Date(step.dueAt).toLocaleString()}`
+                                            ? ` · ${copy.due} ${formatDateTime(step.dueAt)}`
                                             : ''}
                                     </p>
                                 </div>
                             ))}
                             <p className="font-mono text-xs break-all text-muted-foreground">
-                                Scenario SHA-256 {result.scenarioChecksum}
+                                {copy.scenario_checksum}{' '}
+                                {result.scenarioChecksum}
                                 <br />
-                                Version SHA-256 {result.version.checksum}
+                                {copy.version_checksum} {result.version.checksum}
                             </p>
                         </div>
                     )}
                 </div>
             </SheetContent>
         </Sheet>
+    );
+}
+
+function interpolate(
+    template: string,
+    replacements: Record<string, string>,
+): string {
+    return Object.entries(replacements).reduce(
+        (message, [key, value]) => message.replace(`:${key}`, value),
+        template,
     );
 }
