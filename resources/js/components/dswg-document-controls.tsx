@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, Files, Upload } from 'lucide-react';
 import { useState } from 'react';
 import FormSheet from '@/components/form-sheet';
@@ -29,6 +29,7 @@ type Props = {
 };
 
 export default function DswgDocumentControls(props: Props) {
+    const copy = usePage().props.localization.dswg;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
 
@@ -39,21 +40,20 @@ export default function DswgDocumentControls(props: Props) {
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
                         <Files aria-hidden="true" />
-                        Records ({props.documents.length})
+                        {copy.records} {'('}{props.documents.length}{')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Governed DSWG records</SheetTitle>
+                        <SheetTitle>{copy.governed_records}</SheetTitle>
                         <SheetDescription>
-                            Private, checksum-bound records linked to this{' '}
-                            {props.subjectType}.
+                            {copy.private_records} {copy[props.subjectType]}{'.'}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-3 px-4 pb-8">
                         {props.documents.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                No repository records have been linked yet.
+                                {copy.no_repository_records}
                             </p>
                         )}
                         {props.documents.map((document) => (
@@ -68,8 +68,10 @@ export default function DswgDocumentControls(props: Props) {
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {document.originalName ??
-                                                'Repository record'}{' '}
-                                            · {document.sourceType}
+                                                copy.repository_record}{' '}
+                                            {'·'}{' '}
+                                            {copy[document.sourceType] ??
+                                                document.sourceType}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -80,7 +82,8 @@ export default function DswgDocumentControls(props: Props) {
                                                 .replaceAll('-', ' ')}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {document.scanStatus}
+                                            {copy[document.scanStatus] ??
+                                                document.scanStatus}
                                         </Badge>
                                     </div>
                                 </div>
@@ -96,7 +99,7 @@ export default function DswgDocumentControls(props: Props) {
                                                 }
                                             >
                                                 <Eye aria-hidden="true" />
-                                                Preview
+                                                {copy.preview}
                                             </Button>
                                         )}
                                         <Button
@@ -110,7 +113,7 @@ export default function DswgDocumentControls(props: Props) {
                                                 })}
                                             >
                                                 <Download aria-hidden="true" />
-                                                Download
+                                                {copy.download}
                                             </a>
                                         </Button>
                                     </div>
@@ -127,15 +130,15 @@ export default function DswgDocumentControls(props: Props) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {previewDocument?.title ?? 'DSWG record'}
+                            {previewDocument?.title ?? copy.dswg_record}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview from the private repository.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={`${copy.preview} ${previewDocument.title}`}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -147,15 +150,16 @@ export default function DswgDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const copy = usePage().props.localization.dswg;
     const meetingPurposes =
         props.meetingStatus === 'scheduled'
             ? [
-                  { id: 'agenda', name: 'Agenda' },
-                  { id: 'supporting', name: 'Supporting material' },
+                  { id: 'agenda', name: copy.agenda },
+                  { id: 'supporting', name: copy.supporting_material },
               ]
             : [
-                  { id: 'minutes', name: 'Minutes' },
-                  { id: 'supporting', name: 'Supporting material' },
+                  { id: 'minutes', name: copy.minutes },
+                  { id: 'supporting', name: copy.supporting_material },
               ];
     const route =
         props.subjectType === 'meeting'
@@ -164,10 +168,10 @@ function UploadRecord(props: Props) {
 
     return (
         <FormSheet
-            title={`Upload ${props.subjectType} record`}
-            triggerLabel="Upload record"
+            title={`${copy.upload} ${copy[props.subjectType]} ${copy.record}`}
+            triggerLabel={copy.upload_record}
             icon={Upload}
-            description="Add a private scanned or born-digital record. The repository records integrity, security-scan and extraction state."
+            description={copy.upload_record_description}
         >
             <Form {...route} resetOnSuccess className="grid gap-4">
                 {({ errors, processing, progress }) => (
@@ -176,14 +180,14 @@ function UploadRecord(props: Props) {
                             <SearchableSelect
                                 id={`dswg-purpose-${props.subjectId}`}
                                 name="record_purpose"
-                                label="Record purpose"
+                                label={copy.record_purpose}
                                 defaultValue={meetingPurposes[0].id}
                                 options={meetingPurposes}
                             />
                         )}
                         <div className="grid gap-2">
                             <Label htmlFor={`dswg-title-${props.subjectId}`}>
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`dswg-title-${props.subjectId}`}
@@ -207,15 +211,15 @@ function UploadRecord(props: Props) {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor={`dswg-category-${props.subjectId}`}>
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`dswg-category-${props.subjectId}`}
                                 name="category"
                                 defaultValue={
                                     props.subjectType === 'meeting'
-                                        ? 'Meeting record'
-                                        : 'Action evidence'
+                                        ? copy.meeting_record
+                                        : copy.action_evidence
                                 }
                                 required
                                 aria-invalid={Boolean(errors.category)}
@@ -224,16 +228,16 @@ function UploadRecord(props: Props) {
                         <SearchableSelect
                             id={`dswg-source-${props.subjectId}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             defaultValue="digital"
                             options={[
-                                { id: 'digital', name: 'Born-digital' },
-                                { id: 'scanned', name: 'Scanned original' },
+                                { id: 'digital', name: copy.digital },
+                                { id: 'scanned', name: copy.scanned },
                             ]}
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`dswg-file-${props.subjectId}`}>
-                                File
+                                {copy.file}
                             </Label>
                             <Input
                                 id={`dswg-file-${props.subjectId}`}
@@ -259,11 +263,11 @@ function UploadRecord(props: Props) {
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                Uploading: {progress.percentage}%
+                                {copy.uploading}{':'} {progress.percentage}{'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Upload securely
+                            {copy.upload_securely}
                         </Button>
                     </>
                 )}
