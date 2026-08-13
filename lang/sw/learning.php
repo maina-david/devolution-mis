@@ -311,6 +311,7 @@ return [
             'payload_integrity' => 'Uthibitishaji wa uadilifu wa data ya usawazishaji wa nje ya mtandao umeshindwa.',
             'course_structure_unavailable' => 'Muundo wa kozi uliosawazishwa haupatikani tena.',
             'quiz_official_progress' => 'Shughuli ya jaribio la nje ya mtandao haiwezi kusasisha maendeleo rasmi.',
+            'sync_identifier_collision' => 'Kitambulisho cha usawazishaji tayari kilitumika kwa shughuli tofauti.',
         ],
         'outcomes' => [
             'activity_submitted' => 'Shughuli ya nje ya mtandao imewasilishwa kwa upatanisho huru.',
@@ -327,6 +328,7 @@ return [
             'package_generated' => 'Kifurushi cha nje ya mtandao v:version kimetengenezwa kwa :course.',
             'package_downloaded' => 'Kifurushi cha nje ya mtandao v:version kimepakuliwa kwa :course.',
             'sync_decided' => 'Usawazishaji wa kujifunza nje ya mtandao :status.',
+            'sync_submitted' => 'Shughuli ya kujifunza nje ya mtandao imewasilishwa kwa :course.',
         ],
     ],
 ];

@@ -27,7 +27,7 @@ class SubmitLearningOfflineSync
             $payloadChecksum = $this->canonicalJson->checksum($normalized);
             $existing = LearningOfflineSync::query()->where('learning_enrollment_id', $lockedEnrollment->id)->where('client_sync_id', $normalized['client_sync_id'])->first();
             if ($existing instanceof LearningOfflineSync) {
-                abort_unless(hash_equals($existing->payload_checksum, $payloadChecksum), 409, 'The synchronization identifier was already used with different activity.');
+                abort_unless(hash_equals($existing->payload_checksum, $payloadChecksum), 409, __('learning.offline.errors.sync_identifier_collision'));
 
                 return $existing;
             }
@@ -47,7 +47,7 @@ class SubmitLearningOfflineSync
                 'event_count' => count($normalized['events']),
                 'submitted_at' => now(),
             ]);
-            $this->auditLogger->record($actor, $sync, 'learning.offline-sync.submitted', "Offline learning activity submitted for {$lockedEnrollment->course->code}.", $lockedEnrollment->county_id, ['package_id' => $package->id, 'package_version' => $package->package_version, 'payload_checksum' => $payloadChecksum, 'event_count' => $sync->event_count]);
+            $this->auditLogger->record($actor, $sync, 'learning.offline-sync.submitted', __('learning.offline.audit.sync_submitted', ['course' => $lockedEnrollment->course->code]), $lockedEnrollment->county_id, ['package_id' => $package->id, 'package_version' => $package->package_version, 'payload_checksum' => $payloadChecksum, 'event_count' => $sync->event_count]);
 
             return $sync;
         });

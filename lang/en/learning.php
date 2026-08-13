@@ -311,6 +311,7 @@ return [
             'payload_integrity' => 'Offline synchronization payload integrity verification failed.',
             'course_structure_unavailable' => 'The synchronized course structure is no longer available.',
             'quiz_official_progress' => 'Offline quiz activity cannot update official progress.',
+            'sync_identifier_collision' => 'The synchronization identifier was already used with different activity.',
         ],
         'outcomes' => [
             'activity_submitted' => 'Offline activity submitted for independent reconciliation.',
@@ -327,6 +328,7 @@ return [
             'package_generated' => 'Offline package v:version generated for :course.',
             'package_downloaded' => 'Offline package v:version downloaded for :course.',
             'sync_decided' => 'Offline learning synchronization :status.',
+            'sync_submitted' => 'Offline learning activity submitted for :course.',
         ],
     ],
 ];

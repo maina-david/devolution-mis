@@ -311,6 +311,7 @@ return [
             'payload_integrity' => 'La vérification de l’intégrité des données de synchronisation hors ligne a échoué.',
             'course_structure_unavailable' => 'La structure synchronisée du cours n’est plus disponible.',
             'quiz_official_progress' => 'L’activité de questionnaire hors ligne ne peut pas mettre à jour la progression officielle.',
+            'sync_identifier_collision' => 'L’identifiant de synchronisation a déjà été utilisé avec une activité différente.',
         ],
         'outcomes' => [
             'activity_submitted' => 'L’activité hors ligne a été soumise à un rapprochement indépendant.',
@@ -327,6 +328,7 @@ return [
             'package_generated' => 'Paquet hors ligne v:version généré pour :course.',
             'package_downloaded' => 'Paquet hors ligne v:version téléchargé pour :course.',
             'sync_decided' => 'Synchronisation de l’apprentissage hors ligne :status.',
+            'sync_submitted' => 'Activité d’apprentissage hors ligne soumise pour :course.',
         ],
     ],
 ];

@@ -27,6 +27,7 @@ class TravelClearanceWorkflowTest extends TestCase
 
     public function test_request_uses_itinerary_workflow_and_three_person_separation_of_duties(): void
     {
+        Notification::fake();
         $county = County::factory()->create();
         $requester = User::factory()->countyOfficial($county)->create();
         $manager = User::factory()->devolutionAdmin()->create();
@@ -40,7 +41,9 @@ class TravelClearanceWorkflowTest extends TestCase
         $payload = $this->validRequest($county);
         $payload['organization_id'] = $organization->id;
         $payload['sector_id'] = $sector->id;
-        $this->actingAs($requester)->post(route('travel-clearance.store'), $payload)->assertRedirect();
+        $this->withSession(['locale' => 'fr'])->actingAs($requester)->post(route('travel-clearance.store'), $payload)
+            ->assertRedirect()
+            ->assertSessionHas('success', fn (string $message): bool => str_starts_with($message, 'Demande de voyage '));
         $travelRequest = TravelRequest::query()->with('itineraries')->sole();
         $this->assertTrue(Str::isUuid($travelRequest->id));
         $this->assertCount(2, $travelRequest->itineraries);
@@ -49,6 +52,7 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->assertSame($release->id, $travelRequest->reference_data_release_id);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $travelRequest->id, 'action' => 'travel.request.created']);
         $event = AuditEvent::query()->where('subject_id', $travelRequest->id)->where('action', 'travel.request.created')->sole();
+        $this->assertSame(__('travel-clearance.audit.created', ['reference' => $travelRequest->reference], 'fr'), $event->description);
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
 
@@ -72,6 +76,8 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->assertSame('manager_review', $travelRequest->refresh()->status);
         $this->actingAs($manager)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'manager_approve', 'rationale' => 'Travel is necessary and work-plan aligned.', 'approved_cost' => 72000])->assertRedirect();
         $this->assertSame('finance_review', $travelRequest->refresh()->status);
+        Notification::assertSentTo($requester, ProgrammeAlert::class, fn (ProgrammeAlert $notification): bool => $notification->titleTranslationKey === 'travel-clearance.notifications.updated_title'
+            && $notification->messageTranslationKey === 'travel-clearance.notifications.status_finance_review');
 
         $this->actingAs($manager)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Attempted self-clearance.', 'finance_commitment_reference' => 'IFMIS-INVALID'])->assertForbidden();
         $this->actingAs($finance)->patch(route('travel-clearance.transition', [$travelRequest]), ['transition' => 'finance_clear', 'rationale' => 'Budget and commitment independently reconciled.', 'approved_cost' => 70000, 'finance_commitment_reference' => 'IFMIS-COMMIT-2026-001'])->assertRedirect();
@@ -226,6 +232,14 @@ class TravelClearanceWorkflowTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['subject_id' => $travelRequest->id, 'action' => 'travel.request.escalated']);
         Notification::assertSentToTimes($requester, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($reviewer, ProgrammeAlert::class, 1);
+        Notification::assertSentTo($requester, ProgrammeAlert::class, function (ProgrammeAlert $notification) use ($travelRequest): bool {
+            app()->setLocale('sw');
+            $content = $notification->toArray(new \stdClass);
+
+            return $notification->titleTranslationKey === 'travel-clearance.notifications.overdue_title'
+                && $content['title'] === __('travel-clearance.notifications.overdue_title')
+                && $content['message'] === __('travel-clearance.notifications.reminder_message', ['reference' => $travelRequest->reference, 'purpose' => $travelRequest->purpose]);
+        });
 
         $this->artisan('travel-clearance:send-reminders')->assertSuccessful();
         Notification::assertSentToTimes($requester, ProgrammeAlert::class, 1);

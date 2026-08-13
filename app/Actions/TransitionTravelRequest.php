@@ -23,8 +23,13 @@ class TransitionTravelRequest
             if (in_array($name, ['manager_approve', 'manager_reject', 'finance_clear', 'finance_reject'], true)) {
                 $travelRequest->approvals()->create(['actor_id' => $actor->id, 'stage' => str_starts_with($name, 'manager') ? 'manager' : 'finance', 'decision' => str_contains($name, 'reject') ? 'rejected' : 'approved', 'rationale' => $attributes['rationale'], 'approved_cost' => $attributes['approved_cost'] ?? null, 'source_system' => 'idmis', 'external_reference' => $financeReference, 'decided_at' => now()]);
             }
-            $travelRequest->requester->notify(new ProgrammeAlert('Travel clearance updated', "{$travelRequest->reference} is now {$instance->current_state}.", 'travel-clearance'));
-            $this->auditLogger->record($actor, $travelRequest, 'travel.request.transitioned', "Travel request {$travelRequest->reference} transitioned to {$instance->current_state}.", $travelRequest->county_id, ['transition' => $name]);
+            $travelRequest->requester->notify(ProgrammeAlert::translated(
+                'travel-clearance.notifications.updated_title',
+                'travel-clearance.notifications.status_'.$instance->current_state,
+                'travel-clearance',
+                messageParameters: ['reference' => $travelRequest->reference],
+            ));
+            $this->auditLogger->record($actor, $travelRequest, 'travel.request.transitioned', __('travel-clearance.audit.transitioned', ['reference' => $travelRequest->reference, 'status' => __('travel-clearance.value_'.$instance->current_state)]), $travelRequest->county_id, ['transition' => $name]);
 
             return $travelRequest->refresh();
         });

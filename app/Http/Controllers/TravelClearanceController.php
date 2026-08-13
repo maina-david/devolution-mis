@@ -54,7 +54,7 @@ class TravelClearanceController extends Controller
     {
         $travelRequest = $createTravelRequest->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Travel request {$travelRequest->reference} created.");
+        return back()->with('success', __('travel-clearance.outcomes.created', ['reference' => $travelRequest->reference]));
     }
 
     public function transition(TransitionTravelRequestRequest $request, TravelRequest $travelRequest, TransitionTravelRequest $transitionTravelRequest, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -67,7 +67,7 @@ class TravelClearanceController extends Controller
         }
         $transitionTravelRequest->handle($travelRequest, $user, $request->validated());
 
-        return back()->with('success', 'Travel clearance lifecycle updated.');
+        return back()->with('success', __('travel-clearance.outcomes.lifecycle_updated'));
     }
 
     /** @return Builder<TravelRequest> */
@@ -121,7 +121,7 @@ class TravelClearanceController extends Controller
             'hrisReference' => $travelRequest->hris_employee_reference,
             'financeReference' => $travelRequest->finance_commitment_reference,
             'integrationStatus' => $travelRequest->integration_status,
-            'referenceRelease' => $travelRequest->referenceDataRelease ? "v{$travelRequest->referenceDataRelease->version} · {$travelRequest->referenceDataRelease->effective_from?->toDateString()}" : 'Legacy unpinned',
+            'referenceRelease' => $travelRequest->referenceDataRelease ? "v{$travelRequest->referenceDataRelease->version} · {$travelRequest->referenceDataRelease->effective_from?->toDateString()}" : __('travel-clearance.legacy_unpinned'),
             'referenceChecksum' => $travelRequest->referenceDataRelease?->checksum,
             'status' => $travelRequest->status,
             'priority' => $travelRequest->priority,

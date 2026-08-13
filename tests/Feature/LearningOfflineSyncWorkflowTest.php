@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\SubmitLearningOfflineSync;
 use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\LearningCourse;
@@ -16,6 +17,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class LearningOfflineSyncWorkflowTest extends TestCase
@@ -97,6 +99,33 @@ class LearningOfflineSyncWorkflowTest extends TestCase
         $this->assertSame('100.00', $progress->progress_percentage);
         $this->assertSame('online', $progress->state['source']);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $sync->id, 'action' => 'learning.offline-sync.conflict']);
+    }
+
+    public function test_submission_audit_and_collision_error_follow_the_active_locale(): void
+    {
+        [, $learner, , $enrollment, $lesson, $package] = $this->scenario();
+        $payload = $this->payload($package, $lesson);
+
+        app()->setLocale('fr');
+        $sync = app(SubmitLearningOfflineSync::class)->handle($enrollment, $learner, $payload);
+
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $sync->id,
+            'action' => 'learning.offline-sync.submitted',
+            'description' => __('learning.offline.audit.sync_submitted', ['course' => $enrollment->course->code]),
+        ]);
+
+        $collision = $payload;
+        $collision['events'][0]['time_spent_seconds'] = 999;
+        app()->setLocale('sw');
+
+        try {
+            app(SubmitLearningOfflineSync::class)->handle($enrollment, $learner, $collision);
+            $this->fail('A reused synchronization identifier with different activity must fail closed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('learning.offline.errors.sync_identifier_collision'), $exception->getMessage());
+        }
     }
 
     public function test_workspace_scope_pagination_and_all_four_exports_expose_reconciliation_evidence(): void

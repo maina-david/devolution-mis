@@ -40,7 +40,7 @@ class CreateTravelRequest
             $definition = WorkflowDefinition::query()->where('code', 'TRAVEL-CLEARANCE-LIFECYCLE')->firstOrFail();
             $instance = $this->startWorkflow->handle($definition, $request, $actor, ['itinerary_count' => $itineraries->count(), 'estimated_cost' => (float) $request->estimated_cost, 'finance_reference_present' => false], $request->county_id);
             $request->update(['workflow_instance_id' => $instance->id]);
-            $this->auditLogger->record($actor, $request, 'travel.request.created', "Travel request {$request->reference} created.", $request->county_id, [
+            $this->auditLogger->record($actor, $request, 'travel.request.created', __('travel-clearance.audit.created', ['reference' => $request->reference]), $request->county_id, [
                 'estimated_cost' => $request->estimated_cost,
                 'destination' => $request->destination_city,
                 'reference_data_release_id' => $referenceDataRelease->id,
@@ -56,12 +56,12 @@ class CreateTravelRequest
     private function records(mixed $value): array
     {
         if (! is_array($value)) {
-            throw new InvalidArgumentException('Itineraries must be an array.');
+            throw new InvalidArgumentException(__('travel-clearance.errors.itineraries_array'));
         }
 
         return array_values(array_map(function (mixed $itinerary): array {
             if (! is_array($itinerary)) {
-                throw new InvalidArgumentException('Every itinerary must be an object.');
+                throw new InvalidArgumentException(__('travel-clearance.errors.itinerary_object'));
             }
 
             return $itinerary;

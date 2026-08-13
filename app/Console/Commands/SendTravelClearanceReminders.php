@@ -26,13 +26,18 @@ class SendTravelClearanceReminders extends Command
                 $overdue = $travelRequest->decision_due_at->isPast();
                 $permission = $travelRequest->status === 'manager_review' ? ProgrammePermission::ApproveTravelRequests : ProgrammePermission::FinanceClearTravel;
                 $reviewers = User::permission($permission->value)->when($travelRequest->county_id !== null, fn ($query) => $query->where(fn ($query) => $query->whereNull('county_id')->orWhere('county_id', $travelRequest->county_id)))->get();
-                collect([$travelRequest->requester])->merge($reviewers)->filter()->unique('id')->each(fn (User $user) => $user->notify(new ProgrammeAlert($overdue ? 'Travel clearance overdue' : 'Travel clearance due soon', "{$travelRequest->reference}: {$travelRequest->purpose}", 'travel-clearance')));
+                collect([$travelRequest->requester])->merge($reviewers)->filter()->unique('id')->each(fn (User $user) => $user->notify(ProgrammeAlert::translated(
+                    $overdue ? 'travel-clearance.notifications.overdue_title' : 'travel-clearance.notifications.due_soon_title',
+                    'travel-clearance.notifications.reminder_message',
+                    'travel-clearance',
+                    messageParameters: ['reference' => $travelRequest->reference, 'purpose' => $travelRequest->purpose],
+                )));
                 $travelRequest->update(['reminder_sent_at' => now(), 'escalated_at' => $overdue ? now() : null]);
-                $auditLogger->record(null, $travelRequest, $overdue ? 'travel.request.escalated' : 'travel.request.reminded', $overdue ? 'Overdue travel-clearance decision escalated.' : 'Upcoming travel-clearance deadline reminder sent.', $travelRequest->county_id);
+                $auditLogger->record(null, $travelRequest, $overdue ? 'travel.request.escalated' : 'travel.request.reminded', __($overdue ? 'travel-clearance.audit.overdue_escalated' : 'travel-clearance.audit.reminder_sent'), $travelRequest->county_id);
                 $sent++;
             }
         });
-        $this->components->info("Sent {$sent} travel-clearance reminder(s).");
+        $this->components->info(__('travel-clearance.command.reminders_sent', ['count' => $sent]));
 
         return self::SUCCESS;
     }
