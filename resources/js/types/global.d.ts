@@ -76,6 +76,7 @@ declare module '@inertiajs/core' {
                 privacyDocuments: Record<string, string>;
                 evidence: Record<string, string>;
                 learning: Record<string, string>;
+                learningAnalytics: Record<string, string>;
                 knowledge: {
                     outcomes: Record<string, string>;
                     ui: Record<string, string>;

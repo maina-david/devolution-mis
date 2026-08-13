@@ -9,6 +9,7 @@ use App\Services\LearningAnalyticsService;
 use Dompdf\Dompdf;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use LogicException;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -32,7 +33,7 @@ class LearningAnalyticsController extends Controller
         $user = $this->user($request);
         $filters = $this->filters($request);
         $rows = $this->analytics->exportRows($user, $filters);
-        $this->auditLogger->record($user, $user, 'learning.analytics.exported', 'Learning analytics exported as '.mb_strtoupper($format).'.', $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
+        $this->auditLogger->record($user, $user, 'learning.analytics.exported', __('learning-analytics.audit_exported', ['format' => mb_strtoupper($format)]), $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
         $filename = 'learning-analytics-'.now()->format('Ymd-His');
 
         return match ($format) {
@@ -63,7 +64,7 @@ class LearningAnalyticsController extends Controller
     private function xlsx(array $rows, string $filename): BinaryFileResponse
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-learning-analytics-');
-        abort_if($path === false, 500, 'Export file could not be created.');
+        abort_if($path === false, 500, __('learning-analytics.export_failed'));
         $writer = new Writer;
         $writer->openToFile($path);
         $writer->addRow(Row::fromValues($this->headings()));
@@ -94,7 +95,8 @@ class LearningAnalyticsController extends Controller
             return '<tr><td>'.$logo.e(is_array($county) ? $county['name'] : '').'</td><td>'.e($row['course_code']).' · '.e($row['course_title']).'</td><td>'.e($values[0]).'</td><td>'.e($values[1]).'</td><td>'.e($values[2]).'</td><td>'.e($values[3]).'</td><td>'.e($values[4]).'</td></tr>';
         })->implode('');
         $dompdf = new Dompdf;
-        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>IDMIS learning analytics</h1><p>Generated '.e(now()->toDayDateTimeString()).'</p><table><thead><tr><th>County</th><th>Course</th><th>Enrolments</th><th>Completed</th><th>Completion</th><th>Average progress</th><th>Average score</th></tr></thead><tbody>'.$body.'</tbody></table>');
+        $headings = $this->headings();
+        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>'.e(__('learning-analytics.pdf_title')).'</h1><p>'.e(__('learning-analytics.generated', ['date' => now()->translatedFormat('j F Y H:i')])).'</p><table><thead><tr><th>'.e($headings[0]).'</th><th>'.e($headings[2]).'</th><th>'.e($headings[4]).'</th><th>'.e($headings[5]).'</th><th>'.e($headings[6]).'</th><th>'.e($headings[7]).'</th><th>'.e($headings[8]).'</th></tr></thead><tbody>'.$body.'</tbody></table>');
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
@@ -104,7 +106,26 @@ class LearningAnalyticsController extends Controller
     /** @return list<string> */
     private function headings(): array
     {
-        return ['County', 'County code', 'Course code', 'Course title', 'Enrolments', 'Completed', 'Completion rate', 'Average progress', 'Average score'];
+        $headings = __('learning-analytics.export_headings');
+        $validated = [];
+
+        if (! is_array($headings) || count($headings) !== 9) {
+            $message = 'The learning analytics export heading catalogue must contain nine entries.';
+
+            throw new LogicException($message);
+        }
+
+        foreach ($headings as $heading) {
+            if (! is_string($heading)) {
+                $message = 'Every learning analytics export heading must be a string.';
+
+                throw new LogicException($message);
+            }
+
+            $validated[] = $heading;
+        }
+
+        return $validated;
     }
 
     /**
@@ -126,7 +147,7 @@ class LearningAnalyticsController extends Controller
     {
         if ($row['suppressed'] === true) {
             $minimumCellSize = max(2, min(100, (int) config('analytics.minimum_aggregate_cell_size', 5)));
-            $label = 'Suppressed (<'.$minimumCellSize.')';
+            $label = __('learning-analytics.suppressed', ['count' => $minimumCellSize]);
 
             return [$label, $label, $label, $label, $label];
         }

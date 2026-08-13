@@ -92,6 +92,8 @@ export default function LearningAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
+    const { localization } = page.props;
+    const copy = localization.learningAnalytics;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -110,29 +112,39 @@ export default function LearningAnalytics({
                 item.enrollments,
                 item.suppressed,
                 report.privacy.minimumCellSize,
+                localization.current,
+                copy,
             ),
             metric(
                 item.completed,
                 item.suppressed,
                 report.privacy.minimumCellSize,
+                localization.current,
+                copy,
             ),
             metric(
                 item.completionRate,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
             metric(
                 item.averageProgress,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
             metric(
                 item.averageScore,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
         ],
     }));
@@ -145,29 +157,39 @@ export default function LearningAnalytics({
                 item.enrollments,
                 item.suppressed,
                 report.privacy.minimumCellSize,
+                localization.current,
+                copy,
             ),
             metric(
                 item.completed,
                 item.suppressed,
                 report.privacy.minimumCellSize,
+                localization.current,
+                copy,
             ),
             metric(
                 item.completionRate,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
             metric(
                 item.averageProgress,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
             metric(
                 item.averageScore,
                 item.suppressed,
                 report.privacy.minimumCellSize,
-                '%',
+                localization.current,
+                copy,
+                true,
             ),
         ],
         href: preserveDrilldownFilters(
@@ -178,23 +200,21 @@ export default function LearningAnalytics({
 
     return (
         <>
-            <Head title="Learning analytics" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
                     <Link href={learningIndex.url()}>
-                        <ArrowLeft /> E-Learning
+                        <ArrowLeft aria-hidden="true" /> {copy.e_learning}
                     </Link>
                 </Button>
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                                Learning analytics
+                                {copy.title}
                             </h1>
                             <p className="mt-3 text-sm opacity-80 sm:text-base">
-                                Completion, progress, assessment and certificate
-                                outcomes across your authorized county
-                                portfolio.
+                                {copy.description}
                             </p>
                         </div>
                         <ExportMenu query={query} />
@@ -205,11 +225,11 @@ export default function LearningAnalytics({
                     initialFrom={filters.from}
                     initialTo={filters.to}
                     initialSearch={filters.search ?? ''}
-                    searchPlaceholder="Search courses"
+                    searchPlaceholder={copy.search_courses}
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             value: filters.county_id,
                             options: report.options.counties.map((county) => ({
                                 id: county.id,
@@ -218,82 +238,90 @@ export default function LearningAnalytics({
                         },
                         {
                             key: 'course_id',
-                            label: 'Course',
+                            label: copy.course,
                             value: filters.course_id,
                             options: report.options.courses,
                         },
                         {
                             key: 'status',
-                            label: 'Enrollment status',
+                            label: copy.enrollment_status,
                             value: filters.status,
                             options: [
-                                { id: 'enrolled', name: 'Enrolled' },
-                                { id: 'in_progress', name: 'In progress' },
-                                { id: 'completed', name: 'Completed' },
-                                { id: 'withdrawn', name: 'Withdrawn' },
+                                { id: 'enrolled', name: copy.enrolled },
+                                { id: 'in_progress', name: copy.in_progress },
+                                { id: 'completed', name: copy.completed },
+                                { id: 'withdrawn', name: copy.withdrawn },
                             ],
                         },
                     ]}
                 />
                 <Alert>
-                    <AlertTitle>Privacy-protected aggregates</AlertTitle>
+                    <AlertTitle>{copy.privacy_title}</AlertTitle>
                     <AlertDescription>
-                        Results based on fewer than{' '}
-                        {report.privacy.minimumCellSize} enrollments are
-                        suppressed on screen and in every export.
+                        {copy.privacy_description.replace(
+                            ':count',
+                            report.privacy.minimumCellSize.toLocaleString(
+                                localization.current,
+                            ),
+                        )}
                     </AlertDescription>
                 </Alert>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Summary
-                        label="Enrollments"
+                        label={copy.enrollments}
                         value={metric(
                             report.summary.enrollments,
                             report.summary.suppressed,
                             report.privacy.minimumCellSize,
+                            localization.current,
+                            copy,
                         )}
                     />
                     <Summary
-                        label="Active learners"
+                        label={copy.active_learners}
                         value={metric(
                             report.summary.active,
                             report.summary.suppressed,
                             report.privacy.minimumCellSize,
+                            localization.current,
+                            copy,
                         )}
                     />
                     <Summary
-                        label="Completion rate"
+                        label={copy.completion_rate}
                         value={metric(
                             report.summary.completionRate,
                             report.summary.suppressed,
                             report.privacy.minimumCellSize,
-                            '%',
+                            localization.current,
+                            copy,
+                            true,
                         )}
                     />
                     <Summary
-                        label="Certificates"
+                        label={copy.certificates}
                         value={metric(
                             report.summary.certificates,
                             report.summary.suppressed,
                             report.privacy.minimumCellSize,
+                            localization.current,
+                            copy,
                         )}
                     />
                 </div>
                 {!report.summary.hasData ? (
                     <WorkspaceEmptyState
-                        title="No learning activity matches"
-                        description="Adjust the date, county, course or enrollment-status filters."
+                        title={copy.empty_title}
+                        description={copy.empty_description}
                         className="min-h-72"
                     />
                 ) : (
                     <>
                         <Card>
                             <CardHeader>
-                                <CardTitle>
-                                    Enrollment and completion trend
-                                </CardTitle>
+                                <CardTitle>{copy.trend_title}</CardTitle>
                                 <CardDescription>
-                                    Monthly activity within the selected period
-                                    and authorized scope.
+                                    {copy.trend_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4">
@@ -304,12 +332,36 @@ export default function LearningAnalytics({
                                     >
                                         <div className="flex justify-between gap-4 text-sm">
                                             <span className="font-medium">
-                                                {item.period}
+                                                {formatPeriod(
+                                                    item.period,
+                                                    localization.current,
+                                                )}
                                             </span>
                                             <span className="text-muted-foreground">
                                                 {item.suppressed
-                                                    ? `Suppressed (<${report.privacy.minimumCellSize})`
-                                                    : `${item.completed} completed of ${item.enrollments}`}
+                                                    ? copy.suppressed.replace(
+                                                          ':count',
+                                                          report.privacy.minimumCellSize.toLocaleString(
+                                                              localization.current,
+                                                          ),
+                                                      )
+                                                    : copy.completed_of
+                                                          .replace(
+                                                              ':completed',
+                                                              Number(
+                                                                  item.completed,
+                                                              ).toLocaleString(
+                                                                  localization.current,
+                                                              ),
+                                                          )
+                                                          .replace(
+                                                              ':enrollments',
+                                                              Number(
+                                                                  item.enrollments,
+                                                              ).toLocaleString(
+                                                                  localization.current,
+                                                              ),
+                                                          )}
                                             </span>
                                         </div>
                                         <div className="h-3 overflow-hidden rounded-full bg-muted">
@@ -326,23 +378,22 @@ export default function LearningAnalytics({
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Course performance</CardTitle>
+                                <CardTitle>{copy.course_performance}</CardTitle>
                                 <CardDescription>
-                                    Aggregate outcomes without exposing
-                                    learner-level records.
+                                    {copy.course_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <WorkspaceDataTable
                                     columns={[
-                                        'Code',
-                                        'Course',
-                                        'Category',
-                                        'Enrollments',
-                                        'Completed',
-                                        'Completion',
-                                        'Average progress',
-                                        'Average score',
+                                        copy.code,
+                                        copy.course,
+                                        copy.category,
+                                        copy.enrollments,
+                                        copy.completed,
+                                        copy.completion,
+                                        copy.average_progress,
+                                        copy.average_score,
                                     ]}
                                     rows={courseRows}
                                     pagination={report.courses.pagination}
@@ -351,21 +402,20 @@ export default function LearningAnalytics({
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle>County outcomes</CardTitle>
+                                <CardTitle>{copy.county_outcomes}</CardTitle>
                                 <CardDescription>
-                                    County identity and drill-through preserve
-                                    the active analytics filters.
+                                    {copy.county_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <WorkspaceDataTable
                                     columns={[
-                                        'County',
-                                        'Enrollments',
-                                        'Completed',
-                                        'Completion',
-                                        'Average progress',
-                                        'Average score',
+                                        copy.county,
+                                        copy.enrollments,
+                                        copy.completed,
+                                        copy.completion,
+                                        copy.average_progress,
+                                        copy.average_score,
                                     ]}
                                     rows={countyRows}
                                     pagination={report.counties.pagination}
@@ -383,13 +433,33 @@ function metric(
     value: number | null,
     suppressed: boolean,
     minimumCellSize: number,
-    suffix = '',
+    locale: string,
+    copy: Record<string, string>,
+    percentage = false,
 ): string | number {
     if (suppressed) {
-        return `Suppressed (<${minimumCellSize})`;
+        return copy.suppressed.replace(
+            ':count',
+            minimumCellSize.toLocaleString(locale),
+        );
     }
 
-    return value === null ? '—' : `${value}${suffix}`;
+    if (value === null) {
+        return '—';
+    }
+
+    return new Intl.NumberFormat(locale, {
+        maximumFractionDigits: 2,
+        ...(percentage ? { style: 'percent' as const } : {}),
+    }).format(percentage ? value / 100 : value);
+}
+
+function formatPeriod(period: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale, {
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+    }).format(new Date(`${period}-01T00:00:00Z`));
 }
 
 function Summary({ label, value }: { label: string; value: string | number }) {
@@ -397,7 +467,10 @@ function Summary({ label, value }: { label: string; value: string | number }) {
         <Card>
             <CardHeader className="flex-row items-center justify-between gap-3">
                 <CardDescription>{label}</CardDescription>
-                <TrendingUp className="size-4 text-primary" />
+                <TrendingUp
+                    className="size-4 text-primary"
+                    aria-hidden="true"
+                />
             </CardHeader>
             <CardContent className="text-3xl font-bold">{value}</CardContent>
         </Card>
@@ -405,18 +478,21 @@ function Summary({ label, value }: { label: string; value: string | number }) {
 }
 
 function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
+    const copy = usePage().props.localization.learningAnalytics;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="secondary">
-                    <Download /> Export evidence
+                    <Download aria-hidden="true" /> {copy.export_evidence}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                     <DropdownMenuItem key={format} asChild>
                         <a href={exportMethod.url({ format }, { query })}>
-                            <GraduationCap /> {format.toUpperCase()}
+                            <GraduationCap aria-hidden="true" />{' '}
+                            {format.toUpperCase()}
                         </a>
                     </DropdownMenuItem>
                 ))}

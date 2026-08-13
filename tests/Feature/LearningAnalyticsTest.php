@@ -152,6 +152,38 @@ class LearningAnalyticsTest extends TestCase
         $this->assertStringNotContainsString('97.25', $pdf->getContent());
     }
 
+    public function test_learning_analytics_interface_and_tabular_exports_follow_the_active_locale(): void
+    {
+        config()->set('analytics.minimum_aggregate_cell_size', 5);
+        $county = County::factory()->create();
+        $course = LearningCourse::factory()->create(['status' => 'published']);
+        $admin = User::factory()->devolutionAdmin()->create();
+        $this->enrollment($course, $county, 'completed', 100, 88);
+
+        $this->actingAs($admin)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('learning.analytics.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.learningAnalytics.title', 'Uchanganuzi wa mafunzo')
+                ->where('localization.learningAnalytics.suppressed', 'Imefichwa (<:count)'));
+
+        $csv = $this->actingAs($admin)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('learning.analytics.export', ['csv']));
+
+        $csv->assertOk()->assertDownload();
+        $content = $csv->streamedContent();
+        $this->assertStringContainsString('Msimbo wa kaunti', $content);
+        $this->assertStringContainsString('Imefichwa (<5)', $content);
+        $this->assertDatabaseHas('audit_events', [
+            'actor_id' => $admin->id,
+            'action' => 'learning.analytics.exported',
+            'description' => 'Uchanganuzi wa mafunzo umehamishwa kama CSV.',
+        ]);
+    }
+
     public function test_published_knowledge_recommendations_flow_back_to_authorized_courses(): void
     {
         $home = County::factory()->create();
