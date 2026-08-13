@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Actions\CreateDswgAction;
+use App\Actions\CreateDswgCollaborationThread;
 use App\Actions\StartWorkflow;
 use App\Actions\TransitionWorkflow;
 use App\Enums\UserRole;
@@ -17,7 +18,7 @@ use Illuminate\Database\Seeder;
 
 class DswgCoordinationSeeder extends Seeder
 {
-    public function run(StartWorkflow $startWorkflow, TransitionWorkflow $transitionWorkflow, CreateDswgAction $createAction): void
+    public function run(StartWorkflow $startWorkflow, TransitionWorkflow $transitionWorkflow, CreateDswgAction $createAction, CreateDswgCollaborationThread $createThread): void
     {
         if (! app()->isLocal()) {
             return;
@@ -59,6 +60,21 @@ class DswgCoordinationSeeder extends Seeder
             $countyRepresentative->id => ['membership_role' => 'county_focal_point', 'status' => 'active'],
             $partnerRepresentative->id => ['membership_role' => 'development_partner', 'status' => 'active'],
         ]);
+
+        if ($group->collaborationThreads()->doesntExist()) {
+            $thread = $createThread->handle($group->id, $administrator, [
+                'title' => 'Common coastal evidence schedule',
+                'topic' => 'Confirm the repository records, county owners and reconciliation checkpoints required before the next quarterly review.',
+            ]);
+            $postedAt = now()->subDay();
+            $thread->messages()->create([
+                'author_id' => $countyRepresentative->id,
+                'body' => 'Mombasa has nominated the county focal point and mapped the approved work plan, expenditure extract and safeguards evidence.',
+                'posted_at' => $postedAt,
+                'checksum' => $createThread->checksum($thread->id, $countyRepresentative->id, 'Mombasa has nominated the county focal point and mapped the approved work plan, expenditure extract and safeguards evidence.', $postedAt->toIso8601String()),
+            ]);
+            $thread->update(['last_activity_at' => $postedAt]);
+        }
 
         $meeting = DswgMeeting::query()->where('reference', 'DSWG-WASH-2026-Q3')->first();
         if (! $meeting) {

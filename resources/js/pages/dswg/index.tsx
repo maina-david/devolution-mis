@@ -4,6 +4,7 @@ import {
     ClipboardList,
     Download,
     Gavel,
+    MessageSquare,
     UsersRound,
 } from 'lucide-react';
 import {
@@ -11,6 +12,8 @@ import {
     recordOutcomes,
     respondInvitation,
     storeAction,
+    storeCollaborationMessage,
+    storeCollaborationThread,
     storeDecision,
     transitionAction,
 } from '@/actions/App/Http/Controllers/DswgCoordinationController';
@@ -25,6 +28,7 @@ import DswgCoordinationForms, {
 import type { DswgOption } from '@/components/dswg-coordination-forms';
 import DswgDocumentControls from '@/components/dswg-document-controls';
 import FormSheet from '@/components/form-sheet';
+import SearchableSelect from '@/components/searchable-select';
 import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -78,6 +82,23 @@ type MeetingSeries = {
     status: string;
     generatedMeetings: number;
 };
+type CollaborationThread = {
+    id: string;
+    title: string;
+    topic: string;
+    status: string;
+    workingGroup: string;
+    creator: string;
+    lastActivityAt: string;
+    messageCount: number;
+    messages: Array<{
+        id: string;
+        author: string;
+        body: string;
+        checksum: string;
+        postedAt: string;
+    }>;
+};
 type Props = {
     workspace: {
         title: string;
@@ -95,6 +116,7 @@ type Props = {
     };
     meetings: Meeting[];
     series: MeetingSeries[];
+    threads: CollaborationThread[];
     catalogue: {
         available: boolean;
         version: number | null;
@@ -116,11 +138,13 @@ export default function DswgIndex({
     capabilities,
     meetings,
     series,
+    threads,
     catalogue,
     options,
 }: Props) {
     const page = usePage();
     const currentUserId = page.props.auth.user.id;
+    const copy = page.props.localization.dswg;
 
     return (
         <>
@@ -197,6 +221,43 @@ export default function DswgIndex({
                                         </p>
                                     </CardContent>
                                 </Card>
+                            ))
+                        )}
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex-row items-start justify-between gap-4">
+                        <div>
+                            <CardTitle className="flex items-center gap-2">
+                                <MessageSquare aria-hidden="true" />
+                                {copy.collaboration_threads}
+                            </CardTitle>
+                            <CardDescription>
+                                {copy.collaboration_description}
+                            </CardDescription>
+                        </div>
+                        {capabilities.participate && (
+                            <CreateThreadSheet
+                                workingGroups={options.workingGroups}
+                                copy={copy}
+                            />
+                        )}
+                    </CardHeader>
+                    <CardContent className="grid gap-4 lg:grid-cols-2">
+                        {threads.length === 0 ? (
+                            <WorkspaceEmptyState
+                                title={copy.no_collaboration_threads}
+                                description={copy.no_collaboration_description}
+                                className="min-h-44 border lg:col-span-2"
+                            />
+                        ) : (
+                            threads.map((thread) => (
+                                <CollaborationThreadCard
+                                    key={thread.id}
+                                    thread={thread}
+                                    canReply={capabilities.participate}
+                                    copy={copy}
+                                />
                             ))
                         )}
                     </CardContent>
@@ -303,6 +364,117 @@ export default function DswgIndex({
                 </Card>
             </div>
         </>
+    );
+}
+
+function CreateThreadSheet({
+    workingGroups,
+    copy,
+}: {
+    workingGroups: DswgOption[];
+    copy: Record<string, string>;
+}) {
+    return (
+        <FormSheet
+            title={copy.create_thread}
+            triggerLabel={copy.new_thread}
+            description={copy.create_thread_description}
+            icon={MessageSquare}
+        >
+            <Form
+                action={storeCollaborationThread()}
+                className="grid gap-4"
+                resetOnSuccess
+            >
+                {({ errors, processing }) => (
+                    <>
+                        <SearchableSelect
+                            id="collaboration-working-group"
+                            name="dswg_working_group_id"
+                            label={copy.working_group}
+                            options={workingGroups}
+                            error={errors.dswg_working_group_id}
+                        />
+                        <Field label={copy.thread_title} error={errors.title}>
+                            <Input name="title" required />
+                        </Field>
+                        <Field label={copy.opening_contribution} error={errors.topic}>
+                            <textarea name="topic" required className={textareaClass} />
+                        </Field>
+                        <Button type="submit" disabled={processing}>
+                            {copy.create_thread}
+                        </Button>
+                    </>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function CollaborationThreadCard({
+    thread,
+    canReply,
+    copy,
+}: {
+    thread: CollaborationThread;
+    canReply: boolean;
+    copy: Record<string, string>;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                    <CardTitle className="text-base">{thread.title}</CardTitle>
+                    <Badge variant="outline">{thread.status}</Badge>
+                </div>
+                <CardDescription>
+                    {thread.workingGroup} {copy.separator} {thread.creator}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                <div className="max-h-72 space-y-3 overflow-y-auto" aria-label={copy.thread_messages}>
+                    {thread.messages.map((message) => (
+                        <article key={message.id} className="rounded-lg border p-3 text-sm">
+                            <div className="flex justify-between gap-3 font-medium">
+                                <span>{message.author}</span>
+                                <time dateTime={message.postedAt} className="text-xs text-muted-foreground">
+                                    {new Date(message.postedAt).toLocaleString()}
+                                </time>
+                            </div>
+                            <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{message.body}</p>
+                            <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                                {copy.checksum} {message.checksum.slice(0, 16)}
+                            </p>
+                        </article>
+                    ))}
+                </div>
+                {canReply && thread.status === 'open' && (
+                    <FormSheet
+                        title={copy.post_contribution}
+                        triggerLabel={copy.reply}
+                        description={thread.title}
+                        icon={MessageSquare}
+                    >
+                        <Form
+                            action={storeCollaborationMessage({ thread: thread.id })}
+                            className="grid gap-4"
+                            resetOnSuccess
+                        >
+                            {({ errors, processing }) => (
+                                <>
+                                    <Field label={copy.contribution} error={errors.body}>
+                                        <textarea name="body" required className={textareaClass} />
+                                    </Field>
+                                    <Button type="submit" disabled={processing}>
+                                        {copy.post_contribution}
+                                    </Button>
+                                </>
+                            )}
+                        </Form>
+                    </FormSheet>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 

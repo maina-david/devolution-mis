@@ -141,6 +141,8 @@ Route::middleware(['auth', 'verified'])
         Route::patch('partners/operational-alerts/{alert}', [PartnerCoordinationController::class, 'resolveOperationalAlert'])->name('partners.operational-alerts.resolve');
         Route::get('dswg', [DswgCoordinationController::class, 'index'])->name('dswg.index');
         Route::post('dswg/groups', [DswgCoordinationController::class, 'storeWorkingGroup'])->name('dswg.groups.store');
+        Route::post('dswg/collaboration-threads', [DswgCoordinationController::class, 'storeCollaborationThread'])->name('dswg.collaboration-threads.store');
+        Route::post('dswg/collaboration-threads/{thread}/messages', [DswgCoordinationController::class, 'storeCollaborationMessage'])->name('dswg.collaboration-messages.store');
         Route::post('dswg/meetings', [DswgCoordinationController::class, 'storeMeeting'])->name('dswg.meetings.store');
         Route::post('dswg/meeting-series', [DswgCoordinationController::class, 'storeMeetingSeries'])->name('dswg.meeting-series.store');
         Route::post('dswg/meetings/{meeting}/documents', [LinkedDocumentController::class, 'storeDswgMeeting'])->name('dswg.meetings.documents.store');

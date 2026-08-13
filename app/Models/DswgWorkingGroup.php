@@ -71,6 +71,12 @@ class DswgWorkingGroup extends Model
         return $this->hasMany(DswgMeeting::class);
     }
 
+    /** @return HasMany<DswgCollaborationThread, $this> */
+    public function collaborationThreads(): HasMany
+    {
+        return $this->hasMany(DswgCollaborationThread::class);
+    }
+
     /** @return HasMany<DswgMeetingSeries, $this> */
     public function meetingSeries(): HasMany
     {

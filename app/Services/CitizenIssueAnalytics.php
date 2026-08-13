@@ -57,7 +57,7 @@ class CitizenIssueAnalytics
             $expression = match ($column) {
                 'category' => 'category as label, count(*) as responses, round(avg(satisfaction_rating)::numeric, 2) as average_rating',
                 'channel' => 'channel as label, count(*) as responses, round(avg(satisfaction_rating)::numeric, 2) as average_rating',
-                default => throw new \InvalidArgumentException('Unsupported satisfaction analytics dimension.'),
+                default => throw new \ValueError('Unsupported satisfaction analytics dimension.'),
             };
 
             return (clone $rated)

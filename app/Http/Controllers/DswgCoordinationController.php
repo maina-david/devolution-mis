@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\CreateDswgAction;
+use App\Actions\CreateDswgCollaborationThread;
 use App\Actions\CreateDswgMeetingSeries;
 use App\Actions\CreateDswgWorkingGroup;
 use App\Actions\StartWorkflow;
@@ -12,6 +13,8 @@ use App\Http\Requests\ApproveDswgMinutesRequest;
 use App\Http\Requests\RecordDswgMeetingOutcomesRequest;
 use App\Http\Requests\RespondDswgInvitationRequest;
 use App\Http\Requests\StoreDswgActionRequest;
+use App\Http\Requests\StoreDswgCollaborationMessageRequest;
+use App\Http\Requests\StoreDswgCollaborationThreadRequest;
 use App\Http\Requests\StoreDswgDecisionRequest;
 use App\Http\Requests\StoreDswgMeetingRequest;
 use App\Http\Requests\StoreDswgMeetingSeriesRequest;
@@ -21,6 +24,8 @@ use App\Http\Requests\WorkspaceIndexRequest;
 use App\Models\County;
 use App\Models\DocumentLink;
 use App\Models\DswgAction;
+use App\Models\DswgCollaborationMessage;
+use App\Models\DswgCollaborationThread;
 use App\Models\DswgDecision;
 use App\Models\DswgMeeting;
 use App\Models\DswgMeetingSeries;
@@ -71,6 +76,17 @@ class DswgCoordinationController extends Controller
             ->latest()
             ->limit(25)
             ->get();
+        $threads = DswgCollaborationThread::query()
+            ->whereIn('dswg_working_group_id', $visibleGroupIds)
+            ->with([
+                'workingGroup:id,name',
+                'creator:id,name',
+                'messages' => fn ($query) => $query->with('author:id,name')->latest('posted_at')->limit(20),
+            ])
+            ->withCount('messages')
+            ->latest('last_activity_at')
+            ->limit(25)
+            ->get();
 
         return Inertia::render('dswg/index', [
             'workspace' => $workspaceData->dswg($user, WorkspaceFilters::fromRequest($request)),
@@ -113,6 +129,23 @@ class DswgCoordinationController extends Controller
                 'endsOn' => $meetingSeries->ends_on->toDateString(),
                 'status' => $meetingSeries->status,
                 'generatedMeetings' => $meetingSeries->meetings_count,
+            ]),
+            'threads' => $threads->map(fn (DswgCollaborationThread $thread): array => [
+                'id' => $thread->id,
+                'title' => $thread->title,
+                'topic' => $thread->topic,
+                'status' => $thread->status,
+                'workingGroup' => $thread->workingGroup->name,
+                'creator' => $thread->creator->name,
+                'lastActivityAt' => $thread->last_activity_at->toIso8601String(),
+                'messageCount' => $thread->messages_count,
+                'messages' => $thread->messages->sortBy('posted_at')->values()->map(fn (DswgCollaborationMessage $message): array => [
+                    'id' => $message->id,
+                    'author' => $message->author->name,
+                    'body' => $message->body,
+                    'checksum' => $message->checksum,
+                    'postedAt' => $message->posted_at->toIso8601String(),
+                ])->all(),
             ]),
             'catalogue' => ['available' => $referenceDataRelease !== null, 'version' => $referenceDataRelease?->version, 'effectiveFrom' => $referenceDataRelease?->effective_from?->toIso8601String()],
             'options' => [
@@ -158,6 +191,45 @@ class DswgCoordinationController extends Controller
         $auditLogger->record($user, $meeting, 'dswg.meeting.scheduled', "DSWG meeting {$meeting->reference} scheduled.", metadata: ['invitees' => $inviteeIds->all()]);
 
         return $this->success('Meeting scheduled and invitations sent.');
+    }
+
+    public function storeCollaborationThread(StoreDswgCollaborationThreadRequest $request, CreateDswgCollaborationThread $createThread, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
+    {
+        $user = $this->user($request);
+        $group = $this->visibleGroups($user, $countyScope)->whereKey($request->validated('dswg_working_group_id'))->firstOrFail();
+        $isActiveMember = $group->members()->where('users.id', $user->id)->where('dswg_working_group_user.status', 'active')->exists();
+        abort_unless($user->can(ProgrammePermission::ManageDswg->value) || $isActiveMember, 403);
+        $thread = $createThread->handle($group->id, $user, [
+            'title' => (string) $request->validated('title'),
+            'topic' => (string) $request->validated('topic'),
+        ]);
+        $auditLogger->record($user, $thread, 'dswg.collaboration_thread.created', "DSWG collaboration thread {$thread->title} created.");
+
+        return $this->success('Collaboration thread created.');
+    }
+
+    public function storeCollaborationMessage(StoreDswgCollaborationMessageRequest $request, DswgCollaborationThread $thread, CreateDswgCollaborationThread $checksum, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
+    {
+        $user = $this->user($request);
+        abort_unless($this->visibleGroups($user, $countyScope)->whereKey($thread->dswg_working_group_id)->exists(), 403);
+        $isActiveMember = $thread->workingGroup->members()->where('users.id', $user->id)->where('dswg_working_group_user.status', 'active')->exists();
+        abort_unless($user->can(ProgrammePermission::ManageDswg->value) || $isActiveMember, 403);
+        abort_unless($thread->status === 'open', 409, __('dswg.thread_closed'));
+        $postedAt = now();
+        $message = DB::transaction(function () use ($thread, $user, $request, $postedAt, $checksum) {
+            $message = $thread->messages()->create([
+                'author_id' => $user->id,
+                'body' => $request->validated('body'),
+                'posted_at' => $postedAt,
+                'checksum' => $checksum->checksum($thread->id, $user->id, $request->validated('body'), $postedAt->toIso8601String()),
+            ]);
+            $thread->update(['last_activity_at' => $postedAt]);
+
+            return $message;
+        });
+        $auditLogger->record($user, $message, 'dswg.collaboration_message.posted', "Contribution posted to DSWG thread {$thread->title}.");
+
+        return $this->success('Contribution posted.');
     }
 
     public function storeMeetingSeries(StoreDswgMeetingSeriesRequest $request, CreateDswgMeetingSeries $createSeries, ProgrammeCountyScope $countyScope): RedirectResponse
