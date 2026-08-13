@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useId, useMemo, useState } from 'react';
 import type { SearchableSelectOption } from '@/components/searchable-select';
@@ -10,6 +11,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { interpolate } from '@/hooks/use-localization';
 import { cn } from '@/lib/utils';
 
 export default function SearchableMultiSelect({
@@ -27,6 +29,7 @@ export default function SearchableMultiSelect({
     optional?: boolean;
     defaultValues?: string[];
 }) {
+    const copy = usePage().props.localization.common;
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [values, setValues] = useState<string[]>(() =>
@@ -62,7 +65,7 @@ export default function SearchableMultiSelect({
                 htmlFor={controlId}
                 className={label ? undefined : 'sr-only'}
             >
-                {label || 'Select options'}
+                {label || copy.select_options}
             </Label>
             {values.map((value) => (
                 <input
@@ -118,8 +121,8 @@ export default function SearchableMultiSelect({
                             ) : (
                                 <span className="text-muted-foreground">
                                     {optional
-                                        ? 'Not specified'
-                                        : 'Select one or more'}
+                                        ? copy.not_specified
+                                        : copy.select_one_or_more}
                                 </span>
                             )}
                         </span>
@@ -138,15 +141,19 @@ export default function SearchableMultiSelect({
                         <Input
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder={`Search ${(label || 'options').toLocaleLowerCase()}`}
-                            aria-label={`Search ${(label || 'options').toLocaleLowerCase()}`}
+                            placeholder={interpolate(copy.search_options, {
+                                label: label || copy.select_options,
+                            })}
+                            aria-label={interpolate(copy.search_options, {
+                                label: label || copy.select_options,
+                            })}
                             className="pl-9"
                         />
                     </div>
                     <div
                         id={listboxId}
                         role="listbox"
-                        aria-label={label || 'Select options'}
+                        aria-label={label || copy.select_options}
                         aria-multiselectable="true"
                         className="mt-2 max-h-60 overflow-y-auto"
                     >
@@ -184,7 +191,7 @@ export default function SearchableMultiSelect({
                                 role="status"
                                 className="px-2 py-6 text-center text-sm text-muted-foreground"
                             >
-                                No matching options.
+                                {copy.no_matching_options}
                             </p>
                         )}
                     </div>

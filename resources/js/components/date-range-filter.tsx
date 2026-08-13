@@ -13,6 +13,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { formatDateTime } from '@/lib/reference-catalog';
 
 type Props = {
     initialFrom?: string | null;
@@ -40,13 +41,16 @@ export default function DateRangeFilter({
     fromKey = 'from',
     toKey = 'to',
     searchKey = 'search',
-    searchPlaceholder = 'Search authorized records',
+    searchPlaceholder,
     initialCycleId,
     cycles,
     selectFilters = [],
     perPageKey = 'per_page',
 }: Props) {
     const page = usePage();
+    const copy = page.props.localization.common;
+    const resolvedSearchPlaceholder =
+        searchPlaceholder ?? copy.search_authorized_records;
     const currentQuery = new URLSearchParams(page.url.split('?')[1]);
     const resolvedCycles = cycles ?? page.props.assessmentCycles;
     const [range, setRange] = useState<DateRange | undefined>({
@@ -120,9 +124,9 @@ export default function DateRangeFilter({
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     onKeyDown={(event) => event.key === 'Enter' && apply()}
-                    placeholder={searchPlaceholder}
+                    placeholder={resolvedSearchPlaceholder}
                     className="pl-9"
-                    aria-label="Search records"
+                    aria-label={copy.search_records}
                 />
             </div>
             {resolvedCycles.length > 0 && (
@@ -130,7 +134,7 @@ export default function DateRangeFilter({
                     <SearchableSelect
                         id="workspace-cycle"
                         name="cycle_id"
-                        label="Assessment cycle"
+                        label={copy.assessment_cycle}
                         options={resolvedCycles}
                         optional
                         value={cycleId}
@@ -163,10 +167,13 @@ export default function DateRangeFilter({
                             variant="outline"
                             className="justify-start font-normal"
                         >
-                            <CalendarIcon data-icon="inline-start" />
+                            <CalendarIcon
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                            />
                             {range?.from
-                                ? `${format(range.from, 'dd MMM yyyy')}${range.to ? ` – ${format(range.to, 'dd MMM yyyy')}` : ''}`
-                                : 'Filter by date'}
+                                ? `${formatDateTime(range.from, { day: '2-digit', month: 'short', year: 'numeric' })}${range.to ? ` – ${formatDateTime(range.to, { day: '2-digit', month: 'short', year: 'numeric' })}` : ''}`
+                                : copy.filter_by_date}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="end">
@@ -178,7 +185,7 @@ export default function DateRangeFilter({
                         />
                     </PopoverContent>
                 </Popover>
-                <Button onClick={apply}>Apply filters</Button>
+                <Button onClick={apply}>{copy.apply_filters}</Button>
                 {(initialFrom ||
                     initialTo ||
                     initialSearch ||
@@ -187,9 +194,9 @@ export default function DateRangeFilter({
                     <Button
                         variant="ghost"
                         onClick={clear}
-                        aria-label="Clear filters"
+                        aria-label={copy.clear_filters}
                     >
-                        <XIcon />
+                        <XIcon aria-hidden="true" />
                     </Button>
                 )}
             </div>

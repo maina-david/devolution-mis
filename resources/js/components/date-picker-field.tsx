@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
@@ -10,6 +11,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { interpolate } from '@/hooks/use-localization';
+import { formatDateTime } from '@/lib/reference-catalog';
 import { cn } from '@/lib/utils';
 
 export default function DatePickerField({
@@ -33,6 +36,7 @@ export default function DatePickerField({
     value?: string;
     onValueChange?: (value: string) => void;
 }) {
+    const copy = usePage().props.localization.common;
     const generatedId = useId();
     const sourceValue = controlledValue ?? defaultValue;
     const initialDate = sourceValue ? new Date(sourceValue) : undefined;
@@ -81,7 +85,13 @@ export default function DatePickerField({
                             )}
                         >
                             <CalendarIcon aria-hidden="true" />
-                            {date ? format(date, 'dd MMM yyyy') : 'Select date'}
+                            {date
+                                ? formatDateTime(date, {
+                                      day: '2-digit',
+                                      month: 'short',
+                                      year: 'numeric',
+                                  })
+                                : copy.select_date}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -103,7 +113,7 @@ export default function DatePickerField({
             {includeTime && (
                 <TimePickerField
                     id={`${name}-time`}
-                    label={`${label} time`}
+                    label={interpolate(copy.time, { label })}
                     value={time}
                     onValueChange={setTime}
                     required={required}
@@ -111,7 +121,7 @@ export default function DatePickerField({
             )}
             {required && !value && (
                 <p id={guidanceId} className="text-xs text-muted-foreground">
-                    Required
+                    {copy.required}
                 </p>
             )}
             {error && (

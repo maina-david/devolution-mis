@@ -39,6 +39,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.copy.chooseLanguage', 'Chagua lugha')
                 ->where('localization.common.rows_per_page', 'Safu kwa kila ukurasa')
                 ->where('localization.common.verified_county_identity', 'Utambulisho wa kaunti uliothibitishwa')
+                ->where('localization.common.apply_filters', 'Tumia vichujio')
                 ->where('localization.globalSearch.button', 'Tafuta IDMIS')
                 ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
                 ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
@@ -195,6 +196,26 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('{copy.verified_county_identity}', $source);
         $this->assertStringContainsString('{copy.none}', $source);
         $this->assertStringNotContainsString('Verified county identity', $source);
+    }
+
+    public function test_shared_date_and_multi_select_controls_use_locale_copy_and_locale_aware_dates(): void
+    {
+        $datePicker = file_get_contents(resource_path('js/components/date-picker-field.tsx'));
+        $dateRange = file_get_contents(resource_path('js/components/date-range-filter.tsx'));
+        $multiSelect = file_get_contents(resource_path('js/components/searchable-multi-select.tsx'));
+
+        $this->assertIsString($datePicker);
+        $this->assertIsString($dateRange);
+        $this->assertIsString($multiSelect);
+        $this->assertStringContainsString('formatDateTime(date,', $datePicker);
+        $this->assertStringContainsString('copy.select_date', $datePicker);
+        $this->assertStringContainsString('copy.apply_filters', $dateRange);
+        $this->assertStringContainsString('copy.clear_filters', $dateRange);
+        $this->assertStringContainsString('formatDateTime(range.from,', $dateRange);
+        $this->assertStringContainsString('copy.select_one_or_more', $multiSelect);
+        $this->assertStringContainsString('copy.no_matching_options', $multiSelect);
+        $this->assertStringNotContainsString('Apply filters', $dateRange);
+        $this->assertStringNotContainsString('No matching options.', $multiSelect);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
