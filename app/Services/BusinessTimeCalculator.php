@@ -11,8 +11,8 @@ class BusinessTimeCalculator
 {
     public function addHours(BusinessCalendar $calendar, CarbonInterface $enteredAt, float $hours): CarbonImmutable
     {
-        abort_unless($calendar->status === 'published', 409, 'Workflow SLA calendars must be published.');
-        abort_unless($hours > 0, 422, 'Workflow SLA hours must be positive.');
+        abort_unless($calendar->status === 'published', 409, __('workflow-management.calendar.errors.sla_calendar_published'));
+        abort_unless($hours > 0, 422, __('workflow-management.calendar.errors.positive_sla_hours'));
         $calendar->loadMissing('holidays:id,business_calendar_id,holiday_date');
         $holidayDates = $calendar->holidays->pluck('holiday_date')->map->toDateString()->flip();
         $remainingSeconds = (int) round($hours * 3600);
@@ -37,6 +37,6 @@ class BusinessTimeCalculator
             $cursor = $date->addDay();
         }
 
-        throw new RuntimeException('Business-calendar deadline exceeds the supported planning horizon.');
+        throw new RuntimeException(__('workflow-management.calendar.errors.planning_horizon_exceeded'));
     }
 }

@@ -11,6 +11,7 @@ use App\Models\BusinessCalendarHoliday;
 use App\Models\User;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowVersion;
+use App\Services\BusinessTimeCalculator;
 use App\Services\WorkflowSlaMonitor;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
@@ -18,6 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class BusinessCalendarWorkflowTest extends TestCase
@@ -70,6 +72,29 @@ class BusinessCalendarWorkflowTest extends TestCase
             $this->fail('Published calendar mutation should be rejected by PostgreSQL.');
         } catch (QueryException $exception) {
             $this->assertStringContainsString('Published business calendars are immutable', $exception->getMessage());
+        }
+    }
+
+    public function test_calendar_failures_and_catalogues_follow_the_active_locale(): void
+    {
+        $calendar = BusinessCalendar::factory()->create(['status' => 'draft']);
+        app()->setLocale('fr');
+
+        try {
+            app(BusinessTimeCalculator::class)->addHours($calendar, now(), 1);
+            $this->fail('An unpublished business calendar must not calculate an SLA deadline.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('workflow-management.calendar.errors.sla_calendar_published'), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/workflow-management.php');
+        $kiswahili = require lang_path('sw/workflow-management.php');
+        $french = require lang_path('fr/workflow-management.php');
+
+        foreach (['errors', 'outcomes', 'audit'] as $section) {
+            $this->assertSame(array_keys($english['calendar'][$section]), array_keys($kiswahili['calendar'][$section]));
+            $this->assertSame(array_keys($english['calendar'][$section]), array_keys($french['calendar'][$section]));
         }
     }
 

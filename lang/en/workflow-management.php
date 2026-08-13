@@ -25,4 +25,9 @@ return [
     'no_business_calendars' => 'No business calendars', 'no_business_calendars_description' => 'Create a versioned government working calendar before assigning business-hour SLAs.',
     'search_workflows' => 'Search workflows', 'search' => 'Search', 'no_description' => 'No description', 'active' => 'active', 'overdue' => 'overdue', 'create_next_draft' => 'Create next draft',
     'no_matching_workflows' => 'No matching workflows', 'no_matching_workflows_description' => 'Clear the search or create a governed workflow definition.', 'definitions' => 'definitions', 'page' => 'page', 'of' => 'of', 'previous' => 'Previous', 'next' => 'Next',
+    'calendar' => [
+        'errors' => ['draft_required' => 'Only draft calendars can be published.', 'independent_publisher' => 'Calendar publication requires an actor independent of the author.', 'overlapping_versions' => 'Published versions of the same calendar cannot have overlapping effective dates.', 'new_version_for_holidays' => 'Published calendars are immutable. Create a new version to amend holidays.', 'published_immutable' => 'Published calendars are immutable.', 'sla_calendar_published' => 'Workflow SLA calendars must be published.', 'positive_sla_hours' => 'Workflow SLA hours must be positive.', 'planning_horizon_exceeded' => 'Business-calendar deadline exceeds the supported planning horizon.'],
+        'outcomes' => ['created' => 'Business calendar draft created.', 'holiday_added' => 'Calendar exception added.', 'holiday_removed' => 'Draft calendar exception removed.', 'published' => 'Business calendar independently published.'],
+        'audit' => ['created' => 'Business calendar :code v:version drafted.', 'holiday_added' => ':holiday added to :code v:version.', 'holiday_removed' => ':holiday removed from draft calendar.', 'published' => 'Business calendar :code v:version published.'],
+    ],
 ];
