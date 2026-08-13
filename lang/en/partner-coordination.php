@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'collaboration_plans' => 'Collaboration plans and actions', 'collaboration_plans_description' => 'Approved partner/county plans with accountable evidence-backed actions and independent progress verification.', 'no_collaboration_plans' => 'No collaboration plans', 'no_collaboration_plans_description' => 'Create a governed plan to coordinate partner and county delivery actions.', 'no_accountable_actions' => 'No accountable actions assigned.',
+    'due' => 'due', 'empty_value' => '—', 'reference' => 'Reference', 'title_label' => 'Title', 'objective' => 'Objective', 'create_draft' => 'Create draft', 'record' => 'Record', 'code' => 'Code', 'description_label' => 'Description', 'assign_action' => 'Assign action', 'progress' => 'Progress', 'narrative' => 'Narrative', 'submit_verification' => 'Submit for verification', 'verification_note' => 'Verification note',
     'open_parenthesis' => '(', 'close_parenthesis' => ')',
     'agreement_register' => 'Agreement approval register', 'agreement_register_description' => 'Document-backed MoUs and cooperation instruments move from draft submission to independent approval with immutable workflow history.', 'no_agreements' => 'No agreements registered', 'no_agreements_description' => 'Register an agreement to begin its document and approval lifecycle.',
     'separator' => '·', 'label_separator' => ':', 'to' => 'to', 'repository_records' => 'Repository records', 'no_repository_records' => 'No scanned or born-digital agreement record has been uploaded.', 'scan' => 'scan', 'ocr' => 'OCR', 'preview' => 'Preview', 'download' => 'Download',

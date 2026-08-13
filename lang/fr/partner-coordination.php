@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'collaboration_plans' => 'Plans et actions de collaboration', 'collaboration_plans_description' => 'Plans partenaires/comtés approuvés, assortis d’actions responsables, de preuves et d’une vérification indépendante des progrès.', 'no_collaboration_plans' => 'Aucun plan de collaboration', 'no_collaboration_plans_description' => 'Créez un plan gouverné pour coordonner les actions du partenaire et du comté.', 'no_accountable_actions' => 'Aucune action responsable attribuée.',
+    'due' => 'échéance', 'empty_value' => '—', 'reference' => 'Référence', 'title_label' => 'Titre', 'objective' => 'Objectif', 'create_draft' => 'Créer le brouillon', 'record' => 'Consigner', 'code' => 'Code', 'description_label' => 'Description', 'assign_action' => 'Attribuer l’action', 'progress' => 'Progrès', 'narrative' => 'Compte rendu', 'submit_verification' => 'Soumettre à vérification', 'verification_note' => 'Note de vérification',
     'open_parenthesis' => '(', 'close_parenthesis' => ')',
     'agreement_register' => 'Registre d’approbation des accords', 'agreement_register_description' => 'Les protocoles et instruments de coopération documentés passent du projet à l’approbation indépendante avec un historique immuable.', 'no_agreements' => 'Aucun accord enregistré', 'no_agreements_description' => 'Enregistrez un accord pour démarrer son cycle documentaire et d’approbation.',
     'separator' => '·', 'label_separator' => ':', 'to' => 'au', 'repository_records' => 'Documents du référentiel', 'no_repository_records' => 'Aucun document numérisé ou créé nativement au format numérique n’a été téléversé.', 'scan' => 'analyse', 'ocr' => 'OCR', 'preview' => 'Aperçu', 'download' => 'Télécharger',

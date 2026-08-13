@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'collaboration_plans' => 'Mipango na hatua za ushirikiano', 'collaboration_plans_description' => 'Mipango iliyoidhinishwa ya washirika na kaunti yenye hatua zenye uwajibikaji, ushahidi na uthibitishaji huru wa maendeleo.', 'no_collaboration_plans' => 'Hakuna mipango ya ushirikiano', 'no_collaboration_plans_description' => 'Unda mpango unaodhibitiwa wa kuratibu hatua za utekelezaji za mshirika na kaunti.', 'no_accountable_actions' => 'Hakuna hatua zenye uwajibikaji zilizotolewa.',
+    'due' => 'inatarajiwa', 'empty_value' => '—', 'reference' => 'Rejea', 'title_label' => 'Kichwa', 'objective' => 'Lengo', 'create_draft' => 'Unda rasimu', 'record' => 'Rekodi', 'code' => 'Msimbo', 'description_label' => 'Maelezo', 'assign_action' => 'Toa hatua', 'progress' => 'Maendeleo', 'narrative' => 'Maelezo ya maendeleo', 'submit_verification' => 'Wasilisha kwa uthibitishaji', 'verification_note' => 'Maelezo ya uthibitishaji',
     'open_parenthesis' => '(', 'close_parenthesis' => ')',
     'agreement_register' => 'Rejista ya uidhinishaji wa makubaliano', 'agreement_register_description' => 'Hati za maelewano na ushirikiano zenye nyaraka hupitia uwasilishaji wa rasimu hadi uidhinishaji huru wenye historia isiyobadilika.', 'no_agreements' => 'Hakuna makubaliano yaliyosajiliwa', 'no_agreements_description' => 'Sajili makubaliano ili kuanza mzunguko wa nyaraka na uidhinishaji.',
     'separator' => '·', 'label_separator' => ':', 'to' => 'hadi', 'repository_records' => 'Rekodi za hazina', 'no_repository_records' => 'Hakuna rekodi iliyochanganuliwa au ya kidijitali iliyopakiwa.', 'scan' => 'uchanganuzi', 'ocr' => 'OCR', 'preview' => 'Hakiki', 'download' => 'Pakua',

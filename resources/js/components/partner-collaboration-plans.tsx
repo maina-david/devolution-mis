@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, ListChecks, Upload } from 'lucide-react';
 import { storePartnerCollaborationAction } from '@/actions/App/Http/Controllers/LinkedDocumentController';
 import {
@@ -84,6 +84,10 @@ export type CollaborationPlan = {
     actions: CollaborationAction[];
 };
 
+function usePartnerCopy(): Record<string, string> {
+    return usePage().props.localization.partnerCoordination;
+}
+
 export default function PartnerCollaborationPlans({
     plans,
     partners,
@@ -114,18 +118,18 @@ export default function PartnerCollaborationPlans({
         status?: string;
     };
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <Card>
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
                     <CardTitle className="flex items-center gap-2">
                         <ListChecks />
-                        Collaboration plans and actions
+                        {copy.collaboration_plans}
                     </CardTitle>
                     <CardDescription>
-                        Approved partner/county plans with accountable
-                        evidence-backed actions and independent progress
-                        verification.
+                        {copy.collaboration_plans_description}
                     </CardDescription>
                 </div>
                 <div className="flex flex-wrap justify-end gap-2">
@@ -153,8 +157,8 @@ export default function PartnerCollaborationPlans({
             <CardContent className="grid gap-4">
                 {plans.length === 0 ? (
                     <WorkspaceEmptyState
-                        title="No collaboration plans"
-                        description="Create a governed plan to coordinate partner and county delivery actions."
+                        title={copy.no_collaboration_plans}
+                        description={copy.no_collaboration_plans_description}
                         className="min-h-48"
                     />
                 ) : (
@@ -175,8 +179,8 @@ export default function PartnerCollaborationPlans({
                                         {plan.title}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        {plan.partner} · {plan.startsOn} to{' '}
-                                        {plan.endsOn}
+                                        {plan.partner} {copy.separator}{' '}
+                                        {plan.startsOn} {copy.to} {plan.endsOn}
                                     </p>
                                     <p className="mt-2 text-sm">
                                         {plan.objective}
@@ -220,7 +224,7 @@ export default function PartnerCollaborationPlans({
                             </div>
                             {plan.actions.length === 0 ? (
                                 <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                                    No accountable actions assigned.
+                                    {copy.no_accountable_actions}
                                 </p>
                             ) : (
                                 plan.actions.map((action) => (
@@ -236,17 +240,20 @@ export default function PartnerCollaborationPlans({
                                                 />
                                                 <div>
                                                     <p className="font-medium">
-                                                        {action.code} ·{' '}
+                                                        {action.code}{' '}
+                                                        {copy.separator}{' '}
                                                         {action.title}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        {action.owner} · due{' '}
+                                                        {action.owner}{' '}
+                                                        {copy.separator}{' '}
+                                                        {copy.due}{' '}
                                                         {action.dueOn}
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
                                                         {action.ownerOrganization ??
                                                             'No accountable organization'}{' '}
-                                                        ·{' '}
+                                                        {copy.separator}{' '}
                                                         {action.referenceData
                                                             ? `Catalogue v${action.referenceData.version}`
                                                             : 'Legacy · unpinned'}
@@ -307,7 +314,7 @@ export default function PartnerCollaborationPlans({
                                                                 target="_blank"
                                                                 rel="noreferrer"
                                                             >
-                                                                Preview{' '}
+                                                                {copy.preview}{' '}
                                                                 {document.title}
                                                             </a>
                                                         </Button>
@@ -324,7 +331,7 @@ export default function PartnerCollaborationPlans({
                                                                     },
                                                                 )}
                                                             >
-                                                                Download
+                                                                {copy.download}
                                                             </a>
                                                         </Button>
                                                     </span>
@@ -337,7 +344,9 @@ export default function PartnerCollaborationPlans({
                                             >
                                                 <div>
                                                     <p className="text-sm">
-                                                        {update.progress}% ·{' '}
+                                                        {update.progress}
+                                                        {copy.percent}{' '}
+                                                        {copy.separator}{' '}
                                                         {update.narrative}
                                                     </p>
                                                     <p className="font-mono text-[10px] text-muted-foreground">
@@ -349,12 +358,14 @@ export default function PartnerCollaborationPlans({
                                                                 update.decision
                                                                     .verifier
                                                             }
-                                                            :{' '}
+                                                            {
+                                                                copy.label_separator
+                                                            }{' '}
                                                             {
                                                                 update.decision
                                                                     .result
                                                             }{' '}
-                                                            —{' '}
+                                                            {copy.empty_value}{' '}
                                                             {
                                                                 update.decision
                                                                     .note
@@ -381,6 +392,8 @@ export default function PartnerCollaborationPlans({
 }
 
 function CreatePlan({ partners }: { partners: Option[] }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Create collaboration plan"
@@ -395,20 +408,20 @@ function CreatePlan({ partners }: { partners: Option[] }) {
                     options={partners}
                 />
                 <Label>
-                    Reference
+                    {copy.reference}
                     <Input name="reference" required />
                 </Label>
                 <Label>
-                    Title
+                    {copy.title_label}
                     <Input name="title" required />
                 </Label>
                 <Label>
-                    Objective
+                    {copy.objective}
                     <Textarea name="objective" minLength={20} required />
                 </Label>
                 <DatePickerField name="starts_on" label="Starts on" required />
                 <DatePickerField name="ends_on" label="Ends on" required />
-                <Button type="submit">Create draft</Button>
+                <Button type="submit">{copy.create_draft}</Button>
             </Form>
         </FormSheet>
     );
@@ -420,6 +433,8 @@ function TransitionPlan({
     plan: CollaborationPlan;
     transition: string;
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title={`${transition} plan`}
@@ -432,13 +447,15 @@ function TransitionPlan({
             >
                 <input type="hidden" name="transition" value={transition} />
                 <Label>
-                    Decision note
+                    {copy.decision_note}
                     <Textarea
                         name="decision_note"
                         required={transition !== 'submit'}
                     />
                 </Label>
-                <Button type="submit">Record {transition}</Button>
+                <Button type="submit">
+                    {copy.record} {transition}
+                </Button>
             </Form>
         </FormSheet>
     );
@@ -460,6 +477,8 @@ function CreateAction({
         effectiveFrom: string | null;
     };
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Add accountable action"
@@ -483,15 +502,15 @@ function CreateAction({
                     options={counties}
                 />
                 <Label>
-                    Code
+                    {copy.code}
                     <Input name="code" required />
                 </Label>
                 <Label>
-                    Title
+                    {copy.title_label}
                     <Input name="title" required />
                 </Label>
                 <Label>
-                    Description
+                    {copy.description_label}
                     <Textarea name="description" minLength={20} required />
                 </Label>
                 <SearchableSelect
@@ -513,12 +532,14 @@ function CreateAction({
                     required
                     min={plan.startsOn}
                 />
-                <Button type="submit">Assign action</Button>
+                <Button type="submit">{copy.assign_action}</Button>
             </Form>
         </FormSheet>
     );
 }
 function UploadEvidence({ action }: { action: CollaborationAction }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Upload action evidence"
@@ -530,11 +551,11 @@ function UploadEvidence({ action }: { action: CollaborationAction }) {
                 className="grid gap-4"
             >
                 <Label>
-                    Title
+                    {copy.title_label}
                     <Input name="title" required />
                 </Label>
                 <Label>
-                    Category
+                    {copy.category}
                     <Input
                         name="category"
                         defaultValue="Action evidence"
@@ -551,18 +572,20 @@ function UploadEvidence({ action }: { action: CollaborationAction }) {
                     ]}
                 />
                 <Label>
-                    Document
+                    {copy.document}
                     <Input type="file" name="document" required />
                 </Label>
                 <Button type="submit">
                     <Upload />
-                    Upload securely
+                    {copy.upload_securely}
                 </Button>
             </Form>
         </FormSheet>
     );
 }
 function SubmitUpdate({ action }: { action: CollaborationAction }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Submit action progress"
@@ -574,7 +597,7 @@ function SubmitUpdate({ action }: { action: CollaborationAction }) {
                 className="grid gap-4"
             >
                 <Label>
-                    Progress
+                    {copy.progress}
                     <Input
                         name="progress_percentage"
                         type="number"
@@ -585,15 +608,17 @@ function SubmitUpdate({ action }: { action: CollaborationAction }) {
                     />
                 </Label>
                 <Label>
-                    Narrative
+                    {copy.narrative}
                     <Textarea name="narrative" minLength={20} required />
                 </Label>
-                <Button type="submit">Submit for verification</Button>
+                <Button type="submit">{copy.submit_verification}</Button>
             </Form>
         </FormSheet>
     );
 }
 function VerifyUpdate({ update }: { update: ActionUpdate }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Verify action progress"
@@ -614,14 +639,14 @@ function VerifyUpdate({ update }: { update: ActionUpdate }) {
                     ]}
                 />
                 <Label>
-                    Verification note
+                    {copy.verification_note}
                     <Textarea
                         name="verification_note"
                         minLength={20}
                         required
                     />
                 </Label>
-                <Button type="submit">Retain decision</Button>
+                <Button type="submit">{copy.retain_decision}</Button>
             </Form>
         </FormSheet>
     );
