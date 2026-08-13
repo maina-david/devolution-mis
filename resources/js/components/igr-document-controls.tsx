@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, Files, Upload } from 'lucide-react';
 import { useState } from 'react';
 import FormSheet from '@/components/form-sheet';
@@ -27,6 +27,7 @@ type Props = {
 };
 
 export default function IgrDocumentControls(props: Props) {
+    const copy = usePage().props.localization.igrDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
 
@@ -37,21 +38,20 @@ export default function IgrDocumentControls(props: Props) {
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
                         <Files aria-hidden="true" />
-                        Records ({props.documents.length})
+                        {copy.records} {'('}{props.documents.length}{')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Governed IGR records</SheetTitle>
+                        <SheetTitle>{copy.governed_records}</SheetTitle>
                         <SheetDescription>
-                            Private, checksum-bound resolution and
-                            implementation records.
+                            {copy.private_records}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-3 px-4 pb-8">
                         {props.documents.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                No repository records have been linked yet.
+                                {copy.no_repository_records}
                             </p>
                         )}
                         {props.documents.map((document) => (
@@ -66,8 +66,10 @@ export default function IgrDocumentControls(props: Props) {
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {document.originalName ??
-                                                'Repository record'}{' '}
-                                            · {document.sourceType}
+                                                copy.repository_record}{' '}
+                                            {'·'}{' '}
+                                            {copy[document.sourceType] ??
+                                                document.sourceType}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -77,7 +79,8 @@ export default function IgrDocumentControls(props: Props) {
                                                 .replaceAll('-', ' ')}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {document.scanStatus}
+                                            {copy[document.scanStatus] ??
+                                                document.scanStatus}
                                         </Badge>
                                     </div>
                                 </div>
@@ -93,7 +96,7 @@ export default function IgrDocumentControls(props: Props) {
                                                 }
                                             >
                                                 <Eye aria-hidden="true" />
-                                                Preview
+                                                {copy.preview}
                                             </Button>
                                         )}
                                         <Button
@@ -107,7 +110,7 @@ export default function IgrDocumentControls(props: Props) {
                                                 })}
                                             >
                                                 <Download aria-hidden="true" />
-                                                Download
+                                                {copy.download}
                                             </a>
                                         </Button>
                                     </div>
@@ -124,15 +127,15 @@ export default function IgrDocumentControls(props: Props) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {previewDocument?.title ?? 'IGR record'}
+                            {previewDocument?.title ?? copy.igr_record}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview from the private repository.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={`${copy.preview} ${previewDocument.title}`}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -144,28 +147,29 @@ export default function IgrDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const copy = usePage().props.localization.igrDocuments;
     const purposes =
         props.status === 'open'
             ? [
-                  { id: 'resolution', name: 'Adopted resolution' },
+                  { id: 'resolution', name: copy.adopted_resolution },
                   {
                       id: 'implementation_evidence',
-                      name: 'Implementation evidence',
+                      name: copy.implementation_evidence,
                   },
               ]
             : [
                   {
                       id: 'implementation_evidence',
-                      name: 'Implementation evidence',
+                      name: copy.implementation_evidence,
                   },
               ];
 
     return (
         <FormSheet
-            title="Upload IGR record"
-            triggerLabel="Upload record"
+            title={copy.upload_igr_record}
+            triggerLabel={copy.upload_record}
             icon={Upload}
-            description="Add a private scanned or born-digital resolution or implementation record."
+            description={copy.upload_record_description}
         >
             <Form
                 {...store.form({ resolution: props.resolutionId })}
@@ -177,13 +181,13 @@ function UploadRecord(props: Props) {
                         <SearchableSelect
                             id={`igr-purpose-${props.resolutionId}`}
                             name="record_purpose"
-                            label="Record purpose"
+                            label={copy.record_purpose}
                             defaultValue={purposes[0].id}
                             options={purposes}
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`igr-title-${props.resolutionId}`}>
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`igr-title-${props.resolutionId}`}
@@ -209,12 +213,12 @@ function UploadRecord(props: Props) {
                             <Label
                                 htmlFor={`igr-category-${props.resolutionId}`}
                             >
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`igr-category-${props.resolutionId}`}
                                 name="category"
-                                defaultValue="IGR resolution record"
+                                defaultValue={copy.igr_resolution_record}
                                 required
                                 aria-invalid={Boolean(errors.category)}
                             />
@@ -222,16 +226,16 @@ function UploadRecord(props: Props) {
                         <SearchableSelect
                             id={`igr-source-${props.resolutionId}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             defaultValue="digital"
                             options={[
-                                { id: 'digital', name: 'Born-digital' },
-                                { id: 'scanned', name: 'Scanned original' },
+                                { id: 'digital', name: copy.digital },
+                                { id: 'scanned', name: copy.scanned },
                             ]}
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`igr-file-${props.resolutionId}`}>
-                                File
+                                {copy.file}
                             </Label>
                             <Input
                                 id={`igr-file-${props.resolutionId}`}
@@ -257,11 +261,11 @@ function UploadRecord(props: Props) {
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                Uploading: {progress.percentage}%
+                                {copy.uploading}{':'} {progress.percentage}{'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Upload securely
+                            {copy.upload_securely}
                         </Button>
                     </>
                 )}
