@@ -14,18 +14,18 @@ class DocumentSecurityScanner
     {
         $path = $file->getRealPath();
         if ($path === false) {
-            throw new RuntimeException('The uploaded file is unavailable for malware inspection.');
+            throw new RuntimeException(__('document-security.errors.upload_unavailable'));
         }
 
         $checksum = hash_file('sha256', $path);
         if ($checksum === false) {
-            throw new RuntimeException('The uploaded file checksum could not be calculated.');
+            throw new RuntimeException(__('document-security.errors.checksum_failed'));
         }
         $startedAt = hrtime(true);
         $result = match ($this->driver()) {
             'clamav' => $this->inspectWithClamAv($path),
             'signature' => $this->inspectWithDevelopmentSignatureGate($path),
-            default => throw new RuntimeException('The configured document malware scanner is not supported.'),
+            default => throw new RuntimeException(__('document-security.errors.scanner_unsupported')),
         };
 
         return [
@@ -45,22 +45,22 @@ class DocumentSecurityScanner
     {
         if ($this->driver() === 'signature') {
             if (app()->environment('production')) {
-                throw new RuntimeException('Production document scanning requires the approved ClamAV scanner.');
+                throw new RuntimeException(__('document-security.errors.production_clamav_required'));
             }
 
-            return 'Development-only EICAR signature gate is active; production requires ClamAV.';
+            return __('document-security.readiness.development_gate');
         }
 
         if ($this->driver() !== 'clamav') {
-            throw new RuntimeException('The configured document malware scanner is not supported.');
+            throw new RuntimeException(__('document-security.errors.scanner_unsupported'));
         }
 
         $result = Process::timeout($this->timeoutSeconds())->run([$this->clamAvBinary(), '--version']);
         if (! $result->successful() || trim($result->output()) === '') {
-            throw new RuntimeException('The ClamAV scanner dependency is unavailable.');
+            throw new RuntimeException(__('document-security.errors.clamav_unavailable'));
         }
 
-        return 'ClamAV is available: '.mb_substr(trim(strtok($result->output(), "\r\n") ?: 'version reported'), 0, 180);
+        return __('document-security.readiness.clamav_available', ['version' => mb_substr(trim(strtok($result->output(), "\r\n") ?: __('document-security.readiness.version_reported')), 0, 180)]);
     }
 
     /** @return array{status: 'clean'|'infected', engine: string, signature: string|null} */
@@ -74,7 +74,7 @@ class DocumentSecurityScanner
                 $path,
             ]);
         } catch (Throwable) {
-            throw new RuntimeException('The document malware scan could not be completed.');
+            throw new RuntimeException(__('document-security.errors.scan_failed'));
         }
 
         if ($result->exitCode() === 0) {
@@ -91,14 +91,14 @@ class DocumentSecurityScanner
             ];
         }
 
-        throw new RuntimeException('The document malware scan could not be completed.');
+        throw new RuntimeException(__('document-security.errors.scan_failed'));
     }
 
     /** @return array{status: 'clean'|'infected', engine: string, signature: string|null} */
     private function inspectWithDevelopmentSignatureGate(string $path): array
     {
         if (app()->environment('production')) {
-            throw new RuntimeException('The development signature gate is prohibited in production.');
+            throw new RuntimeException(__('document-security.errors.development_gate_prohibited'));
         }
 
         $infected = $this->fileContains($path, 'EICAR-STANDARD-ANTIVIRUS-TEST-FILE');
@@ -114,7 +114,7 @@ class DocumentSecurityScanner
     {
         $stream = fopen($path, 'rb');
         if ($stream === false) {
-            throw new RuntimeException('The uploaded file could not be opened for malware inspection.');
+            throw new RuntimeException(__('document-security.errors.upload_open_failed'));
         }
 
         $overlap = '';
@@ -122,7 +122,7 @@ class DocumentSecurityScanner
             while (! feof($stream)) {
                 $chunk = fread($stream, 65_536);
                 if ($chunk === false) {
-                    throw new RuntimeException('The uploaded file could not be read for malware inspection.');
+                    throw new RuntimeException(__('document-security.errors.upload_read_failed'));
                 }
 
                 $contents = $overlap.$chunk;

@@ -87,6 +87,32 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->assertSame([], Storage::disk('local')->allFiles('assessment-evidence'));
     }
 
+    public function test_document_scanner_failures_and_readiness_follow_the_active_locale(): void
+    {
+        config()->set('repository.security.malware_scanner', 'clamav');
+        Process::preventStrayProcesses();
+        Process::fake(function ($process) {
+            $command = $process->command;
+
+            return is_array($command) && in_array('--version', $command, true)
+                ? Process::result(output: 'ClamAV 1.4.3')
+                : Process::result(errorOutput: 'private scanner detail', exitCode: 2);
+        });
+        $scanner = app(DocumentSecurityScanner::class);
+
+        app()->setLocale('fr');
+        $this->assertSame('ClamAV est disponible : ClamAV 1.4.3', $scanner->readinessDetail());
+
+        app()->setLocale('sw');
+        try {
+            $scanner->inspect(UploadedFile::fake()->createWithContent('evidence.txt', 'county evidence'));
+            $this->fail('An inconclusive malware scan must fail closed.');
+        } catch (\RuntimeException $exception) {
+            $this->assertSame('Ukaguzi wa programu hasidi wa hati haukuweza kukamilika.', $exception->getMessage());
+            $this->assertStringNotContainsString('private scanner detail', $exception->getMessage());
+        }
+    }
+
     public function test_upload_creates_checksum_bound_immutable_version_and_ocr_work_item(): void
     {
         Storage::fake('local');
