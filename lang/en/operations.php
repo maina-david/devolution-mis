@@ -22,4 +22,12 @@ return [
         'search_indexes_available' => ':count required discovery indexes are available.',
         'search_indexes_missing' => 'Required discovery indexes are unavailable: :indexes',
     ],
+    'backup' => ['errors' => [
+        'temporary_backup_path' => 'Unable to allocate a temporary backup path.', 'persist_backup' => 'Unable to persist the database backup on the configured backup disk.',
+        'completed_required' => 'Only completed backups can be verified.', 'temporary_restore_path' => 'Unable to allocate a temporary restore path.',
+        'read_artifact' => 'Unable to read the backup artifact for verification.', 'checksum_failed' => 'Backup checksum verification failed.',
+        'manifest_parse_failed' => 'Backup manifest could not be parsed.', 'manifest_empty' => 'Backup manifest contains no application tables.',
+        'unsafe_restore_target' => 'Unsafe restore probe target.', 'restored_table_count' => 'Restored database table count is below the backup manifest count.',
+        'postgresql_required' => 'Operational backup currently requires PostgreSQL.',
+    ]],
 ];

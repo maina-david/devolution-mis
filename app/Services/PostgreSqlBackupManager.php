@@ -20,7 +20,7 @@ class PostgreSqlBackupManager
         $backup = OperationalBackup::create(['initiated_by' => $actor?->id, 'reference' => $reference, 'disk' => config('operations.backup_disk'), 'path' => $path, 'database_name' => $connection['database'], 'format' => 'postgres_custom', 'status' => 'running', 'started_at' => now(), 'metadata' => ['rpo_minutes' => config('operations.rpo_minutes'), 'retention_days' => config('operations.backup_retention_days')]]);
         $temporaryPath = tempnam(sys_get_temp_dir(), 'idmis-backup-');
         if ($temporaryPath === false) {
-            throw new RuntimeException('Unable to allocate a temporary backup path.');
+            throw new RuntimeException(__('operations.backup.errors.temporary_backup_path'));
         }
 
         try {
@@ -28,7 +28,7 @@ class PostgreSqlBackupManager
             $process->mustRun();
             $stream = fopen($temporaryPath, 'rb');
             if ($stream === false || ! Storage::disk($backup->disk)->put($path, $stream)) {
-                throw new RuntimeException('Unable to persist the database backup on the configured backup disk.');
+                throw new RuntimeException(__('operations.backup.errors.persist_backup'));
             }
             if (is_resource($stream)) {
                 fclose($stream);
@@ -45,15 +45,15 @@ class PostgreSqlBackupManager
 
     public function verify(OperationalBackup $backup, ?User $actor = null, bool $restoreProbe = false): OperationalBackup
     {
-        abort_unless($backup->status === 'completed' && $backup->sha256, 409, 'Only completed backups can be verified.');
+        abort_unless($backup->status === 'completed' && $backup->sha256, 409, __('operations.backup.errors.completed_required'));
         $temporaryPath = tempnam(sys_get_temp_dir(), 'idmis-restore-');
         if ($temporaryPath === false) {
-            throw new RuntimeException('Unable to allocate a temporary restore path.');
+            throw new RuntimeException(__('operations.backup.errors.temporary_restore_path'));
         }
         $input = Storage::disk($backup->disk)->readStream($backup->path);
         $output = fopen($temporaryPath, 'wb');
         if (! is_resource($input) || ! is_resource($output)) {
-            throw new RuntimeException('Unable to read the backup artifact for verification.');
+            throw new RuntimeException(__('operations.backup.errors.read_artifact'));
         }
         stream_copy_to_stream($input, $output);
         fclose($input);
@@ -64,23 +64,23 @@ class PostgreSqlBackupManager
 
         try {
             $actualChecksum = hash_file('sha256', $temporaryPath);
-            abort_unless(is_string($actualChecksum) && hash_equals($backup->sha256, $actualChecksum), 409, 'Backup checksum verification failed.');
+            abort_unless(is_string($actualChecksum) && hash_equals($backup->sha256, $actualChecksum), 409, __('operations.backup.errors.checksum_failed'));
             $manifestProcess = new Process([config('operations.pg_restore_binary'), '--list', $temporaryPath], null, $this->processEnvironment($connection), timeout: 300);
             $manifestProcess->mustRun();
             $manifest = $manifestProcess->getOutput();
             $manifestLines = preg_split('/\R/', $manifest);
-            abort_unless(is_array($manifestLines), 409, 'Backup manifest could not be parsed.');
+            abort_unless(is_array($manifestLines), 409, __('operations.backup.errors.manifest_parse_failed'));
             $tableCount = collect($manifestLines)->filter(fn (string $line): bool => str_contains($line, ' TABLE ') && ! str_contains($line, 'TABLE DATA'))->count();
-            abort_unless($tableCount > 0, 409, 'Backup manifest contains no application tables.');
+            abort_unless($tableCount > 0, 409, __('operations.backup.errors.manifest_empty'));
 
             if ($restoreProbe) {
-                abort_unless((bool) preg_match('/\Aidmis_restore_probe_[a-z0-9_]+\z/', $restoreDatabase), 500, 'Unsafe restore probe target.');
+                abort_unless((bool) preg_match('/\Aidmis_restore_probe_[a-z0-9_]+\z/', $restoreDatabase), 500, __('operations.backup.errors.unsafe_restore_target'));
                 $this->databaseProcess(config('operations.createdb_binary'), $connection, [$restoreDatabase])->mustRun();
                 try {
                     $restore = new Process([config('operations.pg_restore_binary'), '--no-owner', '--no-acl', '--exit-on-error', '--host='.$connection['host'], '--port='.$connection['port'], '--username='.$connection['username'], '--dbname='.$restoreDatabase, $temporaryPath], null, $this->processEnvironment($connection), timeout: 1800);
                     $restore->mustRun();
                     $probe = $this->databaseProcess(config('operations.psql_binary'), $connection, ['--dbname='.$restoreDatabase, '--tuples-only', '--no-align', '--command=select count(*) from information_schema.tables where table_schema = \'public\''])->mustRun();
-                    abort_unless((int) trim($probe->getOutput()) >= $tableCount, 409, 'Restored database table count is below the backup manifest count.');
+                    abort_unless((int) trim($probe->getOutput()) >= $tableCount, 409, __('operations.backup.errors.restored_table_count'));
                 } finally {
                     $this->databaseProcess(config('operations.dropdb_binary'), $connection, ['--if-exists', $restoreDatabase])->run();
                 }
@@ -98,7 +98,7 @@ class PostgreSqlBackupManager
     private function connection(): array
     {
         $configuration = config('database.connections.'.config('database.default'));
-        abort_unless(($configuration['driver'] ?? null) === 'pgsql', 409, 'Operational backup currently requires PostgreSQL.');
+        abort_unless(($configuration['driver'] ?? null) === 'pgsql', 409, __('operations.backup.errors.postgresql_required'));
 
         return ['host' => (string) ($configuration['host'] ?? '127.0.0.1'), 'port' => (string) ($configuration['port'] ?? '5432'), 'username' => (string) ($configuration['username'] ?? ''), 'password' => (string) ($configuration['password'] ?? ''), 'database' => (string) ($configuration['database'] ?? '')];
     }

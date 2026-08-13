@@ -22,4 +22,12 @@ return [
         'search_indexes_available' => 'Faharasa :count zinazohitajika za utafutaji zinapatikana.',
         'search_indexes_missing' => 'Faharasa zinazohitajika za utafutaji hazipatikani: :indexes',
     ],
+    'backup' => ['errors' => [
+        'temporary_backup_path' => 'Imeshindikana kutenga njia ya muda ya nakala rudufu.', 'persist_backup' => 'Imeshindikana kuhifadhi nakala rudufu ya hifadhidata kwenye diski iliyosanidiwa.',
+        'completed_required' => 'Nakala rudufu zilizokamilika pekee ndizo zinaweza kuthibitishwa.', 'temporary_restore_path' => 'Imeshindikana kutenga njia ya muda ya urejeshaji.',
+        'read_artifact' => 'Imeshindikana kusoma sanaa ya nakala rudufu kwa uthibitishaji.', 'checksum_failed' => 'Uthibitishaji wa jumla hakiki ya nakala rudufu umeshindwa.',
+        'manifest_parse_failed' => 'Orodha ya nakala rudufu haikuweza kuchanganuliwa.', 'manifest_empty' => 'Orodha ya nakala rudufu haina majedwali ya programu.',
+        'unsafe_restore_target' => 'Lengo la jaribio la urejeshaji si salama.', 'restored_table_count' => 'Idadi ya majedwali yaliyorejeshwa iko chini ya idadi ya orodha ya nakala rudufu.',
+        'postgresql_required' => 'Nakala rudufu ya uendeshaji kwa sasa inahitaji PostgreSQL.',
+    ]],
 ];

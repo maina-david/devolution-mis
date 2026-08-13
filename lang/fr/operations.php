@@ -22,4 +22,12 @@ return [
         'search_indexes_available' => ':count index de recherche requis sont disponibles.',
         'search_indexes_missing' => 'Les index de recherche requis sont indisponibles : :indexes',
     ],
+    'backup' => ['errors' => [
+        'temporary_backup_path' => 'Impossible d’allouer un chemin temporaire pour la sauvegarde.', 'persist_backup' => 'Impossible de conserver la sauvegarde de la base de données sur le disque configuré.',
+        'completed_required' => 'Seules les sauvegardes terminées peuvent être vérifiées.', 'temporary_restore_path' => 'Impossible d’allouer un chemin temporaire pour la restauration.',
+        'read_artifact' => 'Impossible de lire l’artefact de sauvegarde pour vérification.', 'checksum_failed' => 'La vérification de la somme de contrôle de la sauvegarde a échoué.',
+        'manifest_parse_failed' => 'Le manifeste de sauvegarde n’a pas pu être analysé.', 'manifest_empty' => 'Le manifeste de sauvegarde ne contient aucune table applicative.',
+        'unsafe_restore_target' => 'La cible de la sonde de restauration n’est pas sûre.', 'restored_table_count' => 'Le nombre de tables restaurées est inférieur à celui du manifeste de sauvegarde.',
+        'postgresql_required' => 'La sauvegarde opérationnelle exige actuellement PostgreSQL.',
+    ]],
 ];

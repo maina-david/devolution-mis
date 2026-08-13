@@ -14,6 +14,7 @@ use App\Models\ServiceLevelMeasurement;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use App\Services\OperationalReadinessCheck;
+use App\Services\PostgreSqlBackupManager;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class OperationalReadinessTest extends TestCase
@@ -150,6 +152,35 @@ class OperationalReadinessTest extends TestCase
             $this->actingAs($viewer)->get(route('workspace.export', ['operations', $format]))->assertOk()->assertDownload();
             $this->actingAs($viewer)->get(route('workspace.export', ['operational-alerts', $format]))->assertOk()->assertDownload();
         }
+    }
+
+    public function test_backup_verification_failures_follow_the_active_locale(): void
+    {
+        $backup = OperationalBackup::create([
+            'reference' => 'BKP-LOCALE-001',
+            'disk' => 'local',
+            'path' => 'operations/backups/locale.dump',
+            'database_name' => 'devolution_mis_test',
+            'format' => 'postgres_custom',
+            'status' => 'running',
+            'started_at' => now(),
+        ]);
+        app()->setLocale('fr');
+
+        try {
+            app(PostgreSqlBackupManager::class)->verify($backup);
+            $this->fail('An incomplete backup must not enter verification.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('operations.backup.errors.completed_required'), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/operations.php');
+        $kiswahili = require lang_path('sw/operations.php');
+        $french = require lang_path('fr/operations.php');
+
+        $this->assertSame(array_keys($english['backup']['errors']), array_keys($kiswahili['backup']['errors']));
+        $this->assertSame(array_keys($english['backup']['errors']), array_keys($french['backup']['errors']));
     }
 
     public function test_operational_alert_event_history_and_alert_deletion_are_database_immutable(): void
