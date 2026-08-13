@@ -292,6 +292,16 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->assertStringContainsString('<audio', $source);
         $this->assertStringContainsString('preload="metadata"', $source);
         $this->assertStringContainsString('controlsList="nodownload"', $source);
+        $this->assertStringContainsString('usePage().props.localization', $source);
+        $this->assertStringContainsString('copy.manage_document', $source);
+        $this->assertStringContainsString('toLocaleString(locale)', $source);
+        $this->assertStringNotContainsString('DEFAULT_LOCALE', $source);
+        $this->assertStringNotContainsString('>Manage document<', $source);
+
+        $controller = file_get_contents(app_path('Http/Controllers/EvidenceController.php'));
+        $this->assertIsString($controller);
+        $this->assertStringContainsString("__('evidence.outcomes.uploaded')", $controller);
+        $this->assertStringContainsString("__('evidence.errors.preview_unavailable')", $controller);
     }
 
     public function test_workspace_exposes_complete_version_and_legal_hold_history_with_governed_release(): void

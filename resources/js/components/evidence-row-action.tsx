@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import {
     DownloadIcon,
     EyeIcon,
@@ -36,7 +36,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { interpolate } from '@/hooks/use-localization';
 import {
     destroy,
     download,
@@ -174,6 +174,8 @@ export default function EvidenceRowAction({
     canManageRecords: boolean;
     meta?: EvidenceMeta;
 }) {
+    const { current: locale, evidence: copy } =
+        usePage().props.localization;
     const [activeSheet, setActiveSheet] = useState<'preview' | 'manage' | null>(
         null,
     );
@@ -221,7 +223,7 @@ export default function EvidenceRowAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Open evidence actions"
+                        aria-label={copy.open_actions}
                     >
                         <MoreHorizontal aria-hidden="true" />
                     </Button>
@@ -231,27 +233,29 @@ export default function EvidenceRowAction({
                         <DropdownMenuItem
                             onSelect={() => setActiveSheet('preview')}
                         >
-                            <EyeIcon aria-hidden="true" /> Preview document
+                            <EyeIcon aria-hidden="true" />
+                            {copy.preview_document}
                         </DropdownMenuItem>
                     )}
                     <DropdownMenuItem asChild>
                         <a href={download.url(args)}>
-                            <DownloadIcon aria-hidden="true" /> Download
-                            original
+                            <DownloadIcon aria-hidden="true" />
+                            {copy.download_original}
                         </a>
                     </DropdownMenuItem>
                     {canManage && (
                         <DropdownMenuItem
                             onSelect={() => setActiveSheet('manage')}
                         >
-                            <FilePenIcon aria-hidden="true" /> Manage record
+                            <FilePenIcon aria-hidden="true" />
+                            {copy.manage_record}
                         </DropdownMenuItem>
                     )}
                     {canManageRecords && meta.scanStatus === 'clean' && (
                         <Form {...extract.form(args)}>
                             <DropdownMenuItem asChild>
                                 <button type="submit" className="w-full">
-                                    Reprocess searchable text
+                                    {copy.reprocess_text}
                                 </button>
                             </DropdownMenuItem>
                         </Form>
@@ -269,7 +273,7 @@ export default function EvidenceRowAction({
                                 />
                                 <DropdownMenuItem asChild>
                                     <button type="submit" className="w-full">
-                                        Verify evidence
+                                        {copy.verify_evidence}
                                     </button>
                                 </DropdownMenuItem>
                             </Form>
@@ -284,7 +288,7 @@ export default function EvidenceRowAction({
                                         type="submit"
                                         className="w-full text-destructive"
                                     >
-                                        Reject evidence
+                                        {copy.reject_evidence}
                                     </button>
                                 </DropdownMenuItem>
                             </Form>
@@ -300,21 +304,23 @@ export default function EvidenceRowAction({
                 <SheetContent className="w-full overflow-y-auto sm:max-w-5xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {meta.title ?? 'Document preview'}
+                            {meta.title ?? copy.document_preview}
                         </SheetTitle>
                         <SheetDescription>
-                            {meta.originalName ?? 'Secure evidence document'} ·{' '}
+                            {meta.originalName ?? copy.secure_document}{' '}
                             {meta.sourceType === 'scanned'
-                                ? 'Scanned copy'
-                                : 'Digital file'}
+                                ? copy.scanned_copy
+                                : copy.digital_file}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-6">
                         {county && <CountyIdentity county={county} />}
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="outline">
-                                Text extraction:{' '}
-                                {meta.ocrStatus ?? 'not requested'}
+                                {interpolate(copy.text_extraction, {
+                                    status:
+                                        meta.ocrStatus ?? copy.not_requested,
+                                })}
                             </Badge>
                             {meta.extractionEngine && (
                                 <Badge variant="secondary">
@@ -325,7 +331,7 @@ export default function EvidenceRowAction({
                         {meta.extractionError && (
                             <Alert>
                                 <AlertTitle>
-                                    Searchable text unavailable
+                                    {copy.searchable_unavailable}
                                 </AlertTitle>
                                 <AlertDescription>
                                     {meta.extractionError}
@@ -336,24 +342,23 @@ export default function EvidenceRowAction({
                             <section className="flex flex-col gap-2">
                                 <div>
                                     <h3 className="font-semibold">
-                                        Extraction attempt evidence
+                                        {copy.attempts_title}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Append-only processing and retry history
-                                        for the current immutable version.
+                                        {copy.attempts_description}
                                     </p>
                                 </div>
                                 <div className="overflow-x-auto rounded-lg border">
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Attempt</TableHead>
-                                                <TableHead>Source</TableHead>
-                                                <TableHead>Actor</TableHead>
-                                                <TableHead>Engine</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Duration</TableHead>
-                                                <TableHead>Result</TableHead>
+                                                <TableHead>{copy.attempt}</TableHead>
+                                                <TableHead>{copy.source}</TableHead>
+                                                <TableHead>{copy.actor}</TableHead>
+                                                <TableHead>{copy.engine}</TableHead>
+                                                <TableHead>{copy.status}</TableHead>
+                                                <TableHead>{copy.duration}</TableHead>
+                                                <TableHead>{copy.result}</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -361,7 +366,7 @@ export default function EvidenceRowAction({
                                                 (attempt) => (
                                                     <TableRow key={attempt.id}>
                                                         <TableCell>
-                                                            #{attempt.number}
+                                                            {'#'}{attempt.number}
                                                         </TableCell>
                                                         <TableCell>
                                                             {attempt.triggerSource.replaceAll(
@@ -386,12 +391,14 @@ export default function EvidenceRowAction({
                                                         <TableCell>
                                                             {attempt.durationMs !==
                                                             null
-                                                                ? `${attempt.durationMs.toLocaleString(DEFAULT_LOCALE)} ms`
-                                                                : 'In progress'}
+                                                                ? `${attempt.durationMs.toLocaleString(locale)} ms`
+                                                                : copy.in_progress}
                                                         </TableCell>
                                                         <TableCell>
                                                             {attempt.errorCode ??
-                                                                `${(attempt.characterCount ?? 0).toLocaleString(DEFAULT_LOCALE)} characters`}
+                                                                interpolate(copy.characters, {
+                                                                    count: (attempt.characterCount ?? 0).toLocaleString(locale),
+                                                                })}
                                                         </TableCell>
                                                     </TableRow>
                                                 ),
@@ -406,7 +413,9 @@ export default function EvidenceRowAction({
                                 controls
                                 controlsList="nodownload"
                                 preload="metadata"
-                                aria-label={`Preview of ${meta.title ?? 'document'}`}
+                                aria-label={interpolate(copy.preview_of, {
+                                    title: meta.title ?? copy.document,
+                                })}
                                 className="max-h-[72vh] w-full rounded-lg border bg-black"
                             >
                                 <source
@@ -419,7 +428,9 @@ export default function EvidenceRowAction({
                                 controls
                                 controlsList="nodownload"
                                 preload="metadata"
-                                aria-label={`Preview of ${meta.title ?? 'document'}`}
+                                aria-label={interpolate(copy.preview_of, {
+                                    title: meta.title ?? copy.document,
+                                })}
                                 className="w-full"
                             >
                                 <source
@@ -429,7 +440,9 @@ export default function EvidenceRowAction({
                             </audio>
                         ) : (
                             <iframe
-                                title={`Preview of ${meta.title ?? 'document'}`}
+                                title={interpolate(copy.preview_of, {
+                                    title: meta.title ?? copy.document,
+                                })}
                                 src={preview.url(args)}
                                 className="h-[72vh] w-full rounded-lg border bg-muted"
                             />
@@ -437,7 +450,7 @@ export default function EvidenceRowAction({
                         {meta.extractedTextPreview && (
                             <section className="flex flex-col gap-2">
                                 <h3 className="font-semibold">
-                                    Extracted text preview
+                                    {copy.extracted_preview}
                                 </h3>
                                 <p className="max-h-72 overflow-y-auto rounded-lg border bg-muted p-4 text-sm leading-6 whitespace-pre-wrap">
                                     {meta.extractedTextPreview}
@@ -446,7 +459,7 @@ export default function EvidenceRowAction({
                         )}
                         <Button asChild variant="outline">
                             <a href={download.url(args)}>
-                                Download original document
+                                {copy.download_original_document}
                             </a>
                         </Button>
                     </div>
@@ -459,10 +472,9 @@ export default function EvidenceRowAction({
             >
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Manage document</SheetTitle>
+                        <SheetTitle>{copy.manage_document}</SheetTitle>
                         <SheetDescription>
-                            Update governed metadata, versions, retention, and
-                            legal holds.
+                            {copy.manage_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-6 px-4 pb-6">
@@ -472,7 +484,7 @@ export default function EvidenceRowAction({
                                 <>
                                     <div className="grid gap-2">
                                         <Label htmlFor={`title-${documentId}`}>
-                                            Title
+                                            {copy.title}
                                         </Label>
                                         <Input
                                             id={`title-${documentId}`}
@@ -486,7 +498,7 @@ export default function EvidenceRowAction({
                                             <Label
                                                 htmlFor={`category-${documentId}`}
                                             >
-                                                Category
+                                                {copy.category}
                                             </Label>
                                             <Input
                                                 id={`category-${documentId}`}
@@ -499,7 +511,7 @@ export default function EvidenceRowAction({
                                         </div>
                                         <DatePickerField
                                             name="document_date"
-                                            label="Document date"
+                                            label={copy.document_date}
                                             defaultValue={
                                                 meta.documentDate ?? ''
                                             }
@@ -509,7 +521,7 @@ export default function EvidenceRowAction({
                                         <Label
                                             htmlFor={`description-${documentId}`}
                                         >
-                                            Description
+                                            {copy.description}
                                         </Label>
                                         <Input
                                             id={`description-${documentId}`}
@@ -524,25 +536,25 @@ export default function EvidenceRowAction({
                                             <Label
                                                 htmlFor={`tags-${documentId}`}
                                             >
-                                                Tags
+                                                {copy.tags}
                                             </Label>
                                             <Input
                                                 id={`tags-${documentId}`}
                                                 name="tags"
                                                 defaultValue={meta.tags ?? ''}
-                                                placeholder="planning, FY2025"
+                                                placeholder={copy.tags_placeholder}
                                             />
                                         </div>
                                         <DatePickerField
                                             name="retention_until"
-                                            label="Retain until"
+                                            label={copy.retain_until}
                                             defaultValue={
                                                 meta.retentionUntil ?? ''
                                             }
                                         />
                                     </div>
                                     <Button type="submit" disabled={processing}>
-                                        Save metadata
+                                        {copy.save_metadata}
                                     </Button>
                                 </>
                             )}
@@ -550,17 +562,23 @@ export default function EvidenceRowAction({
                         <section className="grid gap-3 border-t pt-5">
                             <div>
                                 <h3 className="font-semibold">
-                                    Immutable versions
+                                    {copy.versions_title}
                                 </h3>
                                 <p className="text-xs text-muted-foreground">
-                                    Version {meta.version ?? '1'} · SHA-256{' '}
-                                    {meta.checksum?.slice(0, 12) ??
-                                        'legacy record'}{' '}
-                                    · scan {meta.scanStatus ?? 'pending'} · text
-                                    extraction{' '}
-                                    {meta.ocrStatus ?? 'not requested'}
+                                    {interpolate(copy.version_integrity, {
+                                        version: meta.version ?? '1',
+                                        checksum:
+                                            meta.checksum?.slice(0, 12) ?? '—',
+                                        scan: meta.scanStatus ?? 'pending',
+                                        ocr:
+                                            meta.ocrStatus ?? copy.not_requested,
+                                    })}
                                     {meta.extractionCompletedAt
-                                        ? ` · completed ${new Date(meta.extractionCompletedAt).toLocaleString(DEFAULT_LOCALE)}`
+                                        ? interpolate(copy.completed_at, {
+                                              date: new Date(
+                                                  meta.extractionCompletedAt,
+                                              ).toLocaleString(locale),
+                                          })
                                         : ''}
                                 </p>
                             </div>
@@ -580,14 +598,14 @@ export default function EvidenceRowAction({
                                         <Input
                                             name="change_summary"
                                             required
-                                            placeholder="Reason for this replacement"
+                                            placeholder={copy.replacement_reason}
                                         />
                                         <Button
                                             type="submit"
                                             variant="outline"
                                             disabled={processing}
                                         >
-                                            Upload new version
+                                            {copy.upload_version}
                                         </Button>
                                     </>
                                 )}
@@ -595,8 +613,7 @@ export default function EvidenceRowAction({
                             <div className="grid gap-3">
                                 {versions.length === 0 ? (
                                     <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                                        No retained version history is available
-                                        for this legacy record.
+                                        {copy.no_versions}
                                     </p>
                                 ) : (
                                     versions.map((version) => {
@@ -621,12 +638,16 @@ export default function EvidenceRowAction({
                                                     <div>
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <h4 className="font-medium">
-                                                                Version{' '}
-                                                                {version.number}
+                                                                {interpolate(
+                                                                    copy.version_number,
+                                                                    {
+                                                                        number: version.number,
+                                                                    },
+                                                                )}
                                                             </h4>
                                                             {version.isCurrent && (
                                                                 <Badge>
-                                                                    Current
+                                                                    {copy.current}
                                                                 </Badge>
                                                             )}
                                                             <Badge variant="outline">
@@ -636,16 +657,17 @@ export default function EvidenceRowAction({
                                                             </Badge>
                                                         </div>
                                                         <p className="mt-1 text-xs text-muted-foreground">
-                                                            {
-                                                                version.originalName
-                                                            }{' '}
-                                                            · uploaded by{' '}
-                                                            {version.uploadedBy}{' '}
-                                                            ·{' '}
-                                                            {new Date(
-                                                                version.createdAt,
-                                                            ).toLocaleString(
-                                                                DEFAULT_LOCALE,
+                                                            {interpolate(
+                                                                copy.uploaded_by,
+                                                                {
+                                                                    name: version.originalName,
+                                                                    actor: version.uploadedBy,
+                                                                    date: new Date(
+                                                                        version.createdAt,
+                                                                    ).toLocaleString(
+                                                                        locale,
+                                                                    ),
+                                                                },
                                                             )}
                                                         </p>
                                                     </div>
@@ -665,7 +687,7 @@ export default function EvidenceRowAction({
                                                                         target="_blank"
                                                                         rel="noreferrer"
                                                                     >
-                                                                        Preview
+                                                                        {copy.preview}
                                                                     </a>
                                                                 </Button>
                                                             )}
@@ -681,7 +703,7 @@ export default function EvidenceRowAction({
                                                                         versionArgs,
                                                                     )}
                                                                 >
-                                                                    Download
+                                                                    {copy.download}
                                                                 </a>
                                                             </Button>
                                                         )}
@@ -689,15 +711,20 @@ export default function EvidenceRowAction({
                                                 </div>
                                                 <p className="text-sm">
                                                     {version.changeSummary ??
-                                                        'Initial governed version'}
+                                                        copy.initial_version}
                                                 </p>
                                                 <p className="font-mono text-[11px] break-all text-muted-foreground">
-                                                    SHA-256 {version.checksum} ·{' '}
-                                                    {version.sizeBytes.toLocaleString(
-                                                        DEFAULT_LOCALE,
-                                                    )}{' '}
-                                                    bytes · text{' '}
-                                                    {version.ocrStatus}
+                                                    {interpolate(
+                                                        copy.version_manifest,
+                                                        {
+                                                            checksum:
+                                                                version.checksum,
+                                                            bytes: version.sizeBytes.toLocaleString(
+                                                                locale,
+                                                            ),
+                                                            status: version.ocrStatus,
+                                                        },
+                                                    )}
                                                 </p>
                                             </article>
                                         );
@@ -710,11 +737,10 @@ export default function EvidenceRowAction({
                                 <section className="grid gap-3 border-t pt-5">
                                     <div>
                                         <h3 className="font-semibold">
-                                            Place legal hold
+                                            {copy.place_hold}
                                         </h3>
                                         <p className="text-xs text-muted-foreground">
-                                            Prevent replacement, archival, and
-                                            retention changes.
+                                            {copy.place_hold_description}
                                         </p>
                                     </div>
                                     <Form
@@ -727,24 +753,24 @@ export default function EvidenceRowAction({
                                                 <Input
                                                     name="reference"
                                                     required
-                                                    placeholder="Hold reference"
+                                                    placeholder={copy.hold_reference}
                                                 />
                                                 <Input
                                                     name="authority"
                                                     required
-                                                    placeholder="Issuing authority"
+                                                    placeholder={copy.issuing_authority}
                                                 />
                                                 <Input
                                                     name="reason"
                                                     required
-                                                    placeholder="Legal or regulatory reason"
+                                                    placeholder={copy.hold_reason}
                                                 />
                                                 <Button
                                                     type="submit"
                                                     variant="outline"
                                                     disabled={processing}
                                                 >
-                                                    Place legal hold
+                                                    {copy.place_hold}
                                                 </Button>
                                             </>
                                         )}
@@ -753,23 +779,21 @@ export default function EvidenceRowAction({
                             )}
                         {meta.activeLegalHold === 'true' && (
                             <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-                                This record is under legal hold. Replacement,
-                                retention changes, and archival are locked.
+                                {copy.under_hold}
                             </p>
                         )}
                         <section className="grid gap-3 border-t pt-5">
                             <div>
                                 <h3 className="font-semibold">
-                                    Legal-hold history
+                                    {copy.hold_history}
                                 </h3>
                                 <p className="text-xs text-muted-foreground">
-                                    Placement and release decisions remain
-                                    visible after a hold is released.
+                                    {copy.hold_history_description}
                                 </p>
                             </div>
                             {legalHolds.length === 0 ? (
                                 <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                                    No legal holds have been recorded.
+                                    {copy.no_holds}
                                 </p>
                             ) : (
                                 legalHolds.map((hold) => (
@@ -783,12 +807,18 @@ export default function EvidenceRowAction({
                                                     {hold.reference}
                                                 </h4>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {hold.authority} · placed by{' '}
-                                                    {hold.placedBy} ·{' '}
-                                                    {new Date(
-                                                        hold.placedAt,
-                                                    ).toLocaleString(
-                                                        DEFAULT_LOCALE,
+                                                    {interpolate(
+                                                        copy.hold_placed,
+                                                        {
+                                                            authority:
+                                                                hold.authority,
+                                                            actor: hold.placedBy,
+                                                            date: new Date(
+                                                                hold.placedAt,
+                                                            ).toLocaleString(
+                                                                locale,
+                                                            ),
+                                                        },
                                                     )}
                                                 </p>
                                             </div>
@@ -800,22 +830,29 @@ export default function EvidenceRowAction({
                                                 }
                                             >
                                                 {hold.releasedAt
-                                                    ? 'Released'
-                                                    : 'Active'}
+                                                    ? copy.released
+                                                    : copy.active}
                                             </Badge>
                                         </div>
                                         <p className="text-sm">{hold.reason}</p>
                                         {hold.releasedAt && (
                                             <p className="rounded-md bg-muted p-3 text-xs">
-                                                Released by{' '}
-                                                {hold.releasedBy ?? 'Unknown'}{' '}
-                                                on{' '}
-                                                {new Date(
-                                                    hold.releasedAt,
-                                                ).toLocaleString(
-                                                    DEFAULT_LOCALE,
+                                                {interpolate(
+                                                    copy.hold_released,
+                                                    {
+                                                        actor:
+                                                            hold.releasedBy ??
+                                                            copy.unknown,
+                                                        date: new Date(
+                                                            hold.releasedAt,
+                                                        ).toLocaleString(
+                                                            locale,
+                                                        ),
+                                                        reason:
+                                                            hold.releaseReason ??
+                                                            '',
+                                                    },
                                                 )}
-                                                . {hold.releaseReason}
                                             </p>
                                         )}
                                         {hold.canRelease &&
@@ -833,13 +870,13 @@ export default function EvidenceRowAction({
                                                             <Label
                                                                 htmlFor={`release-reason-${hold.id}`}
                                                             >
-                                                                Release reason
+                                                                {copy.release_reason}
                                                             </Label>
                                                             <Input
                                                                 id={`release-reason-${hold.id}`}
                                                                 name="release_reason"
                                                                 required
-                                                                placeholder="Authority and reason for releasing this hold"
+                                                                placeholder={copy.release_placeholder}
                                                             />
                                                             <Button
                                                                 type="submit"
@@ -848,8 +885,7 @@ export default function EvidenceRowAction({
                                                                     processing
                                                                 }
                                                             >
-                                                                Release legal
-                                                                hold
+                                                                {copy.release_hold}
                                                             </Button>
                                                         </>
                                                     )}
@@ -875,7 +911,7 @@ export default function EvidenceRowAction({
                                     variant="destructive"
                                     className="w-full"
                                 >
-                                    Archive document
+                                    {copy.archive_document}
                                 </Button>
                             </Form>
                         )}
@@ -903,6 +939,8 @@ function DispositionControls({
     retentionUntil: string | null;
     recordStatus: string | null;
 }) {
+    const copy = usePage().props.localization.evidence;
+
     return (
         <>
             {canManageRecords &&
@@ -911,20 +949,19 @@ function DispositionControls({
                     <section className="grid gap-3 border-t pt-5">
                         <div>
                             <h3 className="font-semibold">
-                                Request controlled disposition
+                                {copy.request_disposition}
                             </h3>
                             <p className="text-xs text-muted-foreground">
-                                Requires independent review and a separate
-                                executing officer. Active legal holds and
-                                integrity failures stop execution.
+                                {copy.disposition_description}
                             </p>
                         </div>
                         {!retentionUntil ? (
                             <Alert>
-                                <AlertTitle>Retention date required</AlertTitle>
+                                <AlertTitle>
+                                    {copy.retention_required}
+                                </AlertTitle>
                                 <AlertDescription>
-                                    Set an approved retain-until date before
-                                    requesting secure destruction.
+                                    {copy.retention_required_description}
                                 </AlertDescription>
                             </Alert>
                         ) : (
@@ -939,18 +976,18 @@ function DispositionControls({
                                             <Label
                                                 htmlFor={`disposition-authority-${documentId}`}
                                             >
-                                                Authority reference
+                                                {copy.authority_reference}
                                             </Label>
                                             <Input
                                                 id={`disposition-authority-${documentId}`}
                                                 name="authority_reference"
                                                 required
-                                                placeholder="Approved schedule or disposal authority"
+                                                placeholder={copy.authority_placeholder}
                                             />
                                         </div>
                                         <DatePickerField
                                             name="scheduled_for"
-                                            label="Scheduled execution date"
+                                            label={copy.scheduled_date}
                                             min={retentionUntil}
                                             required
                                         />
@@ -958,13 +995,13 @@ function DispositionControls({
                                             <Label
                                                 htmlFor={`disposition-reason-${documentId}`}
                                             >
-                                                Disposition reason
+                                                {copy.disposition_reason}
                                             </Label>
                                             <Textarea
                                                 id={`disposition-reason-${documentId}`}
                                                 name="reason"
                                                 required
-                                                placeholder="Record class, retention trigger and reason destruction is authorized"
+                                                placeholder={copy.disposition_placeholder}
                                             />
                                         </div>
                                         <Button
@@ -972,7 +1009,7 @@ function DispositionControls({
                                             variant="destructive"
                                             disabled={processing}
                                         >
-                                            Submit disposition for review
+                                            {copy.submit_disposition}
                                         </Button>
                                     </>
                                 )}
@@ -982,15 +1019,16 @@ function DispositionControls({
                 )}
             <section className="grid gap-3 border-t pt-5">
                 <div>
-                    <h3 className="font-semibold">Disposition history</h3>
+                    <h3 className="font-semibold">
+                        {copy.disposition_history}
+                    </h3>
                     <p className="text-xs text-muted-foreground">
-                        Requests, independent decisions, execution failures and
-                        immutable destruction evidence.
+                        {copy.disposition_history_description}
                     </p>
                 </div>
                 {dispositions.length === 0 ? (
                     <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                        No disposition requests have been recorded.
+                        {copy.no_dispositions}
                     </p>
                 ) : (
                     dispositions.map((disposition) => (
@@ -1016,6 +1054,8 @@ function DispositionRecord({
     disposition: DocumentDisposition;
     canManageRecords: boolean;
 }) {
+    const { current: locale, evidence: copy } =
+        usePage().props.localization;
     const dispositionArgs = { ...args, disposition: disposition.id };
 
     return (
@@ -1023,34 +1063,42 @@ function DispositionRecord({
             <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                     <h4 className="font-medium">
-                        Secure destruction · {disposition.authorityReference}
+                        {interpolate(copy.secure_destruction, {
+                            reference: disposition.authorityReference,
+                        })}
                     </h4>
                     <p className="text-xs text-muted-foreground">
-                        Requested by {disposition.requestedBy} on{' '}
-                        {new Date(disposition.requestedAt).toLocaleString(
-                            DEFAULT_LOCALE,
-                        )}
+                        {interpolate(copy.requested_by, {
+                            actor: disposition.requestedBy,
+                            date: new Date(
+                                disposition.requestedAt,
+                            ).toLocaleString(locale),
+                        })}
                     </p>
                 </div>
                 <Badge variant="outline">{disposition.status}</Badge>
             </div>
             <p className="text-sm">{disposition.reason}</p>
             <p className="text-xs text-muted-foreground">
-                Retention due {disposition.retentionDueAt} · scheduled{' '}
-                {disposition.scheduledFor}
+                {interpolate(copy.retention_schedule, {
+                    due: disposition.retentionDueAt,
+                    scheduled: disposition.scheduledFor,
+                })}
             </p>
             {disposition.reviewedAt && (
                 <p className="rounded-md bg-muted p-3 text-xs">
-                    Reviewed by {disposition.reviewedBy} on{' '}
-                    {new Date(disposition.reviewedAt).toLocaleString(
-                        DEFAULT_LOCALE,
-                    )}
-                    . {disposition.decisionReason}
+                    {interpolate(copy.reviewed_by, {
+                        actor: disposition.reviewedBy ?? copy.unknown,
+                        date: new Date(disposition.reviewedAt).toLocaleString(
+                            locale,
+                        ),
+                        reason: disposition.decisionReason ?? '',
+                    })}
                 </p>
             )}
             {disposition.executionError && (
                 <Alert variant="destructive">
-                    <AlertTitle>Execution stopped</AlertTitle>
+                    <AlertTitle>{copy.execution_stopped}</AlertTitle>
                     <AlertDescription>
                         {disposition.executionError}
                     </AlertDescription>
@@ -1059,16 +1107,21 @@ function DispositionRecord({
             {disposition.executedAt && (
                 <div className="grid gap-1 rounded-md bg-muted p-3 text-xs">
                     <p>
-                        Executed by {disposition.executedBy} on{' '}
-                        {new Date(disposition.executedAt).toLocaleString(
-                            DEFAULT_LOCALE,
-                        )}
-                        . {disposition.objectCount} objects /{' '}
-                        {disposition.totalBytes.toLocaleString(DEFAULT_LOCALE)}{' '}
-                        bytes.
+                        {interpolate(copy.executed_by, {
+                            actor: disposition.executedBy ?? copy.unknown,
+                            date: new Date(
+                                disposition.executedAt,
+                            ).toLocaleString(locale),
+                            objects: disposition.objectCount,
+                            bytes: disposition.totalBytes.toLocaleString(
+                                locale,
+                            ),
+                        })}
                     </p>
                     <p className="font-mono break-all">
-                        Manifest SHA-256 {disposition.manifestChecksum}
+                        {interpolate(copy.manifest_checksum, {
+                            checksum: disposition.manifestChecksum ?? '—',
+                        })}
                     </p>
                 </div>
             )}
@@ -1082,7 +1135,7 @@ function DispositionRecord({
                             <Label
                                 htmlFor={`decision-reason-${disposition.id}`}
                             >
-                                Independent review reason
+                                {copy.independent_reason}
                             </Label>
                             <Textarea
                                 id={`decision-reason-${disposition.id}`}
@@ -1096,7 +1149,7 @@ function DispositionRecord({
                                     value="approved"
                                     disabled={processing}
                                 >
-                                    Approve
+                                    {copy.approve}
                                 </Button>
                                 <Button
                                     type="submit"
@@ -1105,7 +1158,7 @@ function DispositionRecord({
                                     variant="outline"
                                     disabled={processing}
                                 >
-                                    Reject
+                                    {copy.reject}
                                 </Button>
                             </div>
                         </>
@@ -1121,7 +1174,7 @@ function DispositionRecord({
                             className="w-full"
                             disabled={processing}
                         >
-                            Execute approved secure destruction
+                            {copy.execute_destruction}
                         </Button>
                     )}
                 </Form>

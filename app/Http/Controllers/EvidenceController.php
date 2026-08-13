@@ -66,9 +66,9 @@ class EvidenceController extends Controller
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
         abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
         abort_unless(Storage::exists($document->path), 404);
-        abort_unless($this->hasValidIntegrity($document), 409, 'Document integrity verification failed.');
+        abort_unless($this->hasValidIntegrity($document), 409, __('evidence.errors.integrity_failed'));
         if (! $this->isPreviewableMimeType((string) $document->mime_type)) {
-            abort(415, 'Preview is not available for this file type.');
+            abort(415, __('evidence.errors.preview_unavailable'));
         }
         $auditLogger->record($this->user($request), $document, 'evidence.previewed', "Document previewed: {$document->title}.", $document->county_id);
 
@@ -133,7 +133,7 @@ class EvidenceController extends Controller
             'assessment_criterion_id' => $request->validated('assessment_criterion_id'),
             'criterion_evidence_requirement_id' => $request->validated('criterion_evidence_requirement_id'),
         ]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.uploaded')]);
 
         return back();
     }
@@ -142,7 +142,7 @@ class EvidenceController extends Controller
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
         $verifyEvidence->handle($document, $request->validated('status'), $this->user($request));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Evidence verification recorded.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.verified')]);
 
         return back();
     }
@@ -156,7 +156,7 @@ class EvidenceController extends Controller
             'tags' => $request->string('tags')->explode(',')->map(fn (string $tag): string => str($tag)->trim()->toString())->filter()->values()->all(),
         ]);
         $auditLogger->record($this->user($request), $document, 'evidence.metadata_updated', "Document metadata updated: {$document->title}.", $document->county_id);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Document metadata updated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.metadata_updated')]);
 
         return back();
     }
@@ -168,7 +168,7 @@ class EvidenceController extends Controller
         abort_if($document->hasActiveLegalHold(), 409, 'A document under legal hold cannot be archived.');
         $auditLogger->record($this->user($request), $document, 'evidence.archived', "Document archived: {$document->title}.", $document->county_id);
         $document->delete();
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Document archived.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.archived')]);
 
         return back();
     }
@@ -176,7 +176,7 @@ class EvidenceController extends Controller
     public function replace(ReplaceDocumentVersionRequest $request, AssessmentDocument $document, ReplaceDocumentVersion $replace): RedirectResponse
     {
         $replace->handle($document, $this->user($request), $request->file('document'), $request->string('change_summary')->toString());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'A new immutable document version was uploaded.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.version_uploaded')]);
 
         return back();
     }
@@ -188,7 +188,7 @@ class EvidenceController extends Controller
         abort_unless($document->scan_status === 'clean' && $document->current_version_id !== null, 409, 'Only a clean current document version can be processed.');
         $document->update(['ocr_status' => 'pending']);
         ExtractDocumentText::dispatch((string) $document->current_version_id, true, $this->user($request)->id, 'manual_retry');
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Document text extraction queued.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.extraction_queued')]);
 
         return back();
     }
@@ -200,7 +200,7 @@ class EvidenceController extends Controller
             'reason' => $request->string('reason')->toString(),
             'authority' => $request->string('authority')->toString(),
         ]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Legal hold placed.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.hold_placed')]);
 
         return back();
     }
@@ -213,7 +213,7 @@ class EvidenceController extends Controller
         $validated = $request->validated();
         $legalHold->update(['released_by' => $this->user($request)->id, 'released_at' => now(), 'release_reason' => $validated['release_reason']]);
         $auditLogger->record($this->user($request), $legalHold, 'document.legal_hold_released', "Legal hold {$legalHold->reference} released.", $document->county_id, ['reason' => $validated['release_reason']]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Legal hold released.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.hold_released')]);
 
         return back();
     }
@@ -225,7 +225,7 @@ class EvidenceController extends Controller
             'authority_reference' => $request->string('authority_reference')->toString(),
             'scheduled_for' => $request->date('scheduled_for')->toDateString(),
         ]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Controlled disposition submitted for independent review.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.disposition_submitted')]);
 
         return back();
     }
@@ -234,7 +234,7 @@ class EvidenceController extends Controller
     {
         abort_unless($disposition->assessment_document_id === $document->id, 404);
         $decide->handle($disposition, $this->user($request), $request->string('decision')->toString(), $request->string('decision_reason')->toString());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Disposition review decision recorded.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.disposition_decided')]);
 
         return back();
     }
@@ -243,7 +243,7 @@ class EvidenceController extends Controller
     {
         abort_unless($disposition->assessment_document_id === $document->id, 404);
         $execute->handle($disposition, $this->user($request));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Controlled disposition executed and evidence retained.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.disposition_executed')]);
 
         return redirect()->route('evidence.index');
     }
