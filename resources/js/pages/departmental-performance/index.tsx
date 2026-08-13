@@ -203,7 +203,8 @@ export default function DepartmentalPerformance({
     options,
     analytics,
 }: Props) {
-    const { auth } = usePage().props;
+    const { auth, localization } = usePage().props;
+    const copy = localization.departmentalPerformance;
 
     const rows: WorkspaceRow[] = plans.data.map((plan) => ({
         id: plan.id,
@@ -227,21 +228,19 @@ export default function DepartmentalPerformance({
 
     return (
         <>
-            <Head title="Departmental performance" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                SDD results and accountability
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Departmental performance
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Agree weighted staff goals, conduct
-                                evidence-backed reviews, identify capacity gaps,
-                                and preserve an auditable appraisal history.
+                                {copy.description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -332,17 +331,21 @@ export default function DepartmentalPerformance({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">Performance register</h2>
+                            <h2 className="font-bold">
+                                {copy.performance_register}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                {plans.total.toLocaleString()} plans in your
-                                authorized scope
+                                {copy.plans_authorized_scope.replace(
+                                    ':count',
+                                    plans.total.toLocaleString(),
+                                )}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline">
-                                        <DownloadIcon /> Export
+                                        <DownloadIcon /> {copy.export}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -473,6 +476,8 @@ function AnalyticsTable({
 }
 
 function CycleForm() {
+    const copy = useDepartmentalPerformanceCopy();
+
     return (
         <FormSheet
             title="Create performance cycle"
@@ -534,7 +539,7 @@ function CycleForm() {
                             error={errors.status}
                         />
                         <Button type="submit" disabled={processing}>
-                            Create cycle
+                            {copy.create_cycle}
                         </Button>
                     </>
                 )}
@@ -551,6 +556,7 @@ function PlanForm({
     catalogue: Props['catalogue'];
 }) {
     const [goals, setGoals] = useState([0]);
+    const copy = useDepartmentalPerformanceCopy();
 
     return (
         <FormSheet
@@ -622,7 +628,7 @@ function PlanForm({
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="performance-expectations">
-                                Overall expectations
+                                {copy.overall_expectations}
                             </Label>
                             <Textarea
                                 id="performance-expectations"
@@ -636,10 +642,10 @@ function PlanForm({
                             <div className="flex items-center justify-between">
                                 <div>
                                     <h3 className="font-semibold">
-                                        Weighted goals
+                                        {copy.weighted_goals}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Together the weights must equal 100%.
+                                        {copy.weights_rule}
                                     </p>
                                 </div>
                                 <Button
@@ -653,14 +659,14 @@ function PlanForm({
                                         ])
                                     }
                                 >
-                                    Add goal
+                                    {copy.add_goal}
                                 </Button>
                             </div>
                             {goals.map((key, index) => (
                                 <Card key={key}>
                                     <CardHeader className="flex-row items-center justify-between">
                                         <CardTitle className="text-base">
-                                            Goal {index + 1}
+                                            {copy.goal} {index + 1}
                                         </CardTitle>
                                         {goals.length > 1 && (
                                             <Button
@@ -676,7 +682,7 @@ function PlanForm({
                                                     )
                                                 }
                                             >
-                                                Remove
+                                                {copy.remove}
                                             </Button>
                                         )}
                                     </CardHeader>
@@ -742,7 +748,7 @@ function PlanForm({
                                             <Label
                                                 htmlFor={`goal-description-${index}`}
                                             >
-                                                Description
+                                                {copy.description_label}
                                             </Label>
                                             <Textarea
                                                 id={`goal-description-${index}`}
@@ -756,7 +762,7 @@ function PlanForm({
                             <ErrorText value={errors.goals} />
                         </div>
                         <Button type="submit" disabled={processing}>
-                            Save draft plan
+                            {copy.save_draft_plan}
                         </Button>
                     </>
                 )}
@@ -775,6 +781,7 @@ function PlanActions({
     capabilities: Props['capabilities'];
 }) {
     const [surface, setSurface] = useState<string | null>(null);
+    const copy = useDepartmentalPerformanceCopy();
     const cleanPurposes = new Set(
         plan.documents
             .filter((document) => document.scanStatus === 'clean')
@@ -881,7 +888,7 @@ function PlanActions({
                         <DropdownMenuItem
                             onSelect={() => setSurface('details')}
                         >
-                            <Eye /> View plan
+                            <Eye /> {copy.view_plan}
                         </DropdownMenuItem>
                         {transitions
                             .filter(([, , visible]) => visible)
@@ -904,7 +911,7 @@ function PlanActions({
                                         setSurface(`amend:${goal.id}`)
                                     }
                                 >
-                                    <Pencil /> Amend {goal.code}
+                                    <Pencil /> {copy.amend} {goal.code}
                                 </DropdownMenuItem>
                             ))}
                         {capabilities.review &&
@@ -917,7 +924,8 @@ function PlanActions({
                                         setSurface(`decide:${amendment.id}`)
                                     }
                                 >
-                                    <Scale /> Decide {goal.code} amendment
+                                    <Scale /> {copy.decide} {goal.code}{' '}
+                                    {copy.amendment}
                                 </DropdownMenuItem>
                             ))}
                     </DropdownMenuGroup>
@@ -989,6 +997,7 @@ function TransitionForm({
     transitionName: string;
     disabledReason?: string;
 }) {
+    const copy = useDepartmentalPerformanceCopy();
     const ratings = ['submit_self_review', 'finalize_review'].includes(
         transitionName,
     );
@@ -1015,7 +1024,7 @@ function TransitionForm({
                     />
                     <div className="grid gap-2">
                         <Label htmlFor={`rationale-${plan.id}`}>
-                            Decision rationale
+                            {copy.decision_rationale}
                         </Label>
                         <Textarea
                             id={`rationale-${plan.id}`}
@@ -1030,9 +1039,9 @@ function TransitionForm({
                             <Card key={goal.id}>
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        {goal.code} · {goal.title}{' '}
+                                        {goal.code} {copy.separator} {goal.title}{' '}
                                         <Badge variant="outline">
-                                            {goal.weight}%
+                                            {goal.weight}{copy.percent}
                                         </Badge>
                                     </CardTitle>
                                 </CardHeader>
@@ -1095,7 +1104,7 @@ function TransitionForm({
                         <>
                             <div className="grid gap-2">
                                 <Label htmlFor="capacity-gaps">
-                                    Capacity gaps
+                                    {copy.capacity_gaps}
                                 </Label>
                                 <Textarea
                                     id="capacity-gaps"
@@ -1106,7 +1115,7 @@ function TransitionForm({
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="development-actions">
-                                    Development actions
+                                    {copy.development_actions}
                                 </Label>
                                 <Textarea
                                     id="development-actions"
@@ -1136,6 +1145,8 @@ function GoalAmendmentForm({
     plan: PerformancePlan;
     goal: Goal;
 }) {
+    const copy = useDepartmentalPerformanceCopy();
+
     return (
         <Form
             action={storeGoalAmendment({
@@ -1196,7 +1207,7 @@ function GoalAmendmentForm({
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor={`amend-description-${goal.id}`}>
-                            Goal description
+                            {copy.goal_description}
                         </Label>
                         <Textarea
                             id={`amend-description-${goal.id}`}
@@ -1210,7 +1221,7 @@ function GoalAmendmentForm({
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor={`amend-reason-${goal.id}`}>
-                            Amendment rationale
+                            {copy.amendment_rationale}
                         </Label>
                         <Textarea
                             id={`amend-reason-${goal.id}`}
@@ -1222,7 +1233,7 @@ function GoalAmendmentForm({
                         <ErrorText value={errors.reason} />
                     </div>
                     <Button type="submit" disabled={processing}>
-                        Submit amendment request
+                        {copy.submit_amendment_request}
                     </Button>
                 </>
             )}
@@ -1239,6 +1250,8 @@ function GoalAmendmentDecisionForm({
     goal: Goal;
     amendment: GoalAmendment;
 }) {
+    const copy = useDepartmentalPerformanceCopy();
+
     return (
         <Form
             action={storeGoalAmendmentDecision({
@@ -1252,7 +1265,7 @@ function GoalAmendmentDecisionForm({
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-base">
-                                Requested by {amendment.requester}
+                                {copy.requested_by} {amendment.requester}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-3 text-sm">
@@ -1279,9 +1292,11 @@ function GoalAmendmentDecisionForm({
                                 >
                                     <p className="font-medium">{label}</p>
                                     <p className="text-muted-foreground">
-                                        Current: {current}
+                                        {copy.current_label} {current}
                                     </p>
-                                    <p>Proposed: {proposed}</p>
+                                    <p>
+                                        {copy.proposed_label} {proposed}
+                                    </p>
                                 </div>
                             ))}
                         </CardContent>
@@ -1298,7 +1313,7 @@ function GoalAmendmentDecisionForm({
                     />
                     <div className="grid gap-2">
                         <Label htmlFor={`decision-rationale-${amendment.id}`}>
-                            Decision rationale
+                            {copy.decision_rationale}
                         </Label>
                         <Textarea
                             id={`decision-rationale-${amendment.id}`}
@@ -1310,7 +1325,7 @@ function GoalAmendmentDecisionForm({
                         <ErrorText value={errors.rationale} />
                     </div>
                     <Button type="submit" disabled={processing}>
-                        Retain decision
+                        {copy.retain_decision}
                     </Button>
                 </>
             )}
@@ -1327,6 +1342,7 @@ function PlanDetails({
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
+    const copy = useDepartmentalPerformanceCopy();
     const isEmployee = plan.employeeId === currentUserId;
     const isSupervisor = plan.supervisorId === currentUserId;
     const canUpload =
@@ -1370,30 +1386,38 @@ function PlanDetails({
                 ))}
             </div>
             <div>
-                <h3 className="font-semibold">Overall expectations</h3>
+                <h3 className="font-semibold">
+                    {copy.overall_expectations}
+                </h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                     {plan.expectations}
                 </p>
             </div>
             <div className="grid gap-3">
-                <h3 className="font-semibold">Weighted goals</h3>
+                <h3 className="font-semibold">{copy.weighted_goals}</h3>
                 {plan.goals.map((goal) => (
                     <div key={goal.id} className="rounded-lg border p-4">
                         <div className="flex flex-wrap justify-between gap-2">
                             <p className="font-medium">
-                                {goal.code} · {goal.title}
+                                {goal.code} {copy.separator} {goal.title}
                             </p>
-                            <Badge variant="outline">{goal.weight}%</Badge>
+                            <Badge variant="outline">
+                                {goal.weight}{copy.percent}
+                            </Badge>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            {goal.kpi}: target {goal.target} {goal.unit} ·
-                            actual {goal.actual ?? 'pending'} · self{' '}
-                            {goal.selfRating ?? '—'} · supervisor{' '}
+                            {goal.kpi}{copy.colon} {copy.target_label}{' '}
+                            {goal.target} {goal.unit} {copy.separator}{' '}
+                            {copy.actual_label} {goal.actual ?? 'pending'}{' '}
+                            {copy.separator} {copy.self_label}{' '}
+                            {goal.selfRating ?? '—'} {copy.separator}{' '}
+                            {copy.supervisor_label}{' '}
                             {goal.supervisorRating ?? '—'}
                         </p>
                         <div className="mt-4 grid gap-2">
                             <p className="text-xs font-medium text-muted-foreground">
-                                {goal.versions.length} retained definition{' '}
+                                {goal.versions.length}{' '}
+                                {copy.retained_definition}{' '}
                                 {goal.versions.length === 1
                                     ? 'version'
                                     : 'versions'}
@@ -1405,8 +1429,9 @@ function PlanDetails({
                                 >
                                     <div className="flex flex-wrap items-center justify-between gap-2">
                                         <p className="font-medium">
-                                            Amendment v
-                                            {amendment.requestVersion} ·{' '}
+                                            {copy.amendment_version_prefix}
+                                            {amendment.requestVersion}{' '}
+                                            {copy.separator}{' '}
                                             {amendment.requester}
                                         </p>
                                         <Badge
@@ -1425,7 +1450,8 @@ function PlanDetails({
                                     </p>
                                     {amendment.decision && (
                                         <p className="mt-2">
-                                            {amendment.decision.decider}:{' '}
+                                            {amendment.decision.decider}
+                                            {copy.colon}{' '}
                                             {amendment.decision.rationale}
                                         </p>
                                     )}
@@ -1436,12 +1462,13 @@ function PlanDetails({
                 ))}
             </div>
             <div className="grid gap-3">
-                <h3 className="font-semibold">Review history</h3>
+                <h3 className="font-semibold">{copy.review_history}</h3>
                 {plan.reviews.length ? (
                     plan.reviews.map((review) => (
                         <div key={review.id} className="rounded-lg border p-4">
                             <p className="font-medium">
-                                {humanize(review.stage)} · {review.reviewer}
+                                {humanize(review.stage)} {copy.separator}{' '}
+                                {review.reviewer}
                             </p>
                             <p className="mt-2 text-sm text-muted-foreground">
                                 {review.comments}
@@ -1450,7 +1477,7 @@ function PlanDetails({
                     ))
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        No review decisions recorded yet.
+                        {copy.no_review_decisions}
                     </p>
                 )}
             </div>
@@ -1503,4 +1530,8 @@ function humanize(value: string): string {
         .replaceAll('_', ' ')
         .replaceAll('-', ' ')
         .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function useDepartmentalPerformanceCopy(): Record<string, string> {
+    return usePage().props.localization.departmentalPerformance;
 }
