@@ -93,6 +93,7 @@ declare module '@inertiajs/core' {
                     ui: Record<string, string>;
                 };
                 notifications: Record<string, string>;
+                userActivity: Record<string, string>;
                 evaluationFindings: Record<string, string>;
                 departmentalPerformance: Record<string, string>;
                 performanceDocuments: Record<string, string>;

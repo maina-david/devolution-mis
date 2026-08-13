@@ -42,6 +42,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.learning.heading', 'Kituo cha mafunzo ya ugatuzi')
                 ->where('localization.learning.reconciliation_rationale', 'Sababu ya upatanisho')
                 ->where('localization.programmeUserProfile.governed_identity_record', 'Rekodi ya utambulisho inayosimamiwa')
+                ->where('localization.userActivity.online_now', 'Mtandaoni sasa')
                 ->has('localization.supported', 3));
 
         $this->flushSession();

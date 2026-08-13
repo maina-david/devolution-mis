@@ -5,7 +5,7 @@ import { globSync } from 'node:fs';
 /* global process */
 
 const limits = {
-    frontendLiterals: 249,
+    frontendLiterals: 239,
     backendMessages: 653,
 };
 

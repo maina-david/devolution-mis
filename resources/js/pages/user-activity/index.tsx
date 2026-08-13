@@ -1,4 +1,4 @@
-import { Head, router, usePoll } from '@inertiajs/react';
+import { Head, router, usePage, usePoll } from '@inertiajs/react';
 import { Activity, Clock3, MonitorDot, Users } from 'lucide-react';
 import DateRangeFilter from '@/components/date-range-filter';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { WorkspaceRow } from '@/components/workspace-data-table';
 import WorkspaceDataTable from '@/components/workspace-data-table';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { interpolate } from '@/hooks/use-localization';
 import { index as userActivityIndex } from '@/routes/user-activity';
 
 type ActivitySession = {
@@ -53,13 +53,17 @@ type Paginator<T> = {
     total: number;
 };
 
-const formatDateTime = (value: string | null) =>
+const formatDateTime = (
+    value: string | null,
+    locale: string,
+    activeLabel: string,
+) =>
     value
-        ? new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+        ? new Intl.DateTimeFormat(locale, {
               dateStyle: 'medium',
               timeStyle: 'short',
           }).format(new Date(value))
-        : 'Active';
+        : activeLabel;
 
 export default function UserActivityIndex({
     activeSessions,
@@ -84,6 +88,19 @@ export default function UserActivityIndex({
     };
     onlineWindowMinutes: number;
 }) {
+    const { localization } = usePage().props;
+    const copy = localization.userActivity;
+    const locale = localization.current;
+    const number = (value: number) =>
+        new Intl.NumberFormat(locale).format(value);
+    const onlineUsers = new Set(
+        activeSessions.map((session) => session.user.id),
+    ).size;
+    const roleLabel = (role: string | null) =>
+        role
+            ? (copy[`role_${role.replaceAll('-', '_')}`] ?? role)
+            : copy.no_role;
+
     usePoll(15000, {
         only: ['activeSessions', 'sessions', 'events', 'pageViews'],
     });
@@ -106,15 +123,15 @@ export default function UserActivityIndex({
         status: session.loggedOutAt ? 'closed' : 'active',
         cells: [
             session.user.name,
-            session.user.role ?? 'No role',
-            formatDateTime(session.loggedInAt),
-            formatDateTime(session.lastSeenAt),
-            formatDateTime(session.loggedOutAt),
+            roleLabel(session.user.role),
+            formatDateTime(session.loggedInAt, locale, copy.active),
+            formatDateTime(session.lastSeenAt, locale, copy.active),
+            formatDateTime(session.loggedOutAt, locale, copy.active),
             session.currentPageTitle ??
                 session.currentRoute ??
-                'No page recorded',
+                copy.no_page_recorded,
             session.ipAddress ?? '—',
-            session.loggedOutAt ? 'closed' : 'active',
+            session.loggedOutAt ? copy.closed : copy.active,
         ],
         meta: { userId: session.user.id },
     }));
@@ -127,7 +144,7 @@ export default function UserActivityIndex({
             event.route ?? '—',
             event.method ?? '—',
             event.ipAddress ?? '—',
-            formatDateTime(event.occurredAt),
+            formatDateTime(event.occurredAt, locale, copy.active),
         ],
         meta: { sessionId: event.sessionId },
     }));
@@ -139,55 +156,55 @@ export default function UserActivityIndex({
             view.route,
             view.path,
             view.ipAddress ?? '—',
-            formatDateTime(view.viewedAt),
+            formatDateTime(view.viewedAt, locale, copy.active),
         ],
     }));
 
     return (
         <>
-            <Head title="User activity" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+                <p className="sr-only" role="status" aria-live="polite">
+                    {interpolate(copy.live_region, {
+                        users: number(onlineUsers),
+                        sessions: number(activeSessions.length),
+                    })}
+                </p>
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Identity monitoring
+                        {copy.eyebrow}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                        User activity & sessions
+                        {copy.heading}
                     </h1>
                     <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                        Trace a user from authentication through page access and
-                        governed actions to logout, while monitoring currently
-                        active sessions.
+                        {copy.description}
                     </p>
                 </section>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                     <Metric
                         icon={Users}
-                        label="Users online"
-                        value={String(
-                            new Set(
-                                activeSessions.map(
-                                    (session) => session.user.id,
-                                ),
-                            ).size,
-                        )}
-                        detail={`Seen in the last ${onlineWindowMinutes} minutes`}
+                        label={copy.users_online}
+                        value={number(onlineUsers)}
+                        detail={interpolate(copy.seen_window, {
+                            minutes: number(onlineWindowMinutes),
+                        })}
                     />
                     <Metric
                         icon={MonitorDot}
-                        label="Active sessions"
-                        value={String(activeSessions.length)}
-                        detail="Across authorized workspaces"
+                        label={copy.active_sessions}
+                        value={number(activeSessions.length)}
+                        detail={copy.authorized_scope}
                     />
                     <Metric
                         icon={Activity}
-                        label="Matching events"
-                        value={String(events.total)}
+                        label={copy.matching_events}
+                        value={number(events.total)}
                         detail={
                             filters.userId
-                                ? 'For the selected user'
-                                : 'Across all authorized users'
+                                ? copy.selected_user
+                                : copy.all_authorized_users
                         }
                     />
                 </div>
@@ -199,19 +216,19 @@ export default function UserActivityIndex({
                     selectFilters={[
                         {
                             key: 'user_id',
-                            label: 'User',
+                            label: copy.user,
                             options: users,
                             value: filters.userId,
                         },
                     ]}
-                    searchPlaceholder="Search action or description"
+                    searchPlaceholder={copy.search_placeholder}
                 />
 
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <MonitorDot className="size-5 text-primary" />
-                            Online now
+                            {copy.online_now}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -233,17 +250,20 @@ export default function UserActivityIndex({
                                         <span className="mt-1 block truncate text-sm text-muted-foreground">
                                             {session.currentPageTitle ??
                                                 session.currentRoute ??
-                                                'Authenticated'}{' '}
-                                            ·{' '}
-                                            {formatDateTime(session.lastSeenAt)}
+                                                copy.authenticated}{' '}
+                                            {copy.metadata_separator}{' '}
+                                            {formatDateTime(
+                                                session.lastSeenAt,
+                                                locale,
+                                                copy.active,
+                                            )}
                                         </span>
                                     </span>
                                 </Button>
                             ))
                         ) : (
                             <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
-                                No users were active during the current online
-                                window.
+                                {copy.no_active_users}
                             </p>
                         )}
                     </CardContent>
@@ -251,20 +271,20 @@ export default function UserActivityIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Login and logout sessions</CardTitle>
+                        <CardTitle>{copy.login_logout_sessions}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {sessionRows.length ? (
                             <WorkspaceDataTable
                                 columns={[
-                                    'User',
-                                    'Role',
-                                    'Logged in',
-                                    'Last seen',
-                                    'Logged out',
-                                    'Last page',
-                                    'IP address',
-                                    'Status',
+                                    copy.user,
+                                    copy.role,
+                                    copy.logged_in,
+                                    copy.last_seen,
+                                    copy.logged_out,
+                                    copy.last_page,
+                                    copy.ip_address,
+                                    copy.status,
                                 ]}
                                 rows={sessionRows}
                                 pagination={pagination(
@@ -282,56 +302,65 @@ export default function UserActivityIndex({
                                 }
                             />
                         ) : (
-                            <EmptyState text="No sessions match the selected filters." />
+                            <EmptyState
+                                text={copy.no_sessions}
+                                action={copy.adjust_filters}
+                            />
                         )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Page access history</CardTitle>
+                        <CardTitle>{copy.page_access_history}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {pageViewRows.length ? (
                             <WorkspaceDataTable
                                 columns={[
-                                    'User',
-                                    'Page',
-                                    'Route',
-                                    'Path',
-                                    'IP address',
-                                    'Viewed',
+                                    copy.user,
+                                    copy.page,
+                                    copy.route,
+                                    copy.path,
+                                    copy.ip_address,
+                                    copy.viewed,
                                 ]}
                                 rows={pageViewRows}
                                 pagination={pagination(pageViews, 'view_page')}
                             />
                         ) : (
-                            <EmptyState text="No page views match the selected filters." />
+                            <EmptyState
+                                text={copy.no_page_views}
+                                action={copy.adjust_filters}
+                            />
                         )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Immutable activity timeline</CardTitle>
+                        <CardTitle>{copy.immutable_timeline}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {eventRows.length ? (
                             <WorkspaceDataTable
                                 columns={[
-                                    'Actor',
-                                    'Action',
-                                    'Description',
-                                    'Route',
-                                    'Method',
-                                    'IP address',
-                                    'Occurred',
+                                    copy.actor,
+                                    copy.action,
+                                    copy.description_column,
+                                    copy.route,
+                                    copy.method,
+                                    copy.ip_address,
+                                    copy.occurred,
                                 ]}
                                 rows={eventRows}
                                 pagination={pagination(events, 'event_page')}
                             />
                         ) : (
-                            <EmptyState text="No audit events match the selected filters." />
+                            <EmptyState
+                                text={copy.no_audit_events}
+                                action={copy.adjust_filters}
+                            />
                         )}
                     </CardContent>
                 </Card>
@@ -366,19 +395,22 @@ function Metric({
                     </p>
                 </div>
                 <span className="rounded-lg bg-primary/10 p-2 text-primary">
-                    <Icon className="size-5" />
+                    <Icon className="size-5" aria-hidden="true" />
                 </span>
             </CardContent>
         </Card>
     );
 }
 
-function EmptyState({ text }: { text: string }) {
+function EmptyState({ text, action }: { text: string; action: string }) {
     return (
         <div className="flex min-h-40 flex-col items-center justify-center gap-2 text-center">
-            <Clock3 className="size-6 text-muted-foreground" />
+            <Clock3
+                className="size-6 text-muted-foreground"
+                aria-hidden="true"
+            />
             <p className="text-sm text-muted-foreground">{text}</p>
-            <Badge variant="outline">Adjust filters</Badge>
+            <Badge variant="outline">{action}</Badge>
         </div>
     );
 }
