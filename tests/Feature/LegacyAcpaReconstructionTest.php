@@ -24,7 +24,7 @@ class LegacyAcpaReconstructionTest extends TestCase
     public function test_complete_legacy_acpa_file_is_reconstructed_into_an_immutable_provenance_register(): void
     {
         Storage::fake('local');
-        County::factory()->create(['code' => 1]);
+        County::factory()->create(['code' => 1, 'name' => 'Mombasa']);
         $submitter = User::factory()->platformAdmin()->create();
         $reviewer = User::factory()->platformAdmin()->create();
         $applier = User::factory()->platformAdmin()->create();
@@ -62,6 +62,18 @@ class LegacyAcpaReconstructionTest extends TestCase
         $this->assertStringNotContainsString('IVA-2018-0042', $rawAssignment->person_identifier);
         $this->assertStringNotContainsString('Independent verification assessor', (string) $rawAssignment->source_payload);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $batch->id, 'action' => 'data_migration.legacy_acpa_applied']);
+
+        $this->actingAs($applier)->get(route('data-migrations.index'))->assertOk()->assertInertia(fn ($page) => $page
+            ->where('legacyAcpa.pagination.total', 1)
+            ->where('legacyAcpa.rows.0.cells.0.name', 'Mombasa')
+            ->where('legacyAcpa.rows.0.cells.1', 'ACPA-001-2018 · 2018 Annual County Performance Assessment')
+            ->where('legacyAcpa.rows.0.meta.components.0.type', 'appeal')
+            ->has('legacyAcpa.rows.0.meta.components', 5));
+        foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
+            $this->actingAs($applier)->get(route('workspace.export', ['workspace' => 'legacy-acpa', 'format' => $format]))
+                ->assertOk()
+                ->assertDownload();
+        }
 
         $this->expectException(QueryException::class);
         $assessment->update(['status' => 'revised']);

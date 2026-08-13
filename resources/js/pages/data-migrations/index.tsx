@@ -1,4 +1,4 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     CheckCircle2,
     DatabaseBackup,
@@ -50,7 +50,13 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
-import { apply, download, index, review, store } from '@/routes/data-migrations';
+import {
+    apply,
+    download,
+    index,
+    review,
+    store,
+} from '@/routes/data-migrations';
 import { download as downloadExceptions } from '@/routes/data-migrations/exceptions';
 import {
     apply as applyLineageDisposition,
@@ -59,6 +65,7 @@ import {
 } from '@/routes/data-migrations/lineage-dispositions';
 import { store as storeReferenceData } from '@/routes/data-migrations/reference-data';
 import { show as showTemplate } from '@/routes/data-migrations/templates';
+import { exportMethod as workspaceExport } from '@/routes/workspace';
 
 type Batch = {
     id: string;
@@ -122,6 +129,38 @@ type LineageDisposition = {
     appliedAt: string | null;
 };
 
+type LegacyAcpaComponent = {
+    id: string;
+    type: string;
+    reference: string;
+    criterionCode: string | null;
+    title: string | null;
+    value: string | null;
+    maximumValue: string | null;
+    status: string | null;
+    assignmentRole: string | null;
+    personName: string | null;
+    description: string | null;
+    decision: string | null;
+    fileName: string | null;
+    mimeType: string | null;
+    fileChecksum: string | null;
+    sourceReference: string;
+    recordChecksum: string;
+};
+
+type LegacyAcpaRow = WorkspaceRow & {
+    meta: { countyId: string; components: LegacyAcpaComponent[] };
+};
+
+type WorkspaceDataset = {
+    title: string;
+    description: string;
+    columns: string[];
+    rows: LegacyAcpaRow[];
+    pagination: WorkspacePagination;
+};
+
 type Props = {
     batches: PageSet<Batch>;
     filters: Record<string, string | undefined>;
@@ -154,6 +193,7 @@ type Props = {
             latestAt: string | null;
         }>;
     };
+    legacyAcpa: WorkspaceDataset;
 };
 
 const datasetOptions = [
@@ -195,6 +235,7 @@ export default function HistoricalDataMigrations({
     referenceReleases,
     lineageDispositions,
     lineageTranslations: t,
+    legacyAcpa,
 }: Props) {
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
@@ -205,6 +246,8 @@ export default function HistoricalDataMigrations({
     const [dispositionAction, setDispositionAction] = useState<
         'details' | 'review' | 'apply'
     >('details');
+    const [selectedLegacyAcpa, setSelectedLegacyAcpa] =
+        useState<LegacyAcpaRow | null>(null);
 
     const rows: WorkspaceRow[] = batches.data.map((batch) => ({
         id: batch.id,
@@ -226,6 +269,17 @@ export default function HistoricalDataMigrations({
         lastPage: batches.last_page,
         perPage: batches.per_page,
         total: batches.total,
+    };
+    const legacyRows = legacyAcpa.rows.map((row) => ({
+        ...row,
+        cells: row.cells.slice(0, 10),
+    }));
+    const legacyExportQuery = {
+        from: filters.from,
+        to: filters.to,
+        search: filters.search,
+        county_id: filters.county_id,
+        status: filters.legacy_status,
     };
     const open = (batch: Batch, nextAction: typeof action) => {
         setSelected(batch);
@@ -280,14 +334,15 @@ export default function HistoricalDataMigrations({
                                     {t.inventory_description}
                                 </CardDescription>
                             </div>
-                            {capabilities.stage && legacyInventory.total > 0 && (
-                                <LineageDispositionForm
-                                    recordType={legacyType}
-                                    candidates={legacyCandidates}
-                                    releases={referenceReleases}
-                                    t={t}
-                                />
-                            )}
+                            {capabilities.stage &&
+                                legacyInventory.total > 0 && (
+                                    <LineageDispositionForm
+                                        recordType={legacyType}
+                                        candidates={legacyCandidates}
+                                        releases={referenceReleases}
+                                        t={t}
+                                    />
+                                )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -338,21 +393,32 @@ export default function HistoricalDataMigrations({
                                             )
                                         }
                                     />
-                                <ul className="divide-y rounded-lg border">
-                                    {legacyInventory.records.map((record) => (
-                                        <li
-                                            key={record.model}
-                                            className="flex items-center justify-between gap-4 p-3 text-sm"
-                                        >
-                                            <span>{record.type}</span>
-                                            <span className="flex gap-3 text-xs">
-                                                <strong>{record.count} {t.open}</strong>
-                                                <span className="text-muted-foreground">{record.pending} {t.pending}</span>
-                                                <span className="text-muted-foreground">{record.applied} {t.applied}</span>
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                    <ul className="divide-y rounded-lg border">
+                                        {legacyInventory.records.map(
+                                            (record) => (
+                                                <li
+                                                    key={record.model}
+                                                    className="flex items-center justify-between gap-4 p-3 text-sm"
+                                                >
+                                                    <span>{record.type}</span>
+                                                    <span className="flex gap-3 text-xs">
+                                                        <strong>
+                                                            {record.count}{' '}
+                                                            {t.open}
+                                                        </strong>
+                                                        <span className="text-muted-foreground">
+                                                            {record.pending}{' '}
+                                                            {t.pending}
+                                                        </span>
+                                                        <span className="text-muted-foreground">
+                                                            {record.applied}{' '}
+                                                            {t.applied}
+                                                        </span>
+                                                    </span>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
                                 </div>
                             </div>
                         )}
@@ -423,9 +489,7 @@ export default function HistoricalDataMigrations({
 
                                     const openDisposition = (
                                         nextAction:
-                                            | 'details'
-                                            | 'review'
-                                            | 'apply',
+                                            'details' | 'review' | 'apply',
                                     ) => {
                                         setSelectedDisposition(disposition);
                                         setDispositionAction(nextAction);
@@ -437,7 +501,13 @@ export default function HistoricalDataMigrations({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    aria-label={translate(t.actions_for, { reference: disposition.reference })}
+                                                    aria-label={translate(
+                                                        t.actions_for,
+                                                        {
+                                                            reference:
+                                                                disposition.reference,
+                                                        },
+                                                    )}
                                                 >
                                                     <MoreHorizontal />
                                                 </Button>
@@ -477,7 +547,9 @@ export default function HistoricalDataMigrations({
                                                             }
                                                         >
                                                             <PlayCircle /> Apply
-                                                            {t.apply_disposition}
+                                                            {
+                                                                t.apply_disposition
+                                                            }
                                                         </DropdownMenuItem>
                                                     )}
                                             </DropdownMenuContent>
@@ -512,6 +584,103 @@ export default function HistoricalDataMigrations({
                         },
                     ]}
                 />
+
+                <Card>
+                    <CardHeader className="flex-row items-start justify-between gap-4">
+                        <div>
+                            <CardTitle>{legacyAcpa.title}</CardTitle>
+                            <CardDescription>
+                                {legacyAcpa.description}
+                            </CardDescription>
+                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline">
+                                    <Download /> {t.legacy_export}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {['csv', 'xlsx', 'json', 'pdf'].map(
+                                    (format) => (
+                                        <DropdownMenuItem key={format} asChild>
+                                            <Link
+                                                href={workspaceExport(
+                                                    {
+                                                        workspace:
+                                                            'legacy-acpa',
+                                                        format,
+                                                    },
+                                                    {
+                                                        query: legacyExportQuery,
+                                                    },
+                                                )}
+                                            >
+                                                <Download />
+                                                {format.toUpperCase()}
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    ),
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </CardHeader>
+                    <CardContent>
+                        {legacyAcpa.pagination.total === 0 ? (
+                            <WorkspaceEmptyState
+                                title={t.legacy_empty_title}
+                                description={t.legacy_empty_description}
+                            />
+                        ) : (
+                            <WorkspaceDataTable
+                                columns={legacyAcpa.columns.slice(0, 10)}
+                                rows={legacyRows}
+                                pagination={{
+                                    ...legacyAcpa.pagination,
+                                    pageName: 'legacy_page',
+                                    perPageName: 'legacy_per_page',
+                                }}
+                                renderActionControl={(row) => {
+                                    const assessment = legacyAcpa.rows.find(
+                                        (candidate) => candidate.id === row.id,
+                                    );
+
+                                    return assessment ? (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label={translate(
+                                                        t.legacy_actions,
+                                                        {
+                                                            assessment: String(
+                                                                assessment
+                                                                    .cells[1],
+                                                            ),
+                                                        },
+                                                    )}
+                                                >
+                                                    <MoreHorizontal />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        setSelectedLegacyAcpa(
+                                                            assessment,
+                                                        )
+                                                    }
+                                                >
+                                                    <Eye /> {t.legacy_view}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    ) : null;
+                                }}
+                            />
+                        )}
+                    </CardContent>
+                </Card>
 
                 <Card>
                     <CardHeader>
@@ -661,7 +830,162 @@ export default function HistoricalDataMigrations({
                 }
                 t={t}
             />
+            <LegacyAcpaSheet
+                assessment={selectedLegacyAcpa}
+                onOpenChange={(isOpen) =>
+                    !isOpen && setSelectedLegacyAcpa(null)
+                }
+                t={t}
+            />
         </>
+    );
+}
+
+function LegacyAcpaSheet({
+    assessment,
+    onOpenChange,
+    t,
+}: {
+    assessment: LegacyAcpaRow | null;
+    onOpenChange: (open: boolean) => void;
+    t: Props['lineageTranslations'];
+}) {
+    return (
+        <Sheet open={Boolean(assessment)} onOpenChange={onOpenChange}>
+            <SheetContent className="overflow-y-auto sm:max-w-3xl">
+                <SheetHeader>
+                    <SheetTitle>{t.legacy_sheet_title}</SheetTitle>
+                    <SheetDescription>
+                        {t.legacy_sheet_description}
+                    </SheetDescription>
+                </SheetHeader>
+                {assessment && (
+                    <div className="mt-6 grid gap-5">
+                        <div className="grid gap-3 rounded-xl border p-4 text-sm sm:grid-cols-2">
+                            <Detail
+                                label={t.assessment}
+                                value={assessment.cells[1]}
+                            />
+                            <Detail
+                                label={t.period}
+                                value={assessment.cells[2]}
+                            />
+                            <Detail
+                                label={t.status}
+                                value={assessment.cells[3]}
+                            />
+                            <Detail
+                                label={t.overall_score}
+                                value={assessment.cells[4]}
+                            />
+                            <Detail
+                                label={t.source_reference}
+                                value={assessment.cells[10]}
+                            />
+                            <Detail
+                                label={t.imported_by}
+                                value={assessment.cells[13]}
+                            />
+                            <Detail
+                                label={t.source_checksum}
+                                value={assessment.cells[11]}
+                                mono
+                            />
+                            <Detail
+                                label={t.record_checksum}
+                                value={assessment.cells[12]}
+                                mono
+                            />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold">{t.components}</h3>
+                            <p className="text-sm text-muted-foreground">
+                                {translate(t.component_count, {
+                                    count: assessment.meta.components.length.toLocaleString(
+                                        DEFAULT_LOCALE,
+                                    ),
+                                })}
+                            </p>
+                        </div>
+                        <div className="grid gap-3">
+                            {assessment.meta.components.map((component) => (
+                                <Card key={component.id}>
+                                    <CardHeader>
+                                        <CardTitle className="flex flex-wrap items-center justify-between gap-2 text-base">
+                                            <span>
+                                                {component.reference}
+                                                {' · '}
+                                                {component.title ??
+                                                    humanize(component.type)}
+                                            </span>
+                                            <span className="rounded-full border px-2 py-1 text-xs font-medium">
+                                                {humanize(component.type)}
+                                            </span>
+                                        </CardTitle>
+                                        <CardDescription>
+                                            {component.criterionCode ??
+                                                t.assessment_level}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="grid gap-3 text-sm sm:grid-cols-2">
+                                        <Detail
+                                            label={t.status}
+                                            value={component.status}
+                                        />
+                                        <Detail
+                                            label={t.score}
+                                            value={
+                                                component.value === null
+                                                    ? null
+                                                    : `${component.value}${component.maximumValue ? ` / ${component.maximumValue}` : ''}`
+                                            }
+                                        />
+                                        <Detail
+                                            label={t.assessor_role}
+                                            value={component.assignmentRole}
+                                        />
+                                        <Detail
+                                            label={t.assessor}
+                                            value={component.personName}
+                                        />
+                                        <Detail
+                                            label={t.decision}
+                                            value={component.decision}
+                                        />
+                                        <Detail
+                                            label={t.evidence_file}
+                                            value={
+                                                component.fileName
+                                                    ? `${component.fileName} · ${component.mimeType ?? t.unknown_type}`
+                                                    : null
+                                            }
+                                        />
+                                        <Detail
+                                            label={t.description}
+                                            value={component.description}
+                                        />
+                                        <Detail
+                                            label={t.source_reference}
+                                            value={component.sourceReference}
+                                        />
+                                        <Detail
+                                            label={t.file_checksum}
+                                            value={component.fileChecksum}
+                                            mono
+                                        />
+                                        <Detail
+                                            label={t.record_checksum}
+                                            value={component.recordChecksum}
+                                            mono
+                                        />
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </SheetContent>
+        </Sheet>
     );
 }
 
@@ -788,9 +1112,7 @@ function LineageDispositionForm({
                         </div>
                         <Button type="submit" disabled={processing}>
                             <Scale data-icon="inline-start" />
-                            {processing
-                                ? t.recording
-                                : t.submit_review}
+                            {processing ? t.recording : t.submit_review}
                         </Button>
                     </div>
                 )}
@@ -1395,11 +1717,28 @@ function ErrorText({ children }: { children: string }) {
     return <p className="text-xs text-destructive">{children}</p>;
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
+function Detail({
+    label,
+    value,
+    mono = false,
+}: {
+    label: string;
+    value: unknown;
+    mono?: boolean;
+}) {
+    const text =
+        value === null || value === undefined || value === ''
+            ? '—'
+            : String(value);
+
     return (
-        <div className="rounded-lg border p-3">
+        <div className="min-w-0 rounded-lg border p-3">
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-1 text-sm font-medium">{value}</p>
+            <p
+                className={`mt-1 font-medium break-words ${mono ? 'font-mono text-xs' : 'text-sm'}`}
+            >
+                {text}
+            </p>
         </div>
     );
 }

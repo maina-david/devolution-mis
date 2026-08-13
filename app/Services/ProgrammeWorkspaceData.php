@@ -34,6 +34,7 @@ use App\Models\LearningCohort;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
 use App\Models\LearningOfflineSync;
+use App\Models\LegacyAcpaAssessment;
 use App\Models\OperationalAlert;
 use App\Models\OperationalBackup;
 use App\Models\PartnerAgreement;
@@ -139,6 +140,84 @@ class ProgrammeWorkspaceData
         $workspace['assessmentCreationOptions'] = $this->assessmentCreationOptions($user);
 
         return $workspace;
+    }
+
+    /** @return array<string, mixed> */
+    public function legacyAcpa(User $user, WorkspaceFilters $filters): array
+    {
+        $assessments = LegacyAcpaAssessment::query()
+            ->whereIn('county_id', $this->countyScope->query($user)->select('id'))
+            ->with([
+                'county:id,name,code,logo_path,logo_source_authority,logo_verified_at',
+                'importer:id,name',
+                'components' => fn ($query) => $query->orderBy('record_type')->orderBy('record_reference'),
+            ])
+            ->withCount([
+                'components',
+                'components as criterion_results_count' => fn (Builder $query) => $query->where('record_type', 'criterion_result'),
+                'components as evidence_manifests_count' => fn (Builder $query) => $query->where('record_type', 'evidence_manifest'),
+                'components as findings_count' => fn (Builder $query) => $query->where('record_type', 'finding'),
+                'components as assessor_assignments_count' => fn (Builder $query) => $query->where('record_type', 'assessor_assignment'),
+                'components as appeals_count' => fn (Builder $query) => $query->where('record_type', 'appeal'),
+            ])
+            ->when($filters->countyId, fn (Builder $query, string $countyId) => $query->where('county_id', $countyId))
+            ->when($filters->status, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters->from, fn (Builder $query, string $from) => $query->whereDate('period', '>=', $from))
+            ->when($filters->to, fn (Builder $query, string $to) => $query->whereDate('period', '<=', $to))
+            ->when($filters->search !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->where('assessment_reference', 'ilike', '%'.$filters->search.'%')
+                ->orWhere('cycle_name', 'ilike', '%'.$filters->search.'%')
+                ->orWhere('source_name', 'ilike', '%'.$filters->search.'%')
+                ->orWhere('source_reference', 'ilike', '%'.$filters->search.'%')))
+            ->orderByDesc('period')
+            ->paginate($filters->perPage, pageName: 'legacy_page')
+            ->withQueryString();
+
+        $copy = __('migration.ui');
+
+        return $this->workspace($copy['legacy_register_title'], $copy['legacy_register_description'], [$copy['county'], $copy['assessment'], $copy['period'], $copy['status'], $copy['score'], $copy['criteria'], $copy['evidence'], $copy['findings'], $copy['assessors'], $copy['appeals'], $copy['source'], $copy['source_checksum'], $copy['record_checksum'], $copy['imported_by'], $copy['imported_at']], $assessments->through(fn (LegacyAcpaAssessment $assessment): array => [
+            'id' => $assessment->id,
+            'status' => $assessment->status,
+            'meta' => [
+                'countyId' => $assessment->county_id,
+                'components' => $assessment->components->map(fn ($component): array => [
+                    'id' => $component->id,
+                    'type' => $component->record_type,
+                    'reference' => $component->record_reference,
+                    'criterionCode' => $component->criterion_code,
+                    'title' => $component->title,
+                    'value' => $component->numeric_value,
+                    'maximumValue' => $component->maximum_value,
+                    'status' => $component->status,
+                    'assignmentRole' => $component->assignment_role,
+                    'personName' => $component->person_name,
+                    'description' => $component->description,
+                    'decision' => $component->decision,
+                    'fileName' => $component->file_name,
+                    'mimeType' => $component->mime_type,
+                    'fileChecksum' => $component->file_checksum,
+                    'sourceReference' => $component->source_reference,
+                    'recordChecksum' => $component->record_checksum,
+                ])->values()->all(),
+            ],
+            'cells' => [
+                $assessment->county->identityCell(),
+                $assessment->assessment_reference.' · '.$assessment->cycle_name,
+                $assessment->period->toDateString(),
+                $assessment->status,
+                $assessment->overall_score ?? '—',
+                $assessment->criterion_results_count,
+                $assessment->evidence_manifests_count,
+                $assessment->findings_count,
+                $assessment->assessor_assignments_count,
+                $assessment->appeals_count,
+                $assessment->source_name.' · '.$assessment->source_reference,
+                $assessment->source_checksum,
+                $assessment->record_checksum,
+                $assessment->importer->name,
+                $assessment->imported_at->toIso8601String(),
+            ],
+        ]));
     }
 
     /** @return array{counties: list<array<string, mixed>>, cycles: list<array{id: string, name: string}>, pairs: list<array{countyId: string, cycleId: string}>} */

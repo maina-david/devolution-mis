@@ -42,6 +42,7 @@ class WorkspaceExportController extends Controller
         $data = match ($workspace) {
             'counties' => $workspaceData->counties($user, $filters),
             'assessments' => $workspaceData->assessments($user, $filters),
+            'legacy-acpa' => $workspaceData->legacyAcpa($user, $filters),
             'evidence' => $workspaceData->evidence($user, $filters),
             'grants' => $workspaceData->grants($user, $filters),
             'exchequer' => $workspaceData->exchequer($user, $filters),
@@ -234,7 +235,7 @@ class WorkspaceExportController extends Controller
     private function permission(string $workspace): ProgrammePermission
     {
         return match ($workspace) {
-            'counties', 'assessments', 'evidence' => ProgrammePermission::ViewCountyData,
+            'counties', 'assessments', 'legacy-acpa', 'evidence' => ProgrammePermission::ViewCountyData,
             'grants', 'exchequer' => ProgrammePermission::ViewGrants,
             'reports' => ProgrammePermission::ViewNationalReports,
             'users' => ProgrammePermission::ManageUserAccess,

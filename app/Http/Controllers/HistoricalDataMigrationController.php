@@ -23,6 +23,8 @@ use App\Models\ReferenceDataRelease;
 use App\Models\ReferenceLineageDisposition;
 use App\Models\User;
 use App\Services\LegacyReferenceInventory;
+use App\Services\ProgrammeWorkspaceData;
+use App\Support\WorkspaceFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,13 +40,23 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HistoricalDataMigrationController extends Controller
 {
-    public function index(HistoricalDataMigrationIndexRequest $request, LegacyReferenceInventory $legacyInventory): Response
+    public function index(HistoricalDataMigrationIndexRequest $request, LegacyReferenceInventory $legacyInventory, ProgrammeWorkspaceData $workspaceData): Response
     {
         $this->authorizeView();
         $filters = $request->validated();
         $search = trim((string) ($filters['search'] ?? ''));
         $inventory = $legacyInventory->report();
         $legacyType = (string) ($filters['legacy_type'] ?? ($inventory['records'][0]['key'] ?? 'assessment'));
+        /** @var User $user */
+        $user = $request->user();
+        $legacyFilters = new WorkspaceFilters(
+            $filters['from'] ?? null,
+            $filters['to'] ?? null,
+            $search,
+            (int) ($filters['legacy_per_page'] ?? 10),
+            countyId: $filters['county_id'] ?? null,
+            status: $filters['legacy_status'] ?? null,
+        );
 
         $batches = DataMigrationBatch::query()
             ->with(['submitter:id,name', 'reviewer:id,name', 'applier:id,name'])
@@ -95,6 +107,7 @@ class HistoricalDataMigrationController extends Controller
             'legacyInventory' => $inventory,
             'legacyCandidates' => $legacyInventory->candidates($legacyType),
             'legacyType' => $legacyType,
+            'legacyAcpa' => $workspaceData->legacyAcpa($user, $legacyFilters),
             'referenceReleases' => ReferenceDataRelease::query()->where('status', 'published')->where('effective_from', '<=', now())->latest('version')->get(['id', 'version', 'checksum', 'effective_from'])->map(fn (ReferenceDataRelease $release): array => ['id' => $release->id, 'version' => $release->version, 'checksum' => $release->checksum, 'effectiveFrom' => $release->effective_from?->toIso8601String()]),
             'lineageTranslations' => __('migration.ui'),
             'lineageDispositions' => ReferenceLineageDisposition::query()->with(['referenceDataRelease:id,version,checksum', 'proposer:id,name', 'reviewer:id,name', 'applier:id,name'])->latest()->paginate($request->integer('disposition_per_page', 10), ['*'], 'disposition_page')->withQueryString()->through(fn (ReferenceLineageDisposition $disposition): array => [
