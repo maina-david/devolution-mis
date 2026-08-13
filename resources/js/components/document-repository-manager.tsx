@@ -11,7 +11,7 @@ import {
     Trash2Icon,
     UploadIcon,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
@@ -99,6 +99,9 @@ export default function DocumentRepositoryManager({
     onViewModeChange: (mode: 'grid' | 'list') => void;
 }) {
     const copy = usePage().props.localization.documentRepository;
+    const [uploadOpen, setUploadOpen] = useState(false);
+    const [queuedFile, setQueuedFile] = useState<File | null>(null);
+    const [uploadDropActive, setUploadDropActive] = useState(false);
     const currentFolder = repository.folders.find(
         (folder) => folder.id === repository.currentFolderId,
     );
@@ -201,6 +204,10 @@ export default function DocumentRepositoryManager({
                             <RepositoryUploadSheet
                                 folders={repository.folders}
                                 currentFolderId={repository.currentFolderId}
+                                open={uploadOpen}
+                                onOpenChange={setUploadOpen}
+                                queuedFile={queuedFile}
+                                onQueuedFileChange={setQueuedFile}
                             />
                         )}
                         {canManage && currentFolder && (
@@ -243,6 +250,54 @@ export default function DocumentRepositoryManager({
                         </span>
                     ))}
                 </nav>
+
+                {canUpload && repository.folders.length > 0 && (
+                    <button
+                        type="button"
+                        className="m-4 grid w-[calc(100%_-_2rem)] gap-2 rounded-lg border border-dashed p-5 text-center transition-colors hover:border-primary hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none data-[active=true]:border-primary data-[active=true]:bg-accent/60"
+                        data-active={uploadDropActive}
+                        aria-label={copy.drop_file_here}
+                        onClick={() => setUploadOpen(true)}
+                        onDragEnter={(event) => {
+                            event.preventDefault();
+                            setUploadDropActive(true);
+                        }}
+                        onDragOver={(event) => {
+                            event.preventDefault();
+                            event.dataTransfer.dropEffect = 'copy';
+                        }}
+                        onDragLeave={(event) => {
+                            if (
+                                !event.currentTarget.contains(
+                                    event.relatedTarget as Node,
+                                )
+                            ) {
+                                setUploadDropActive(false);
+                            }
+                        }}
+                        onDrop={(event) => {
+                            event.preventDefault();
+                            setUploadDropActive(false);
+                            const file = event.dataTransfer.files.item(0);
+
+                            if (file) {
+                                setQueuedFile(file);
+                                setUploadOpen(true);
+                            }
+                        }}
+                    >
+                        <UploadIcon
+                            className="mx-auto text-primary"
+                            aria-hidden="true"
+                        />
+                        <span className="font-medium">
+                            {copy.drop_file_here}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                            {copy.secure_upload_notice}
+                        </span>
+                    </button>
+                )}
 
                 <div className="grid lg:grid-cols-[minmax(15rem,0.32fr)_1fr]">
                     <div className="border-b p-4 lg:border-r lg:border-b-0">
@@ -456,18 +511,43 @@ function FolderCreateSheet({
 function RepositoryUploadSheet({
     folders,
     currentFolderId,
+    open,
+    onOpenChange,
+    queuedFile,
+    onQueuedFileChange,
 }: {
     folders: RepositoryFolder[];
     currentFolderId: string | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    queuedFile: File | null;
+    onQueuedFileChange: (file: File | null) => void;
 }) {
     const copy = usePage().props.localization.documentRepository;
-    const [open, setOpen] = useState(false);
-    const [fileName, setFileName] = useState<string | null>(null);
     const [dragActive, setDragActive] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    useEffect(() => {
+        if (!open || !queuedFile || !fileInputRef.current) {
+            return;
+        }
+
+        const transfer = new DataTransfer();
+        transfer.items.add(queuedFile);
+        fileInputRef.current.files = transfer.files;
+    }, [open, queuedFile]);
+
     return (
-        <Sheet open={open} onOpenChange={setOpen}>
+        <Sheet
+            open={open}
+            onOpenChange={(nextOpen) => {
+                onOpenChange(nextOpen);
+
+                if (!nextOpen) {
+                    onQueuedFileChange(null);
+                }
+            }}
+        >
             <SheetTrigger asChild>
                 <Button type="button">
                     <UploadIcon aria-hidden="true" />
@@ -484,7 +564,10 @@ function RepositoryUploadSheet({
                 <Form
                     {...storeDocument.form()}
                     className="grid gap-5 px-4 pb-6"
-                    onSuccess={() => setOpen(false)}
+                    onSuccess={() => {
+                        onQueuedFileChange(null);
+                        onOpenChange(false);
+                    }}
                     resetOnSuccess
                 >
                     {({ processing, errors, progress }) => (
@@ -509,6 +592,10 @@ function RepositoryUploadSheet({
                                     name="title"
                                     required
                                     maxLength={255}
+                                    defaultValue={queuedFile?.name.replace(
+                                        /\.[^.]+$/,
+                                        '',
+                                    )}
                                     aria-invalid={Boolean(errors.title)}
                                 />
                                 <InputError message={errors.title} />
@@ -606,7 +693,7 @@ function RepositoryUploadSheet({
                                     const transfer = new DataTransfer();
                                     transfer.items.add(file);
                                     fileInputRef.current.files = transfer.files;
-                                    setFileName(file.name);
+                                    onQueuedFileChange(file);
                                 }}
                             >
                                 <UploadIcon
@@ -618,7 +705,8 @@ function RepositoryUploadSheet({
                                         {copy.drop_file_here}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {fileName ?? copy.secure_upload_notice}
+                                        {queuedFile?.name ??
+                                            copy.secure_upload_notice}
                                     </p>
                                 </div>
                                 <Input
@@ -630,9 +718,10 @@ function RepositoryUploadSheet({
                                     accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff,.doc,.docx,.xls,.xlsx,.csv,.txt,.mp3,.mp4,.webm,.ogg,.wav"
                                     aria-invalid={Boolean(errors.document)}
                                     onChange={(event) =>
-                                        setFileName(
-                                            event.currentTarget.files?.item(0)
-                                                ?.name ?? null,
+                                        onQueuedFileChange(
+                                            event.currentTarget.files?.item(
+                                                0,
+                                            ) ?? null,
                                         )
                                     }
                                 />
