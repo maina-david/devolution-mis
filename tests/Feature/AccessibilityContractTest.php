@@ -165,6 +165,13 @@ class AccessibilityContractTest extends TestCase
             $this->assertStringContainsString('aria-busy={processing}', $upload);
             $this->assertStringContainsString('copy.uploading', $upload);
         }
+
+        $partnerAlerts = $this->source('resources/js/components/partner-operational-alerts.tsx');
+        $this->assertStringContainsString('aria-label={interpolate(copy.alert_actions', $partnerAlerts);
+        $this->assertStringContainsString('aria-invalid={Boolean(', $partnerAlerts);
+        $this->assertStringContainsString('aria-describedby={', $partnerAlerts);
+        $this->assertStringContainsString('aria-busy={processing}', $partnerAlerts);
+        $this->assertStringContainsString('aria-hidden="true"', $partnerAlerts);
     }
 
     private function source(string $path): string

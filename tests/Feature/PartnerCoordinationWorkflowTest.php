@@ -450,9 +450,12 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame($manager->id, $alert->resolved_by);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $alert->id, 'action' => 'partner.operational_alert.resolved']);
 
-        $this->actingAs($manager)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+        $this->actingAs($manager)->withSession(['locale' => 'sw'])->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
             ->has('operationalAlerts', 3)
-            ->where('operationalAlerts.0.county.logoUrl', '/counties/monitor.svg'));
+            ->where('operationalAlerts.0.county.logoUrl', '/counties/monitor.svg')
+            ->where('localization.current', 'sw')
+            ->where('localization.partnerCoordination.operational_control_alerts', 'Tahadhari za udhibiti wa uendeshaji')
+            ->where('localization.partnerCoordination.status_accepted_risk', 'Hatari imekubaliwa'));
         $export = $this->actingAs($manager)->get(route('workspace.export', ['partners', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('Open alerts', $export);
         $this->assertStringContainsString($partner->organization->name, $export);
