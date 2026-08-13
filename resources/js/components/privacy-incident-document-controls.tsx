@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, Files, Upload } from 'lucide-react';
 import { useState } from 'react';
 import FormSheet from '@/components/form-sheet';
@@ -30,6 +30,7 @@ export default function PrivacyIncidentDocumentControls({
     documents: WorkspaceDocument[];
     canUpload: boolean;
 }) {
+    const copy = usePage().props.localization.privacyDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
 
@@ -41,21 +42,20 @@ export default function PrivacyIncidentDocumentControls({
             <Sheet>
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
-                        <Files /> Records ({documents.length})
+                        <Files /> {copy.records} {'('}{documents.length}{')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Private breach records</SheetTitle>
+                        <SheetTitle>{copy.private_breach_records}</SheetTitle>
                         <SheetDescription>
-                            Checksum-bound scanned and born-digital
-                            investigation, notification and closure evidence.
+                            {copy.private_records_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-3 px-4 pb-8">
                         {documents.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                No governed evidence records have been linked.
+                                {copy.no_records}
                             </p>
                         )}
                         {documents.map((document) => (
@@ -70,8 +70,10 @@ export default function PrivacyIncidentDocumentControls({
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {document.originalName ??
-                                                'Repository record'}{' '}
-                                            · {document.sourceType}
+                                                copy.repository_record}{' '}
+                                            {'·'}{' '}
+                                            {copy[document.sourceType] ??
+                                                document.sourceType}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -84,7 +86,8 @@ export default function PrivacyIncidentDocumentControls({
                                                 .replaceAll('-', ' ')}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {document.scanStatus}
+                                            {copy[document.scanStatus] ??
+                                                document.scanStatus}
                                         </Badge>
                                     </div>
                                 </div>
@@ -99,7 +102,7 @@ export default function PrivacyIncidentDocumentControls({
                                                     setPreviewDocument(document)
                                                 }
                                             >
-                                                <Eye /> Preview
+                                                <Eye /> {copy.preview}
                                             </Button>
                                         )}
                                         <Button
@@ -112,7 +115,7 @@ export default function PrivacyIncidentDocumentControls({
                                                     document: document.id,
                                                 })}
                                             >
-                                                <Download /> Download
+                                                <Download /> {copy.download}
                                             </a>
                                         </Button>
                                     </div>
@@ -129,15 +132,15 @@ export default function PrivacyIncidentDocumentControls({
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {previewDocument?.title ?? 'Incident evidence'}
+                            {previewDocument?.title ?? copy.incident_evidence}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview from the private repository.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={`${copy.preview} ${previewDocument.title}`}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -155,22 +158,25 @@ function UploadRecord({
     incidentId: string;
     status: string;
 }) {
-    const purposes = [{ id: 'investigation', name: 'Investigation evidence' }];
+    const copy = usePage().props.localization.privacyDocuments;
+    const purposes = [
+        { id: 'investigation', name: copy.investigation_evidence },
+    ];
 
     if (['notification_required', 'remediation'].includes(status)) {
-        purposes.push({ id: 'notification', name: 'Notification evidence' });
+        purposes.push({ id: 'notification', name: copy.notification_evidence });
     }
 
     if (status === 'remediation') {
-        purposes.push({ id: 'closure', name: 'Closure evidence' });
+        purposes.push({ id: 'closure', name: copy.closure_evidence });
     }
 
     return (
         <FormSheet
-            title="Upload incident evidence"
-            triggerLabel="Upload evidence"
+            title={copy.upload_incident_evidence}
+            triggerLabel={copy.upload_evidence}
             icon={Upload}
-            description="Add a private scanned or born-digital breach record."
+            description={copy.upload_description}
         >
             <Form
                 {...store.form({ privacyIncident: incidentId })}
@@ -182,7 +188,7 @@ function UploadRecord({
                         <SearchableSelect
                             id={`incident-purpose-${incidentId}`}
                             name="record_purpose"
-                            label="Record purpose"
+                            label={copy.record_purpose}
                             options={purposes}
                             defaultValue={purposes[0].id}
                         />
@@ -190,7 +196,7 @@ function UploadRecord({
                             <Label
                                 htmlFor={`incident-document-title-${incidentId}`}
                             >
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`incident-document-title-${incidentId}`}
@@ -208,22 +214,22 @@ function UploadRecord({
                             <Label
                                 htmlFor={`incident-document-category-${incidentId}`}
                             >
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`incident-document-category-${incidentId}`}
                                 name="category"
-                                defaultValue="Personal data breach evidence"
+                                defaultValue={copy.breach_evidence}
                                 required
                             />
                         </div>
                         <SearchableSelect
                             id={`incident-source-${incidentId}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             options={[
-                                { id: 'scanned', name: 'Scanned original' },
-                                { id: 'digital', name: 'Born digital' },
+                                { id: 'scanned', name: copy.scanned },
+                                { id: 'digital', name: copy.digital },
                             ]}
                             defaultValue="digital"
                         />
@@ -231,7 +237,7 @@ function UploadRecord({
                             <Label
                                 htmlFor={`incident-document-file-${incidentId}`}
                             >
-                                Document file
+                                {copy.document_file}
                             </Label>
                             <Input
                                 id={`incident-document-file-${incidentId}`}
@@ -248,14 +254,14 @@ function UploadRecord({
                         </div>
                         {progress && (
                             <p className="text-sm text-muted-foreground">
-                                Uploading {progress.percentage}%
+                                {copy.uploading} {progress.percentage}{'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
                             <Upload />{' '}
                             {processing
-                                ? 'Uploading…'
-                                : 'Upload secure evidence'}
+                                ? copy.uploading_progress
+                                : copy.upload_secure_evidence}
                         </Button>
                     </>
                 )}

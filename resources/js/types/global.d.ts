@@ -73,6 +73,7 @@ declare module '@inertiajs/core' {
                 citizen: Record<string, string>;
                 dataRights: Record<string, string>;
                 dataGovernance: Record<string, string>;
+                privacyDocuments: Record<string, string>;
                 evidence: Record<string, string>;
                 learning: Record<string, string>;
                 knowledge: {
