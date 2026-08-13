@@ -89,6 +89,19 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
         $this->actingAs($facilitator)->post(route('learning.classrooms.attendance.store', [$futureClassroom]), ['learning_enrollment_id' => $enrollment->id, 'attendance_status' => 'absent', 'source' => 'manual'])->assertStatus(409);
     }
 
+    public function test_classroom_attendance_interface_uses_the_active_locale(): void
+    {
+        [$classroom, $facilitator] = $this->classroomWithRoster();
+
+        $this->actingAs($facilitator)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('learning.classrooms.show', $classroom))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('localization.learning.governed_attendance_register', 'Rejesta ya mahudhurio inayosimamiwa')
+                ->where('localization.learning.value_present', 'Amehudhuria'));
+    }
+
     /** @return array{VirtualClassroom, User, LearningEnrollment, LearningEnrollment} */
     private function classroomWithRoster(?int $capacity = 10): array
     {

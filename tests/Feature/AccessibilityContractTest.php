@@ -132,6 +132,12 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-live="polite"', $activity);
         $this->assertStringContainsString('aria-hidden="true"', $activity);
         $this->assertStringContainsString('localization.current', $activity);
+
+        $classroom = $this->source('resources/js/pages/learning/classrooms/show.tsx');
+        $this->assertStringContainsString('aria-label={interpolate(copy.attendance_actions', $classroom);
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.notes)}', $classroom);
+        $this->assertStringContainsString('role="alert"', $classroom);
+        $this->assertStringNotContainsString('DEFAULT_LOCALE', $classroom);
     }
 
     private function source(string $path): string

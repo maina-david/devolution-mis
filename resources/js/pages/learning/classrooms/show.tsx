@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, DownloadIcon, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
@@ -30,7 +30,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { interpolate } from '@/hooks/use-localization';
 import { index as learningIndex } from '@/routes/learning';
 import { store as storeAttendance } from '@/routes/learning/classrooms/attendance';
 import { exportMethod } from '@/routes/workspace';
@@ -69,20 +69,24 @@ type Props = {
     filters: Record<string, string | undefined>;
 };
 
-const attendanceStatuses = ['not_recorded', 'present', 'partial', 'absent'].map(
-    (id) => ({ id, name: humanize(id) }),
-);
-
 export default function ClassroomAttendance({
     classroom,
     roster,
     filters,
 }: Props) {
+    const { localization } = usePage().props;
+    const copy = localization.learning;
+    const locale = localization.current;
+    const attendanceStatuses = attendanceStatusOptions(copy);
     const exportQuery = { ...filters, classroom_id: classroom.id };
 
     return (
         <>
-            <Head title={`${classroom.title} attendance`} />
+            <Head
+                title={interpolate(copy.classroom_attendance_title, {
+                    title: classroom.title,
+                })}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
@@ -94,19 +98,22 @@ export default function ClassroomAttendance({
                             >
                                 <Link href={learningIndex()}>
                                     <ArrowLeft aria-hidden="true" />
-                                    Learning hub
+                                    {copy.learning_hub}
                                 </Link>
                             </Button>
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Governed attendance register
+                                {copy.governed_attendance_register}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                                 {classroom.title}
                             </h1>
                             <p className="mt-3 text-[#c7d6dd]">
-                                {classroom.course.code} ·{' '}
-                                {classroom.course.title} ·{' '}
-                                {classroom.facilitator} · {classroom.platform}
+                                {classroom.course.code}{' '}
+                                {copy.metadata_separator}{' '}
+                                {classroom.course.title}{' '}
+                                {copy.metadata_separator}{' '}
+                                {classroom.facilitator}{' '}
+                                {copy.metadata_separator} {classroom.platform}
                             </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -117,7 +124,8 @@ export default function ClassroomAttendance({
                                 />
                             )}
                             <Badge variant="secondary">
-                                {humanize(classroom.status)}
+                                {copy[`value_${classroom.status}`] ??
+                                    humanize(classroom.status)}
                             </Badge>
                         </div>
                     </div>
@@ -130,7 +138,7 @@ export default function ClassroomAttendance({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Attendance status',
+                            label: copy.attendance_status,
                             options: attendanceStatuses,
                             value: filters.status,
                         },
@@ -141,24 +149,27 @@ export default function ClassroomAttendance({
                     <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:px-6">
                         <div>
                             <h2 className="font-bold">
-                                Enrolled learner roster
+                                {copy.enrolled_learner_roster}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {roster.pagination.total.toLocaleString()}{' '}
-                                learners · session{' '}
-                                {new Date(classroom.startsAt).toLocaleString(
-                                    DEFAULT_LOCALE,
-                                )}{' '}
-                                to{' '}
-                                {new Date(classroom.endsAt).toLocaleString(
-                                    DEFAULT_LOCALE,
-                                )}
+                                {interpolate(copy.roster_summary, {
+                                    count: roster.pagination.total.toLocaleString(
+                                        locale,
+                                    ),
+                                    start: new Date(
+                                        classroom.startsAt,
+                                    ).toLocaleString(locale),
+                                    end: new Date(
+                                        classroom.endsAt,
+                                    ).toLocaleString(locale),
+                                })}
                             </p>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
-                                    <DownloadIcon aria-hidden="true" /> Export
+                                    <DownloadIcon aria-hidden="true" />{' '}
+                                    {copy.export}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -186,16 +197,16 @@ export default function ClassroomAttendance({
                     {roster.rows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Learner',
-                                'County',
-                                'Enrolment',
-                                'Joined',
-                                'Left',
-                                'Minutes',
-                                'Source',
-                                'Recorded by',
-                                'Recorded at',
-                                'Attendance',
+                                copy.learner,
+                                copy.county,
+                                copy.enrolment,
+                                copy.joined,
+                                copy.left,
+                                copy.minutes,
+                                copy.source,
+                                copy.recorded_by,
+                                copy.recorded_at,
+                                copy.attendance,
                             ]}
                             rows={roster.rows}
                             pagination={roster.pagination}
@@ -208,8 +219,8 @@ export default function ClassroomAttendance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching learners"
-                            description="Adjust the attendance filters or enroll learners in the published course."
+                            title={copy.no_matching_learners}
+                            description={copy.adjust_or_enroll}
                             className="min-h-72 border-0"
                         />
                     )}
@@ -226,6 +237,8 @@ function AttendanceAction({
     classroom: Classroom;
     row: AttendanceRow;
 }) {
+    const copy = usePage().props.localization.learning;
+    const attendanceStatuses = attendanceStatusOptions(copy);
     const [open, setOpen] = useState(false);
     const [status, setStatus] = useState(
         row.status === 'not_recorded' ? 'present' : (row.status ?? 'present'),
@@ -240,14 +253,16 @@ function AttendanceAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Attendance actions for ${row.meta?.userName ?? 'learner'}`}
+                        aria-label={interpolate(copy.attendance_actions, {
+                            learner: row.meta?.userName ?? copy.learner,
+                        })}
                     >
                         <MoreHorizontal aria-hidden="true" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setOpen(true)}>
-                        Record attendance
+                        {copy.record_attendance}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -255,11 +270,13 @@ function AttendanceAction({
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {isAmendment ? 'Amend' : 'Record'} attendance
+                            {isAmendment ? copy.amend : copy.record}{' '}
+                            {copy.attendance}
                         </SheetTitle>
                         <SheetDescription>
-                            {row.meta?.userName} · attendance times are checked
-                            against the governed classroom schedule.
+                            {interpolate(copy.attendance_schedule_assurance, {
+                                learner: row.meta?.userName ?? copy.learner,
+                            })}
                         </SheetDescription>
                     </SheetHeader>
                     <Form
@@ -276,7 +293,7 @@ function AttendanceAction({
                                 <SearchableSelect
                                     id={`attendance-status-${row.id}`}
                                     name="attendance_status"
-                                    label="Attendance status"
+                                    label={copy.attendance_status}
                                     options={attendanceStatuses.filter(
                                         (option) =>
                                             option.id !== 'not_recorded',
@@ -288,7 +305,7 @@ function AttendanceAction({
                                     <>
                                         <DatePickerField
                                             name="joined_at"
-                                            label="Joined at"
+                                            label={copy.joined_at}
                                             includeTime
                                             required
                                             defaultValue={
@@ -299,7 +316,7 @@ function AttendanceAction({
                                         />
                                         <DatePickerField
                                             name="left_at"
-                                            label="Left at"
+                                            label={copy.left_at}
                                             includeTime
                                             required
                                             defaultValue={
@@ -313,12 +330,12 @@ function AttendanceAction({
                                 <SearchableSelect
                                     id={`attendance-source-${row.id}`}
                                     name="source"
-                                    label="Evidence source"
+                                    label={copy.evidence_source}
                                     options={[
-                                        { id: 'manual', name: 'Manual' },
+                                        { id: 'manual', name: copy.manual },
                                         {
                                             id: 'provider_import',
-                                            name: 'Provider import',
+                                            name: copy.provider_import,
                                         },
                                     ]}
                                     defaultValue={source}
@@ -327,7 +344,7 @@ function AttendanceAction({
                                 {source === 'provider_import' && (
                                     <InputField
                                         name="provider_event_id"
-                                        label="Provider event ID"
+                                        label={copy.provider_event_id}
                                         defaultValue={
                                             row.meta?.providerEventId ?? ''
                                         }
@@ -337,8 +354,8 @@ function AttendanceAction({
                                 <div className="grid gap-2">
                                     <Label htmlFor={`notes-${row.id}`}>
                                         {isAmendment
-                                            ? 'Amendment rationale'
-                                            : 'Attendance note'}
+                                            ? copy.amendment_rationale
+                                            : copy.attendance_note}
                                     </Label>
                                     <Textarea
                                         id={`notes-${row.id}`}
@@ -364,8 +381,8 @@ function AttendanceAction({
                                 </div>
                                 <Button type="submit" disabled={processing}>
                                     {isAmendment
-                                        ? 'Save attributed amendment'
-                                        : 'Record attendance'}
+                                        ? copy.save_attributed_amendment
+                                        : copy.record_attendance}
                                 </Button>
                             </>
                         )}
@@ -415,4 +432,11 @@ function InputField({
 
 function humanize(value: string): string {
     return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function attendanceStatusOptions(copy: Record<string, string>) {
+    return ['not_recorded', 'present', 'partial', 'absent'].map((id) => ({
+        id,
+        name: copy[`value_${id}`] ?? humanize(id),
+    }));
 }
