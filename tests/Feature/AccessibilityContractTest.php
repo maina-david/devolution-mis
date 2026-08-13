@@ -151,6 +151,12 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('<InputError', $platformSetting);
         $this->assertStringContainsString('aria-busy={processing}', $platformSetting);
 
+        $grantAction = $this->source('resources/js/components/grant-row-action.tsx');
+        $this->assertStringContainsString('errors.allocated_amount', $grantAction);
+        $this->assertStringContainsString('errors.disbursed_amount', $grantAction);
+        $this->assertStringContainsString('<InputError', $grantAction);
+        $this->assertStringContainsString('aria-busy={processing}', $grantAction);
+
         $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
         $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
         $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);

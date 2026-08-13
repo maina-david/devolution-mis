@@ -68,18 +68,20 @@ class LocalePreferenceTest extends TestCase
             resource_path('js/components/programme-user-access-form.tsx'),
             resource_path('js/components/programme-user-row-action.tsx'),
             resource_path('js/components/platform-setting-row-action.tsx'),
+            resource_path('js/components/grant-row-action.tsx'),
         ];
 
         foreach ($sources as $sourcePath) {
             $source = file_get_contents($sourcePath);
 
             $this->assertIsString($source);
-            $this->assertStringContainsString('props.localization.', $source);
+            $this->assertStringContainsString('localization.', $source);
         }
 
         $accessForm = (string) file_get_contents($sources[0]);
         $userAction = (string) file_get_contents($sources[1]);
         $settingAction = (string) file_get_contents($sources[2]);
+        $grantAction = (string) file_get_contents($sources[3]);
 
         foreach (['Grant programme access', 'Official email', 'Assigned county portfolio'] as $literal) {
             $this->assertStringNotContainsString($literal, $accessForm);
@@ -89,6 +91,10 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringNotContainsString('Deactivate', $userAction);
         $this->assertStringNotContainsString('Setting value', $settingAction);
         $this->assertStringNotContainsString('>Save<', $settingAction);
+        $this->assertStringContainsString('copy.update_grant', $grantAction);
+        $this->assertStringContainsString('copy.save_grant', $grantAction);
+        $this->assertStringNotContainsString('Update grant', $grantAction);
+        $this->assertStringNotContainsString('Allocated amount', $grantAction);
     }
 
     public function test_guest_can_change_session_locale_without_creating_a_profile_preference(): void
