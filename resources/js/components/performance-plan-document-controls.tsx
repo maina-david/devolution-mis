@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, Files, Upload } from 'lucide-react';
 import { useState } from 'react';
 import FormSheet from '@/components/form-sheet';
@@ -28,6 +28,7 @@ type Props = {
 };
 
 export default function PerformancePlanDocumentControls(props: Props) {
+    const copy = usePage().props.localization.performanceDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
 
@@ -38,21 +39,20 @@ export default function PerformancePlanDocumentControls(props: Props) {
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
                         <Files aria-hidden="true" />
-                        Records ({props.documents.length})
+                        {copy.records} {'('}{props.documents.length}{')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Governed performance records</SheetTitle>
+                        <SheetTitle>{copy.governed_records}</SheetTitle>
                         <SheetDescription>
-                            Private, checksum-bound goal plans, self-review
-                            evidence, and signed final appraisals.
+                            {copy.private_records}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-3 px-4 pb-8">
                         {props.documents.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                No repository records have been linked yet.
+                                {copy.no_repository_records}
                             </p>
                         )}
                         {props.documents.map((document) => (
@@ -67,8 +67,10 @@ export default function PerformancePlanDocumentControls(props: Props) {
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {document.originalName ??
-                                                'Repository record'}{' '}
-                                            · {document.sourceType}
+                                                copy.repository_record}{' '}
+                                            {'·'}{' '}
+                                            {copy[document.sourceType] ??
+                                                document.sourceType}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -78,7 +80,8 @@ export default function PerformancePlanDocumentControls(props: Props) {
                                                 .replaceAll('-', ' ')}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {document.scanStatus}
+                                            {copy[document.scanStatus] ??
+                                                document.scanStatus}
                                         </Badge>
                                     </div>
                                 </div>
@@ -94,7 +97,7 @@ export default function PerformancePlanDocumentControls(props: Props) {
                                                 }
                                             >
                                                 <Eye aria-hidden="true" />
-                                                Preview
+                                                {copy.preview}
                                             </Button>
                                         )}
                                         <Button
@@ -108,7 +111,7 @@ export default function PerformancePlanDocumentControls(props: Props) {
                                                 })}
                                             >
                                                 <Download aria-hidden="true" />
-                                                Download
+                                                {copy.download}
                                             </a>
                                         </Button>
                                     </div>
@@ -125,15 +128,15 @@ export default function PerformancePlanDocumentControls(props: Props) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {previewDocument?.title ?? 'Performance record'}
+                            {previewDocument?.title ?? copy.performance_record}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview from the private repository.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={`${copy.preview} ${previewDocument.title}`}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -145,22 +148,23 @@ export default function PerformancePlanDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const copy = usePage().props.localization.performanceDocuments;
     const purpose =
         props.status === 'draft'
-            ? { id: 'goal_plan', name: 'Signed goal plan' }
+            ? { id: 'goal_plan', name: copy.signed_goal_plan }
             : props.isEmployee
               ? {
                     id: 'self_review_evidence',
-                    name: 'Self-review evidence',
+                    name: copy.self_review_evidence,
                 }
-              : { id: 'final_appraisal', name: 'Signed final appraisal' };
+              : { id: 'final_appraisal', name: copy.signed_final_appraisal };
 
     return (
         <FormSheet
-            title={`Upload ${purpose.name.toLowerCase()}`}
-            triggerLabel="Upload record"
+            title={`${copy.upload} ${purpose.name.toLocaleLowerCase()}`}
+            triggerLabel={copy.upload_record}
             icon={Upload}
-            description="Add a private scanned or born-digital performance record."
+            description={copy.upload_record_description}
         >
             <Form
                 {...store.form({ performancePlan: props.planId })}
@@ -178,7 +182,7 @@ function UploadRecord(props: Props) {
                             <Label
                                 htmlFor={`performance-title-${props.planId}`}
                             >
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`performance-title-${props.planId}`}
@@ -199,28 +203,28 @@ function UploadRecord(props: Props) {
                             <Label
                                 htmlFor={`performance-category-${props.planId}`}
                             >
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`performance-category-${props.planId}`}
                                 name="category"
-                                defaultValue="Performance appraisal"
+                                defaultValue={copy.performance_appraisal}
                                 required
                             />
                         </div>
                         <SearchableSelect
                             id={`performance-source-${props.planId}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             defaultValue="digital"
                             options={[
-                                { id: 'digital', name: 'Born-digital' },
-                                { id: 'scanned', name: 'Scanned original' },
+                                { id: 'digital', name: copy.digital },
+                                { id: 'scanned', name: copy.scanned },
                             ]}
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`performance-file-${props.planId}`}>
-                                File
+                                {copy.file}
                             </Label>
                             <Input
                                 id={`performance-file-${props.planId}`}
@@ -241,11 +245,11 @@ function UploadRecord(props: Props) {
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                Uploading: {progress.percentage}%
+                                {copy.uploading}{':'} {progress.percentage}{'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Upload securely
+                            {copy.upload_securely}
                         </Button>
                     </>
                 )}
