@@ -132,6 +132,10 @@ type Props = {
     };
 };
 
+function useDswgCopy(): Record<string, string> {
+    return usePage().props.localization.dswg;
+}
+
 export default function DswgIndex({
     workspace,
     filters,
@@ -148,36 +152,30 @@ export default function DswgIndex({
 
     return (
         <>
-            <Head title="DSWG coordination" />
+            <Head title={copy.head_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Sector coordination and accountability
+                        {copy.eyebrow}
                     </p>
-                    <h1 className="mt-3 text-3xl font-bold">
-                        Devolution Sector Working Groups
-                    </h1>
+                    <h1 className="mt-3 text-3xl font-bold">{copy.title}</h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
-                        Coordinate membership, invitations, quorum, agendas,
-                        approved minutes, decisions, accountable actions,
-                        deadlines, reminders, and independent closure.
+                        {copy.description}
                     </p>
                 </section>
                 {capabilities.manage && <DswgCoordinationForms {...options} />}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Recurring meeting series</CardTitle>
+                        <CardTitle>{copy.series_title}</CardTitle>
                         <CardDescription>
-                            Rolling, idempotent schedules generated in the
-                            selected IANA timezone with a governed workflow for
-                            every occurrence.
+                            {copy.series_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                         {series.length === 0 ? (
                             <WorkspaceEmptyState
-                                title="No recurring series"
-                                description="Create a series to maintain future meeting occurrences automatically."
+                                title={copy.no_series}
+                                description={copy.no_series_description}
                                 className="min-h-40 border md:col-span-2 xl:col-span-3"
                             />
                         ) : (
@@ -189,7 +187,9 @@ export default function DswgIndex({
                                                 {meetingSeries.referencePrefix}
                                             </CardTitle>
                                             <Badge variant="secondary">
-                                                {meetingSeries.status}
+                                                {copy[
+                                                    `value_${meetingSeries.status}`
+                                                ] ?? meetingSeries.status}
                                             </Badge>
                                         </div>
                                         <CardDescription>
@@ -199,22 +199,24 @@ export default function DswgIndex({
                                     <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
                                         <p>{meetingSeries.workingGroup}</p>
                                         <p>
-                                            Every {meetingSeries.interval}{' '}
-                                            {meetingSeries.frequency} period(s)
-                                            · {meetingSeries.timezone}
+                                            {copy.every}{' '}
+                                            {meetingSeries.interval}{' '}
+                                            {meetingSeries.frequency}{' '}
+                                            {copy.periods} {copy.separator}{' '}
+                                            {meetingSeries.timezone}
                                         </p>
                                         <p>
                                             {meetingSeries.generatedMeetings}{' '}
-                                            occurrence(s) generated
+                                            {copy.occurrences_generated}
                                         </p>
                                         <p>
-                                            Next:{' '}
+                                            {copy.next_occurrence}{' '}
                                             {new Date(
                                                 meetingSeries.nextOccurrenceAt,
                                             ).toLocaleString()}
                                         </p>
                                         <p>
-                                            Ends:{' '}
+                                            {copy.ends_on}{' '}
                                             {new Date(
                                                 meetingSeries.endsOn,
                                             ).toLocaleDateString()}
@@ -275,10 +277,9 @@ export default function DswgIndex({
                                 aria-hidden="true"
                             />
                             <div>
-                                <CardTitle>Meeting workspace</CardTitle>
+                                <CardTitle>{copy.meeting_workspace}</CardTitle>
                                 <CardDescription>
-                                    Tracked invitations, attendance, quorum,
-                                    minutes, decisions, and actions.
+                                    {copy.meeting_workspace_description}
                                 </CardDescription>
                             </div>
                         </div>
@@ -286,8 +287,8 @@ export default function DswgIndex({
                     <CardContent className="grid gap-4">
                         {meetings.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No meetings available"
-                                description="Adjust the reporting dates or schedule the first sector working group meeting."
+                                title={copy.no_meetings}
+                                description={copy.no_meetings_description}
                                 className="min-h-52 border"
                             />
                         )}
@@ -299,6 +300,7 @@ export default function DswgIndex({
                                 capabilities={capabilities}
                                 options={options}
                                 catalogue={catalogue}
+                                copy={copy}
                             />
                         ))}
                     </CardContent>
@@ -355,8 +357,8 @@ export default function DswgIndex({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No matching accountable actions"
-                                description="Adjust the filters or record actions from an approved sector working group meeting."
+                                title={copy.no_actions}
+                                description={copy.no_actions_description}
                                 className="min-h-72 border-0"
                             />
                         )}
@@ -398,8 +400,15 @@ function CreateThreadSheet({
                         <Field label={copy.thread_title} error={errors.title}>
                             <Input name="title" required />
                         </Field>
-                        <Field label={copy.opening_contribution} error={errors.topic}>
-                            <textarea name="topic" required className={textareaClass} />
+                        <Field
+                            label={copy.opening_contribution}
+                            error={errors.topic}
+                        >
+                            <textarea
+                                name="topic"
+                                required
+                                className={textareaClass}
+                            />
                         </Field>
                         <Button type="submit" disabled={processing}>
                             {copy.create_thread}
@@ -432,16 +441,29 @@ function CollaborationThreadCard({
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-                <div className="max-h-72 space-y-3 overflow-y-auto" aria-label={copy.thread_messages}>
+                <div
+                    className="max-h-72 space-y-3 overflow-y-auto"
+                    aria-label={copy.thread_messages}
+                >
                     {thread.messages.map((message) => (
-                        <article key={message.id} className="rounded-lg border p-3 text-sm">
+                        <article
+                            key={message.id}
+                            className="rounded-lg border p-3 text-sm"
+                        >
                             <div className="flex justify-between gap-3 font-medium">
                                 <span>{message.author}</span>
-                                <time dateTime={message.postedAt} className="text-xs text-muted-foreground">
-                                    {new Date(message.postedAt).toLocaleString()}
+                                <time
+                                    dateTime={message.postedAt}
+                                    className="text-xs text-muted-foreground"
+                                >
+                                    {new Date(
+                                        message.postedAt,
+                                    ).toLocaleString()}
                                 </time>
                             </div>
-                            <p className="mt-2 whitespace-pre-wrap text-muted-foreground">{message.body}</p>
+                            <p className="mt-2 whitespace-pre-wrap text-muted-foreground">
+                                {message.body}
+                            </p>
                             <p className="mt-2 font-mono text-[10px] text-muted-foreground">
                                 {copy.checksum} {message.checksum.slice(0, 16)}
                             </p>
@@ -456,14 +478,23 @@ function CollaborationThreadCard({
                         icon={MessageSquare}
                     >
                         <Form
-                            action={storeCollaborationMessage({ thread: thread.id })}
+                            action={storeCollaborationMessage({
+                                thread: thread.id,
+                            })}
                             className="grid gap-4"
                             resetOnSuccess
                         >
                             {({ errors, processing }) => (
                                 <>
-                                    <Field label={copy.contribution} error={errors.body}>
-                                        <textarea name="body" required className={textareaClass} />
+                                    <Field
+                                        label={copy.contribution}
+                                        error={errors.body}
+                                    >
+                                        <textarea
+                                            name="body"
+                                            required
+                                            className={textareaClass}
+                                        />
                                     </Field>
                                     <Button type="submit" disabled={processing}>
                                         {copy.post_contribution}
@@ -484,12 +515,14 @@ function MeetingCard({
     capabilities,
     options,
     catalogue,
+    copy,
 }: {
     meeting: Meeting;
     currentUserId: string;
     capabilities: Props['capabilities'];
     options: Props['options'];
     catalogue: Props['catalogue'];
+    copy: Record<string, string>;
 }) {
     const hasCleanMinutes = meeting.documents.some(
         (document) =>
@@ -508,16 +541,19 @@ function MeetingCard({
                         <Badge variant="secondary">{meeting.mode}</Badge>
                     </div>
                     <h3 className="mt-2 font-bold">
-                        {meeting.reference} · {meeting.title}
+                        {meeting.reference} {copy.separator} {meeting.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        {meeting.workingGroup} ·{' '}
-                        {new Date(meeting.startsAt).toLocaleString()} · quorum{' '}
-                        {meeting.quorumRequired}/{meeting.invitees.length}
+                        {meeting.workingGroup} {copy.separator}{' '}
+                        {new Date(meeting.startsAt).toLocaleString()}{' '}
+                        {copy.separator} {copy.quorum} {meeting.quorumRequired}
+                        {'/'}
+                        {meeting.invitees.length}
                     </p>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                    {meeting.decisions} decisions · {meeting.actions} actions
+                    {meeting.decisions} {copy.decisions} {copy.separator}{' '}
+                    {meeting.actions} {copy.actions}
                 </div>
             </div>
             <DswgDocumentControls
@@ -528,7 +564,8 @@ function MeetingCard({
                 meetingStatus={meeting.status}
             />
             <p className="text-sm">
-                <span className="font-medium">Agenda:</span> {meeting.agenda}
+                <span className="font-medium">{copy.agenda}</span>{' '}
+                {meeting.agenda}
             </p>
             {capabilities.participate &&
                 meeting.invitationStatus &&
@@ -555,7 +592,7 @@ function MeetingCard({
                                             }
                                             disabled={processing}
                                         >
-                                            {status}
+                                            {copy[`value_${status}`] ?? status}
                                         </Button>
                                     ),
                                 )}
@@ -565,9 +602,9 @@ function MeetingCard({
                 )}
             {capabilities.manage && meeting.status === 'scheduled' && (
                 <FormSheet
-                    title="Record meeting outcomes"
-                    triggerLabel="Record outcomes"
-                    description={`Record attendance, quorum and draft minutes for ${meeting.reference}.`}
+                    title={copy.record_outcomes_title}
+                    triggerLabel={copy.record_outcomes}
+                    description={`${copy.record_outcomes_description} ${meeting.reference}.`}
                 >
                     <Form
                         action={recordOutcomes({ meeting: meeting.id })}
@@ -576,7 +613,7 @@ function MeetingCard({
                         {({ errors, processing }) => (
                             <>
                                 <Field
-                                    label="Draft minutes"
+                                    label={copy.draft_minutes}
                                     error={errors.minutes}
                                 >
                                     <textarea
@@ -586,7 +623,7 @@ function MeetingCard({
                                     />
                                 </Field>
                                 <Field
-                                    label="Members present"
+                                    label={copy.members_present}
                                     error={errors.present_user_ids}
                                 >
                                     <Multi
@@ -595,7 +632,7 @@ function MeetingCard({
                                     />
                                 </Field>
                                 <Button type="submit" disabled={processing}>
-                                    Record outcomes and quorum
+                                    {copy.record_outcomes_submit}
                                 </Button>
                             </>
                         )}
@@ -604,7 +641,7 @@ function MeetingCard({
             )}
             {meeting.minutes && (
                 <div className="rounded-lg border bg-muted/20 p-4 text-sm">
-                    <p className="font-medium">Minutes</p>
+                    <p className="font-medium">{copy.minutes}</p>
                     <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
                         {meeting.minutes}
                     </p>
@@ -614,9 +651,9 @@ function MeetingCard({
                 meeting.status === 'minutes_pending' &&
                 meeting.minutesRecordedBy !== currentUserId && (
                     <FormSheet
-                        title="Approve meeting minutes"
-                        triggerLabel="Approve minutes"
-                        description={`Independently review and approve the minutes for ${meeting.reference}.`}
+                        title={copy.approve_minutes_title}
+                        triggerLabel={copy.approve_minutes}
+                        description={`${copy.approve_minutes_description} ${meeting.reference}.`}
                     >
                         <Form
                             action={approveMinutes({ meeting: meeting.id })}
@@ -626,13 +663,13 @@ function MeetingCard({
                                 <>
                                     <p className="text-sm text-muted-foreground">
                                         {hasCleanMinutes
-                                            ? 'A clean repository-linked minutes record is ready for approval.'
-                                            : 'Upload a clean minutes record before approval can be completed.'}
+                                            ? copy.clean_minutes_ready
+                                            : copy.clean_minutes_required}
                                     </p>
                                     <Input
                                         name="approval_comment"
                                         required
-                                        placeholder="Independent minutes approval comment"
+                                        placeholder={copy.minutes_comment}
                                     />
                                     <Button
                                         type="submit"
@@ -640,7 +677,7 @@ function MeetingCard({
                                             processing || !hasCleanMinutes
                                         }
                                     >
-                                        Approve minutes
+                                        {copy.approve_minutes}
                                     </Button>
                                 </>
                             )}
@@ -650,11 +687,12 @@ function MeetingCard({
             {capabilities.manage &&
                 ['minutes_pending', 'closed'].includes(meeting.status) && (
                     <div className="grid gap-4 lg:grid-cols-2">
-                        <DecisionForm meeting={meeting} />
+                        <DecisionForm meeting={meeting} copy={copy} />
                         <ActionForm
                             meeting={meeting}
                             options={options}
                             catalogue={catalogue}
+                            copy={copy}
                         />
                     </div>
                 )}
@@ -662,13 +700,19 @@ function MeetingCard({
     );
 }
 
-function DecisionForm({ meeting }: { meeting: Meeting }) {
+function DecisionForm({
+    meeting,
+    copy,
+}: {
+    meeting: Meeting;
+    copy: Record<string, string>;
+}) {
     return (
         <FormSheet
-            title="Register adopted decision"
-            triggerLabel="Register decision"
+            title={copy.register_decision_title}
+            triggerLabel={copy.register_decision}
             icon={Gavel}
-            description={`Record an adopted decision from ${meeting.reference}.`}
+            description={`${copy.register_decision_description} ${meeting.reference}.`}
         >
             <Form
                 action={storeDecision({ meeting: meeting.id })}
@@ -685,13 +729,13 @@ function DecisionForm({ meeting }: { meeting: Meeting }) {
                         <Input
                             name="title"
                             required
-                            placeholder="Decision title"
+                            placeholder={copy.decision_title}
                         />
                         <textarea
                             name="decision_text"
                             required
                             className={textareaClass}
-                            placeholder="Adopted decision"
+                            placeholder={copy.adopted_decision}
                         />
                         <StaticSearchableSelect
                             id={`decision-type-${meeting.id}`}
@@ -705,12 +749,12 @@ function DecisionForm({ meeting }: { meeting: Meeting }) {
                         />
                         <DatePickerField
                             name="decided_at"
-                            label="Decision date and time"
+                            label={copy.decision_datetime}
                             required
                             includeTime
                         />
                         <Button type="submit" disabled={processing}>
-                            Register adopted decision
+                            {copy.register_decision_title}
                         </Button>
                     </>
                 )}
@@ -723,22 +767,24 @@ function ActionForm({
     meeting,
     options,
     catalogue,
+    copy,
 }: {
     meeting: Meeting;
     options: Props['options'];
     catalogue: Props['catalogue'];
+    copy: Record<string, string>;
 }) {
     return (
         <FormSheet
-            title="Assign accountable action"
-            triggerLabel="Assign action"
+            title={copy.assign_action_title}
+            triggerLabel={copy.assign_action}
             icon={UsersRound}
-            description={`Create a deadline-bound action from ${meeting.reference}.`}
+            description={`${copy.assign_action_description} ${meeting.reference}.`}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
-                    ? `Using governed catalogue release v${catalogue.version}`
-                    : 'No checksum-valid published reference catalogue is currently effective.'
+                    ? `${copy.using_catalogue} ${catalogue.version}`
+                    : copy.no_effective_catalogue
             }
         >
             <Form
@@ -756,13 +802,13 @@ function ActionForm({
                         <Input
                             name="title"
                             required
-                            placeholder="Action title"
+                            placeholder={copy.action_title}
                         />
                         <textarea
                             name="description"
                             required
                             className={textareaClass}
-                            placeholder="Deliverable and acceptance evidence"
+                            placeholder={copy.deliverable_evidence}
                         />
                         <Select
                             name="dswg_decision_id"
@@ -785,7 +831,7 @@ function ActionForm({
                         />
                         <DatePickerField
                             name="due_on"
-                            label="Due date"
+                            label={copy.due_date}
                             required
                         />
                         <StaticSearchableSelect
@@ -794,7 +840,7 @@ function ActionForm({
                             values={['medium', 'high', 'critical', 'low']}
                         />
                         <Button type="submit" disabled={processing}>
-                            Assign action
+                            {copy.assign_action}
                         </Button>
                     </>
                 )}
@@ -812,6 +858,7 @@ function ActionControls({
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
+    const copy = useDswgCopy();
     const canManage =
         capabilities.manage ||
         (capabilities.manageActions &&
@@ -835,14 +882,14 @@ function ActionControls({
                 <TransitionSheet
                     actionId={row.id}
                     transition="start"
-                    label="Start"
+                    label={copy.start}
                 />
             )}
             {row.status === 'in_progress' && canManage && (
                 <FormSheet
-                    title="Submit action completion"
-                    triggerLabel="Submit completion"
-                    description="Submit repository-backed completion evidence for independent verification."
+                    title={copy.submit_completion_title}
+                    triggerLabel={copy.submit_completion}
+                    description={copy.submit_completion_description}
                 >
                     <Form
                         action={transitionAction({ action: row.id })}
@@ -862,24 +909,24 @@ function ActionControls({
                                 />
                                 <p className="text-sm text-muted-foreground">
                                     {hasCleanEvidence
-                                        ? 'A clean action-evidence record is linked and ready for submission.'
-                                        : 'Upload a clean action-evidence record before submitting completion.'}
+                                        ? copy.clean_evidence_ready
+                                        : copy.clean_evidence_required}
                                 </p>
                                 <Input
                                     name="completion_evidence"
-                                    placeholder="Optional evidence narrative or repository reference"
+                                    placeholder={copy.evidence_narrative}
                                 />
                                 <Input
                                     name="comment"
                                     required
-                                    placeholder="Completion submission comment"
+                                    placeholder={copy.completion_comment}
                                 />
                                 <Button
                                     type="submit"
                                     size="sm"
                                     disabled={processing || !hasCleanEvidence}
                                 >
-                                    Submit completion
+                                    {copy.submit_completion}
                                 </Button>
                             </>
                         )}
@@ -892,12 +939,12 @@ function ActionControls({
                         <TransitionSheet
                             actionId={row.id}
                             transition="verify"
-                            label="Verify"
+                            label={copy.verify}
                         />
                         <TransitionSheet
                             actionId={row.id}
                             transition="reject"
-                            label="Return"
+                            label={copy.return}
                             variant="outline"
                         />
                     </>
@@ -917,11 +964,13 @@ function TransitionSheet({
     label: string;
     variant?: 'default' | 'outline';
 }) {
+    const copy = useDswgCopy();
+
     return (
         <FormSheet
-            title={`${label} accountable action`}
+            title={`${label} ${copy.accountable_action}`}
             triggerLabel={label}
-            description={`${label} this action through the governed DSWG workflow.`}
+            description={`${label} ${copy.transition_description}`}
         >
             <Form
                 action={transitionAction({ action: actionId })}
@@ -937,8 +986,8 @@ function TransitionSheet({
                         <Input
                             name="comment"
                             required
-                            defaultValue={`${label} action through the governed DSWG workflow.`}
-                            aria-label={`${label} rationale`}
+                            defaultValue={`${label} ${copy.transition_comment}`}
+                            aria-label={`${label} ${copy.rationale}`}
                         />
                         <Button
                             type="submit"
@@ -946,7 +995,7 @@ function TransitionSheet({
                             variant={variant}
                             disabled={processing}
                         >
-                            Confirm {label.toLowerCase()}
+                            {copy.confirm} {label.toLowerCase()}
                         </Button>
                     </>
                 )}
