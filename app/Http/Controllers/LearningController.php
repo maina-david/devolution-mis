@@ -207,8 +207,8 @@ class LearningController extends Controller
         abort_unless($hasGovernanceAccess || $isEnrolled, 403);
         abort_unless($offlinePackage->course->county_id === null || $user->programmeRole()->hasNationalScope() || $user->canAccessCounty($offlinePackage->course->county), 403);
         abort_unless($offlinePackage->status === 'ready' && $offlinePackage->storage_disk !== null && $offlinePackage->path !== null && $offlinePackage->original_name !== null, 404);
-        abort_unless($integrityVerifier->matches($offlinePackage->storage_disk, $offlinePackage->path, $offlinePackage->content_checksum), 409, 'Offline package integrity verification failed.');
-        $auditLogger->record($user, $offlinePackage, 'learning.offline-package.downloaded', "Offline package v{$offlinePackage->package_version} downloaded for {$offlinePackage->course->code}.", $offlinePackage->course->county_id, ['content_checksum' => $offlinePackage->content_checksum, 'manifest_checksum' => $offlinePackage->manifest_checksum]);
+        abort_unless($integrityVerifier->matches($offlinePackage->storage_disk, $offlinePackage->path, $offlinePackage->content_checksum), 409, __('learning.offline.errors.package_integrity_failed'));
+        $auditLogger->record($user, $offlinePackage, 'learning.offline-package.downloaded', __('learning.offline.audit.package_downloaded', ['version' => $offlinePackage->package_version, 'course' => $offlinePackage->course->code]), $offlinePackage->course->county_id, ['content_checksum' => $offlinePackage->content_checksum, 'manifest_checksum' => $offlinePackage->manifest_checksum]);
 
         return Storage::disk($offlinePackage->storage_disk)->download($offlinePackage->path, $offlinePackage->original_name, ['Content-Type' => 'application/zip']);
     }
@@ -217,7 +217,7 @@ class LearningController extends Controller
     {
         $sync = $action->handle($enrollment, $this->user($request), $request->syncPayload());
 
-        return back()->with('success', $sync->status === 'pending' ? 'Offline activity submitted for independent reconciliation.' : 'The existing synchronization record was retained.');
+        return back()->with('success', $sync->status === 'pending' ? __('learning.offline.outcomes.activity_submitted') : __('learning.offline.outcomes.sync_retained'));
     }
 
     public function decideOfflineSync(DecideLearningOfflineSyncRequest $request, LearningOfflineSync $offlineSync, DecideLearningOfflineSync $action): RedirectResponse
@@ -226,7 +226,7 @@ class LearningController extends Controller
         $attributes = $request->validated();
         $decided = $action->handle($offlineSync, $this->user($request), $attributes);
 
-        return back()->with('success', $decided->status === 'conflict' ? 'A newer official record caused a reconciliation conflict; no progress was changed.' : 'Offline synchronization decision recorded.');
+        return back()->with('success', $decided->status === 'conflict' ? __('learning.offline.outcomes.sync_conflict') : __('learning.offline.outcomes.decision_recorded'));
     }
 
     public function completeLesson(CompleteLearningLessonRequest $request, LearningEnrollment $enrollment, LearningLesson $lesson, RecordLearningProgress $action): RedirectResponse

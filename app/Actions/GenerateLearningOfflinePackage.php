@@ -29,7 +29,7 @@ class GenerateLearningOfflinePackage
             'modules.lessons.questions:id,learning_lesson_id,question,options,points,sequence',
             'modules.lessons.documentLinks.document.currentVersion',
         ])->findOrFail($course->id);
-        abort_unless($course->status === 'published', 409, 'Only a published course can be packaged for offline use.');
+        abort_unless($course->status === 'published', 409, __('learning.offline.errors.course_not_published'));
 
         $snapshot = $this->contentSnapshot($course);
         $snapshotJson = json_encode($snapshot, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -55,7 +55,7 @@ class GenerateLearningOfflinePackage
         try {
             $temporaryZip = tempnam(sys_get_temp_dir(), 'idmis-offline-');
             if ($temporaryZip === false) {
-                throw new RuntimeException('Unable to allocate temporary package storage.');
+                throw new RuntimeException(__('learning.offline.errors.temporary_package_storage'));
             }
             $manifest = [
                 'schema' => 'idmis.learning-offline-package.v1',
@@ -75,7 +75,7 @@ class GenerateLearningOfflinePackage
             $manifestChecksum = hash('sha256', $manifestJson);
             $zip = new ZipArchive;
             if ($zip->open($temporaryZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-                throw new RuntimeException('Unable to create the offline package archive.');
+                throw new RuntimeException(__('learning.offline.errors.archive_create_failed'));
             }
             $zip->addFromString('manifest.json', $manifestJson);
             $zip->addFromString('index.html', $this->offlineHtml($course, $package, $manifestChecksum));
@@ -96,22 +96,22 @@ class GenerateLearningOfflinePackage
                     }
                     $version = $link->document->currentVersion;
                     if ($version === null || $version->scan_status !== 'clean' || ! $this->integrityVerifier->matches($version->storage_disk, $version->path, $version->content_checksum)) {
-                        throw ValidationException::withMessages(['package' => "Downloadable asset {$link->document->title} is unavailable, quarantined, or failed integrity verification."]);
+                        throw ValidationException::withMessages(['package' => __('learning.offline.errors.asset_unavailable', ['title' => $link->document->title])]);
                     }
                     $stream = Storage::disk($version->storage_disk)->readStream($version->path);
                     if (! is_resource($stream)) {
-                        throw new RuntimeException("Unable to read downloadable asset {$link->document->title}.");
+                        throw new RuntimeException(__('learning.offline.errors.asset_read_failed', ['title' => $link->document->title]));
                     }
                     $temporaryAsset = tempnam(sys_get_temp_dir(), 'idmis-asset-');
                     if ($temporaryAsset === false) {
                         fclose($stream);
-                        throw new RuntimeException('Unable to allocate temporary asset storage.');
+                        throw new RuntimeException(__('learning.offline.errors.temporary_asset_storage'));
                     }
                     $temporaryAssets[] = $temporaryAsset;
                     $target = fopen($temporaryAsset, 'wb');
                     if (! is_resource($target)) {
                         fclose($stream);
-                        throw new RuntimeException('Unable to stage an offline asset.');
+                        throw new RuntimeException(__('learning.offline.errors.asset_stage_failed'));
                     }
                     stream_copy_to_stream($stream, $target);
                     fclose($stream);
@@ -120,7 +120,7 @@ class GenerateLearningOfflinePackage
                 }
             }
             if (! $zip->close()) {
-                throw new RuntimeException('Unable to finalize the offline package archive.');
+                throw new RuntimeException(__('learning.offline.errors.archive_finalize_failed'));
             }
 
             $path = "learning/offline/{$course->id}/v{$package->package_version}.zip";
@@ -130,7 +130,7 @@ class GenerateLearningOfflinePackage
                 if (is_resource($archive)) {
                     fclose($archive);
                 }
-                throw new RuntimeException('Unable to store the offline package archive.');
+                throw new RuntimeException(__('learning.offline.errors.archive_store_failed'));
             }
             fclose($archive);
             $storedDisk = $disk;
@@ -138,7 +138,7 @@ class GenerateLearningOfflinePackage
             $checksum = hash_file('sha256', $temporaryZip);
             $size = filesize($temporaryZip);
             if (! is_string($checksum) || ! is_int($size)) {
-                throw new RuntimeException('Unable to verify the generated offline package.');
+                throw new RuntimeException(__('learning.offline.errors.archive_verify_failed'));
             }
             $readyAttributes = [
                 'status' => 'ready',
@@ -152,7 +152,7 @@ class GenerateLearningOfflinePackage
                 'manifest_summary' => ['modules' => $course->modules->count(), 'lessons' => $course->modules->flatMap->lessons->count(), 'assets' => count($manifest['assets']), 'sync_schema' => $manifest['sync_contract']['schema']],
                 'generated_at' => now(),
             ];
-            $this->auditLogger->record($actor, $package, 'learning.offline-package.generated', "Offline package v{$package->package_version} generated for {$course->code}.", $course->county_id, ['course_content_checksum' => $courseContentChecksum, 'content_checksum' => $checksum, 'manifest_checksum' => $manifestChecksum]);
+            $this->auditLogger->record($actor, $package, 'learning.offline-package.generated', __('learning.offline.audit.package_generated', ['version' => $package->package_version, 'course' => $course->code]), $course->county_id, ['course_content_checksum' => $courseContentChecksum, 'content_checksum' => $checksum, 'manifest_checksum' => $manifestChecksum]);
             $package->update($readyAttributes);
 
             return $package->refresh();

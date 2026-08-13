@@ -26,6 +26,7 @@ return [
         'no_notifications' => 'No notifications yet.',
         'notifications' => 'Notifications',
         'settings' => 'Settings',
+        'file_manager' => 'File manager',
         'open_account_menu' => 'Open account menu',
         'system' => 'System',
         'theme' => 'Theme',

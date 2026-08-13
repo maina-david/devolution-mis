@@ -20,30 +20,30 @@ class LearningOfflineSyncReconciler
      */
     public function validateAndNormalize(LearningEnrollment $enrollment, LearningOfflinePackage $package, array $payload): array
     {
-        abort_unless($package->status === 'ready', 409, 'Only a verified ready offline package can be synchronized.');
-        abort_unless($package->learning_course_id === $enrollment->learning_course_id, 422, 'The offline package does not belong to this enrolment.');
-        abort_unless(($payload['package_id'] ?? null) === $package->id, 422, 'The offline package identifier does not match the synchronization record.');
-        abort_unless(is_string($package->manifest_checksum) && hash_equals($package->manifest_checksum, (string) ($payload['package_manifest_checksum'] ?? '')), 409, 'The offline package manifest checksum does not match.');
-        abort_unless($package->generated_at !== null, 409, 'The offline package has no verified generation time.');
+        abort_unless($package->status === 'ready', 409, __('learning.offline.errors.package_not_ready'));
+        abort_unless($package->learning_course_id === $enrollment->learning_course_id, 422, __('learning.offline.errors.package_course_mismatch'));
+        abort_unless(($payload['package_id'] ?? null) === $package->id, 422, __('learning.offline.errors.package_id_mismatch'));
+        abort_unless(is_string($package->manifest_checksum) && hash_equals($package->manifest_checksum, (string) ($payload['package_manifest_checksum'] ?? '')), 409, __('learning.offline.errors.manifest_checksum_mismatch'));
+        abort_unless($package->generated_at !== null, 409, __('learning.offline.errors.generation_time_missing'));
 
         /** @var list<array<string, mixed>> $events */
         $events = $payload['events'];
         $lessonIds = collect($events)->pluck('lesson_id')->all();
         /** @var Collection<int, LearningLesson> $lessons */
         $lessons = LearningLesson::query()->whereIn('id', $lessonIds)->whereHas('module', fn ($query) => $query->where('learning_course_id', $enrollment->learning_course_id))->get()->keyBy('id');
-        abort_unless($lessons->count() === count($lessonIds), 422, 'One or more offline lessons do not belong to the enrolled course.');
+        abort_unless($lessons->count() === count($lessonIds), 422, __('learning.offline.errors.lessons_outside_course'));
 
         $exportedAt = CarbonImmutable::parse((string) $payload['exported_at']);
         $existing = $enrollment->progress()->whereIn('learning_lesson_id', $lessonIds)->get()->keyBy('learning_lesson_id');
         foreach ($events as &$event) {
             $lesson = $lessons->get((string) $event['lesson_id']);
-            abort_unless($lesson instanceof LearningLesson && $lesson->content_type !== 'quiz', 422, 'Quiz progress must be submitted through the assessment engine.');
+            abort_unless($lesson instanceof LearningLesson && $lesson->content_type !== 'quiz', 422, __('learning.offline.errors.quiz_progress_engine'));
             $percentage = (float) $event['progress_percentage'];
-            abort_unless(($event['status'] === 'completed' && $percentage === 100.0) || ($event['status'] === 'in_progress' && $percentage < 100.0), 422, 'Offline lesson status and progress percentage are inconsistent.');
+            abort_unless(($event['status'] === 'completed' && $percentage === 100.0) || ($event['status'] === 'in_progress' && $percentage < 100.0), 422, __('learning.offline.errors.status_progress_mismatch'));
             $occurredAt = CarbonImmutable::parse((string) $event['occurred_at']);
-            abort_unless($occurredAt->greaterThanOrEqualTo($package->generated_at) && $occurredAt->lessThanOrEqualTo($exportedAt), 422, 'Offline activity must occur after package generation and no later than export.');
+            abort_unless($occurredAt->greaterThanOrEqualTo($package->generated_at) && $occurredAt->lessThanOrEqualTo($exportedAt), 422, __('learning.offline.errors.activity_window_invalid'));
             $current = $existing->get((string) $event['lesson_id']);
-            abort_if($current !== null && ((float) $current->progress_percentage > $percentage || ($current->last_position_at !== null && $current->last_position_at->greaterThan($occurredAt))), 409, 'Offline activity would regress a newer official learning record.');
+            abort_if($current !== null && ((float) $current->progress_percentage > $percentage || ($current->last_position_at !== null && $current->last_position_at->greaterThan($occurredAt))), 409, __('learning.offline.errors.progress_regression'));
             $event['progress_percentage'] = $percentage;
             $event['time_spent_seconds'] = (int) $event['time_spent_seconds'];
             $event['occurred_at'] = $occurredAt->toIso8601String();

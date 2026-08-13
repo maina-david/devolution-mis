@@ -43,6 +43,9 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('mouseHoverSession.current', $navMain);
 
         $this->assertStringContainsString('<SidebarFooter', $sidebar);
+        $this->assertStringContainsString("user.permissions.includes('county-data:view')", $sidebar);
+        $this->assertStringContainsString('href={evidenceIndex()}', $sidebar);
+        $this->assertStringContainsString('.fileManager', $sidebar);
         $this->assertStringContainsString('notificationsIndex()', $sidebar);
         $this->assertStringContainsString('page.props.notificationSummary.unread', $sidebar);
         $this->assertStringContainsString('href={profileEdit()}', $sidebar);

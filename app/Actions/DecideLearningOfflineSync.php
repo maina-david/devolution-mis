@@ -22,10 +22,10 @@ class DecideLearningOfflineSync
     {
         return DB::transaction(function () use ($sync, $actor, $attributes): LearningOfflineSync {
             $locked = LearningOfflineSync::query()->whereKey($sync->id)->lockForUpdate()->sole();
-            abort_unless($locked->status === 'pending', 409, 'This offline synchronization has already received a final decision.');
-            abort_if($locked->submitted_by === $actor->id, 403, 'Offline activity requires an independent reviewer.');
+            abort_unless($locked->status === 'pending', 409, __('learning.offline.errors.decision_final'));
+            abort_if($locked->submitted_by === $actor->id, 403, __('learning.offline.errors.independent_reviewer'));
             abort_unless($locked->county_id === null ? $actor->programmeRole()->hasNationalScope() : $actor->canAccessCounty($locked->county), 403);
-            abort_unless(hash_equals($locked->payload_checksum, $this->canonicalJson->checksum($locked->payload)), 409, 'Offline synchronization payload integrity verification failed.');
+            abort_unless(hash_equals($locked->payload_checksum, $this->canonicalJson->checksum($locked->payload)), 409, __('learning.offline.errors.payload_integrity'));
 
             $enrollment = LearningEnrollment::query()->whereKey($locked->learning_enrollment_id)->lockForUpdate()->sole();
             $status = $attributes['decision'] === 'reject' ? 'rejected' : 'approved';
@@ -38,15 +38,15 @@ class DecideLearningOfflineSync
                 /** @var list<array<string, mixed>> $events */
                 $events = $locked->payload['events'];
                 $lessons = LearningLesson::query()->whereIn('id', collect($events)->pluck('lesson_id'))->whereHas('module', fn ($query) => $query->where('learning_course_id', $enrollment->learning_course_id))->get()->keyBy('id');
-                abort_unless($lessons->count() === count($events), 409, 'The synchronized course structure is no longer available.');
+                abort_unless($lessons->count() === count($events), 409, __('learning.offline.errors.course_structure_unavailable'));
                 $enrollment->progress()->whereIn('learning_lesson_id', $lessons->keys())->lockForUpdate()->get();
 
                 foreach ($events as $event) {
                     $lesson = $lessons->get((string) $event['lesson_id']);
-                    abort_unless($lesson instanceof LearningLesson && $lesson->content_type !== 'quiz', 409, 'Offline quiz activity cannot update official progress.');
+                    abort_unless($lesson instanceof LearningLesson && $lesson->content_type !== 'quiz', 409, __('learning.offline.errors.quiz_official_progress'));
                     $occurredAt = CarbonImmutable::parse((string) $event['occurred_at']);
                     $current = LearningProgress::query()->withTrashed()->where('learning_enrollment_id', $enrollment->id)->where('learning_lesson_id', $lesson->id)->first();
-                    abort_if($current !== null && ((float) $current->progress_percentage > (float) $event['progress_percentage'] || ($current->last_position_at !== null && $current->last_position_at->greaterThan($occurredAt))), 409, 'Offline activity would regress a newer official learning record.');
+                    abort_if($current !== null && ((float) $current->progress_percentage > (float) $event['progress_percentage'] || ($current->last_position_at !== null && $current->last_position_at->greaterThan($occurredAt))), 409, __('learning.offline.errors.progress_regression'));
                     if ($current?->trashed()) {
                         $current->restore();
                     }
@@ -92,7 +92,7 @@ class DecideLearningOfflineSync
                 'reviewed_at' => $reviewedAt,
                 'applied_at' => $status === 'approved' ? $reviewedAt : null,
             ]);
-            $this->auditLogger->record($actor, $locked, 'learning.offline-sync.'.$status, "Offline learning synchronization {$status}.", $locked->county_id, ['payload_checksum' => $locked->payload_checksum, 'decision_checksum' => $locked->decision_checksum, 'event_count' => $locked->event_count]);
+            $this->auditLogger->record($actor, $locked, 'learning.offline-sync.'.$status, __('learning.offline.audit.sync_decided', ['status' => __('learning.offline.statuses.'.$status)]), $locked->county_id, ['payload_checksum' => $locked->payload_checksum, 'decision_checksum' => $locked->decision_checksum, 'event_count' => $locked->event_count]);
 
             return $locked->refresh();
         });

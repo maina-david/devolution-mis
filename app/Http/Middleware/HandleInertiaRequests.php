@@ -68,6 +68,7 @@ class HandleInertiaRequests extends Middleware
                     'system' => __('idmis.header.system'),
                     'notifications' => __('idmis.header.notifications'),
                     'settings' => __('idmis.header.settings'),
+                    'fileManager' => __('idmis.header.file_manager'),
                     'unread' => __('idmis.header.unread'),
                     'noNotifications' => __('idmis.header.no_notifications'),
                     'viewAllNotifications' => __('idmis.header.view_all_notifications'),

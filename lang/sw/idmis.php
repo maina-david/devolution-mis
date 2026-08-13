@@ -26,6 +26,7 @@ return [
         'no_notifications' => 'Bado hakuna arifa.',
         'notifications' => 'Arifa',
         'settings' => 'Mipangilio',
+        'file_manager' => 'Kidhibiti cha faili',
         'open_account_menu' => 'Fungua menyu ya akaunti',
         'system' => 'Mfumo',
         'theme' => 'Mandhari',

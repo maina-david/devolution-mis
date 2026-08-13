@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Bell, Settings2 } from 'lucide-react';
+import { Bell, FolderOpen, Settings2 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import NotificationRealtimeSync from '@/components/notification-realtime-sync';
@@ -19,6 +19,7 @@ import {
     appNavigationGroups,
 } from '@/lib/app-navigation';
 import { dashboard, home } from '@/routes';
+import { index as evidenceIndex } from '@/routes/evidence';
 import { index as notificationsIndex } from '@/routes/notifications';
 import { edit as profileEdit } from '@/routes/profile';
 
@@ -78,6 +79,32 @@ export function AppSidebar() {
                 </SidebarContent>
                 <SidebarFooter className="border-t border-sidebar-border p-3">
                     <SidebarMenu className="gap-1">
+                        {user.permissions.includes('county-data:view') && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={currentUrl.startsWith(
+                                        '/evidence',
+                                    )}
+                                    tooltip={{
+                                        children:
+                                            page.props.localization.copy
+                                                .fileManager,
+                                    }}
+                                    className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
+                                >
+                                    <Link href={evidenceIndex()} prefetch>
+                                        <FolderOpen aria-hidden="true" />
+                                        <span>
+                                            {
+                                                page.props.localization.copy
+                                                    .fileManager
+                                            }
+                                        </span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         {user && (
                             <SidebarMenuItem>
                                 <SidebarMenuButton
