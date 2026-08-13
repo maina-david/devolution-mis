@@ -1,4 +1,4 @@
-import { Form, Head, router, useForm } from '@inertiajs/react';
+import { Form, Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     CalendarDays,
     GitBranch,
@@ -181,6 +181,10 @@ const starterConfiguration: WorkflowConfiguration = {
     escalation_permission: 'workflows:manage',
 };
 
+function useWorkflowCopy(): Record<string, string> {
+    return usePage().props.localization.workflowManagement;
+}
+
 function DraftEditor({
     workflow,
     version,
@@ -190,6 +194,7 @@ function DraftEditor({
     version: WorkflowVersion;
     calendars: BusinessCalendar[];
 }) {
+    const copy = useWorkflowCopy();
     const form = useForm<{
         configuration: WorkflowConfiguration;
         effective_from: string;
@@ -222,10 +227,7 @@ function DraftEditor({
             setConfigurationJson(JSON.stringify(configuration, null, 2));
             form.clearErrors('configuration');
         } catch {
-            form.setError(
-                'configuration',
-                'Correct the configuration JSON before selecting a calendar.',
-            );
+            form.setError('configuration', copy.correct_configuration_json);
         }
     }
 
@@ -239,7 +241,7 @@ function DraftEditor({
             form.clearErrors('configuration');
             form.transform((data) => ({ ...data, configuration }));
         } catch {
-            form.setError('configuration', 'Configuration must be valid JSON.');
+            form.setError('configuration', copy.configuration_valid_json);
 
             return;
         }
@@ -251,9 +253,9 @@ function DraftEditor({
 
     return (
         <FormSheet
-            title={`Edit ${workflow.name} version ${version.version}`}
-            description="Update the governed state machine, its permissions, rules, separation controls and SLA calendar before publication."
-            triggerLabel={`Edit draft v${version.version}`}
+            title={`${copy.edit} ${workflow.name} ${copy.version} ${version.version}`}
+            description={copy.edit_description}
+            triggerLabel={`${copy.edit_draft} ${copy.version_prefix}${version.version}`}
             icon={GitBranch}
             size="xl"
         >
@@ -264,12 +266,12 @@ function DraftEditor({
                         setConfigurationJson(event.target.value)
                     }
                     className="min-h-96 font-mono text-xs"
-                    aria-label={`Workflow ${workflow.name} configuration`}
+                    aria-label={`${copy.workflow} ${workflow.name} ${copy.configuration}`}
                 />
                 <SearchableSelect
                     id={`workflow-calendar-${version.id}`}
                     name="business_calendar_selector"
-                    label="Published SLA business calendar"
+                    label={copy.published_sla_calendar}
                     options={calendars
                         .filter((calendar) => calendar.status === 'published')
                         .map((calendar) => ({
@@ -293,7 +295,7 @@ function DraftEditor({
                             form.processing || !!form.errors.configuration
                         }
                     >
-                        Save draft
+                        {copy.save_draft}
                     </Button>
                     <Button
                         type="button"
@@ -307,7 +309,8 @@ function DraftEditor({
                             )
                         }
                     >
-                        <ShieldCheck data-icon="inline-start" /> Publish version
+                        <ShieldCheck data-icon="inline-start" />{' '}
+                        {copy.publish_version}
                     </Button>
                 </div>
             </form>
@@ -316,11 +319,13 @@ function DraftEditor({
 }
 
 function WorkflowForm() {
+    const copy = useWorkflowCopy();
+
     return (
         <FormSheet
-            title="Create workflow definition"
-            description="Create a governed workflow definition before drafting and simulating its versioned control paths."
-            triggerLabel="New workflow"
+            title={copy.create_workflow_definition}
+            description={copy.create_workflow_description}
+            triggerLabel={copy.new_workflow}
             icon={Plus}
             size="lg"
         >
@@ -328,7 +333,7 @@ function WorkflowForm() {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="workflow-code">Code</Label>
+                            <Label htmlFor="workflow-code">{copy.code}</Label>
                             <Input
                                 id="workflow-code"
                                 name="code"
@@ -337,7 +342,7 @@ function WorkflowForm() {
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="workflow-name">Name</Label>
+                            <Label htmlFor="workflow-name">{copy.name}</Label>
                             <Input
                                 id="workflow-name"
                                 name="name"
@@ -348,7 +353,7 @@ function WorkflowForm() {
                         <SearchableSelect
                             id="workflow-module"
                             name="module"
-                            label="Module"
+                            label={copy.module}
                             options={modules.map((module) => ({
                                 id: module,
                                 name: module.replaceAll('-', ' '),
@@ -357,14 +362,16 @@ function WorkflowForm() {
                         <input type="hidden" name="status" value="active" />
                         <div className="grid gap-2">
                             <Label htmlFor="workflow-description">
-                                Description
+                                {copy.description_label}
                             </Label>
                             <Textarea
                                 id="workflow-description"
                                 name="description"
                             />
                         </div>
-                        <Button disabled={processing}>Create workflow</Button>
+                        <Button disabled={processing}>
+                            {copy.create_workflow}
+                        </Button>
                     </>
                 )}
             </Form>
@@ -372,22 +379,26 @@ function WorkflowForm() {
     );
 }
 
-const weekdays = [
-    { id: '1', name: 'Monday' },
-    { id: '2', name: 'Tuesday' },
-    { id: '3', name: 'Wednesday' },
-    { id: '4', name: 'Thursday' },
-    { id: '5', name: 'Friday' },
-    { id: '6', name: 'Saturday' },
-    { id: '7', name: 'Sunday' },
-];
+function weekdays(copy: Record<string, string>) {
+    return [
+        { id: '1', name: copy.monday },
+        { id: '2', name: copy.tuesday },
+        { id: '3', name: copy.wednesday },
+        { id: '4', name: copy.thursday },
+        { id: '5', name: copy.friday },
+        { id: '6', name: copy.saturday },
+        { id: '7', name: copy.sunday },
+    ];
+}
 
 function CalendarForm() {
+    const copy = useWorkflowCopy();
+
     return (
         <FormSheet
-            title="Create business-calendar version"
-            description="Define working days, office hours and the effective period. Add source-referenced holidays before an independent actor publishes the version."
-            triggerLabel="New calendar"
+            title={copy.create_calendar_version}
+            description={copy.create_calendar_description}
+            triggerLabel={copy.new_calendar}
             icon={CalendarDays}
             size="xl"
         >
@@ -400,7 +411,9 @@ function CalendarForm() {
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="grid gap-2">
-                                <Label htmlFor="calendar-code">Code</Label>
+                                <Label htmlFor="calendar-code">
+                                    {copy.code}
+                                </Label>
                                 <Input
                                     id="calendar-code"
                                     name="code"
@@ -410,7 +423,9 @@ function CalendarForm() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="calendar-name">Name</Label>
+                                <Label htmlFor="calendar-name">
+                                    {copy.name}
+                                </Label>
                                 <Input
                                     id="calendar-name"
                                     name="name"
@@ -421,39 +436,40 @@ function CalendarForm() {
                             <ReferenceCatalogSelect
                                 id="calendar-timezone"
                                 name="timezone"
-                                label="Timezone"
+                                label={copy.timezone}
                                 catalog="timezone"
                             />
                             <SearchableMultiSelect
                                 name="working_days"
-                                label="Working days"
-                                options={weekdays}
+                                label={copy.working_days}
+                                options={weekdays(copy)}
                                 defaultValues={['1', '2', '3', '4', '5']}
                             />
                             <TimePickerField
                                 name="workday_starts_at"
-                                label="Workday starts"
+                                label={copy.workday_starts}
                                 defaultValue="08:00"
                                 required
                             />
                             <TimePickerField
                                 name="workday_ends_at"
-                                label="Workday ends"
+                                label={copy.workday_ends}
                                 defaultValue="17:00"
                                 required
                             />
                             <DatePickerField
                                 name="effective_from"
-                                label="Effective from"
+                                label={copy.effective_from}
                                 required
                             />
                             <DatePickerField
                                 name="effective_to"
-                                label="Effective to"
+                                label={copy.effective_to}
                             />
                         </div>
                         <Button type="submit" disabled={processing}>
-                            <Plus data-icon="inline-start" /> Create draft
+                            <Plus data-icon="inline-start" />{' '}
+                            {copy.create_draft}
                         </Button>
                     </>
                 )}
@@ -463,10 +479,13 @@ function CalendarForm() {
 }
 
 function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
+    const copy = useWorkflowCopy();
     const [sheet, setSheet] = useState<'details' | 'holiday' | null>(null);
     const workingDayNames = calendar.workingDays
         .map(
-            (day) => weekdays.find((option) => option.id === String(day))?.name,
+            (day) =>
+                weekdays(copy).find((option) => option.id === String(day))
+                    ?.name,
         )
         .filter(Boolean)
         .join(', ');
@@ -478,7 +497,9 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                     <div>
                         <CardTitle>{calendar.name}</CardTitle>
                         <CardDescription>
-                            {calendar.code} · v{calendar.version}
+                            {calendar.code} {copy.separator}{' '}
+                            {copy.version_prefix}
+                            {calendar.version}
                         </CardDescription>
                     </div>
                     <DropdownMenu>
@@ -496,14 +517,14 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                 <DropdownMenuItem
                                     onSelect={() => setSheet('details')}
                                 >
-                                    <CalendarDays /> View calendar
+                                    <CalendarDays /> {copy.view_calendar}
                                 </DropdownMenuItem>
                                 {calendar.status === 'draft' && (
                                     <>
                                         <DropdownMenuItem
                                             onSelect={() => setSheet('holiday')}
                                         >
-                                            <Plus /> Add exception
+                                            <Plus /> {copy.add_exception}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem
                                             onSelect={() =>
@@ -519,8 +540,8 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                                 )
                                             }
                                         >
-                                            <ShieldCheck /> Publish
-                                            independently
+                                            <ShieldCheck />{' '}
+                                            {copy.publish_independently}
                                         </DropdownMenuItem>
                                     </>
                                 )}
@@ -532,19 +553,20 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                     <div className="flex flex-wrap gap-2">
                         <Badge>{calendar.status}</Badge>
                         <Badge variant="outline">
-                            {calendar.holidays.length} exceptions
+                            {calendar.holidays.length} {copy.exceptions}
                         </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        {workingDayNames} ·{' '}
-                        {calendar.workdayStartsAt.slice(0, 5)}–
+                        {workingDayNames} {copy.separator}{' '}
+                        {calendar.workdayStartsAt.slice(0, 5)}
+                        {copy.range_separator}
                         {calendar.workdayEndsAt.slice(0, 5)} {calendar.timezone}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        Effective {calendar.effectiveFrom}
+                        {copy.effective} {calendar.effectiveFrom}
                         {calendar.effectiveTo
-                            ? ` to ${calendar.effectiveTo}`
-                            : ' with no recorded end date'}
+                            ? ` ${copy.to} ${calendar.effectiveTo}`
+                            : ` ${copy.no_end_date}`}
                     </p>
                 </CardContent>
             </Card>
@@ -556,13 +578,13 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                     <SheetHeader>
                         <SheetTitle>
                             {sheet === 'holiday'
-                                ? 'Add calendar exception'
+                                ? copy.add_calendar_exception
                                 : `${calendar.code} v${calendar.version}`}
                         </SheetTitle>
                         <SheetDescription>
                             {sheet === 'holiday'
-                                ? 'Record the gazetted holiday or accountable government closure source.'
-                                : `${calendar.name} · ${calendar.status}`}
+                                ? copy.exception_description
+                                : `${calendar.name} ${copy.separator} ${calendar.status}`}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -578,14 +600,14 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                     <>
                                         <DatePickerField
                                             name="holiday_date"
-                                            label="Exception date"
+                                            label={copy.exception_date}
                                             required
                                         />
                                         <div className="grid gap-2">
                                             <Label
                                                 htmlFor={`holiday-name-${calendar.id}`}
                                             >
-                                                Name
+                                                {copy.name}
                                             </Label>
                                             <Input
                                                 id={`holiday-name-${calendar.id}`}
@@ -596,7 +618,7 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                         <SearchableSelect
                                             id={`holiday-category-${calendar.id}`}
                                             name="category"
-                                            label="Category"
+                                            label={copy.category}
                                             options={[
                                                 'public_holiday',
                                                 'government_closure',
@@ -613,7 +635,7 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                             <Label
                                                 htmlFor={`holiday-source-${calendar.id}`}
                                             >
-                                                Gazette or authority reference
+                                                {copy.authority_reference}
                                             </Label>
                                             <Input
                                                 id={`holiday-source-${calendar.id}`}
@@ -625,7 +647,7 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Add exception
+                                            {copy.add_exception}
                                         </Button>
                                     </>
                                 )}
@@ -640,7 +662,8 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                                     {holiday.name}
                                                 </CardTitle>
                                                 <CardDescription>
-                                                    {holiday.date} ·{' '}
+                                                    {holiday.date}{' '}
+                                                    {copy.separator}{' '}
                                                     {holiday.category.replaceAll(
                                                         '_',
                                                         ' ',
@@ -675,21 +698,24 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                                 {holiday.sourceReference}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Recorded by {holiday.creator}
+                                                {copy.recorded_by}{' '}
+                                                {holiday.creator}
                                             </p>
                                         </CardContent>
                                     </Card>
                                 ))}
                                 {calendar.holidays.length === 0 && (
                                     <WorkspaceEmptyState
-                                        title="No calendar exceptions"
-                                        description="This version has no holidays or closure exceptions recorded."
+                                        title={copy.no_calendar_exceptions}
+                                        description={
+                                            copy.no_calendar_exceptions_description
+                                        }
                                         className="min-h-48"
                                     />
                                 )}
                                 {calendar.checksum && (
                                     <p className="font-mono text-xs break-all text-muted-foreground">
-                                        SHA-256 {calendar.checksum}
+                                        {copy.sha256} {calendar.checksum}
                                     </p>
                                 )}
                             </div>
@@ -707,6 +733,7 @@ export default function WorkflowRegistry({
     users,
     workflows,
 }: Props) {
+    const copy = useWorkflowCopy();
     function search(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -719,18 +746,17 @@ export default function WorkflowRegistry({
 
     return (
         <>
-            <Head title="Workflow registry" />
+            <Head title={copy.head_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Shared platform control plane
+                        {copy.eyebrow}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                        Workflow and rules registry
+                        {copy.title}
                     </h1>
                     <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                        Define, validate, checksum and publish reusable
-                        lifecycle rules for every IDMIS module.
+                        {copy.description}
                     </p>
                 </section>
 
@@ -738,11 +764,10 @@ export default function WorkflowRegistry({
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                         <div>
                             <h2 className="text-xl font-bold">
-                                Business calendars
+                                {copy.business_calendars}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Published working hours and gazetted exceptions
-                                drive reproducible workflow SLA deadlines.
+                                {copy.business_calendars_description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -777,8 +802,10 @@ export default function WorkflowRegistry({
                         ))}
                         {calendars.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No business calendars"
-                                description="Create a versioned government working calendar before assigning business-hour SLAs."
+                                title={copy.no_business_calendars}
+                                description={
+                                    copy.no_business_calendars_description
+                                }
                                 className="min-h-56 lg:col-span-2 xl:col-span-3"
                             />
                         )}
@@ -789,11 +816,10 @@ export default function WorkflowRegistry({
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                         <div>
                             <h2 className="text-xl font-bold">
-                                Workflow definitions
+                                {copy.workflow_definitions}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Versioned, testable lifecycle controls shared
-                                across IDMIS modules.
+                                {copy.workflow_definitions_description}
                             </p>
                         </div>
                         <WorkflowForm />
@@ -803,11 +829,12 @@ export default function WorkflowRegistry({
                             <Input
                                 name="search"
                                 defaultValue={filters.search}
-                                placeholder="Search workflows"
-                                aria-label="Search workflows"
+                                placeholder={copy.search_workflows}
+                                aria-label={copy.search_workflows}
                             />
                             <Button type="submit" variant="outline">
-                                <Search data-icon="inline-start" /> Search
+                                <Search data-icon="inline-start" />{' '}
+                                {copy.search}
                             </Button>
                         </form>
                         {workflows.data.map((workflow) => {
@@ -824,26 +851,26 @@ export default function WorkflowRegistry({
                                                 {workflow.name}
                                             </CardTitle>
                                             <CardDescription className="mt-1">
-                                                {workflow.code} ·{' '}
+                                                {workflow.code} {copy.separator}{' '}
                                                 {workflow.module.replaceAll(
                                                     '-',
                                                     ' ',
                                                 )}{' '}
-                                                ·{' '}
+                                                {copy.separator}{' '}
                                                 {workflow.description ??
-                                                    'No description'}
+                                                    copy.no_description}
                                             </CardDescription>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
                                             <Badge>{workflow.status}</Badge>
                                             <Badge variant="secondary">
                                                 {workflow.activeInstances}{' '}
-                                                active
+                                                {copy.active}
                                             </Badge>
                                             {workflow.overdueInstances > 0 && (
                                                 <Badge variant="destructive">
                                                     {workflow.overdueInstances}{' '}
-                                                    overdue
+                                                    {copy.overdue}
                                                 </Badge>
                                             )}
                                         </div>
@@ -861,7 +888,9 @@ export default function WorkflowRegistry({
                                                                 : 'secondary'
                                                         }
                                                     >
-                                                        v{version.version} ·{' '}
+                                                        {copy.version_prefix}
+                                                        {version.version}{' '}
+                                                        {copy.separator}{' '}
                                                         {version.status}
                                                         {version.checksum
                                                             ? ` · ${version.checksum.slice(0, 8)}`
@@ -913,7 +942,7 @@ export default function WorkflowRegistry({
                                                 }
                                             >
                                                 <Plus data-icon="inline-start" />{' '}
-                                                Create next draft
+                                                {copy.create_next_draft}
                                             </Button>
                                         )}
                                     </CardContent>
@@ -922,15 +951,18 @@ export default function WorkflowRegistry({
                         })}
                         {workflows.data.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No matching workflows"
-                                description="Clear the search or create a governed workflow definition."
+                                title={copy.no_matching_workflows}
+                                description={
+                                    copy.no_matching_workflows_description
+                                }
                                 className="min-h-64 bg-card"
                             />
                         )}
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                             <span>
-                                {workflows.total.toLocaleString()} definitions ·
-                                page {workflows.current_page} of{' '}
+                                {workflows.total.toLocaleString()}{' '}
+                                {copy.definitions} {copy.separator} {copy.page}{' '}
+                                {workflows.current_page} {copy.of}{' '}
                                 {workflows.last_page}
                             </span>
                             <div className="flex gap-2">
@@ -943,7 +975,7 @@ export default function WorkflowRegistry({
                                         router.visit(workflows.prev_page_url)
                                     }
                                 >
-                                    Previous
+                                    {copy.previous}
                                 </Button>
                                 <Button
                                     size="sm"
@@ -954,7 +986,7 @@ export default function WorkflowRegistry({
                                         router.visit(workflows.next_page_url)
                                     }
                                 >
-                                    Next
+                                    {copy.next}
                                 </Button>
                             </div>
                         </div>

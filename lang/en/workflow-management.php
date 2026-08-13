@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'head_title' => 'Workflow registry',
+    'eyebrow' => 'Shared platform control plane',
+    'title' => 'Workflow and rules registry',
+    'description' => 'Define, validate, checksum and publish reusable lifecycle rules for every IDMIS module.',
+    'business_calendars' => 'Business calendars',
+    'business_calendars_description' => 'Published working hours and gazetted exceptions drive reproducible workflow SLA deadlines.',
+    'workflow_definitions' => 'Workflow definitions',
+    'workflow_definitions_description' => 'Versioned, testable lifecycle controls shared across IDMIS modules.',
+    'edit' => 'Edit', 'version' => 'version', 'version_prefix' => 'v', 'workflow' => 'Workflow', 'configuration' => 'configuration',
+    'edit_description' => 'Update the governed state machine, its permissions, rules, separation controls and SLA calendar before publication.',
+    'edit_draft' => 'Edit draft', 'published_sla_calendar' => 'Published SLA business calendar', 'save_draft' => 'Save draft', 'publish_version' => 'Publish version',
+    'correct_configuration_json' => 'Correct the configuration JSON before selecting a calendar.', 'configuration_valid_json' => 'Configuration must be valid JSON.',
+    'create_workflow_definition' => 'Create workflow definition', 'create_workflow_description' => 'Create a governed workflow definition before drafting and simulating its versioned control paths.', 'new_workflow' => 'New workflow',
+    'code' => 'Code', 'name' => 'Name', 'module' => 'Module', 'description_label' => 'Description', 'create_workflow' => 'Create workflow',
+    'create_calendar_version' => 'Create business-calendar version', 'create_calendar_description' => 'Define working days, office hours and the effective period. Add source-referenced holidays before an independent actor publishes the version.', 'new_calendar' => 'New calendar',
+    'timezone' => 'Timezone', 'working_days' => 'Working days', 'workday_starts' => 'Workday starts', 'workday_ends' => 'Workday ends', 'effective_from' => 'Effective from', 'effective_to' => 'Effective to', 'create_draft' => 'Create draft',
+    'separator' => '·', 'range_separator' => '–', 'view_calendar' => 'View calendar', 'add_exception' => 'Add exception', 'publish_independently' => 'Publish independently', 'exceptions' => 'exceptions',
+    'monday' => 'Monday', 'tuesday' => 'Tuesday', 'wednesday' => 'Wednesday', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday',
+    'effective' => 'Effective', 'to' => 'to', 'no_end_date' => 'with no recorded end date', 'add_calendar_exception' => 'Add calendar exception', 'exception_description' => 'Record the gazetted holiday or accountable government closure source.',
+    'exception_date' => 'Exception date', 'category' => 'Category', 'authority_reference' => 'Gazette or authority reference', 'recorded_by' => 'Recorded by', 'sha256' => 'SHA-256',
+    'no_calendar_exceptions' => 'No calendar exceptions', 'no_calendar_exceptions_description' => 'This version has no holidays or closure exceptions recorded.',
+    'no_business_calendars' => 'No business calendars', 'no_business_calendars_description' => 'Create a versioned government working calendar before assigning business-hour SLAs.',
+    'search_workflows' => 'Search workflows', 'search' => 'Search', 'no_description' => 'No description', 'active' => 'active', 'overdue' => 'overdue', 'create_next_draft' => 'Create next draft',
+    'no_matching_workflows' => 'No matching workflows', 'no_matching_workflows_description' => 'Clear the search or create a governed workflow definition.', 'definitions' => 'definitions', 'page' => 'page', 'of' => 'of', 'previous' => 'Previous', 'next' => 'Next',
+];
