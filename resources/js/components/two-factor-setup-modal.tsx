@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Check, Copy, ScanLine } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -62,8 +62,9 @@ function TwoFactorSetupStep({
     onNextStep: () => void;
     errors: string[];
 }) {
+    const copy = usePage().props.localization.settingsSecurity;
     const { resolvedAppearance } = useAppearance();
-    const [copiedText, copy] = useClipboard();
+    const [copiedText, copyToClipboard] = useClipboard();
     const IconComponent = copiedText === manualSetupKey ? Check : Copy;
 
     return (
@@ -77,6 +78,8 @@ function TwoFactorSetupStep({
                             <div className="z-10 flex h-full w-full items-center justify-center p-5">
                                 {qrCodeSvg ? (
                                     <div
+                                        role="img"
+                                        aria-label={copy.two_factor_qr_code}
                                         className="aspect-square w-full rounded-lg bg-white p-2 [&_svg]:size-full"
                                         dangerouslySetInnerHTML={{
                                             __html: qrCodeSvg,
@@ -104,7 +107,7 @@ function TwoFactorSetupStep({
                     <div className="relative flex w-full items-center justify-center">
                         <div className="absolute inset-0 top-1/2 h-px w-full bg-border" />
                         <span className="relative bg-card px-2 py-1">
-                            or, enter the code manually
+                            {copy.enter_code_manually}
                         </span>
                     </div>
 
@@ -120,13 +123,21 @@ function TwoFactorSetupStep({
                                         type="text"
                                         readOnly
                                         value={manualSetupKey}
+                                        aria-label={copy.manual_setup_key}
                                         className="h-full w-full bg-background p-3 text-foreground outline-none"
                                     />
                                     <button
-                                        onClick={() => copy(manualSetupKey)}
+                                        type="button"
+                                        onClick={() =>
+                                            copyToClipboard(manualSetupKey)
+                                        }
+                                        aria-label={copy.copy_setup_key}
                                         className="border-l border-border px-3 hover:bg-muted"
                                     >
-                                        <IconComponent className="w-4" />
+                                        <IconComponent
+                                            className="w-4"
+                                            aria-hidden="true"
+                                        />
                                     </button>
                                 </>
                             )}
@@ -145,6 +156,7 @@ function TwoFactorVerificationStep({
     onClose: () => void;
     onBack: () => void;
 }) {
+    const copy = usePage().props.localization.settingsSecurity;
     const [code, setCode] = useState<string>('');
     const pinInputContainerRef = useRef<HTMLDivElement>(null);
 
@@ -182,6 +194,7 @@ function TwoFactorVerificationStep({
                                 disabled={processing}
                                 pattern={REGEXP_ONLY_DIGITS}
                                 autoFocus
+                                aria-label={copy.authentication_code}
                             >
                                 <InputOTPGroup>
                                     {Array.from(
@@ -210,7 +223,7 @@ function TwoFactorVerificationStep({
                                 onClick={onBack}
                                 disabled={processing}
                             >
-                                Back
+                                {copy.back}
                             </Button>
                             <Button
                                 type="submit"
@@ -219,7 +232,7 @@ function TwoFactorVerificationStep({
                                     processing || code.length < OTP_MAX_LENGTH
                                 }
                             >
-                                Confirm
+                                {copy.confirm}
                             </Button>
                         </div>
                     </div>
@@ -252,6 +265,7 @@ export default function TwoFactorSetupModal({
     fetchSetupData,
     errors,
 }: Props) {
+    const copy = usePage().props.localization.settingsSecurity;
     const [showVerificationStep, setShowVerificationStep] =
         useState<boolean>(false);
 
@@ -262,29 +276,26 @@ export default function TwoFactorSetupModal({
     }>(() => {
         if (twoFactorEnabled) {
             return {
-                title: 'Two-factor authentication enabled',
-                description:
-                    'Two-factor authentication is now enabled. Scan the QR code or enter the setup key in your authenticator app.',
-                buttonText: 'Close',
+                title: copy.two_factor_enabled,
+                description: copy.two_factor_enabled_setup,
+                buttonText: copy.close,
             };
         }
 
         if (showVerificationStep) {
             return {
-                title: 'Verify authentication code',
-                description:
-                    'Enter the 6-digit code from your authenticator app',
-                buttonText: 'Continue',
+                title: copy.verify_authentication_code,
+                description: copy.enter_six_digit_code,
+                buttonText: copy.continue,
             };
         }
 
         return {
-            title: 'Enable two-factor authentication',
-            description:
-                'To finish enabling two-factor authentication, scan the QR code or enter the setup key in your authenticator app',
-            buttonText: 'Continue',
+            title: copy.enable_two_factor_authentication,
+            description: copy.finish_two_factor_setup,
+            buttonText: copy.continue,
         };
-    }, [twoFactorEnabled, showVerificationStep]);
+    }, [copy, twoFactorEnabled, showVerificationStep]);
 
     const resetModalState = useCallback(() => {
         if (twoFactorEnabled) {

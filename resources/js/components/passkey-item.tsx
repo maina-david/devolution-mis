@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { KeyRound, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ type Props = {
 };
 
 export default function PasskeyItem({ passkey, onDelete }: Props) {
+    const copy = usePage().props.localization.settingsSecurity;
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = () => {
@@ -29,7 +31,10 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
         <div className="flex items-center justify-between border-b p-4 last:border-b-0">
             <div className="flex items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                    <KeyRound className="h-5 w-5 text-muted-foreground" />
+                    <KeyRound
+                        className="h-5 w-5 text-muted-foreground"
+                        aria-hidden="true"
+                    />
                 </div>
                 <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
@@ -43,13 +48,16 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                         )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        Added {passkey.created_at_diff}
+                        {copy.added.replace(':when', passkey.created_at_diff)}
                         {passkey.last_used_at_diff && (
                             <>
                                 <span className="mx-1 text-muted-foreground/50">
-                                    /
+                                    {copy.metadata_separator}
                                 </span>
-                                Last used {passkey.last_used_at_diff}
+                                {copy.last_used.replace(
+                                    ':when',
+                                    passkey.last_used_at_diff,
+                                )}
                             </>
                         )}
                     </p>
@@ -63,27 +71,28 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                         size="sm"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Remove</span>
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        <span className="sr-only">{copy.remove}</span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogTitle>Remove passkey</DialogTitle>
+                    <DialogTitle>{copy.remove_passkey}</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to remove the "{passkey.name}"
-                        passkey? You will no longer be able to use it to sign
-                        in.
+                        {copy.remove_passkey_confirmation.replace(
+                            ':name',
+                            passkey.name,
+                        )}
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary">Cancel</Button>
+                            <Button variant="secondary">{copy.cancel}</Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={isDeleting}
                         >
-                            {isDeleting ? 'Removing...' : 'Remove passkey'}
+                            {isDeleting ? copy.removing : copy.remove_passkey}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

@@ -142,6 +142,7 @@ class HandleInertiaRequests extends Middleware
                 'help' => __('help'),
                 'accessControl' => __('access-control'),
                 'settingsProfile' => __('settings-profile'),
+                'settingsSecurity' => __('settings-security'),
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),

@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { KeyRound, LockKeyhole, Pencil } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
@@ -36,39 +36,45 @@ type Props = { passwordRules: string } & ManagePasskeysProps &
     ManageTwoFactorProps;
 
 export default function Security(props: Props) {
+    const { localization } = usePage().props;
+    const copy = localization.settingsSecurity;
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
         <>
-            <Head title="Security settings" />
-            <h1 className="sr-only">Security settings</h1>
+            <Head title={copy.security_settings} />
+            <h1 className="sr-only">{copy.security_settings}</h1>
 
             <div className="grid gap-6 xl:grid-cols-2">
                 <Card>
                     <CardHeader className="flex-row items-start justify-between gap-4">
                         <div className="flex flex-col gap-1.5">
                             <CardTitle className="flex items-center gap-2">
-                                <LockKeyhole aria-hidden="true" /> Password
+                                <LockKeyhole aria-hidden="true" />{' '}
+                                {copy.password}
                             </CardTitle>
                             <CardDescription>
-                                Use a long, unique password and update it if you
-                                suspect exposure.
+                                {copy.password_description}
                             </CardDescription>
                         </div>
                         <Sheet>
                             <SheetTrigger asChild>
                                 <Button variant="outline">
-                                    <Pencil data-icon="inline-start" /> Change
+                                    <Pencil
+                                        data-icon="inline-start"
+                                        aria-hidden="true"
+                                    />{' '}
+                                    {copy.change}
                                 </Button>
                             </SheetTrigger>
                             <SheetContent className="overflow-y-auto sm:max-w-lg">
                                 <SheetHeader>
-                                    <SheetTitle>Change password</SheetTitle>
+                                    <SheetTitle>
+                                        {copy.change_password}
+                                    </SheetTitle>
                                     <SheetDescription>
-                                        Confirm the current password, then enter
-                                        a new password that meets the displayed
-                                        browser password rules.
+                                        {copy.change_password_description}
                                     </SheetDescription>
                                 </SheetHeader>
                                 <Form
@@ -94,7 +100,9 @@ export default function Security(props: Props) {
                                             <FieldGroup className="px-4">
                                                 <PasswordField
                                                     id="current_password"
-                                                    label="Current password"
+                                                    label={
+                                                        copy.current_password
+                                                    }
                                                     name="current_password"
                                                     autoComplete="current-password"
                                                     error={
@@ -106,7 +114,7 @@ export default function Security(props: Props) {
                                                 />
                                                 <PasswordField
                                                     id="password"
-                                                    label="New password"
+                                                    label={copy.new_password}
                                                     name="password"
                                                     autoComplete="new-password"
                                                     error={errors.password}
@@ -117,7 +125,9 @@ export default function Security(props: Props) {
                                                 />
                                                 <PasswordField
                                                     id="password_confirmation"
-                                                    label="Confirm new password"
+                                                    label={
+                                                        copy.confirm_new_password
+                                                    }
                                                     name="password_confirmation"
                                                     autoComplete="new-password"
                                                     error={
@@ -135,7 +145,7 @@ export default function Security(props: Props) {
                                                     aria-busy={processing}
                                                     data-test="update-password-button"
                                                 >
-                                                    Update password
+                                                    {copy.update_password}
                                                 </Button>
                                             </SheetFooter>
                                         </>
@@ -146,8 +156,7 @@ export default function Security(props: Props) {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                            Password changes require your current password and
-                            are rate-limited to protect the account.
+                            {copy.password_protection_notice}
                         </p>
                     </CardContent>
                 </Card>
@@ -155,26 +164,31 @@ export default function Security(props: Props) {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <KeyRound aria-hidden="true" /> Authentication
-                            posture
+                            <KeyRound aria-hidden="true" />{' '}
+                            {copy.authentication_posture}
                         </CardTitle>
                         <CardDescription>
-                            Layer phishing-resistant passkeys and authenticator
-                            codes over your password.
+                            {copy.authentication_posture_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-2 text-sm">
                         <p>
-                            Two-factor authentication:{' '}
+                            {copy.two_factor_authentication}
+                            {copy.field_separator}{' '}
                             <strong>
                                 {props.twoFactorEnabled
-                                    ? 'Enabled'
-                                    : 'Not enabled'}
+                                    ? copy.enabled
+                                    : copy.not_enabled}
                             </strong>
                         </p>
                         <p>
-                            Registered passkeys:{' '}
-                            <strong>{props.passkeys?.length ?? 0}</strong>
+                            {copy.registered_passkeys}
+                            {copy.field_separator}{' '}
+                            <strong>
+                                {(props.passkeys?.length ?? 0).toLocaleString(
+                                    localization.current,
+                                )}
+                            </strong>
                         </p>
                     </CardContent>
                 </Card>

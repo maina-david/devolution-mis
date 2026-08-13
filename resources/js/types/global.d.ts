@@ -116,6 +116,7 @@ declare module '@inertiajs/core' {
                 help: Record<string, string>;
                 accessControl: Record<string, string>;
                 settingsProfile: Record<string, string>;
+                settingsSecurity: Record<string, string>;
                 monitoringResults: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;

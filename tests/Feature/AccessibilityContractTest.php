@@ -111,6 +111,17 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('htmlFor="recovery_code"', $twoFactor);
         $this->assertStringContainsString('id="recovery_code"', $twoFactor);
         $this->assertStringContainsString("? 'authentication-code-error'", $twoFactor);
+
+        $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
+        $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
+        $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);
+        $this->assertStringContainsString('aria-label={copy.copy_setup_key}', $setup);
+        $this->assertStringContainsString('aria-label={copy.authentication_code}', $setup);
+
+        $recovery = $this->source('resources/js/components/two-factor-recovery-codes.tsx');
+        $this->assertStringContainsString('aria-expanded={codesAreVisible}', $recovery);
+        $this->assertStringContainsString('aria-controls="recovery-codes-section"', $recovery);
+        $this->assertStringContainsString('role="status"', $recovery);
     }
 
     private function source(string $path): string

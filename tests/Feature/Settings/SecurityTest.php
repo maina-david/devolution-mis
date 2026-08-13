@@ -39,6 +39,20 @@ class SecurityTest extends TestCase
             );
     }
 
+    public function test_security_page_shares_the_active_locale_catalogue(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time(), 'locale' => 'sw'])
+            ->get(route('security.edit'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'sw')
+                ->where('localization.settingsSecurity.security_settings', 'Mipangilio ya usalama')
+                ->where('localization.settingsSecurity.recovery_codes', 'Misimbo ya urejeshaji ya 2FA'));
+    }
+
     public function test_security_page_requires_password_confirmation_when_enabled()
     {
         $this->skipUnlessFortifyHas(Features::twoFactorAuthentication());
