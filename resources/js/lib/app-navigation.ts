@@ -6,6 +6,7 @@ import {
     ChartNoAxesCombined,
     LayoutGrid,
     Settings2,
+    ShieldCheck,
 } from 'lucide-react';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -281,7 +282,7 @@ export function appNavigationGroups(
         },
         {
             title: 'Platform governance',
-            icon: Settings2,
+            icon: ShieldCheck,
             contextualSubgroups: [
                 {
                     title: 'Access & accountability',
@@ -294,23 +295,8 @@ export function appNavigationGroups(
                     ],
                 },
                 {
-                    title: 'Configuration',
-                    itemTitles: [
-                        'Reference data',
-                        'Historical migrations',
-                        'Workflow registry',
-                        'Assessment setup',
-                        'Platform controls',
-                    ],
-                },
-                {
-                    title: 'Assurance & operations',
-                    itemTitles: [
-                        'Integrations',
-                        'Operations',
-                        'Data governance',
-                        'Security governance',
-                    ],
+                    title: 'Security & data assurance',
+                    itemTitles: ['Data governance', 'Security governance'],
                 },
             ],
             items: visible([
@@ -344,6 +330,38 @@ export function appNavigationGroups(
                     visible: can('user-activity:view'),
                 },
                 {
+                    title: 'Data governance',
+                    href: dataGovernanceIndex(),
+                    visible: can('data-governance:view'),
+                },
+                {
+                    title: 'Security governance',
+                    href: securityGovernanceIndex(),
+                    visible: can('security-governance:view'),
+                },
+            ]),
+        },
+        {
+            title: 'Platform administration',
+            icon: Settings2,
+            contextualSubgroups: [
+                {
+                    title: 'Configuration',
+                    itemTitles: [
+                        'Reference data',
+                        'Historical migrations',
+                        'Workflow registry',
+                        'Assessment setup',
+                        'Platform controls',
+                    ],
+                },
+                {
+                    title: 'Integrations & operations',
+                    itemTitles: ['Integrations', 'Operations'],
+                },
+            ],
+            items: visible([
+                {
                     title: 'Reference data',
                     href: referenceDataIndex(),
                     visible: can('reference-data:manage'),
@@ -375,16 +393,6 @@ export function appNavigationGroups(
                     title: 'Operations',
                     href: operationsIndex(),
                     visible: can('operations:view'),
-                },
-                {
-                    title: 'Data governance',
-                    href: dataGovernanceIndex(),
-                    visible: can('data-governance:view'),
-                },
-                {
-                    title: 'Security governance',
-                    href: securityGovernanceIndex(),
-                    visible: can('security-governance:view'),
                 },
                 {
                     title: 'Platform controls',

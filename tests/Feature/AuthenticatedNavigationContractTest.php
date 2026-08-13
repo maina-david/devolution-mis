@@ -10,8 +10,25 @@ class AuthenticatedNavigationContractTest extends TestCase
     {
         $registry = $this->source('resources/js/lib/app-navigation.ts');
 
-        foreach (['Dashboard', 'County services', 'Delivery coordination', 'Performance & insights', 'Knowledge & capability', 'Platform governance'] as $group) {
+        foreach (['Dashboard', 'County services', 'Delivery coordination', 'Performance & insights', 'Knowledge & capability', 'Platform governance', 'Platform administration'] as $group) {
             $this->assertStringContainsString("title: '{$group}'", $registry);
+        }
+        $platformGovernance = $this->sourceBetween(
+            $registry,
+            "title: 'Platform governance'",
+            "title: 'Platform administration'",
+        );
+        $platformAdministration = substr(
+            $registry,
+            strpos($registry, "title: 'Platform administration'"),
+        );
+        foreach (['User access', 'Roles & permissions', 'Audit trail', 'Audit assurance', 'User activity', 'Data governance', 'Security governance'] as $title) {
+            $this->assertStringContainsString("title: '{$title}'", $platformGovernance);
+            $this->assertStringNotContainsString("title: '{$title}'", $platformAdministration);
+        }
+        foreach (['Reference data', 'Historical migrations', 'Workflow registry', 'Assessment setup', 'Integrations', 'Operations', 'Platform controls'] as $title) {
+            $this->assertStringContainsString("title: '{$title}'", $platformAdministration);
+            $this->assertStringNotContainsString("title: '{$title}'", $platformGovernance);
         }
         $this->assertStringContainsString('permissions.includes(permission)', $registry);
         $this->assertStringContainsString("title: 'Service desk'", $registry);
@@ -245,8 +262,9 @@ class AuthenticatedNavigationContractTest extends TestCase
             'Learning & readiness',
             'Knowledge exchange',
             'Access & accountability',
+            'Security & data assurance',
             'Configuration',
-            'Assurance & operations',
+            'Integrations & operations',
         ] as $subgroup) {
             $this->assertStringContainsString("title: '{$subgroup}'", $registry);
         }
@@ -386,5 +404,16 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertIsString($source, "Unable to read {$path}.");
 
         return $source;
+    }
+
+    private function sourceBetween(string $source, string $start, string $end): string
+    {
+        $startPosition = strpos($source, $start);
+        $endPosition = strpos($source, $end);
+        $this->assertIsInt($startPosition);
+        $this->assertIsInt($endPosition);
+        $this->assertGreaterThan($startPosition, $endPosition);
+
+        return substr($source, $startPosition, $endPosition - $startPosition);
     }
 }
