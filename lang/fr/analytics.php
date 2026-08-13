@@ -17,6 +17,15 @@ return [
         'artifact_not_ready' => 'L’artefact du rapport n’est pas prêt.',
         'artifact_integrity_failed' => 'L’artefact du rapport a échoué au contrôle d’intégrité.',
     ],
+    'report_generator' => [
+        'errors' => [
+            'configuration_unavailable' => 'La configuration approuvée du rapport planifié n’est plus exécutable.', 'artifact_storage_failed' => 'L’artefact privé du rapport planifié n’a pas pu être stocké.',
+            'unsupported_format' => 'Le format du rapport planifié n’est pas pris en charge.', 'csv_stream_failed' => 'Le flux du rapport CSV n’a pas pu être ouvert.', 'csv_render_failed' => 'Le rapport CSV n’a pas pu être généré.',
+            'spreadsheet_create_failed' => 'Le fichier tableur du rapport n’a pas pu être créé.', 'spreadsheet_read_failed' => 'Le fichier tableur du rapport n’a pas pu être lu.',
+        ],
+        'audit' => ['generated' => 'Le rapport planifié :code a été généré au format :format.'],
+        'notifications' => ['ready_title' => 'Rapport planifié prêt', 'ready_message' => ':name est disponible au téléchargement autorisé.'],
+    ],
     'dashboard_filter' => 'Analyse détaillée du tableau de bord',
     'widget_filter' => 'Analyse détaillée du widget',
     'visualization' => 'Visualisation',

@@ -17,6 +17,15 @@ return [
         'artifact_not_ready' => 'The report artifact is not ready.',
         'artifact_integrity_failed' => 'The report artifact failed its integrity check.',
     ],
+    'report_generator' => [
+        'errors' => [
+            'configuration_unavailable' => 'The approved scheduled-report configuration is no longer executable.', 'artifact_storage_failed' => 'The private scheduled-report artifact could not be stored.',
+            'unsupported_format' => 'Unsupported scheduled-report format.', 'csv_stream_failed' => 'The CSV report stream could not be opened.', 'csv_render_failed' => 'The CSV report could not be rendered.',
+            'spreadsheet_create_failed' => 'The spreadsheet report file could not be created.', 'spreadsheet_read_failed' => 'The spreadsheet report could not be read.',
+        ],
+        'audit' => ['generated' => 'Scheduled report :code generated as :format.'],
+        'notifications' => ['ready_title' => 'Scheduled report ready', 'ready_message' => ':name is ready for authorized download.'],
+    ],
     'dashboard_filter' => 'Dashboard drill-down',
     'widget_filter' => 'Widget drill-down',
     'visualization' => 'Visualization',

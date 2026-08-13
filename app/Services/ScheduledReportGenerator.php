@@ -32,7 +32,7 @@ class ScheduledReportGenerator
             : null;
 
         if (! $dashboard instanceof AnalyticsDashboard || $dashboard->status !== 'published' || $dashboard->referenceDataRelease === null || $schedule->referenceDataRelease === null) {
-            throw new RuntimeException('The approved scheduled-report configuration is no longer executable.');
+            throw new RuntimeException(__('analytics.report_generator.errors.configuration_unavailable'));
         }
 
         $run->update(['status' => 'processing', 'started_at' => now(), 'error_detail' => null]);
@@ -73,7 +73,7 @@ class ScheduledReportGenerator
         $disk = (string) config('analytics.report_disk', 'local');
         $path = "scheduled-reports/{$schedule->id}/{$run->id}.{$format}";
         if (! Storage::disk($disk)->put($path, $contents)) {
-            throw new RuntimeException('The private scheduled-report artifact could not be stored.');
+            throw new RuntimeException(__('analytics.report_generator.errors.artifact_storage_failed'));
         }
         $run->update([
             'status' => 'completed',
@@ -85,10 +85,10 @@ class ScheduledReportGenerator
             'record_count' => count($rows),
             'completed_at' => now(),
         ]);
-        $this->auditLogger->record(null, $run, 'analytics.report.generated', "Scheduled report {$schedule->code} generated as ".mb_strtoupper($format).'.', $schedule->county_id, ['sha256' => $run->sha256, 'records' => count($rows)]);
+        $this->auditLogger->record(null, $run, 'analytics.report.generated', __('analytics.report_generator.audit.generated', ['code' => $schedule->code, 'format' => mb_strtoupper($format)]), $schedule->county_id, ['sha256' => $run->sha256, 'records' => count($rows)]);
 
         User::query()->whereKey($schedule->recipient_user_ids)->get()->each(
-            fn (User $recipient) => $recipient->notify(new ProgrammeAlert('Scheduled report ready', "{$schedule->name} is ready for authorized download.", 'analytics')),
+            fn (User $recipient) => $recipient->notify(ProgrammeAlert::translated('analytics.report_generator.notifications.ready_title', 'analytics.report_generator.notifications.ready_message', 'analytics', messageParameters: ['name' => $schedule->name])),
         );
 
         return $run->refresh();
@@ -105,7 +105,7 @@ class ScheduledReportGenerator
             'json' => json_encode(['dashboard' => ['code' => $dashboard->code, 'name' => $dashboard->name, 'checksum' => $dashboard->checksum], 'reference_data' => $lineage, 'county' => $county?->identityCell(), 'filters' => $filters, 'rows' => $rows], JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
             'xlsx' => $this->xlsx($rows, $lineage),
             'pdf' => $this->pdf($dashboard, $rows, $filters, $county, $lineage),
-            default => throw new RuntimeException('Unsupported scheduled-report format.'),
+            default => throw new RuntimeException(__('analytics.report_generator.errors.unsupported_format')),
         };
     }
 
@@ -116,7 +116,7 @@ class ScheduledReportGenerator
     {
         $stream = fopen('php://temp', 'w+b');
         if ($stream === false) {
-            throw new RuntimeException('The CSV report stream could not be opened.');
+            throw new RuntimeException(__('analytics.report_generator.errors.csv_stream_failed'));
         }
         fputcsv($stream, ['Reference lineage', json_encode($lineage, JSON_THROW_ON_ERROR)]);
         fputcsv($stream, ['Metric', 'Metric key', 'Value', 'Unit', 'Visualization', 'Time grain', 'Trend', 'Provenance', 'Measured at']);
@@ -128,7 +128,7 @@ class ScheduledReportGenerator
         fclose($stream);
 
         if ($contents === false) {
-            throw new RuntimeException('The CSV report could not be rendered.');
+            throw new RuntimeException(__('analytics.report_generator.errors.csv_render_failed'));
         }
 
         return $contents;
@@ -141,7 +141,7 @@ class ScheduledReportGenerator
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-scheduled-report-');
         if ($path === false) {
-            throw new RuntimeException('The spreadsheet report file could not be created.');
+            throw new RuntimeException(__('analytics.report_generator.errors.spreadsheet_create_failed'));
         }
         try {
             $writer = new Writer;
@@ -154,7 +154,7 @@ class ScheduledReportGenerator
             $writer->close();
             $contents = file_get_contents($path);
             if ($contents === false) {
-                throw new RuntimeException('The spreadsheet report could not be read.');
+                throw new RuntimeException(__('analytics.report_generator.errors.spreadsheet_read_failed'));
             }
 
             return $contents;

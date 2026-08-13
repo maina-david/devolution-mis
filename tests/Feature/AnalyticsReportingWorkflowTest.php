@@ -13,14 +13,17 @@ use App\Models\ReferenceDataRelease;
 use App\Models\ReportRun;
 use App\Models\ReportSchedule;
 use App\Models\User;
+use App\Notifications\ProgrammeAlert;
 use App\Services\AnalyticsMetricCatalogue;
 use App\Services\ScheduledReportGenerator;
 use App\Support\CanonicalJson;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Tests\TestCase;
 
 class AnalyticsReportingWorkflowTest extends TestCase
@@ -200,6 +203,7 @@ class AnalyticsReportingWorkflowTest extends TestCase
 
     public function test_all_formats_are_private_checksummed_and_download_revalidates_integrity(): void
     {
+        Notification::fake();
         Storage::fake('local');
         $county = County::factory()->create();
         $author = User::factory()->devolutionAdmin()->create();
@@ -244,10 +248,42 @@ class AnalyticsReportingWorkflowTest extends TestCase
             }
         }
 
+        Notification::assertSentTo($recipient, ProgrammeAlert::class, function (ProgrammeAlert $notification): bool {
+            app()->setLocale('fr');
+            $content = $notification->toArray(new \stdClass);
+
+            return $notification->titleTranslationKey === 'analytics.report_generator.notifications.ready_title'
+                && $content['title'] === __('analytics.report_generator.notifications.ready_title')
+                && $content['message'] === __('analytics.report_generator.notifications.ready_message', ['name' => $notification->messageTranslationParameters['name']]);
+        });
+
         $downloadable = ReportRun::query()->latest()->firstOrFail();
         $this->actingAs($recipient)->get(route('analytics.runs.download', [$downloadable]))->assertOk()->assertDownload();
         Storage::disk('local')->put((string) $downloadable->path, 'tampered');
         $this->actingAs($recipient)->get(route('analytics.runs.download', [$downloadable]))->assertStatus(409);
+    }
+
+    public function test_report_generator_failures_and_catalogues_follow_the_active_locale(): void
+    {
+        $schedule = ReportSchedule::factory()->create(['filters' => ['dashboard_id' => (string) Str::uuid()]]);
+        $run = ReportRun::factory()->create(['report_schedule_id' => $schedule->id]);
+        app()->setLocale('sw');
+
+        try {
+            app(ScheduledReportGenerator::class)->generate($run);
+            $this->fail('A scheduled report without an executable governed dashboard must fail closed.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame(__('analytics.report_generator.errors.configuration_unavailable'), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/analytics.php');
+        $kiswahili = require lang_path('sw/analytics.php');
+        $french = require lang_path('fr/analytics.php');
+
+        foreach (['errors', 'audit', 'notifications'] as $section) {
+            $this->assertSame(array_keys($english['report_generator'][$section]), array_keys($kiswahili['report_generator'][$section]));
+            $this->assertSame(array_keys($english['report_generator'][$section]), array_keys($french['report_generator'][$section]));
+        }
     }
 
     public function test_analytics_configuration_fails_closed_without_valid_catalogue_lineage(): void

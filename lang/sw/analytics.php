@@ -17,6 +17,15 @@ return [
         'artifact_not_ready' => 'Faili ya ripoti bado haijawa tayari.',
         'artifact_integrity_failed' => 'Faili ya ripoti imeshindwa ukaguzi wa uadilifu.',
     ],
+    'report_generator' => [
+        'errors' => [
+            'configuration_unavailable' => 'Usanidi ulioidhinishwa wa ripoti iliyoratibiwa hauwezi kutekelezwa tena.', 'artifact_storage_failed' => 'Faili binafsi ya ripoti iliyoratibiwa haikuweza kuhifadhiwa.',
+            'unsupported_format' => 'Muundo wa ripoti iliyoratibiwa hautumiki.', 'csv_stream_failed' => 'Mtiririko wa ripoti ya CSV haukuweza kufunguliwa.', 'csv_render_failed' => 'Ripoti ya CSV haikuweza kutengenezwa.',
+            'spreadsheet_create_failed' => 'Faili ya lahajedwali ya ripoti haikuweza kuundwa.', 'spreadsheet_read_failed' => 'Lahajedwali ya ripoti haikuweza kusomwa.',
+        ],
+        'audit' => ['generated' => 'Ripoti iliyoratibiwa :code imetengenezwa kama :format.'],
+        'notifications' => ['ready_title' => 'Ripoti iliyoratibiwa iko tayari', 'ready_message' => ':name iko tayari kupakuliwa na watumiaji walioidhinishwa.'],
+    ],
     'dashboard_filter' => 'Uchambuzi wa dashibodi',
     'widget_filter' => 'Uchambuzi wa wijeti',
     'visualization' => 'Mwonekano wa data',
