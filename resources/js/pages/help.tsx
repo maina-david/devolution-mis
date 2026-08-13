@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ExternalLink,
     KeyRound,
@@ -16,12 +16,14 @@ const focusClass =
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
 
 export default function Help() {
+    const copy = usePage().props.localization.help;
+
     return (
         <>
-            <Head title="Help and support">
+            <Head title={copy.page_title}>
                 <meta
                     name="description"
-                    content="IDMIS access guidance and official State Department for Devolution contact details."
+                    content={copy.meta_description}
                 />
             </Head>
 
@@ -30,15 +32,13 @@ export default function Help() {
                     <section className="border-b bg-background">
                         <div className="mx-auto max-w-360 px-5 py-14 sm:px-8 sm:py-18 lg:px-10">
                             <p className="text-sm font-semibold text-primary">
-                                Support and contact
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-[-0.035em] text-balance text-foreground sm:text-5xl">
-                                Get help with IDMIS
+                                {copy.title}
                             </h1>
                             <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-                                Choose the route that matches your issue. Never
-                                share your password, recovery codes, or one-time
-                                verification code with support personnel.
+                                {copy.description}
                             </p>
                         </div>
                     </section>
@@ -46,7 +46,7 @@ export default function Help() {
                     <section className="mx-auto grid max-w-360 gap-12 px-5 py-12 sm:px-8 lg:grid-cols-[1fr_.85fr] lg:px-10 lg:py-16">
                         <div>
                             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
-                                System access
+                                {copy.system_access}
                             </h2>
                             <div className="mt-6 divide-y border-y">
                                 <div className="grid gap-4 py-6 sm:grid-cols-[2.75rem_1fr]">
@@ -56,26 +56,23 @@ export default function Help() {
                                     />
                                     <div>
                                         <h3 className="font-semibold text-foreground">
-                                            I already have an account
+                                            {copy.existing_account}
                                         </h3>
                                         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                                            Sign in with your approved work
-                                            email. If you have forgotten your
-                                            password, request a secure reset
-                                            link.
+                                            {copy.existing_account_description}
                                         </p>
                                         <div className="mt-4 flex flex-wrap gap-3">
                                             <Link
                                                 href={login()}
                                                 className={`inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 ${focusClass}`}
                                             >
-                                                Sign in
+                                                {copy.sign_in}
                                             </Link>
                                             <Link
                                                 href={request()}
                                                 className={`inline-flex min-h-10 items-center rounded-md border px-4 text-sm font-semibold text-foreground hover:bg-accent ${focusClass}`}
                                             >
-                                                Reset password
+                                                {copy.reset_password}
                                             </Link>
                                         </div>
                                     </div>
@@ -87,15 +84,10 @@ export default function Help() {
                                     />
                                     <div>
                                         <h3 className="font-semibold text-foreground">
-                                            I need access
+                                            {copy.need_access}
                                         </h3>
                                         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                                            IDMIS does not allow public
-                                            registration. Ask your designated
-                                            county, national, verification, or
-                                            programme administrator to grant the
-                                            role required for your official
-                                            duties.
+                                            {copy.need_access_description}
                                         </p>
                                     </div>
                                 </div>
@@ -105,7 +97,7 @@ export default function Help() {
                                 href={faqs()}
                                 className={`mt-8 inline-flex rounded-sm text-sm font-semibold text-primary underline-offset-4 hover:underline ${focusClass}`}
                             >
-                                Browse frequently asked questions
+                                {copy.browse_faqs}
                             </Link>
                         </div>
 
@@ -117,12 +109,10 @@ export default function Help() {
                                 id="department-contact"
                                 className="text-2xl font-semibold tracking-[-0.025em]"
                             >
-                                Department enquiries
+                                {copy.department_enquiries}
                             </h2>
                             <p className="mt-3 text-sm leading-6 text-white/70">
-                                For official enquiries and feedback, contact the
-                                State Department for Devolution using its
-                                published channels.
+                                {copy.department_description}
                             </p>
                             <address className="mt-8 not-italic">
                                 <ul className="grid gap-5 text-sm">
@@ -132,11 +122,11 @@ export default function Help() {
                                             aria-hidden="true"
                                         />
                                         <span>
-                                            Teleposta Towers, Kenyatta Avenue
+                                            {copy.address_line_one}
                                             <br />
-                                            P.O. Box 30004–00100
+                                            {copy.address_line_two}
                                             <br />
-                                            Nairobi, Kenya
+                                            {copy.address_line_three}
                                         </span>
                                     </li>
                                     <li>
@@ -183,7 +173,7 @@ export default function Help() {
                                 rel="noopener noreferrer"
                                 className={`mt-9 inline-flex min-h-11 items-center gap-2 rounded-md bg-primary-foreground px-4 text-sm font-semibold text-primary hover:bg-primary-foreground/90 ${focusClass}`}
                             >
-                                Official contact page
+                                {copy.official_contact_page}
                                 <ExternalLink
                                     className="size-4"
                                     aria-hidden="true"
