@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { Award, CheckCircle2, Search, ShieldAlert } from 'lucide-react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { interpolate } from '@/hooks/use-localization';
 import PublicLayout from '@/layouts/public-layout';
 import { verify } from '@/routes/learning/certificates';
 
@@ -30,12 +31,20 @@ export default function CertificateVerification({
     searched: boolean;
     certificate: Certificate | null;
 }) {
+    const { localization } = usePage().props;
+    const copy = localization.learning;
+    const locale = localization.current;
+    const formatDate = (value: string) =>
+        new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(
+            new Date(`${value}T00:00:00`),
+        );
+
     return (
         <PublicLayout>
-            <Head title="Verify learning certificate">
+            <Head title={copy.verify_certificate_title}>
                 <meta
                     name="description"
-                    content="Verify an IDMIS learning certificate issued by the State Department for Devolution."
+                    content={copy.verify_certificate_meta}
                 />
             </Head>
             <main id="main-content" tabIndex={-1}>
@@ -45,12 +54,10 @@ export default function CertificateVerification({
                             <Award aria-hidden="true" />
                         </div>
                         <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground">
-                            Verify a learning certificate
+                            {copy.verify_certificate_heading}
                         </h1>
                         <p className="mt-4 max-w-xl leading-7 text-muted-foreground">
-                            Enter the 24-character verification code printed on
-                            the certificate. Results come directly from the
-                            governed IDMIS certificate register.
+                            {copy.verify_certificate_description}
                         </p>
                         <Form
                             {...verify.form()}
@@ -60,7 +67,7 @@ export default function CertificateVerification({
                             {({ errors, processing }) => (
                                 <>
                                     <Label htmlFor="verification-code">
-                                        Verification code
+                                        {copy.verification_code}
                                     </Label>
                                     <div className="flex flex-col gap-3 sm:flex-row">
                                         <Input
@@ -72,6 +79,12 @@ export default function CertificateVerification({
                                             autoComplete="off"
                                             spellCheck={false}
                                             required
+                                            aria-invalid={Boolean(errors.code)}
+                                            aria-describedby={
+                                                errors.code
+                                                    ? 'verification-code-error'
+                                                    : undefined
+                                            }
                                             className="font-mono uppercase"
                                         />
                                         <Button
@@ -80,10 +93,13 @@ export default function CertificateVerification({
                                             className="shrink-0"
                                         >
                                             <Search aria-hidden="true" />
-                                            Verify
+                                            {copy.verify}
                                         </Button>
                                     </div>
-                                    <InputError message={errors.code} />
+                                    <InputError
+                                        id="verification-code-error"
+                                        message={errors.code}
+                                    />
                                 </>
                             )}
                         </Form>
@@ -93,14 +109,15 @@ export default function CertificateVerification({
                         {!searched && (
                             <Card className="border-dashed bg-card/60">
                                 <CardContent className="flex min-h-72 flex-col items-center justify-center text-center">
-                                    <Search className="size-9 text-muted-foreground" />
+                                    <Search
+                                        className="size-9 text-muted-foreground"
+                                        aria-hidden="true"
+                                    />
                                     <p className="mt-4 font-semibold">
-                                        Certificate result
+                                        {copy.certificate_result}
                                     </p>
                                     <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                                        A verified record will show its holder,
-                                        course, issue date and integrity
-                                        checksum here.
+                                        {copy.certificate_result_description}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -109,14 +126,17 @@ export default function CertificateVerification({
                         {searched && !certificate && (
                             <Card className="border-destructive/40">
                                 <CardContent className="flex min-h-72 flex-col items-center justify-center text-center">
-                                    <ShieldAlert className="size-10 text-destructive" />
+                                    <ShieldAlert
+                                        className="size-10 text-destructive"
+                                        aria-hidden="true"
+                                    />
                                     <p className="mt-4 text-lg font-semibold">
-                                        Certificate not verified
+                                        {copy.certificate_not_verified}
                                     </p>
                                     <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                                        No issued certificate matches that exact
-                                        code. Check every character against the
-                                        original certificate.
+                                        {
+                                            copy.certificate_not_verified_description
+                                        }
                                     </p>
                                 </CardContent>
                             </Card>
@@ -128,7 +148,7 @@ export default function CertificateVerification({
                                     <div className="flex items-start justify-between gap-4">
                                         <div>
                                             <p className="text-sm font-medium text-primary">
-                                                IDMIS certificate register
+                                                {copy.certificate_register}
                                             </p>
                                             <CardTitle className="mt-1">
                                                 {certificate.number}
@@ -141,10 +161,10 @@ export default function CertificateVerification({
                                                     : 'destructive'
                                             }
                                         >
-                                            <CheckCircle2 />
+                                            <CheckCircle2 aria-hidden="true" />
                                             {certificate.status === 'valid'
-                                                ? 'Valid'
-                                                : 'Expired'}
+                                                ? copy.valid
+                                                : copy.expired}
                                         </Badge>
                                     </div>
                                 </CardHeader>
@@ -152,22 +172,43 @@ export default function CertificateVerification({
                                     <dl className="divide-y">
                                         {[
                                             [
-                                                'Certificate holder',
+                                                copy.certificate_holder,
                                                 certificate.learner,
                                             ],
                                             [
-                                                'Course',
-                                                `${certificate.courseCode} · ${certificate.courseTitle}`,
+                                                copy.course,
+                                                interpolate(
+                                                    copy.course_summary,
+                                                    {
+                                                        code: certificate.courseCode,
+                                                        title: certificate.courseTitle,
+                                                    },
+                                                ),
                                             ],
                                             [
-                                                'Final score',
-                                                `${certificate.finalScore}%`,
+                                                copy.final_score,
+                                                new Intl.NumberFormat(locale, {
+                                                    style: 'percent',
+                                                    maximumFractionDigits: 2,
+                                                }).format(
+                                                    Number(
+                                                        certificate.finalScore,
+                                                    ) / 100,
+                                                ),
                                             ],
-                                            ['Issued', certificate.issuedAt],
                                             [
-                                                'Expires',
-                                                certificate.expiresAt ??
-                                                    'No expiry recorded',
+                                                copy.issued,
+                                                formatDate(
+                                                    certificate.issuedAt,
+                                                ),
+                                            ],
+                                            [
+                                                copy.expires,
+                                                certificate.expiresAt
+                                                    ? formatDate(
+                                                          certificate.expiresAt,
+                                                      )
+                                                    : copy.no_expiry,
                                             ],
                                         ].map(([label, value]) => (
                                             <div
@@ -185,7 +226,7 @@ export default function CertificateVerification({
                                     </dl>
                                     <div className="mt-4 rounded-lg bg-muted p-4">
                                         <p className="text-xs font-semibold tracking-wide uppercase">
-                                            Content checksum
+                                            {copy.content_checksum}
                                         </p>
                                         <p className="mt-2 font-mono text-xs break-all text-muted-foreground">
                                             {certificate.checksum}

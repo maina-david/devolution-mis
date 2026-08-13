@@ -95,4 +95,15 @@ class LearningCertificateVerificationTest extends TestCase
         $this->assertStringContainsString('<AuthenticatedNotificationRealtimeSync userId={userId} />', $realtimeSync);
         $this->assertStringContainsString('`App.Models.User.${userId}`', $realtimeSync);
     }
+
+    public function test_public_certificate_verification_uses_the_active_locale(): void
+    {
+        $this->withSession(['locale' => 'fr'])
+            ->get(route('learning.certificates.verify'))
+            ->assertOk()
+            ->assertSee('lang="fr"', false)
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.learning.verify_certificate_heading', 'Vérifier un certificat de formation')
+                ->where('localization.learning.certificate_not_verified', 'Certificat non vérifié'));
+    }
 }
