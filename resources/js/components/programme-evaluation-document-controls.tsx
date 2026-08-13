@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, Files, Upload } from 'lucide-react';
 import { useState } from 'react';
 import FormSheet from '@/components/form-sheet';
@@ -27,6 +27,7 @@ type Props = {
 };
 
 export default function ProgrammeEvaluationDocumentControls(props: Props) {
+    const copy = usePage().props.localization.evaluationDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
 
@@ -37,21 +38,20 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
                         <Files aria-hidden="true" />
-                        Records ({props.documents.length})
+                        {copy.records} {'('}{props.documents.length}{')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Governed evaluation records</SheetTitle>
+                        <SheetTitle>{copy.governed_records}</SheetTitle>
                         <SheetDescription>
-                            Private, checksum-bound terms of reference, reports,
-                            and supporting material.
+                            {copy.private_records}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-3 px-4 pb-8">
                         {props.documents.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                No repository records have been linked yet.
+                                {copy.no_repository_records}
                             </p>
                         )}
                         {props.documents.map((document) => (
@@ -66,8 +66,10 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                                         </p>
                                         <p className="text-xs text-muted-foreground">
                                             {document.originalName ??
-                                                'Repository record'}{' '}
-                                            · {document.sourceType}
+                                                copy.repository_record}{' '}
+                                            {'·'}{' '}
+                                            {copy[document.sourceType] ??
+                                                document.sourceType}
                                         </p>
                                     </div>
                                     <div className="flex gap-2">
@@ -80,7 +82,8 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                                                 .replaceAll('-', ' ')}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {document.scanStatus}
+                                            {copy[document.scanStatus] ??
+                                                document.scanStatus}
                                         </Badge>
                                     </div>
                                 </div>
@@ -96,7 +99,7 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                                                 }
                                             >
                                                 <Eye aria-hidden="true" />
-                                                Preview
+                                                {copy.preview}
                                             </Button>
                                         )}
                                         <Button
@@ -110,7 +113,7 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                                                 })}
                                             >
                                                 <Download aria-hidden="true" />
-                                                Download
+                                                {copy.download}
                                             </a>
                                         </Button>
                                     </div>
@@ -127,15 +130,15 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {previewDocument?.title ?? 'Evaluation record'}
+                            {previewDocument?.title ?? copy.evaluation_record}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview from the private repository.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={`${copy.preview} ${previewDocument.title}`}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -147,23 +150,24 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const copy = usePage().props.localization.evaluationDocuments;
     const purposes =
         props.status === 'planned'
             ? [
-                  { id: 'terms_of_reference', name: 'Terms of reference' },
-                  { id: 'supporting', name: 'Supporting material' },
+                  { id: 'terms_of_reference', name: copy.terms_of_reference },
+                  { id: 'supporting', name: copy.supporting_material },
               ]
             : [
-                  { id: 'evaluation_report', name: 'Evaluation report' },
-                  { id: 'supporting', name: 'Supporting material' },
+                  { id: 'evaluation_report', name: copy.evaluation_report },
+                  { id: 'supporting', name: copy.supporting_material },
               ];
 
     return (
         <FormSheet
-            title="Upload evaluation record"
-            triggerLabel="Upload record"
+            title={copy.upload_evaluation_record}
+            triggerLabel={copy.upload_record}
             icon={Upload}
-            description="Add a private scanned or born-digital evaluation record."
+            description={copy.upload_record_description}
         >
             <Form
                 {...store.form({ evaluation: props.evaluationId })}
@@ -175,7 +179,7 @@ function UploadRecord(props: Props) {
                         <SearchableSelect
                             id={`evaluation-purpose-${props.evaluationId}`}
                             name="record_purpose"
-                            label="Record purpose"
+                            label={copy.record_purpose}
                             defaultValue={purposes[0].id}
                             options={purposes}
                         />
@@ -183,7 +187,7 @@ function UploadRecord(props: Props) {
                             <Label
                                 htmlFor={`evaluation-title-${props.evaluationId}`}
                             >
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`evaluation-title-${props.evaluationId}`}
@@ -209,30 +213,30 @@ function UploadRecord(props: Props) {
                             <Label
                                 htmlFor={`evaluation-category-${props.evaluationId}`}
                             >
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`evaluation-category-${props.evaluationId}`}
                                 name="category"
-                                defaultValue="Programme evaluation"
+                                defaultValue={copy.programme_evaluation}
                                 required
                             />
                         </div>
                         <SearchableSelect
                             id={`evaluation-source-${props.evaluationId}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             defaultValue="digital"
                             options={[
-                                { id: 'digital', name: 'Born-digital' },
-                                { id: 'scanned', name: 'Scanned original' },
+                                { id: 'digital', name: copy.digital },
+                                { id: 'scanned', name: copy.scanned },
                             ]}
                         />
                         <div className="grid gap-2">
                             <Label
                                 htmlFor={`evaluation-file-${props.evaluationId}`}
                             >
-                                File
+                                {copy.file}
                             </Label>
                             <Input
                                 id={`evaluation-file-${props.evaluationId}`}
@@ -258,11 +262,11 @@ function UploadRecord(props: Props) {
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                Uploading: {progress.percentage}%
+                                {copy.uploading}{':'} {progress.percentage}{'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Upload securely
+                            {copy.upload_securely}
                         </Button>
                     </>
                 )}
