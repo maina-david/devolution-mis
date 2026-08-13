@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { Building2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -38,6 +39,7 @@ export default function CountyIdentity({
     inverse?: boolean;
     className?: string;
 }) {
+    const copy = usePage().props.localization.common;
     const identity = (
         <span
             className={cn(
@@ -55,7 +57,7 @@ export default function CountyIdentity({
                 {county.logoUrl ? (
                     <AvatarImage
                         src={county.logoUrl}
-                        alt={`${county.name} County official logo`}
+                        alt={`${county.name} ${copy.county_official_logo}`}
                         className="object-contain"
                     />
                 ) : null}
@@ -77,7 +79,7 @@ export default function CountyIdentity({
                             inverse ? 'text-white/70' : 'text-muted-foreground',
                         )}
                     >
-                        County {String(county.code).padStart(3, '0')}
+                        {copy.county} {String(county.code).padStart(3, '0')}
                     </span>
                 )}
             </span>
@@ -93,10 +95,14 @@ export default function CountyIdentity({
             <Tooltip>
                 <TooltipTrigger asChild>{identity}</TooltipTrigger>
                 <TooltipContent>
-                    <p className="font-medium">Verified county identity</p>
+                    <p className="font-medium">
+                        {copy.verified_county_identity}
+                    </p>
                     <p>{county.logoSourceAuthority}</p>
                     {county.logoVerifiedAt && (
-                        <p>Verified {county.logoVerifiedAt}</p>
+                        <p>
+                            {copy.verified} {county.logoVerifiedAt}
+                        </p>
                     )}
                 </TooltipContent>
             </Tooltip>
@@ -109,8 +115,10 @@ export function CountyIdentityGroup({
 }: {
     counties: CountyIdentityValue[];
 }) {
+    const copy = usePage().props.localization.common;
+
     if (counties.length === 0) {
-        return <span className="text-muted-foreground">None</span>;
+        return <span className="text-muted-foreground">{copy.none}</span>;
     }
 
     return (

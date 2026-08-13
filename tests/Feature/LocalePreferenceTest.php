@@ -38,6 +38,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.current', 'sw')
                 ->where('localization.copy.chooseLanguage', 'Chagua lugha')
                 ->where('localization.common.rows_per_page', 'Safu kwa kila ukurasa')
+                ->where('localization.common.verified_county_identity', 'Utambulisho wa kaunti uliothibitishwa')
                 ->where('localization.globalSearch.button', 'Tafuta IDMIS')
                 ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
                 ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
@@ -183,6 +184,17 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('value={meta?.findingCodes || copy.none}', $source);
         $this->assertStringNotContainsString('Fail-closed verification', $source);
         $this->assertStringNotContainsString('Audit assurance evidence', $source);
+    }
+
+    public function test_shared_county_identity_localizes_logo_names_verification_and_empty_groups(): void
+    {
+        $source = file_get_contents(resource_path('js/components/county-identity.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('alt={`${county.name} ${copy.county_official_logo}`}', $source);
+        $this->assertStringContainsString('{copy.verified_county_identity}', $source);
+        $this->assertStringContainsString('{copy.none}', $source);
+        $this->assertStringNotContainsString('Verified county identity', $source);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void

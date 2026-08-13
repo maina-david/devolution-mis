@@ -45,6 +45,8 @@ return [
     ],
     'common' => [
         'actions' => 'Actions',
+        'county' => 'County',
+        'county_official_logo' => 'County official logo',
         'bulk_actions' => 'Bulk actions',
         'clear_selection' => 'Clear selection',
         'log_out' => 'Log out',
@@ -55,6 +57,7 @@ return [
         'no_records_found' => 'No records found',
         'no_records_match_filters' => 'No records match the current filters.',
         'not_specified' => 'Not specified',
+        'none' => 'None',
         'open_row_actions' => 'Open row actions',
         'records_range' => 'Showing :first–:last of :total records',
         'rows_per_page' => 'Rows per page',
@@ -67,6 +70,8 @@ return [
         'selected_page' => ':count selected on this page',
         'sort_by' => 'Sort by :column',
         'work_areas' => 'Work areas',
+        'verified' => 'Verified',
+        'verified_county_identity' => 'Verified county identity',
     ],
     'navigation' => [
         'access_accountability' => 'Access & accountability',

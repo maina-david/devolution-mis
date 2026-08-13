@@ -45,6 +45,8 @@ return [
     ],
     'common' => [
         'actions' => 'Vitendo',
+        'county' => 'Kaunti',
+        'county_official_logo' => 'Nembo rasmi ya kaunti',
         'bulk_actions' => 'Vitendo vya pamoja',
         'clear_selection' => 'Futa uteuzi',
         'log_out' => 'Toka',
@@ -55,6 +57,7 @@ return [
         'no_records_found' => 'Hakuna rekodi zilizopatikana',
         'no_records_match_filters' => 'Hakuna rekodi zinazolingana na vichujio vya sasa.',
         'not_specified' => 'Haijabainishwa',
+        'none' => 'Hakuna',
         'open_row_actions' => 'Fungua vitendo vya safu',
         'records_range' => 'Inaonyesha :first–:last kati ya rekodi :total',
         'rows_per_page' => 'Safu kwa kila ukurasa',
@@ -67,6 +70,8 @@ return [
         'selected_page' => ':count zimechaguliwa kwenye ukurasa huu',
         'sort_by' => 'Panga kwa :column',
         'work_areas' => 'Maeneo ya kazi',
+        'verified' => 'Imethibitishwa',
+        'verified_county_identity' => 'Utambulisho wa kaunti uliothibitishwa',
     ],
     'navigation' => [
         'access_accountability' => 'Ufikiaji na uwajibikaji', 'analytics' => 'Uchanganuzi', 'appearance' => 'Mwonekano',

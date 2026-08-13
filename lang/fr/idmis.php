@@ -45,6 +45,8 @@ return [
     ],
     'common' => [
         'actions' => 'Actions',
+        'county' => 'Comté',
+        'county_official_logo' => 'Logo officiel du comté',
         'bulk_actions' => 'Actions groupées',
         'clear_selection' => 'Effacer la sélection',
         'log_out' => 'Se déconnecter',
@@ -55,6 +57,7 @@ return [
         'no_records_found' => 'Aucun dossier trouvé',
         'no_records_match_filters' => 'Aucun dossier ne correspond aux filtres actuels.',
         'not_specified' => 'Non précisé',
+        'none' => 'Aucun',
         'open_row_actions' => 'Ouvrir les actions de la ligne',
         'records_range' => 'Affichage de :first à :last sur :total dossiers',
         'rows_per_page' => 'Lignes par page',
@@ -67,6 +70,8 @@ return [
         'selected_page' => ':count sélectionnés sur cette page',
         'sort_by' => 'Trier par :column',
         'work_areas' => 'Espaces de travail',
+        'verified' => 'Vérifié',
+        'verified_county_identity' => 'Identité du comté vérifiée',
     ],
     'navigation' => [
         'access_accountability' => 'Accès et responsabilité', 'analytics' => 'Analyses', 'appearance' => 'Apparence',
