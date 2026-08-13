@@ -119,6 +119,7 @@ class HandleInertiaRequests extends Middleware
                 'departmentalPerformance' => __('departmental-performance'),
                 'dswg' => __('dswg'),
                 'integrationManagement' => __('integration-management'),
+                'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),
                 'security' => __('security'),

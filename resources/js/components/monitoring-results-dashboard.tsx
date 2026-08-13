@@ -138,6 +138,7 @@ export default function MonitoringResultsDashboard({
     results: MonitoringResults;
 }) {
     const page = usePage();
+    const copy = page.props.localization.monitoringResults;
     const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
     const summaryCards = [
         {
@@ -169,11 +170,10 @@ export default function MonitoringResultsDashboard({
         >
             <div>
                 <h2 id="results-dashboard-title" className="text-xl font-bold">
-                    Results dashboard
+                    {copy.results_dashboard}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                    Filter-aware verified results, disaggregation and project
-                    contributions within your authorized county scope.
+                    {copy.results_dashboard_description}
                 </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -195,10 +195,9 @@ export default function MonitoringResultsDashboard({
             <div className="grid gap-5 xl:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Verified indicator ranges</CardTitle>
+                            <CardTitle>{copy.verified_indicator_ranges}</CardTitle>
                         <CardDescription>
-                            Average and observed range by released indicator
-                            version.
+                                {copy.verified_indicator_ranges_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto p-0">
@@ -206,16 +205,16 @@ export default function MonitoringResultsDashboard({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Indicator</TableHead>
-                                        <TableHead>Level</TableHead>
+                                        <TableHead>{copy.indicator}</TableHead>
+                                        <TableHead>{copy.level}</TableHead>
                                         <TableHead className="text-right">
-                                            Average
+                                            {copy.average}
                                         </TableHead>
                                         <TableHead className="text-right">
-                                            Range
+                                            {copy.range}
                                         </TableHead>
                                         <TableHead className="text-right">
-                                            Records
+                                            {copy.records}
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -241,7 +240,7 @@ export default function MonitoringResultsDashboard({
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
                                                 {indicator.minimum.toLocaleString()}
-                                                –
+                                                    {copy.range_separator}
                                                 {indicator.maximum.toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
@@ -262,10 +261,9 @@ export default function MonitoringResultsDashboard({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Disaggregation</CardTitle>
+                            <CardTitle>{copy.disaggregation}</CardTitle>
                         <CardDescription>
-                            Verified result averages by declared dimension
-                            category.
+                                {copy.disaggregation_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto p-0">
@@ -273,13 +271,13 @@ export default function MonitoringResultsDashboard({
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Indicator</TableHead>
-                                        <TableHead>Dimension</TableHead>
+                                        <TableHead>{copy.indicator}</TableHead>
+                                        <TableHead>{copy.dimension}</TableHead>
                                         <TableHead className="text-right">
-                                            Average
+                                            {copy.average}
                                         </TableHead>
                                         <TableHead className="text-right">
-                                            Records
+                                            {copy.records}
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -323,10 +321,9 @@ export default function MonitoringResultsDashboard({
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Project result contributions</CardTitle>
+                        <CardTitle>{copy.project_result_contributions}</CardTitle>
                     <CardDescription>
-                        Verified project submissions awaiting or completing
-                        separate M&E quality review.
+                            {copy.project_result_contributions_description}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="overflow-x-auto p-0">
@@ -334,14 +331,14 @@ export default function MonitoringResultsDashboard({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Project</TableHead>
-                                    <TableHead>County</TableHead>
-                                    <TableHead>Indicator</TableHead>
-                                    <TableHead>Dimension</TableHead>
+                                    <TableHead>{copy.project}</TableHead>
+                                    <TableHead>{copy.county}</TableHead>
+                                    <TableHead>{copy.indicator}</TableHead>
+                                    <TableHead>{copy.dimension}</TableHead>
                                     <TableHead className="text-right">
-                                        Value
+                                        {copy.value}
                                     </TableHead>
-                                    <TableHead>Quality state</TableHead>
+                                    <TableHead>{copy.quality_state}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -378,7 +375,7 @@ export default function MonitoringResultsDashboard({
                                             </Link>
                                         </TableCell>
                                         <TableCell>
-                                            {item.indicator.code} ·{' '}
+                                            {item.indicator.code} {copy.separator}{' '}
                                             {item.indicator.name}
                                         </TableCell>
                                         <TableCell>{item.dimension}</TableCell>
@@ -387,7 +384,8 @@ export default function MonitoringResultsDashboard({
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline">
-                                                {item.verificationStatus} ·{' '}
+                                                {item.verificationStatus}{' '}
+                                                {copy.separator}{' '}
                                                 {item.qualityStatus}
                                             </Badge>
                                         </TableCell>
@@ -418,6 +416,7 @@ function TargetPerformance({
     performance: MonitoringResults['performance'];
 }) {
     const page = usePage();
+    const copy = page.props.localization.monitoringResults;
     const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
 
     return (
@@ -427,11 +426,10 @@ function TargetPerformance({
         >
             <div>
                 <h3 id="target-performance-title" className="text-lg font-bold">
-                    Target performance and trends
+                    {copy.target_performance_trends}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                    Latest verified actuals compared with applicable
-                    independently verified targets.
+                    {copy.target_performance_trends_description}
                 </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -458,7 +456,7 @@ function TargetPerformance({
             </div>
             <Alert>
                 <ChartNoAxesCombined aria-hidden="true" />
-                <AlertTitle>Calculation method</AlertTitle>
+                <AlertTitle>{copy.calculation_method}</AlertTitle>
                 <AlertDescription>{performance.methodology}</AlertDescription>
             </Alert>
             {performance.trends.length > 0 && (
@@ -467,7 +465,7 @@ function TargetPerformance({
                         <Card key={trend.key}>
                             <CardHeader>
                                 <CardTitle>
-                                    {trend.indicator.code} ·{' '}
+                                    {trend.indicator.code} {copy.separator}{' '}
                                     {trend.indicator.name}
                                 </CardTitle>
                                 <CardDescription className="flex flex-wrap items-center gap-2">
@@ -485,7 +483,7 @@ function TargetPerformance({
                                         />
                                     </Link>
                                     <span>
-                                        {trend.dimension} ·{' '}
+                                        {trend.dimension} {copy.separator}{' '}
                                         {trend.indicator.unit}
                                     </span>
                                 </CardDescription>
@@ -548,10 +546,9 @@ function TargetPerformance({
             )}
             <Card>
                 <CardHeader>
-                    <CardTitle>Latest target variance</CardTitle>
+                    <CardTitle>{copy.latest_target_variance}</CardTitle>
                     <CardDescription>
-                        Direction-aware attainment for each scoped indicator,
-                        county, programme and dimension series.
+                        {copy.latest_target_variance_description}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="overflow-x-auto p-0">
@@ -559,22 +556,22 @@ function TargetPerformance({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Indicator</TableHead>
-                                    <TableHead>County</TableHead>
-                                    <TableHead>Period</TableHead>
+                                    <TableHead>{copy.indicator}</TableHead>
+                                    <TableHead>{copy.county}</TableHead>
+                                    <TableHead>{copy.period}</TableHead>
                                     <TableHead className="text-right">
-                                        Actual
+                                        {copy.actual}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Target
+                                        {copy.target}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Variance
+                                        {copy.variance}
                                     </TableHead>
                                     <TableHead className="text-right">
-                                        Attainment
+                                        {copy.attainment}
                                     </TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead>{copy.status}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -585,7 +582,8 @@ function TargetPerformance({
                                                 {row.indicator.code}
                                             </span>
                                             <span className="block max-w-64 text-xs text-muted-foreground">
-                                                {row.indicator.name} ·{' '}
+                                                {row.indicator.name}{' '}
+                                                {copy.separator}{' '}
                                                 {row.dimension}
                                             </span>
                                         </TableCell>

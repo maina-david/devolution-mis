@@ -93,6 +93,7 @@ declare module '@inertiajs/core' {
                 departmentalPerformance: Record<string, string>;
                 dswg: Record<string, string>;
                 integrationManagement: Record<string, string>;
+                monitoringResults: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;
                 security: {
