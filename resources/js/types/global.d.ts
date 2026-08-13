@@ -74,6 +74,7 @@ declare module '@inertiajs/core' {
                 dataRights: Record<string, string>;
                 dataGovernance: Record<string, string>;
                 evidence: Record<string, string>;
+                learning: Record<string, string>;
                 welcome: Record<string, string>;
                 support: Record<string, string> & {
                     questions: Array<{ question: string; answer: string }>;

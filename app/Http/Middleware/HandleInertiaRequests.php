@@ -109,6 +109,7 @@ class HandleInertiaRequests extends Middleware
                 'dataRights' => __('data-rights'),
                 'dataGovernance' => __('data-governance'),
                 'evidence' => __('evidence'),
+                'learning' => __('learning'),
                 'welcome' => __('welcome'),
                 'support' => __('support'),
             ],

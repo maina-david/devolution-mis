@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     Award,
     BookOpen,
@@ -47,7 +47,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { interpolate } from '@/hooks/use-localization';
 import {
     download as downloadEvidence,
     preview as previewEvidence,
@@ -283,6 +283,9 @@ export default function Learning({
     catalogue,
     options,
 }: Props) {
+    const { localization } = usePage().props;
+    const copy = localization.learning;
+    const locale = localization.current;
     const rows: WorkspaceRow[] = courses.data.map((course) => ({
         id: course.id,
         status: course.status,
@@ -291,15 +294,20 @@ export default function Learning({
             course.title,
             course.category,
             course.level,
-            course.county ?? 'National',
+            course.county ?? copy.national,
             course.referenceData
                 ? `v${course.referenceData.version}`
-                : 'Legacy · unpinned',
-            course.referenceData?.checksum ?? 'Legacy · unpinned',
-            `${course.moduleCount} modules · ${course.estimatedMinutes} min`,
+                : copy.legacy_unpinned,
+            course.referenceData?.checksum ?? copy.legacy_unpinned,
+            interpolate(copy.module_duration, {
+                modules: course.moduleCount,
+                minutes: course.estimatedMinutes,
+            }),
             course.enrollment
                 ? `${course.enrollment.progress}%`
-                : `${course.enrollmentCount} enrolled`,
+                : interpolate(copy.enrolled_count, {
+                      count: course.enrollmentCount,
+                  }),
             humanize(course.status),
         ],
     }));
@@ -316,10 +324,10 @@ export default function Learning({
             sync.course.code,
             `v${sync.packageVersion}`,
             sync.learner,
-            sync.county ?? 'National',
+            sync.county ?? copy.national,
             sync.eventCount,
-            new Date(sync.submittedAt).toLocaleString(DEFAULT_LOCALE),
-            sync.reviewer ?? 'Pending',
+            new Date(sync.submittedAt).toLocaleString(locale),
+            sync.reviewer ?? copy.pending,
             humanize(sync.status),
         ],
     }));
@@ -338,10 +346,10 @@ export default function Learning({
             cohort.name,
             `${cohort.course.code} · ${cohort.course.title}`,
             cohort.instructor,
-            cohort.county ?? 'National',
+            cohort.county ?? copy.national,
             `${cohort.membersCount} / ${cohort.capacity}`,
-            new Date(cohort.startsAt).toLocaleString(DEFAULT_LOCALE),
-            new Date(cohort.endsAt).toLocaleString(DEFAULT_LOCALE),
+            new Date(cohort.startsAt).toLocaleString(locale),
+            new Date(cohort.endsAt).toLocaleString(locale),
             humanize(cohort.status),
         ],
     }));
@@ -355,21 +363,19 @@ export default function Learning({
 
     return (
         <>
-            <Head title="E-Learning" />
+            <Head title={copy.page_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Continuous professional development
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Devolution learning hub
+                                {copy.heading}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Multimedia courses, practical toolkits, live
-                                classrooms, tracked progress, assessments, and
-                                verifiable certification.
+                                {copy.introduction}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -401,7 +407,7 @@ export default function Learning({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Status',
+                            label: copy.status,
                             options: statuses,
                             value: filters.status,
                         },
@@ -410,17 +416,18 @@ export default function Learning({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">Learning catalogue</h2>
+                            <h2 className="font-bold">{copy.catalogue}</h2>
                             <p className="text-sm text-muted-foreground">
-                                {courses.total.toLocaleString()} courses in your
-                                authorized catalogue
+                                {interpolate(copy.catalogue_count, {
+                                    count: courses.total.toLocaleString(locale),
+                                })}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline">
-                                        <DownloadIcon /> Export
+                                        <DownloadIcon /> {copy.export}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -453,16 +460,16 @@ export default function Learning({
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Code',
-                                'Course',
-                                'Category',
-                                'Level',
-                                'Scope',
-                                'Reference release',
-                                'Reference checksum',
-                                'Content',
-                                'Progress / reach',
-                                'Status',
+                                copy.code,
+                                copy.course,
+                                copy.category,
+                                copy.level,
+                                copy.scope,
+                                copy.reference_release,
+                                copy.reference_checksum,
+                                copy.content,
+                                copy.progress_reach,
+                                copy.status,
                             ]}
                             rows={rows}
                             pagination={pagination}
@@ -485,8 +492,8 @@ export default function Learning({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching courses"
-                            description="Adjust the filters or publish the first governed multimedia learning course."
+                            title={copy.no_courses}
+                            description={copy.no_courses_description}
                             className="min-h-72 border-0"
                         />
                     )}
@@ -494,16 +501,17 @@ export default function Learning({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">Learning cohorts</h2>
+                            <h2 className="font-bold">{copy.cohorts}</h2>
                             <p className="text-sm text-muted-foreground">
-                                {cohorts.total.toLocaleString()} instructor-led
-                                delivery cohorts in your authorized scope
+                                {interpolate(copy.cohort_count, {
+                                    count: cohorts.total.toLocaleString(locale),
+                                })}
                             </p>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
-                                    <DownloadIcon /> Export
+                                    <DownloadIcon /> {copy.export}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -536,15 +544,15 @@ export default function Learning({
                     {cohortRows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Code',
-                                'Cohort',
-                                'Course',
-                                'Instructor',
-                                'County',
-                                'Roster',
-                                'Starts',
-                                'Ends',
-                                'Status',
+                                copy.code,
+                                copy.cohort,
+                                copy.course,
+                                copy.instructor,
+                                copy.county,
+                                copy.roster,
+                                copy.starts,
+                                copy.ends,
+                                copy.status,
                             ]}
                             rows={cohortRows}
                             pagination={cohortPagination}
@@ -568,8 +576,8 @@ export default function Learning({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching learning cohorts"
-                            description="Create a course-bound cohort to assign an accountable instructor, delivery window and capacity-governed learner roster."
+                            title={copy.no_cohorts}
+                            description={copy.no_cohorts_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -578,17 +586,18 @@ export default function Learning({
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
                         <div>
                             <h2 className="font-bold">
-                                Offline synchronization register
+                                {copy.offline_register}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {offlineSyncs.total.toLocaleString()} governed
-                                submission and reconciliation records
+                                {interpolate(copy.offline_count, {
+                                    count: offlineSyncs.total.toLocaleString(locale),
+                                })}
                             </p>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
-                                    <DownloadIcon /> Export
+                                    <DownloadIcon /> {copy.export}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -627,14 +636,14 @@ export default function Learning({
                     {syncRows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Course',
-                                'Package',
-                                'Learner',
-                                'County',
-                                'Events',
-                                'Submitted',
-                                'Reviewer',
-                                'Status',
+                                copy.course,
+                                copy.package,
+                                copy.learner,
+                                copy.county,
+                                copy.events,
+                                copy.submitted,
+                                copy.reviewer,
+                                copy.status,
                             ]}
                             rows={syncRows}
                             pagination={syncPagination}
@@ -653,8 +662,8 @@ export default function Learning({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No offline activity submitted"
-                            description="Downloaded course activity will appear here after a learner imports the package-generated progress record."
+                            title={copy.no_offline_activity}
+                            description={copy.no_offline_activity_description}
                             className="min-h-56 border-0"
                         />
                     )}
@@ -673,11 +682,13 @@ function CohortForm({
     instructors: Option[];
     counties: Option[];
 }) {
+    const copy = usePage().props.localization.learning;
+
     return (
         <FormSheet
-            title="Create learning cohort"
-            description="Bind a published course to an accountable instructor, county scope, capacity and governed delivery window."
-            triggerLabel="New cohort"
+            title={copy.create_cohort}
+            description={copy.create_cohort_description}
+            triggerLabel={copy.new_cohort}
             icon={GraduationCap}
             size="lg"
         >
@@ -687,65 +698,65 @@ function CohortForm({
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
                                 name="code"
-                                label="Cohort code"
+                                label={copy.cohort_code}
                                 error={errors.code}
                             />
                             <Field
                                 name="name"
-                                label="Cohort name"
+                                label={copy.cohort_name}
                                 error={errors.name}
                             />
                             <SearchableSelect
                                 id="cohort-course"
                                 name="learning_course_id"
-                                label="Published course"
+                                label={copy.published_course}
                                 options={courses}
                                 error={errors.learning_course_id}
                             />
                             <SearchableSelect
                                 id="cohort-instructor"
                                 name="instructor_id"
-                                label="Accountable instructor"
+                                label={copy.accountable_instructor}
                                 options={instructors}
                                 error={errors.instructor_id}
                             />
                             <SearchableSelect
                                 id="cohort-county"
                                 name="county_id"
-                                label="County scope"
+                                label={copy.county_scope}
                                 options={counties}
                                 optional
                                 error={errors.county_id}
                             />
                             <Field
                                 name="capacity"
-                                label="Approved capacity"
+                                label={copy.approved_capacity}
                                 type="number"
                                 defaultValue="30"
                                 error={errors.capacity}
                             />
                             <DatePickerField
                                 name="enrollment_opens_on"
-                                label="Enrollment opens"
+                                label={copy.enrollment_opens}
                                 required
                                 error={errors.enrollment_opens_on}
                             />
                             <DatePickerField
                                 name="enrollment_closes_on"
-                                label="Enrollment closes"
+                                label={copy.enrollment_closes}
                                 required
                                 error={errors.enrollment_closes_on}
                             />
                             <DatePickerField
                                 name="starts_at"
-                                label="Delivery starts"
+                                label={copy.delivery_starts}
                                 required
                                 includeTime
                                 error={errors.starts_at}
                             />
                             <DatePickerField
                                 name="ends_at"
-                                label="Delivery ends"
+                                label={copy.delivery_ends}
                                 required
                                 includeTime
                                 error={errors.ends_at}
@@ -753,11 +764,13 @@ function CohortForm({
                         </div>
                         <TextField
                             name="description"
-                            label="Delivery purpose and audience"
+                            label={copy.delivery_purpose}
                             error={errors.description}
                         />
                         <Button type="submit" disabled={processing}>
-                            {processing ? 'Creating cohort…' : 'Create cohort'}
+                            {processing
+                                ? copy.creating_cohort
+                                : copy.create_cohort}
                         </Button>
                     </>
                 )}
@@ -775,6 +788,8 @@ function CohortActions({
     canManage: boolean;
     enrollments: Option[];
 }) {
+    const { localization } = usePage().props;
+    const copy = localization.learning;
     const [surface, setSurface] = useState<
         'details' | 'member' | 'open' | 'start' | 'complete' | 'cancel' | null
     >(null);
@@ -792,7 +807,9 @@ function CohortActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for cohort ${cohort.code}`}
+                        aria-label={interpolate(copy.cohort_actions, {
+                            code: cohort.code,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -802,14 +819,14 @@ function CohortActions({
                         <DropdownMenuItem
                             onSelect={() => setSurface('details')}
                         >
-                            <Eye /> View cohort
+                            <Eye /> {copy.view_cohort}
                         </DropdownMenuItem>
                         {canManage &&
                             ['draft', 'open'].includes(cohort.status) && (
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('member')}
                                 >
-                                    <Plus /> Add learner
+                                    <Plus /> {copy.add_learner}
                                 </DropdownMenuItem>
                             )}
                         {canManage &&
@@ -826,7 +843,9 @@ function CohortActions({
                                         )
                                     }
                                 >
-                                    {humanize(transitionName)} cohort
+                                    {interpolate(copy.transition_cohort, {
+                                        transition: humanize(transitionName),
+                                    })}
                                 </DropdownMenuItem>
                             ))}
                     </DropdownMenuGroup>
@@ -842,8 +861,10 @@ function CohortActions({
                             {surface === 'details'
                                 ? cohort.name
                                 : surface === 'member'
-                                  ? 'Add cohort learner'
-                                  : `${humanize(surface ?? '')} cohort`}
+                                  ? copy.add_cohort_learner
+                                  : interpolate(copy.transition_cohort, {
+                                        transition: humanize(surface ?? ''),
+                                    })}
                         </SheetTitle>
                         <SheetDescription>
                             {cohort.code} · {cohort.course.code} ·{' '}
@@ -858,8 +879,10 @@ function CohortActions({
                                         {humanize(cohort.status)}
                                     </Badge>
                                     <Badge variant="outline">
-                                        {cohort.membersCount} /{' '}
-                                        {cohort.capacity} learners
+                                        {interpolate(copy.roster_capacity, {
+                                            members: cohort.membersCount,
+                                            capacity: cohort.capacity,
+                                        })}
                                     </Badge>
                                     {cohort.county && (
                                         <CountyIdentity
@@ -869,46 +892,50 @@ function CohortActions({
                                 </div>
                                 <p className="text-sm leading-6 text-muted-foreground">
                                     {cohort.description ??
-                                        'No delivery description recorded.'}
+                                        copy.no_delivery_description}
                                 </p>
                                 <dl className="grid gap-3 text-sm sm:grid-cols-2">
                                     <div>
                                         <dt className="font-medium">
-                                            Enrollment window
+                                            {copy.enrollment_window}
                                         </dt>
                                         <dd className="text-muted-foreground">
                                             {new Date(
                                                 `${cohort.enrollmentOpensOn}T00:00:00`,
                                             ).toLocaleDateString(
-                                                DEFAULT_LOCALE,
+                                                localization.current,
                                             )}{' '}
-                                            –{' '}
+                                            {copy.range_separator}{' '}
                                             {new Date(
                                                 `${cohort.enrollmentClosesOn}T00:00:00`,
                                             ).toLocaleDateString(
-                                                DEFAULT_LOCALE,
+                                                localization.current,
                                             )}
                                         </dd>
                                     </div>
                                     <div>
                                         <dt className="font-medium">
-                                            Delivery window
+                                            {copy.delivery_window}
                                         </dt>
                                         <dd className="text-muted-foreground">
                                             {new Date(
                                                 cohort.startsAt,
                                             ).toLocaleString(
-                                                DEFAULT_LOCALE,
+                                                localization.current,
                                             )}{' '}
-                                            –{' '}
+                                            {copy.range_separator}{' '}
                                             {new Date(
                                                 cohort.endsAt,
-                                            ).toLocaleString(DEFAULT_LOCALE)}
+                                            ).toLocaleString(
+                                                localization.current,
+                                            )}
                                         </dd>
                                     </div>
                                 </dl>
                                 <div>
-                                    <h3 className="font-medium">Roster</h3>
+                                    <h3 className="font-medium">
+                                        {copy.roster}
+                                    </h3>
                                     {cohort.members.length ? (
                                         <ul className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground">
                                             {cohort.members.map((member) => (
@@ -919,7 +946,7 @@ function CohortActions({
                                         </ul>
                                     ) : (
                                         <p className="mt-2 text-sm text-muted-foreground">
-                                            No learners assigned yet.
+                                            {copy.no_learners}
                                         </p>
                                     )}
                                 </div>
@@ -934,7 +961,7 @@ function CohortActions({
                                         <SearchableSelect
                                             id={`cohort-member-${cohort.id}`}
                                             name="learning_enrollment_id"
-                                            label="Active course enrollment"
+                                            label={copy.active_enrollment}
                                             options={enrollments}
                                             error={
                                                 errors.learning_enrollment_id
@@ -945,8 +972,8 @@ function CohortActions({
                                             disabled={processing}
                                         >
                                             {processing
-                                                ? 'Adding learner…'
-                                                : 'Add learner'}
+                                                ? copy.adding_learner
+                                                : copy.add_learner}
                                         </Button>
                                     </>
                                 )}
@@ -969,7 +996,7 @@ function CohortActions({
                                             <Label
                                                 htmlFor={`cohort-rationale-${cohort.id}`}
                                             >
-                                                Lifecycle rationale
+                                                {copy.lifecycle_rationale}
                                             </Label>
                                             <Textarea
                                                 id={`cohort-rationale-${cohort.id}`}
@@ -996,8 +1023,14 @@ function CohortActions({
                                             disabled={processing}
                                         >
                                             {processing
-                                                ? 'Updating cohort…'
-                                                : `${humanize(surface)} cohort`}
+                                                ? copy.updating_cohort
+                                                : interpolate(
+                                                      copy.transition_cohort,
+                                                      {
+                                                          transition:
+                                                              humanize(surface),
+                                                      },
+                                                  )}
                                         </Button>
                                     </>
                                 )}
@@ -1017,6 +1050,7 @@ function OfflineSyncActions({
     sync: OfflineSync;
     canReview: boolean;
 }) {
+    const copy = usePage().props.localization.learning;
     const [surface, setSurface] = useState<
         'details' | 'approve' | 'reject' | null
     >(null);
@@ -1028,7 +1062,9 @@ function OfflineSyncActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for offline synchronization ${sync.clientSyncId}`}
+                        aria-label={interpolate(copy.offline_actions, {
+                            id: sync.clientSyncId,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1038,19 +1074,19 @@ function OfflineSyncActions({
                         <DropdownMenuItem
                             onSelect={() => setSurface('details')}
                         >
-                            <Eye /> View evidence
+                            <Eye /> {copy.view_evidence}
                         </DropdownMenuItem>
                         {canReview && sync.status === 'pending' && (
                             <>
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('approve')}
                                 >
-                                    <ShieldCheck /> Approve reconciliation
+                                    <ShieldCheck /> {copy.approve_reconciliation}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('reject')}
                                 >
-                                    Reject reconciliation
+                                    {copy.reject_reconciliation}
                                 </DropdownMenuItem>
                             </>
                         )}
@@ -1065,12 +1101,17 @@ function OfflineSyncActions({
                     <SheetHeader>
                         <SheetTitle>
                             {surface === 'details'
-                                ? 'Offline synchronization evidence'
-                                : `${humanize(surface ?? '')} offline progress`}
+                                ? copy.offline_evidence
+                                : interpolate(copy.offline_progress_action, {
+                                      action: humanize(surface ?? ''),
+                                  })}
                         </SheetTitle>
                         <SheetDescription>
-                            {sync.course.code} · package v{sync.packageVersion}{' '}
-                            · {sync.learner}
+                            {interpolate(copy.offline_package_summary, {
+                                code: sync.course.code,
+                                version: sync.packageVersion,
+                                learner: sync.learner,
+                            })}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1081,7 +1122,9 @@ function OfflineSyncActions({
                                         {humanize(sync.status)}
                                     </Badge>
                                     <Badge variant="outline">
-                                        {sync.eventCount} events
+                                        {interpolate(copy.event_count, {
+                                            count: sync.eventCount,
+                                        })}
                                     </Badge>
                                     {sync.county && (
                                         <CountyIdentity county={sync.county} />
@@ -1090,7 +1133,7 @@ function OfflineSyncActions({
                                 <dl className="grid gap-3 text-sm">
                                     <div>
                                         <dt className="font-medium">
-                                            Client synchronization ID
+                                            {copy.client_sync_id}
                                         </dt>
                                         <dd className="break-all text-muted-foreground">
                                             {sync.clientSyncId}
@@ -1098,7 +1141,7 @@ function OfflineSyncActions({
                                     </div>
                                     <div>
                                         <dt className="font-medium">
-                                            Payload SHA-256
+                                            {copy.payload_checksum}
                                         </dt>
                                         <dd className="break-all text-muted-foreground">
                                             {sync.payloadChecksum}
@@ -1106,18 +1149,19 @@ function OfflineSyncActions({
                                     </div>
                                     <div>
                                         <dt className="font-medium">
-                                            Decision SHA-256
+                                            {copy.decision_checksum}
                                         </dt>
                                         <dd className="break-all text-muted-foreground">
-                                            {sync.decisionChecksum ?? 'Pending'}
+                                            {sync.decisionChecksum ??
+                                                copy.pending}
                                         </dd>
                                     </div>
                                     <div>
                                         <dt className="font-medium">
-                                            Decision rationale
+                                            {copy.decision_rationale}
                                         </dt>
                                         <dd className="text-muted-foreground">
-                                            {sync.decisionReason ?? 'Pending'}
+                                            {sync.decisionReason ?? copy.pending}
                                         </dd>
                                     </div>
                                 </dl>
@@ -1140,7 +1184,7 @@ function OfflineSyncActions({
                                             <Label
                                                 htmlFor={`reason-${sync.id}`}
                                             >
-                                                Reconciliation rationale
+                                                {copy.reconciliation_rationale}
                                             </Label>
                                             <Textarea
                                                 id={`reason-${sync.id}`}
@@ -1158,10 +1202,7 @@ function OfflineSyncActions({
                                             )}
                                         </div>
                                         <p className="text-sm leading-6 text-muted-foreground">
-                                            Approval verifies the retained
-                                            package and payload checksums,
-                                            rejects stale progress, and applies
-                                            only monotonic non-quiz activity.
+                                            {copy.reconciliation_assurance}
                                         </p>
                                         <Button
                                             type="submit"
@@ -1173,8 +1214,15 @@ function OfflineSyncActions({
                                             disabled={processing}
                                         >
                                             {processing
-                                                ? 'Recording decision…'
-                                                : `${humanize(surface)} synchronization`}
+                                                ? copy.recording_decision
+                                                : interpolate(
+                                                      copy.sync_action,
+                                                      {
+                                                          action: humanize(
+                                                              surface,
+                                                          ),
+                                                      },
+                                                  )}
                                         </Button>
                                     </>
                                 )}
@@ -1861,6 +1909,7 @@ function CourseDetails({
     canAccessAssets: boolean;
     onUploadAsset: (lesson: Lesson) => void;
 }) {
+    const locale = usePage().props.localization.current;
     const enrollment = course.enrollment;
     const quizQuestions = course.modules
         .flatMap((module) => module.lessons)
@@ -1962,7 +2011,7 @@ function CourseDetails({
                                 {course.offlinePackage.generatedAt
                                     ? new Date(
                                           course.offlinePackage.generatedAt,
-                                      ).toLocaleString(DEFAULT_LOCALE)
+                                      ).toLocaleString(locale)
                                     : 'Generation pending'}{' '}
                                 ·{' '}
                                 {course.offlinePackage.sizeBytes
@@ -2013,7 +2062,7 @@ function CourseDetails({
                                 <p className="mt-1 text-sm text-muted-foreground">
                                     {new Date(
                                         classroom.startsAt,
-                                    ).toLocaleString(DEFAULT_LOCALE)}{' '}
+                                    ).toLocaleString(locale)}{' '}
                                     · {classroom.facilitator} ·{' '}
                                     {classroom.platform}
                                 </p>
