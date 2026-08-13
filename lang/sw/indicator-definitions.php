@@ -26,4 +26,11 @@ return [
     'number' => 'Nambari', 'percentage' => 'Asilimia', 'currency' => 'Sarafu', 'count' => 'Idadi', 'text' => 'Maandishi',
     'increase' => 'Ongezeko', 'decrease' => 'Upungufu', 'maintain' => 'Dumisha',
     'monthly' => 'Kila mwezi', 'quarterly' => 'Kila robo mwaka', 'semiannual' => 'Kila nusu mwaka', 'annual' => 'Kila mwaka', 'ad_hoc' => 'Inapohitajika',
+    'define_indicator' => 'Fafanua kiashiria',
+    'define_indicator_description' => 'Unda ufafanuzi wa mnyororo wa matokeo wenye matoleo kwa idhini huru kabla ya kuingiza data.',
+    'catalogue_required' => 'Chapisha katalogi ya data ya rejea iliyoidhinishwa kabla ya kufafanua viashiria.',
+    'unit' => 'Kipimo',
+    'unit_placeholder' => 'asilimia, siku, idadi…',
+    'programme' => 'Programu',
+    'create_draft_indicator' => 'Unda rasimu ya kiashiria',
 ];

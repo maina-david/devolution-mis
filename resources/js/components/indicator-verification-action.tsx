@@ -1,5 +1,6 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,21 +13,23 @@ export default function IndicatorVerificationAction({
     observationId: string;
     status?: string;
 }) {
+    const copy = usePage().props.localization.monitoringResults;
+
     if (status === 'verified') {
         return null;
     }
 
     return (
         <FormSheet
-            title="Verify indicator observation"
-            triggerLabel="Review observation"
-            description="Record an independent data-quality decision and rationale."
+            title={copy.verify_observation}
+            triggerLabel={copy.review_observation}
+            description={copy.verify_observation_description}
         >
             <Form
                 {...verify.form({ observation: observationId })}
                 className="grid gap-4"
             >
-                {({ processing }) => (
+                {({ processing, errors }) => (
                     <>
                         <StaticSearchableSelect
                             id="verification-status"
@@ -36,26 +39,41 @@ export default function IndicatorVerificationAction({
                                 'clarification_requested',
                                 'rejected',
                             ]}
+                            labels={copy}
+                            error={errors.verification_status}
                         />
                         <StaticSearchableSelect
                             id="quality-status"
                             name="quality_status"
                             values={['accepted', 'warning', 'rejected']}
+                            labels={copy}
+                            error={errors.quality_status}
                         />
                         <div className="flex gap-2">
                             <Input
                                 name="rationale"
                                 required
-                                placeholder="Verification rationale"
+                                placeholder={copy.verification_rationale}
+                                aria-invalid={Boolean(errors.rationale)}
+                                aria-describedby={
+                                    errors.rationale
+                                        ? 'verification-rationale-error'
+                                        : undefined
+                                }
                             />
                             <Button
                                 size="sm"
                                 type="submit"
                                 disabled={processing}
+                                aria-busy={processing}
                             >
-                                Record
+                                {copy.record_decision}
                             </Button>
                         </div>
+                        <InputError
+                            id="verification-rationale-error"
+                            message={errors.rationale}
+                        />
                     </>
                 )}
             </Form>

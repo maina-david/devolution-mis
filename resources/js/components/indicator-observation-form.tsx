@@ -1,7 +1,8 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Send } from 'lucide-react';
 import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import SearchableSelect from '@/components/searchable-select';
 import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Button } from '@/components/ui/button';
@@ -27,17 +28,19 @@ export default function IndicatorObservationForm({
     counties: Option[];
     programmes: Option[];
 }) {
+    const copy = usePage().props.localization.monitoringResults;
+
     if (!indicators.length || !counties.length || !programmes.length) {
         return null;
     }
 
     return (
         <FormSheet
-            title="Submit target or result"
-            triggerLabel="Submit result"
+            title={copy.submit_target_or_result}
+            triggerLabel={copy.submit_result}
             icon={Send}
             size="xl"
-            description="Every value retains source provenance and enters independent data-quality verification."
+            description={copy.submit_result_description}
         >
             <Form
                 {...store.form({})}
@@ -47,7 +50,7 @@ export default function IndicatorObservationForm({
                 {({ processing, errors }) => (
                     <>
                         <Field
-                            label="Indicator"
+                            label={copy.indicator}
                             error={errors.indicator_definition_id}
                         >
                             <SearchableSelect
@@ -60,33 +63,37 @@ export default function IndicatorObservationForm({
                                 }))}
                             />
                         </Field>
-                        <Field label="County" error={errors.county_id}>
+                        <Field label={copy.county} error={errors.county_id}>
                             <Options name="county_id" options={counties} />
                         </Field>
-                        <Field label="Programme" error={errors.programme_id}>
+                        <Field
+                            label={copy.programme}
+                            error={errors.programme_id}
+                        >
                             <Options name="programme_id" options={programmes} />
                         </Field>
-                        <Field label="Measure" error={errors.measure_type}>
+                        <Field label={copy.measure} error={errors.measure_type}>
                             <StaticSearchableSelect
                                 id="observation-measure"
                                 name="measure_type"
                                 values={['target', 'actual', 'baseline']}
+                                labels={copy}
                             />
                         </Field>
                         <DatePickerField
                             name="period_start"
-                            label="Period start"
+                            label={copy.period_start}
                             error={errors.period_start}
                             required
                         />
                         <DatePickerField
                             name="period_end"
-                            label="Period end"
+                            label={copy.period_end}
                             error={errors.period_end}
                             required
                         />
                         <Field
-                            label="Numeric value"
+                            label={copy.numeric_value}
                             error={errors.numeric_value}
                         >
                             <Input
@@ -96,23 +103,23 @@ export default function IndicatorObservationForm({
                             />
                         </Field>
                         <Field
-                            label="Narrative value"
+                            label={copy.narrative_value}
                             error={errors.narrative_value}
                         >
                             <Input name="narrative_value" />
                         </Field>
                         <Field
-                            label="Source reference"
+                            label={copy.source_reference}
                             error={errors.source_reference}
                         >
                             <Input
                                 name="source_reference"
                                 required
-                                placeholder="Report, ledger, URL or document reference"
+                                placeholder={copy.source_reference_placeholder}
                             />
                         </Field>
                         <Field
-                            label="Source system"
+                            label={copy.source_system}
                             error={errors['provenance.source_system']}
                         >
                             <Input
@@ -123,21 +130,25 @@ export default function IndicatorObservationForm({
                         </Field>
                         <DatePickerField
                             name="provenance[captured_at]"
-                            label="Captured at"
+                            label={copy.captured_at}
                             error={errors['provenance.captured_at']}
                             required
                             includeTime
                         />
                         <Field
-                            label="Import batch"
+                            label={copy.import_batch}
                             error={errors['provenance.import_batch']}
                         >
                             <Input name="provenance[import_batch]" />
                         </Field>
                         <div className="md:col-span-2">
-                            <Button type="submit" disabled={processing}>
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                aria-busy={processing}
+                            >
                                 <Send aria-hidden="true" />
-                                Submit for verification
+                                {copy.submit_for_verification}
                             </Button>
                         </div>
                     </>
@@ -160,7 +171,7 @@ function Field({
         <div className="grid gap-2">
             <Label>{label}</Label>
             {children}
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            <InputError message={error} />
         </div>
     );
 }

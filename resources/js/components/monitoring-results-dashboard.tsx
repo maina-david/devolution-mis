@@ -40,6 +40,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { interpolate } from '@/hooks/use-localization';
 import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { show as showCounty } from '@/routes/counties';
 import { show as showProject } from '@/routes/projects';
@@ -139,25 +140,26 @@ export default function MonitoringResultsDashboard({
 }) {
     const page = usePage();
     const copy = page.props.localization.monitoringResults;
+    const locale = page.props.localization.current;
     const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
     const summaryCards = [
         {
-            label: 'Scoped observations',
+            label: copy.scoped_observations,
             value: results.summary.total,
             icon: Activity,
         },
         {
-            label: 'Verified results',
+            label: copy.verified_results,
             value: results.summary.verified,
             icon: ShieldCheck,
         },
         {
-            label: 'Awaiting M&E review',
+            label: copy.awaiting_review,
             value: results.summary.submitted,
             icon: ChartNoAxesCombined,
         },
         {
-            label: 'Project sourced',
+            label: copy.project_sourced,
             value: results.summary.projectSourced,
             icon: FolderKanban,
         },
@@ -185,7 +187,7 @@ export default function MonitoringResultsDashboard({
                         </CardHeader>
                         <CardContent>
                             <p className="text-3xl font-bold tabular-nums">
-                                {value.toLocaleString()}
+                                {value.toLocaleString(locale)}
                             </p>
                         </CardContent>
                     </Card>
@@ -235,16 +237,24 @@ export default function MonitoringResultsDashboard({
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
-                                                {indicator.average.toLocaleString()}{' '}
+                                                {indicator.average.toLocaleString(
+                                                    locale,
+                                                )}{' '}
                                                 {indicator.unit}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
-                                                {indicator.minimum.toLocaleString()}
+                                                {indicator.minimum.toLocaleString(
+                                                    locale,
+                                                )}
                                                 {copy.range_separator}
-                                                {indicator.maximum.toLocaleString()}
+                                                {indicator.maximum.toLocaleString(
+                                                    locale,
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
-                                                {indicator.observations}
+                                                {indicator.observations.toLocaleString(
+                                                    locale,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -252,8 +262,10 @@ export default function MonitoringResultsDashboard({
                             </Table>
                         ) : (
                             <ResultsEmpty
-                                title="No verified numeric results"
-                                description="Results appear after independent M&E verification."
+                                title={copy.no_verified_numeric_results}
+                                description={
+                                    copy.no_verified_numeric_results_description
+                                }
                             />
                         )}
                     </CardContent>
@@ -298,10 +310,14 @@ export default function MonitoringResultsDashboard({
                                                 {item.dimension}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
-                                                {item.average.toLocaleString()}
+                                                {item.average.toLocaleString(
+                                                    locale,
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
-                                                {item.observations}
+                                                {item.observations.toLocaleString(
+                                                    locale,
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -309,8 +325,10 @@ export default function MonitoringResultsDashboard({
                             </Table>
                         ) : (
                             <ResultsEmpty
-                                title="No disaggregated results"
-                                description="Add dimensions to project or county observations to populate this view."
+                                title={copy.no_disaggregated_results}
+                                description={
+                                    copy.no_disaggregated_results_description
+                                }
                             />
                         )}
                     </CardContent>
@@ -396,8 +414,10 @@ export default function MonitoringResultsDashboard({
                         </Table>
                     ) : (
                         <ResultsEmpty
-                            title="No project contributions"
-                            description="Verified project result lines appear here automatically."
+                            title={copy.no_project_contributions}
+                            description={
+                                copy.no_project_contributions_description
+                            }
                         />
                     )}
                 </CardContent>
@@ -406,11 +426,6 @@ export default function MonitoringResultsDashboard({
     );
 }
 
-const performanceChartConfig = {
-    actual: { label: 'Verified actual', color: 'var(--chart-1)' },
-    target: { label: 'Verified target', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
 function TargetPerformance({
     performance,
 }: {
@@ -418,7 +433,12 @@ function TargetPerformance({
 }) {
     const page = usePage();
     const copy = page.props.localization.monitoringResults;
+    const locale = page.props.localization.current;
     const drilldown = (url: string) => preserveDrilldownFilters(url, page.url);
+    const performanceChartConfig = {
+        actual: { label: copy.verified_actual, color: 'var(--chart-1)' },
+        target: { label: copy.verified_target, color: 'var(--chart-2)' },
+    } satisfies ChartConfig;
 
     return (
         <section
@@ -435,19 +455,19 @@ function TargetPerformance({
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <PerformanceMetric
-                    label="Series with targets"
+                    label={copy.series_with_targets}
                     value={`${performance.summary.withTarget}/${performance.summary.series}`}
                 />
                 <PerformanceMetric
-                    label="Targets met"
-                    value={performance.summary.met.toLocaleString()}
+                    label={copy.targets_met}
+                    value={performance.summary.met.toLocaleString(locale)}
                 />
                 <PerformanceMetric
-                    label="Off track"
-                    value={performance.summary.offTrack.toLocaleString()}
+                    label={copy.off_track}
+                    value={performance.summary.offTrack.toLocaleString(locale)}
                 />
                 <PerformanceMetric
-                    label="Average attainment"
+                    label={copy.average_attainment}
                     value={
                         performance.summary.averageAttainment === null
                             ? '—'
@@ -494,7 +514,13 @@ function TargetPerformance({
                                     config={performanceChartConfig}
                                     className="h-64 w-full"
                                     role="img"
-                                    aria-label={`${trend.indicator.code} actual and target trend for ${trend.county.name}`}
+                                    aria-label={interpolate(
+                                        copy.trend_accessible_name,
+                                        {
+                                            indicator: trend.indicator.code,
+                                            county: trend.county.name,
+                                        },
+                                    )}
                                 >
                                     <LineChart
                                         accessibilityLayer
@@ -603,18 +629,20 @@ function TargetPerformance({
                                         </TableCell>
                                         <TableCell>{row.periodEnd}</TableCell>
                                         <TableCell className="text-right tabular-nums">
-                                            {row.actual.toLocaleString()}{' '}
+                                            {row.actual.toLocaleString(locale)}{' '}
                                             {row.indicator.unit}
                                         </TableCell>
                                         <TableCell className="text-right tabular-nums">
                                             {row.target === null
                                                 ? '—'
-                                                : row.target.toLocaleString()}
+                                                : row.target.toLocaleString(
+                                                      locale,
+                                                  )}
                                         </TableCell>
                                         <TableCell className="text-right tabular-nums">
                                             {row.variance === null
                                                 ? '—'
-                                                : `${row.variance > 0 ? '+' : ''}${row.variance.toLocaleString()} (${row.variancePercentage ?? '—'}%)`}
+                                                : `${row.variance > 0 ? '+' : ''}${row.variance.toLocaleString(locale)} (${row.variancePercentage ?? '—'}%)`}
                                         </TableCell>
                                         <TableCell className="text-right tabular-nums">
                                             {row.attainment === null
@@ -632,10 +660,7 @@ function TargetPerformance({
                                                           : 'outline'
                                                 }
                                             >
-                                                {row.status.replaceAll(
-                                                    '_',
-                                                    ' ',
-                                                )}
+                                                {copy[row.status] ?? row.status}
                                             </Badge>
                                         </TableCell>
                                     </TableRow>
@@ -644,8 +669,8 @@ function TargetPerformance({
                         </Table>
                     ) : (
                         <ResultsEmpty
-                            title="No verified actuals"
-                            description="Submit and independently verify numeric actuals to calculate target performance."
+                            title={copy.no_verified_actuals}
+                            description={copy.no_verified_actuals_description}
                         />
                     )}
                 </CardContent>

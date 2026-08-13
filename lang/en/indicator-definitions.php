@@ -26,4 +26,11 @@ return [
     'number' => 'Number', 'percentage' => 'Percentage', 'currency' => 'Currency', 'count' => 'Count', 'text' => 'Text',
     'increase' => 'Increase', 'decrease' => 'Decrease', 'maintain' => 'Maintain',
     'monthly' => 'Monthly', 'quarterly' => 'Quarterly', 'semiannual' => 'Semiannual', 'annual' => 'Annual', 'ad_hoc' => 'Ad hoc',
+    'define_indicator' => 'Define an indicator',
+    'define_indicator_description' => 'Create a versioned results-chain definition for independent approval before data entry.',
+    'catalogue_required' => 'Publish an approved reference-data catalogue before defining indicators.',
+    'unit' => 'Unit',
+    'unit_placeholder' => 'percent, days, count…',
+    'programme' => 'Programme',
+    'create_draft_indicator' => 'Create draft indicator',
 ];

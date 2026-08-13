@@ -43,6 +43,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.globalSearch.button', 'Tafuta IDMIS')
                 ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
                 ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
+                ->where('localization.monitoringResults.results_learning_control_plane', 'Kituo cha udhibiti wa matokeo na mafunzo')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -106,6 +107,37 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringNotContainsString('Email password reset link', $forgotPassword);
         $this->assertStringNotContainsString('Enter the authentication code provided by your authenticator application.', $twoFactor);
         $this->assertStringNotContainsString('Resend verification email', $verifyEmail);
+    }
+
+    public function test_monitoring_results_and_indicator_workflows_use_synchronized_locale_copy(): void
+    {
+        $sources = [
+            resource_path('js/pages/monitoring-evaluation/index.tsx'),
+            resource_path('js/components/indicator-definition-form.tsx'),
+            resource_path('js/components/indicator-observation-form.tsx'),
+            resource_path('js/components/indicator-verification-action.tsx'),
+            resource_path('js/components/monitoring-results-dashboard.tsx'),
+        ];
+
+        foreach ($sources as $path) {
+            $source = file_get_contents($path);
+
+            $this->assertIsString($source);
+            $this->assertStringContainsString('localization.', $source);
+        }
+
+        $workspace = file_get_contents($sources[0]);
+        $dashboard = file_get_contents($sources[4]);
+        $this->assertIsString($workspace);
+        $this->assertIsString($dashboard);
+        $this->assertStringNotContainsString('Results and learning control plane', $workspace);
+        $this->assertStringNotContainsString('No indicator observations', $workspace);
+        $this->assertStringNotContainsString('No verified numeric results', $dashboard);
+        $this->assertStringContainsString('toLocaleString(locale)', $dashboard);
+
+        $english = $this->flattenTranslations(require lang_path('en/monitoring-results.php'));
+        $this->assertArrayHasKey('trend_accessible_name', $english);
+        $this->assertArrayHasKey('no_verified_actuals_description', $english);
     }
 
     public function test_saved_locale_drives_translated_queued_notification_payloads(): void

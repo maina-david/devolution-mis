@@ -26,4 +26,11 @@ return [
     'number' => 'Nombre', 'percentage' => 'Pourcentage', 'currency' => 'Devise', 'count' => 'Décompte', 'text' => 'Texte',
     'increase' => 'Augmentation', 'decrease' => 'Diminution', 'maintain' => 'Maintien',
     'monthly' => 'Mensuelle', 'quarterly' => 'Trimestrielle', 'semiannual' => 'Semestrielle', 'annual' => 'Annuelle', 'ad_hoc' => 'Ponctuelle',
+    'define_indicator' => 'Définir un indicateur',
+    'define_indicator_description' => 'Créez une définition versionnée de la chaîne de résultats soumise à une approbation indépendante avant la saisie des données.',
+    'catalogue_required' => 'Publiez un catalogue de données de référence approuvé avant de définir des indicateurs.',
+    'unit' => 'Unité',
+    'unit_placeholder' => 'pourcentage, jours, nombre…',
+    'programme' => 'Programme',
+    'create_draft_indicator' => 'Créer le brouillon de l’indicateur',
 ];

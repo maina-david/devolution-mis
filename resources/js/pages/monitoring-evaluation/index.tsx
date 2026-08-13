@@ -29,6 +29,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { exportMethod } from '@/routes/workspace';
 
 type Option = { id: string; name: string };
@@ -88,12 +89,13 @@ export default function MonitoringEvaluationIndex({
     options,
     catalogue,
 }: Props) {
-    const { auth } = usePage().props;
+    const { auth, localization } = usePage().props;
+    const copy = localization.monitoringResults;
 
     const badges = [
-        capabilities.manageIndicators && 'Manage indicators',
-        capabilities.submitData && 'Submit data',
-        capabilities.verifyData && 'Verify data',
+        capabilities.manageIndicators && copy.manage_indicators,
+        capabilities.submitData && copy.submit_data,
+        capabilities.verifyData && copy.verify_data,
     ].filter(Boolean) as string[];
 
     return (
@@ -104,7 +106,7 @@ export default function MonitoringEvaluationIndex({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Results and learning control plane
+                                {copy.results_learning_control_plane}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                                 {workspace.title}
@@ -178,19 +180,19 @@ export default function MonitoringEvaluationIndex({
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.countyId,
                         },
                         {
                             key: 'sector_id',
-                            label: 'Sector',
+                            label: copy.sector,
                             options: options.sectors,
                             value: filters.sectorId,
                         },
                         {
                             key: 'status',
-                            label: 'Verification status',
+                            label: copy.verification_status,
                             options: options.verificationStatuses,
                             value: filters.status,
                         },
@@ -201,23 +203,26 @@ export default function MonitoringEvaluationIndex({
                     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
                         <div>
                             <h2 className="font-bold">
-                                Indicator data register
+                                {copy.indicator_data_register}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {workspace.pagination.total.toLocaleString()}{' '}
-                                scoped observations with traceable provenance
+                                {interpolate(copy.scoped_observations_count, {
+                                    count: workspace.pagination.total.toLocaleString(
+                                        localization.current,
+                                    ),
+                                })}
                             </p>
                         </div>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline">
                                     <DownloadIcon data-icon="inline-start" />
-                                    Export
+                                    {copy.export}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>
-                                    Observation register
+                                    {copy.observation_register}
                                 </DropdownMenuLabel>
                                 <DropdownMenuGroup>
                                     {['csv', 'xlsx', 'pdf', 'json'].map(
@@ -244,7 +249,7 @@ export default function MonitoringEvaluationIndex({
                                 </DropdownMenuGroup>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuLabel>
-                                    Target performance
+                                    {copy.target_performance}
                                 </DropdownMenuLabel>
                                 <DropdownMenuGroup>
                                     {['csv', 'xlsx', 'pdf', 'json'].map(
@@ -264,7 +269,7 @@ export default function MonitoringEvaluationIndex({
                                                     )}
                                                 >
                                                     {format.toUpperCase()}{' '}
-                                                    variance report
+                                                    {copy.variance_report}
                                                 </a>
                                             </DropdownMenuItem>
                                         ),
@@ -295,8 +300,10 @@ export default function MonitoringEvaluationIndex({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No indicator observations"
-                            description="Approve an indicator, then submit a target, baseline, or actual for an authorized county and reporting period."
+                            title={copy.no_indicator_observations}
+                            description={
+                                copy.no_indicator_observations_description
+                            }
                             className="min-h-72 border-0"
                         />
                     )}

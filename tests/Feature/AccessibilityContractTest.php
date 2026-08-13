@@ -119,6 +119,15 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('id="recovery_code"', $twoFactor);
         $this->assertStringContainsString("? 'authentication-code-error'", $twoFactor);
 
+        $indicatorDefinition = $this->source('resources/js/components/indicator-definition-form.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.description)}', $indicatorDefinition);
+        $this->assertStringContainsString("? 'indicator-description-error'", $indicatorDefinition);
+        $this->assertStringContainsString('aria-busy={processing}', $indicatorDefinition);
+
+        $indicatorVerification = $this->source('resources/js/components/indicator-verification-action.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.rationale)}', $indicatorVerification);
+        $this->assertStringContainsString("? 'verification-rationale-error'", $indicatorVerification);
+
         $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
         $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
         $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);

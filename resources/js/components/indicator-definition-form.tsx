@@ -1,7 +1,8 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ChartSpline } from 'lucide-react';
 import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import SearchableSelect from '@/components/searchable-select';
 import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Button } from '@/components/ui/button';
@@ -20,18 +21,18 @@ export default function IndicatorDefinitionForm({
     programmes: Option[];
     catalogue: { available: boolean };
 }) {
+    const copy = usePage().props.localization.indicatorDefinitions;
+
     return (
         <FormSheet
-            title="Define an indicator"
-            triggerLabel="Define indicator"
+            title={copy.define_indicator}
+            triggerLabel={copy.define_indicator}
             icon={ChartSpline}
             size="xl"
-            description="Create a versioned results-chain definition for independent approval before data entry."
+            description={copy.define_indicator_description}
             triggerDisabled={!catalogue.available}
             triggerTitle={
-                !catalogue.available
-                    ? 'Publish an approved reference-data catalogue before defining indicators.'
-                    : undefined
+                !catalogue.available ? copy.catalogue_required : undefined
             }
         >
             <Form
@@ -41,18 +42,18 @@ export default function IndicatorDefinitionForm({
             >
                 {({ processing, errors }) => (
                     <>
-                        <Field label="Code" error={errors.code}>
+                        <Field label={copy.code} error={errors.code}>
                             <Input
                                 name="code"
                                 required
                                 placeholder="M07-OUT-01"
                             />
                         </Field>
-                        <Field label="Indicator name" error={errors.name}>
+                        <Field label={copy.indicator_name} error={errors.name}>
                             <Input name="name" required />
                         </Field>
                         <Field
-                            label="Results level"
+                            label={copy.results_level}
                             error={errors.results_level}
                         >
                             <Select
@@ -64,9 +65,10 @@ export default function IndicatorDefinitionForm({
                                     'outcome',
                                     'impact',
                                 ]}
+                                labels={copy}
                             />
                         </Field>
-                        <Field label="Frequency" error={errors.frequency}>
+                        <Field label={copy.frequency} error={errors.frequency}>
                             <Select
                                 name="frequency"
                                 values={[
@@ -76,16 +78,20 @@ export default function IndicatorDefinitionForm({
                                     'annual',
                                     'ad_hoc',
                                 ]}
+                                labels={copy}
                             />
                         </Field>
-                        <Field label="Unit" error={errors.unit_of_measure}>
+                        <Field label={copy.unit} error={errors.unit_of_measure}>
                             <Input
                                 name="unit_of_measure"
                                 required
-                                placeholder="percent, days, count…"
+                                placeholder={copy.unit_placeholder}
                             />
                         </Field>
-                        <Field label="Value type" error={errors.value_type}>
+                        <Field
+                            label={copy.value_type}
+                            error={errors.value_type}
+                        >
                             <Select
                                 name="value_type"
                                 values={[
@@ -95,61 +101,78 @@ export default function IndicatorDefinitionForm({
                                     'count',
                                     'text',
                                 ]}
+                                labels={copy}
                             />
                         </Field>
-                        <Field label="Direction" error={errors.direction}>
+                        <Field label={copy.direction} error={errors.direction}>
                             <Select
                                 name="direction"
                                 values={['increase', 'decrease', 'maintain']}
+                                labels={copy}
                             />
                         </Field>
-                        <Field label="Sector" error={errors.sector_id}>
+                        <Field label={copy.sector} error={errors.sector_id}>
                             <OptionSelect
                                 name="sector_id"
                                 options={sectors}
                                 optional
                             />
                         </Field>
-                        <Field label="Programme" error={errors.programme_id}>
+                        <Field
+                            label={copy.programme}
+                            error={errors.programme_id}
+                        >
                             <OptionSelect
                                 name="programme_id"
                                 options={programmes}
                                 optional
                             />
                         </Field>
-                        <Field label="Data source" error={errors.data_source}>
+                        <Field
+                            label={copy.data_source}
+                            error={errors.data_source}
+                        >
                             <Input name="data_source" required />
                         </Field>
                         <Field
-                            label="Verification method"
+                            label={copy.verification_method}
                             error={errors.verification_method}
                         >
                             <Input name="verification_method" required />
                         </Field>
                         <DatePickerField
                             name="effective_from"
-                            label="Effective from"
+                            label={copy.effective_from}
                             error={errors.effective_from}
                         />
                         <div className="grid gap-2 md:col-span-2">
                             <Label htmlFor="indicator-description">
-                                Description
+                                {copy.definition_description}
                             </Label>
                             <textarea
                                 id="indicator-description"
                                 name="description"
                                 required
+                                aria-invalid={Boolean(errors.description)}
+                                aria-describedby={
+                                    errors.description
+                                        ? 'indicator-description-error'
+                                        : undefined
+                                }
                                 className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                             />
-                            {errors.description && (
-                                <p className="text-xs text-destructive">
-                                    {errors.description}
-                                </p>
-                            )}
+                            <InputError
+                                id="indicator-description-error"
+                                message={errors.description}
+                            />
                         </div>
                         <div className="md:col-span-2">
-                            <Button type="submit" disabled={processing}>
-                                Create draft indicator
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                aria-busy={processing}
+                            >
+                                {copy.create_draft_indicator}
                             </Button>
                         </div>
                     </>
@@ -174,16 +197,25 @@ function Field({
         <div className="grid gap-2">
             <Label htmlFor={id}>{label}</Label>
             <div id={id}>{children}</div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            <InputError message={error} />
         </div>
     );
 }
-function Select({ name, values }: { name: string; values: string[] }) {
+function Select({
+    name,
+    values,
+    labels,
+}: {
+    name: string;
+    values: string[];
+    labels: Record<string, string>;
+}) {
     return (
         <StaticSearchableSelect
             id={`indicator-${name}`}
             name={name}
             values={values}
+            labels={labels}
         />
     );
 }
