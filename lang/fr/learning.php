@@ -269,6 +269,16 @@ return [
     'value_publish' => 'Publier',
     'value_return' => 'Renvoyer',
     'value_retire' => 'Retirer',
+    'asset' => [
+        'registered_audit' => 'Ressource gouvernée enregistrée pour la leçon :title.',
+        'errors' => [
+            'locked_after_review' => 'Les ressources de formation sont verrouillées dès le début du contrôle qualité.',
+            'replace_through_version_control' => 'Remplacez la ressource gouvernée existante par le contrôle de version des documents.',
+            'unsupported_lesson_type' => 'Les ressources du dépôt sont prises en charge pour les leçons multimédias, les trousses et les manuels.',
+            'video_requires_transcript' => 'Les leçons vidéo nécessitent une vidéo numérique et une transcription.',
+            'audio_requires_transcript' => 'Les leçons audio nécessitent un fichier audio numérique et une transcription.',
+        ],
+    ],
     'outcomes' => [
         'course_created' => 'Cours :code créé.',
         'cohort_created' => 'Cohorte de formation :code créée.',

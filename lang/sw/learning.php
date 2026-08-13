@@ -269,6 +269,16 @@ return [
     'value_publish' => 'Chapisha',
     'value_return' => 'Rudisha',
     'value_retire' => 'Staafisha',
+    'asset' => [
+        'registered_audit' => 'Nyenzo inayodhibitiwa imesajiliwa kwa somo :title.',
+        'errors' => [
+            'locked_after_review' => 'Nyenzo za mafunzo zimefungwa baada ya ukaguzi wa ubora kuanza.',
+            'replace_through_version_control' => 'Badilisha nyenzo iliyopo inayodhibitiwa kupitia udhibiti wa matoleo ya hati.',
+            'unsupported_lesson_type' => 'Nyenzo za hazina zinatumika kwa masomo ya midia, zana na mwongozo.',
+            'video_requires_transcript' => 'Masomo ya video yanahitaji video ya kidijitali na nakala yake.',
+            'audio_requires_transcript' => 'Masomo ya sauti yanahitaji sauti ya kidijitali na nakala yake.',
+        ],
+    ],
     'outcomes' => [
         'course_created' => 'Kozi :code imeundwa.',
         'cohort_created' => 'Kundi la mafunzo :code limeundwa.',

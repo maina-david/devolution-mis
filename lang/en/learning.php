@@ -269,6 +269,16 @@ return [
     'value_publish' => 'Publish',
     'value_return' => 'Return',
     'value_retire' => 'Retire',
+    'asset' => [
+        'registered_audit' => 'Governed asset registered for lesson :title.',
+        'errors' => [
+            'locked_after_review' => 'Learning assets are locked after quality review begins.',
+            'replace_through_version_control' => 'Replace the existing governed asset through document version control.',
+            'unsupported_lesson_type' => 'Repository assets are supported for multimedia, toolkit and manual lessons.',
+            'video_requires_transcript' => 'Video lessons require a digital video asset and transcript.',
+            'audio_requires_transcript' => 'Audio lessons require a digital audio asset and transcript.',
+        ],
+    ],
     'outcomes' => [
         'course_created' => 'Course :code created.',
         'cohort_created' => 'Learning cohort :code created.',

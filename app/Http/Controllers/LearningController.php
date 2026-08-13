@@ -155,10 +155,10 @@ class LearningController extends Controller
     {
         $user = $this->user($request);
         abort_unless($lesson->module()->where('learning_course_id', $course->id)->exists(), 404);
-        abort_unless($course->status === 'draft', 409, 'Learning assets are locked after quality review begins.');
+        abort_unless($course->status === 'draft', 409, __('learning.asset.errors.locked_after_review'));
         abort_unless($user->programmeRole()->hasNationalScope() || $course->owner_id === $user->id, 403);
-        abort_if($lesson->documentLinks()->whereHas('document', fn (Builder $query) => $query->where('record_status', 'active'))->exists(), 409, 'Replace the existing governed asset through document version control.');
-        abort_unless(in_array($lesson->content_type, ['video', 'audio', 'toolkit', 'manual'], true), 409, 'Repository assets are supported for multimedia, toolkit and manual lessons.');
+        abort_if($lesson->documentLinks()->whereHas('document', fn (Builder $query) => $query->where('record_status', 'active'))->exists(), 409, __('learning.asset.errors.replace_through_version_control'));
+        abort_unless(in_array($lesson->content_type, ['video', 'audio', 'toolkit', 'manual'], true), 409, __('learning.asset.errors.unsupported_lesson_type'));
         $file = $request->file('document');
         $detectedMimeType = (string) $file->getMimeType();
         $mimeType = match ($detectedMimeType) {
@@ -166,17 +166,17 @@ class LearningController extends Controller
             default => $detectedMimeType,
         };
         if ($lesson->content_type === 'video') {
-            abort_unless($request->string('source_type')->toString() === 'digital' && str_starts_with($mimeType, 'video/') && $request->boolean('transcript_available'), 422, 'Video lessons require a digital video asset and transcript.');
+            abort_unless($request->string('source_type')->toString() === 'digital' && str_starts_with($mimeType, 'video/') && $request->boolean('transcript_available'), 422, __('learning.asset.errors.video_requires_transcript'));
         }
         if ($lesson->content_type === 'audio') {
-            abort_unless($request->string('source_type')->toString() === 'digital' && str_starts_with($mimeType, 'audio/') && $request->boolean('transcript_available'), 422, 'Audio lessons require a digital audio asset and transcript.');
+            abort_unless($request->string('source_type')->toString() === 'digital' && str_starts_with($mimeType, 'audio/') && $request->boolean('transcript_available'), 422, __('learning.asset.errors.audio_requires_transcript'));
         }
 
         $document = $storeDocument->handle($lesson, $user, $file, ['title' => $request->string('title')->toString(), 'category' => 'Learning '.$lesson->content_type, 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'learning-lesson-asset', 'county_id' => $course->county_id, 'mime_type' => $mimeType]);
         $existingMetadata = $lesson->assetMetadata();
         $metadata = [...$existingMetadata, 'repository_asset_id' => $document->id, 'rights_holder' => $request->string('rights_holder')->toString(), 'licence' => $request->string('licence')->toString(), 'accessible_alternative' => $request->string('accessible_alternative')->toString(), 'transcript_available' => $request->boolean('transcript_available'), 'asset_source_type' => $request->string('source_type')->toString(), 'uploaded_at' => now()->toIso8601String()];
         $lesson->update(['content_url' => null, 'mime_type' => $document->mime_type, 'content_checksum' => $document->content_checksum, 'is_downloadable' => $request->boolean('is_downloadable'), 'metadata' => $metadata]);
-        $auditLogger->record($user, $lesson, 'learning.lesson_asset_registered', "Governed asset registered for lesson {$lesson->title}.", $course->county_id, ['document_id' => $document->id, 'content_checksum' => $document->content_checksum, 'licence' => $metadata['licence']]);
+        $auditLogger->record($user, $lesson, 'learning.lesson_asset_registered', __('learning.asset.registered_audit', ['title' => $lesson->title]), $course->county_id, ['document_id' => $document->id, 'content_checksum' => $document->content_checksum, 'licence' => $metadata['licence']]);
 
         return back()->with('success', __('learning.outcomes.asset_uploaded'));
     }

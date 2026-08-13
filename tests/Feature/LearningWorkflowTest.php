@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\LearningCertificate;
 use App\Models\LearningCourse;
@@ -48,8 +49,8 @@ class LearningWorkflowTest extends TestCase
         $this->assertSame('published', $course->status);
         $this->assertInstanceOf(LearningLesson::class, $manual);
         $this->assertSame('clean', $manual->documentLinks->sole()->document->scan_status);
-        $this->assertNotEmpty($manual->metadata['accessible_alternative']);
-        $this->assertSame('permission_granted', $manual->metadata['licence']);
+        $this->assertNotEmpty($manual->assetMetadata()['accessible_alternative']);
+        $this->assertSame('permission_granted', $manual->assetMetadata()['licence']);
     }
 
     public function test_multimedia_course_is_independently_published_completed_assessed_and_certified(): void
@@ -175,7 +176,11 @@ class LearningWorkflowTest extends TestCase
 
         $this->actingAs($author)->patch(route('learning.courses.transition', [$course]), ['transition' => 'submit_review', 'rationale' => 'Attempt without governed assets.'])->assertStatus(409);
         $invalid = $this->assetPayload($video, false);
-        $this->actingAs($author)->post(route('learning.lessons.assets.store', [$course, $video]), $invalid)->assertStatus(422);
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($author)
+            ->post(route('learning.lessons.assets.store', [$course, $video]), $invalid)
+            ->assertStatus(422)
+            ->assertSee('Les leçons vidéo nécessitent une vidéo numérique et une transcription.');
         $this->assertDatabaseCount('assessment_documents', 0);
 
         $this->uploadRequiredAssets($course, $author);
@@ -185,9 +190,16 @@ class LearningWorkflowTest extends TestCase
         $this->assertTrue($video->metadata['transcript_available']);
         $this->assertSame(64, strlen($video->content_checksum));
         $this->assertDatabaseHas('audit_events', ['subject_id' => $video->id, 'action' => 'learning.lesson_asset_registered']);
+        $this->assertSame(
+            'Ressource gouvernée enregistrée pour la leçon '.$video->title.'.',
+            AuditEvent::query()->where('subject_id', $video->id)->where('action', 'learning.lesson_asset_registered')->sole()->description,
+        );
 
         $this->actingAs($author)->patch(route('learning.courses.transition', [$course]), ['transition' => 'submit_review', 'rationale' => 'Accessible repository assets are complete.'])->assertRedirect();
-        $this->actingAs($author)->post(route('learning.lessons.assets.store', [$course, $video]), $this->assetPayload($video, true))->assertStatus(409);
+        $this->actingAs($author)
+            ->post(route('learning.lessons.assets.store', [$course, $video]), $this->assetPayload($video, true))
+            ->assertStatus(409)
+            ->assertSee('Les ressources de formation sont verrouillées dès le début du contrôle qualité.');
     }
 
     /** @return array{LearningCourse,User} */
