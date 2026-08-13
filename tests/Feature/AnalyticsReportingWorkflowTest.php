@@ -129,6 +129,26 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $this->assertArrayHasKey('evaluation-findings.overdue', $catalogue->options());
     }
 
+    public function test_metric_catalogue_produces_bounded_authorized_time_series(): void
+    {
+        $county = County::factory()->create();
+        $otherCounty = County::factory()->create();
+        $viewer = User::factory()->countyAdmin($county)->create();
+        EvaluationFinding::factory()->create(['county_id' => $county->id, 'status' => 'closed', 'closed_at' => '2026-01-15']);
+        EvaluationFinding::factory()->create(['county_id' => $county->id, 'status' => 'closed', 'closed_at' => '2026-04-15']);
+        EvaluationFinding::factory()->create(['county_id' => $otherCounty->id, 'status' => 'closed', 'closed_at' => '2026-04-15']);
+
+        $measurement = app(AnalyticsMetricCatalogue::class)->evaluate($viewer, 'evaluation-findings.closed', [
+            'from' => '2026-01-01',
+            'to' => '2026-06-30',
+            'time_grain' => 'quarter',
+        ]);
+
+        $this->assertSame(['Q1 2026', 'Q2 2026'], array_column($measurement['trend'], 'label'));
+        $this->assertSame([1, 1], array_column($measurement['trend'], 'value'));
+        $this->assertCount(2, $measurement['trend']);
+    }
+
     public function test_all_formats_are_private_checksummed_and_download_revalidates_integrity(): void
     {
         Storage::fake('local');
@@ -166,6 +186,12 @@ class AnalyticsReportingWorkflowTest extends TestCase
                 $this->assertStringContainsString('"name": "'.$county->name.'"', $contents);
                 $this->assertStringContainsString('"dashboard_reference_release"', $contents);
                 $this->assertStringContainsString('"schedule_reference_checksum"', $contents);
+                $this->assertStringContainsString('"visualization": "metric"', $contents);
+                $this->assertStringContainsString('"trend": []', $contents);
+            }
+            if ($format === 'csv') {
+                $contents = Storage::disk('local')->get((string) $run->path);
+                $this->assertStringContainsString('Visualization,"Time grain",Trend', $contents);
             }
         }
 

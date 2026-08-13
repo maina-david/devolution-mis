@@ -51,7 +51,8 @@ class AnalyticsReportingController extends Controller
     {
         Gate::authorize(ProgrammePermission::ViewAnalytics->value);
         $user = $this->user($request);
-        $hasExplicitFilter = collect(['from', 'to', 'search', 'status', 'county_id', 'per_page'])->contains(fn (string $key): bool => $request->filled($key));
+        $filterKeys = ['from', 'to', 'search', 'status', 'county_id', 'per_page', 'dashboard_id', 'widget_id', 'visualization', 'time_grain'];
+        $hasExplicitFilter = collect($filterKeys)->contains(fn (string $key): bool => $request->filled($key));
         if (! $hasExplicitFilter) {
             $defaultView = AnalyticsFilterView::query()->where('user_id', $user->id)->where('is_default', true)->first();
             if ($defaultView instanceof AnalyticsFilterView && $defaultView->filters !== []) {
@@ -78,6 +79,7 @@ class AnalyticsReportingController extends Controller
             ->where(fn (Builder $query) => $query->whereNull('county_id')->orWhereIn('county_id', $countyIds))
             ->when($request->filled('county_id'), fn (Builder $query) => $query->where('county_id', $request->string('county_id')))
             ->when($request->filled('status'), fn (Builder $query) => $query->where('status', $request->string('status')))
+            ->when($request->filled('dashboard_id'), fn (Builder $query) => $query->whereKey($request->string('dashboard_id')))
             ->when($request->filled('search'), function (Builder $query) use ($request): void {
                 $search = $request->string('search')->trim();
                 $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%"));
@@ -100,17 +102,19 @@ class AnalyticsReportingController extends Controller
                 'publishedAt' => $dashboard->published_at?->toIso8601String(),
                 'creator' => $dashboard->creator->name,
                 'publisher' => $dashboard->publisher?->name,
-                'widgets' => $dashboard->widgets->map(fn (AnalyticsWidget $widget): array => [
-                    'id' => $widget->id,
-                    'title' => $widget->title,
-                    'description' => $widget->description,
-                    'metricKey' => $widget->metric_key,
-                    'visualization' => $widget->visualization,
-                    'disaggregation' => $widget->disaggregation,
-                    'position' => $widget->position,
-                    'width' => $widget->width,
-                    'measurement' => $this->metricCatalogue->evaluate($user, $widget->metric_key, [...($widget->filters ?? []), ...$requestFilters], $widget->disaggregation),
-                ])->values()->all(),
+                'widgets' => $dashboard->widgets
+                    ->when($request->filled('widget_id'), fn ($widgets) => $widgets->where('id', (string) $request->input('widget_id')))
+                    ->map(fn (AnalyticsWidget $widget): array => [
+                        'id' => $widget->id,
+                        'title' => $widget->title,
+                        'description' => $widget->description,
+                        'metricKey' => $widget->metric_key,
+                        'visualization' => $request->filled('visualization') ? (string) $request->input('visualization') : $widget->visualization,
+                        'disaggregation' => $widget->disaggregation,
+                        'position' => $widget->position,
+                        'width' => $widget->width,
+                        'measurement' => $this->metricCatalogue->evaluate($user, $widget->metric_key, [...($widget->filters ?? []), ...$requestFilters, ...array_filter(['time_grain' => $request->input('time_grain')])], $widget->disaggregation),
+                    ])->values()->all(),
             ];
         })->values();
 
@@ -130,7 +134,7 @@ class AnalyticsReportingController extends Controller
             'savedFilterViews' => AnalyticsFilterView::query()->where('user_id', $user->id)->latest()->get()->map(fn (AnalyticsFilterView $view): array => ['id' => $view->id, 'name' => $view->name, 'filters' => $view->filters, 'isDefault' => $view->is_default])->values(),
             'schedules' => $schedules,
             'runs' => $runs,
-            'filters' => $request->safe()->only(['from', 'to', 'search', 'status', 'county_id', 'per_page']),
+            'filters' => $request->safe()->only($filterKeys),
             'options' => [
                 'counties' => $this->countyScope->query($user)->whereIn('id', $governedCountyIds)->orderBy('code')->get()->map->identityCell()->values(),
                 'metrics' => collect($this->metricCatalogue->options())->map(fn (string $label, string $key): array => ['id' => $key, 'name' => $label])->values(),

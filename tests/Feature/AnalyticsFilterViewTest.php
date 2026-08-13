@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\AnalyticsDashboard;
 use App\Models\AnalyticsFilterView;
+use App\Models\AnalyticsWidget;
 use App\Models\County;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,5 +77,36 @@ class AnalyticsFilterViewTest extends TestCase
         ])->assertSessionHasErrors(['filters.status', 'filters.to']);
 
         $this->assertDatabaseCount('analytics_filter_views', 0);
+    }
+
+    public function test_saved_view_preserves_valid_governed_drill_down_and_chart_state(): void
+    {
+        $user = User::factory()->devolutionAdmin()->create();
+        $dashboard = AnalyticsDashboard::factory()->for($user, 'creator')->create();
+        $widget = AnalyticsWidget::factory()->for($dashboard, 'dashboard')->create();
+
+        $filters = [
+            'dashboard_id' => $dashboard->id,
+            'widget_id' => $widget->id,
+            'visualization' => 'line',
+            'time_grain' => 'quarter',
+        ];
+        $this->actingAs($user)->post(route('analytics.filter-views.store'), [
+            'name' => 'Quarterly dashboard drill-down',
+            'filters' => $filters,
+        ])->assertRedirect();
+
+        $this->assertEqualsCanonicalizing($filters, AnalyticsFilterView::query()->sole()->filters);
+        $this->actingAs($user)->get(route('analytics.index', $filters))->assertOk()->assertInertia(fn ($page) => $page
+            ->where('filters.dashboard_id', $dashboard->id)
+            ->where('filters.widget_id', $widget->id)
+            ->where('filters.visualization', 'line')
+            ->where('filters.time_grain', 'quarter'));
+
+        $otherWidget = AnalyticsWidget::factory()->create();
+        $this->actingAs($user)->post(route('analytics.filter-views.store'), [
+            'name' => 'Invalid dashboard relationship',
+            'filters' => [...$filters, 'widget_id' => $otherWidget->id],
+        ])->assertSessionHasErrors('filters.widget_id');
     }
 }

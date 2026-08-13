@@ -1,4 +1,4 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     Bookmark,
@@ -13,7 +13,17 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import {
+    Area,
+    AreaChart,
+    Bar,
+    BarChart,
+    CartesianGrid,
+    Line,
+    LineChart,
+    XAxis,
+    YAxis,
+} from 'recharts';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
@@ -80,6 +90,7 @@ type Measurement = {
     provenance: string;
     measured_at: string;
     series: Array<{ county: CountyIdentityValue; value: number | null }>;
+    trend: Array<{ period: string; label: string; value: number | null }>;
 };
 type Widget = {
     id: string;
@@ -191,6 +202,17 @@ export default function AnalyticsReporting({
     catalogue,
     capabilities,
 }: Props) {
+    const analyticsCopy = usePage().props.localization.analytics;
+    const dashboardOptions = dashboards.map((dashboard) => ({
+        id: dashboard.id,
+        name: `${dashboard.code} · ${dashboard.name}`,
+    }));
+    const widgetOptions = dashboards.flatMap((dashboard) =>
+        dashboard.widgets.map((widget) => ({
+            id: widget.id,
+            name: `${dashboard.code} · ${widget.title}`,
+        })),
+    );
     const runRows: WorkspaceRow[] =
         runs?.data.map((report) => ({
             id: report.id,
@@ -299,13 +321,44 @@ export default function AnalyticsReporting({
                             options: options.counties,
                             value: filters.county_id,
                         },
+                        {
+                            key: 'dashboard_id',
+                            label: analyticsCopy.dashboard_filter,
+                            options: dashboardOptions,
+                            value: filters.dashboard_id,
+                        },
+                        {
+                            key: 'widget_id',
+                            label: analyticsCopy.widget_filter,
+                            options: widgetOptions,
+                            value: filters.widget_id,
+                        },
+                        {
+                            key: 'visualization',
+                            label: analyticsCopy.visualization,
+                            options: [
+                                'metric',
+                                'bar',
+                                'line',
+                                'area',
+                                'progress',
+                                'table',
+                            ].map(option),
+                            value: filters.visualization,
+                        },
+                        {
+                            key: 'time_grain',
+                            label: analyticsCopy.time_grain,
+                            options: ['month', 'quarter', 'year'].map((id) => ({
+                                id,
+                                name: analyticsCopy[id],
+                            })),
+                            value: filters.time_grain,
+                        },
                     ]}
                 />
 
-                <SavedFilterViews
-                    views={savedFilterViews}
-                    filters={filters}
-                />
+                <SavedFilterViews views={savedFilterViews} filters={filters} />
 
                 <section className="grid gap-5">
                     {dashboards.map((dashboard) => (
@@ -314,6 +367,7 @@ export default function AnalyticsReporting({
                             dashboard={dashboard}
                             options={options}
                             capabilities={capabilities}
+                            filters={filters}
                         />
                     ))}
                     {dashboards.length === 0 && (
@@ -441,7 +495,10 @@ function SavedFilterViews({
                                         aria-invalid={Boolean(errors.name)}
                                     />
                                     {errors.name && (
-                                        <p className="text-sm text-destructive" role="alert">
+                                        <p
+                                            className="text-sm text-destructive"
+                                            role="alert"
+                                        >
                                             {errors.name}
                                         </p>
                                     )}
@@ -462,7 +519,9 @@ function SavedFilterViews({
                                 </label>
                                 <Button type="submit" disabled={processing}>
                                     <Bookmark data-icon="inline-start" />
-                                    {processing ? 'Saving…' : 'Save filter view'}
+                                    {processing
+                                        ? 'Saving…'
+                                        : 'Save filter view'}
                                 </Button>
                             </>
                         )}
@@ -471,13 +530,27 @@ function SavedFilterViews({
             </CardHeader>
             <CardContent>
                 {views.length ? (
-                    <div className="flex flex-wrap gap-2" aria-label="Saved analytics filter views">
+                    <div
+                        className="flex flex-wrap gap-2"
+                        aria-label="Saved analytics filter views"
+                    >
                         {views.map((view) => (
-                            <div key={view.id} className="flex items-center rounded-md border bg-background">
+                            <div
+                                key={view.id}
+                                className="flex items-center rounded-md border bg-background"
+                            >
                                 <Button variant="ghost" asChild>
-                                    <Link href={analyticsIndex({ query: view.filters })}>
+                                    <Link
+                                        href={analyticsIndex({
+                                            query: view.filters,
+                                        })}
+                                    >
                                         {view.name}
-                                        {view.isDefault && <Badge variant="secondary">Default</Badge>}
+                                        {view.isDefault && (
+                                            <Badge variant="secondary">
+                                                Default
+                                            </Badge>
+                                        )}
                                     </Link>
                                 </Button>
                                 <Button
@@ -485,7 +558,12 @@ function SavedFilterViews({
                                     variant="ghost"
                                     size="icon"
                                     aria-label={`Delete saved view ${view.name}`}
-                                    onClick={() => router.delete(destroyFilterView.url(view.id), { preserveScroll: true })}
+                                    onClick={() =>
+                                        router.delete(
+                                            destroyFilterView.url(view.id),
+                                            { preserveScroll: true },
+                                        )
+                                    }
                                 >
                                     <Trash2 />
                                 </Button>
@@ -508,10 +586,12 @@ function DashboardPanel({
     dashboard,
     options,
     capabilities,
+    filters,
 }: {
     dashboard: Dashboard;
     options: Props['options'];
     capabilities: Props['capabilities'];
+    filters: Props['filters'];
 }) {
     return (
         <section className="overflow-hidden rounded-xl border bg-card">
@@ -580,14 +660,30 @@ function DashboardPanel({
             </div>
             <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
                 {dashboard.widgets.map((widget) => (
-                    <WidgetCard key={widget.id} widget={widget} />
+                    <WidgetCard
+                        key={widget.id}
+                        widget={widget}
+                        filters={filters}
+                    />
                 ))}
             </div>
         </section>
     );
 }
 
-function WidgetCard({ widget }: { widget: Widget }) {
+function WidgetCard({
+    widget,
+    filters,
+}: {
+    widget: Widget;
+    filters: Props['filters'];
+}) {
+    const analyticsCopy = usePage().props.localization.analytics;
+    const trendData = widget.measurement.trend.map((entry) => ({
+        period: entry.label,
+        value: entry.value ?? 0,
+    }));
+
     return (
         <Card
             className={
@@ -671,12 +767,35 @@ function WidgetCard({ widget }: { widget: Widget }) {
                             </ChartContainer>
                         </div>
                     )}
+                {widget.visualization === 'line' && trendData.length > 0 && (
+                    <TrendChart
+                        kind="line"
+                        data={trendData}
+                        label={analyticsCopy.trend_chart.replace(
+                            ':title',
+                            widget.title,
+                        )}
+                    />
+                )}
+                {widget.visualization === 'area' && trendData.length > 0 && (
+                    <TrendChart
+                        kind="area"
+                        data={trendData}
+                        label={analyticsCopy.trend_chart.replace(
+                            ':title',
+                            widget.title,
+                        )}
+                    />
+                )}
                 {widget.measurement.series.length > 0 && (
                     <div className="grid gap-2">
                         {widget.measurement.series.map((entry) => (
                             <Link
                                 key={entry.county.id}
-                                href={countyShow({ county: entry.county.id })}
+                                href={countyShow(
+                                    { county: entry.county.id },
+                                    { query: filters },
+                                )}
                                 className="flex items-center justify-between rounded-lg border p-2 hover:bg-muted/50"
                             >
                                 <CountyIdentity county={entry.county} compact />
@@ -697,6 +816,72 @@ function WidgetCard({ widget }: { widget: Widget }) {
     );
 }
 
+function TrendChart({
+    kind,
+    data,
+    label,
+}: {
+    kind: 'line' | 'area';
+    data: Array<{ period: string; value: number }>;
+    label: string;
+}) {
+    const axes = (
+        <>
+            <CartesianGrid vertical={false} />
+            <XAxis
+                dataKey="period"
+                tickLine={false}
+                axisLine={false}
+                interval="preserveStartEnd"
+            />
+            <YAxis tickLine={false} axisLine={false} width={42} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+        </>
+    );
+
+    return (
+        <ChartContainer
+            config={analyticsChartConfig}
+            className="min-h-64 w-full"
+            role="img"
+            aria-label={label}
+        >
+            {kind === 'line' ? (
+                <LineChart
+                    accessibilityLayer
+                    data={data}
+                    margin={{ left: 4, right: 8 }}
+                >
+                    {axes}
+                    <Line
+                        dataKey="value"
+                        type="monotone"
+                        stroke="var(--color-value)"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                    />
+                </LineChart>
+            ) : (
+                <AreaChart
+                    accessibilityLayer
+                    data={data}
+                    margin={{ left: 4, right: 8 }}
+                >
+                    {axes}
+                    <Area
+                        dataKey="value"
+                        type="monotone"
+                        fill="var(--color-value)"
+                        fillOpacity={0.2}
+                        stroke="var(--color-value)"
+                        strokeWidth={2}
+                    />
+                </AreaChart>
+            )}
+        </ChartContainer>
+    );
+}
+
 function DashboardForm({
     options,
     catalogue,
@@ -704,6 +889,8 @@ function DashboardForm({
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <FormSheet
             title="Create analytics dashboard"
@@ -774,6 +961,8 @@ function DashboardForm({
                                     options={[
                                         'metric',
                                         'bar',
+                                        'line',
+                                        'area',
                                         'progress',
                                         'table',
                                     ].map(option)}
@@ -784,6 +973,15 @@ function DashboardForm({
                                     name="widgets[0][disaggregation]"
                                     label="Disaggregation"
                                     options={[{ id: 'county', name: 'County' }]}
+                                    optional
+                                />
+                                <SearchableSelect
+                                    id="dashboard-time-grain"
+                                    name="widgets[0][filters][time_grain]"
+                                    label={analyticsCopy.time_grain}
+                                    options={['month', 'quarter', 'year'].map(
+                                        option,
+                                    )}
                                     optional
                                 />
                                 <input
@@ -815,6 +1013,7 @@ function WidgetForm({
     dashboard: Dashboard;
     metrics: Option[];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
     const nextPosition =
         Math.max(0, ...dashboard.widgets.map((item) => item.position)) + 1;
 
@@ -845,7 +1044,14 @@ function WidgetForm({
                     id={`visual-${dashboard.id}`}
                     name="visualization"
                     label="Visualization"
-                    options={['metric', 'bar', 'progress', 'table'].map(option)}
+                    options={[
+                        'metric',
+                        'bar',
+                        'line',
+                        'area',
+                        'progress',
+                        'table',
+                    ].map(option)}
                     defaultValue="metric"
                 />
                 <SearchableSelect
@@ -853,6 +1059,13 @@ function WidgetForm({
                     name="disaggregation"
                     label="Disaggregation"
                     options={[{ id: 'county', name: 'County' }]}
+                    optional
+                />
+                <SearchableSelect
+                    id={`time-grain-${dashboard.id}`}
+                    name="filters[time_grain]"
+                    label={analyticsCopy.time_grain}
+                    options={['month', 'quarter', 'year'].map(option)}
                     optional
                 />
                 <SearchableSelect

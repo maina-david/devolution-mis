@@ -10,7 +10,9 @@ use App\Models\EvaluationFinding;
 use App\Models\IndicatorObservation;
 use App\Models\User;
 use App\Support\WorkspaceFilters;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 
 class AnalyticsMetricCatalogue
@@ -36,7 +38,7 @@ class AnalyticsMetricCatalogue
     }
 
     /** @param array<string, mixed> $filters
-     * @return array{value: int|float|null, unit: string, provenance: string, measured_at: string, series: list<array{county: array<string, mixed>, value: int|float|null}>}
+     * @return array{value: int|float|null, unit: string, provenance: string, measured_at: string, series: list<array{county: array<string, mixed>, value: int|float|null}>, trend: list<array{period: string, label: string, value: int|float|null}>}
      */
     public function evaluate(User $user, string $metricKey, array $filters = [], ?string $disaggregation = null): array
     {
@@ -53,8 +55,63 @@ class AnalyticsMetricCatalogue
         $authorizedCountyIds = array_values($countyIds->all());
         $value = $this->value($user, $metricKey, $authorizedCountyIds, $from, $to);
         $series = $disaggregation === 'county' ? array_values(County::query()->whereKey($countyIds)->orderBy('code')->get()->map(fn (County $county): array => ['county' => $county->identityCell(), 'value' => $this->value($user, $metricKey, [$county->id], $from, $to)])->all()) : [];
+        $timeGrain = is_string($filters['time_grain'] ?? null) ? $filters['time_grain'] : null;
+        $trend = $timeGrain === null ? [] : $this->trend($user, $metricKey, $authorizedCountyIds, $from, $to, $timeGrain);
 
-        return ['value' => $value, 'unit' => $this->unit($metricKey), 'provenance' => $this->options()[$metricKey].' · authorized PostgreSQL records · county scope applied before aggregation', 'measured_at' => now()->toIso8601String(), 'series' => $series];
+        return ['value' => $value, 'unit' => $this->unit($metricKey), 'provenance' => $this->options()[$metricKey].' · authorized PostgreSQL records · county scope applied before aggregation', 'measured_at' => now()->toIso8601String(), 'series' => $series, 'trend' => $trend];
+    }
+
+    /** @param list<string> $countyIds
+     * @return list<array{period: string, label: string, value: int|float|null}>
+     */
+    private function trend(User $user, string $metricKey, array $countyIds, ?string $from, ?string $to, string $timeGrain): array
+    {
+        $end = $to === null ? CarbonImmutable::today() : CarbonImmutable::parse($to)->endOfDay();
+        $start = $from === null ? match ($timeGrain) {
+            'year' => $end->startOfYear()->subYears(4),
+            'quarter' => $end->startOfQuarter()->subQuarters(7),
+            default => $end->startOfMonth()->subMonths(11),
+        } : CarbonImmutable::parse($from)->startOfDay();
+
+        $maximumStart = match ($timeGrain) {
+            'year' => $end->startOfYear()->subYears(9),
+            'quarter' => $end->startOfQuarter()->subQuarters(19),
+            default => $end->startOfMonth()->subMonths(35),
+        };
+        $start = $start->max($maximumStart);
+        $cacheKey = 'analytics-trend:'.hash('sha256', json_encode([$user->id, $metricKey, $countyIds, $start->toDateString(), $end->toDateString(), $timeGrain], JSON_THROW_ON_ERROR));
+
+        return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($user, $metricKey, $countyIds, $start, $end, $timeGrain): array {
+            $cursor = match ($timeGrain) {
+                'year' => $start->startOfYear(),
+                'quarter' => $start->startOfQuarter(),
+                default => $start->startOfMonth(),
+            };
+            $points = [];
+            while ($cursor->lessThanOrEqualTo($end)) {
+                $bucketEnd = (match ($timeGrain) {
+                    'year' => $cursor->endOfYear(),
+                    'quarter' => $cursor->endOfQuarter(),
+                    default => $cursor->endOfMonth(),
+                })->min($end);
+                $points[] = [
+                    'period' => $cursor->toDateString(),
+                    'label' => match ($timeGrain) {
+                        'year' => $cursor->format('Y'),
+                        'quarter' => 'Q'.$cursor->quarter.' '.$cursor->format('Y'),
+                        default => $cursor->format('Y-m'),
+                    },
+                    'value' => $this->value($user, $metricKey, $countyIds, $cursor->max($start)->toDateString(), $bucketEnd->toDateString()),
+                ];
+                $cursor = match ($timeGrain) {
+                    'year' => $cursor->addYear(),
+                    'quarter' => $cursor->addQuarter(),
+                    default => $cursor->addMonth(),
+                };
+            }
+
+            return $points;
+        });
     }
 
     /** @param list<string> $countyIds */

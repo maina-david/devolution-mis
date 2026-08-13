@@ -57,6 +57,9 @@ class ScheduledReportGenerator
                 'provenance' => $measurement['provenance'],
                 'measured_at' => $measurement['measured_at'],
                 'series' => $measurement['series'],
+                'trend' => $measurement['trend'],
+                'visualization' => $widget->visualization,
+                'time_grain' => $widget->filters['time_grain'] ?? null,
             ];
         })->all());
         $format = $schedule->format;
@@ -116,9 +119,9 @@ class ScheduledReportGenerator
             throw new RuntimeException('The CSV report stream could not be opened.');
         }
         fputcsv($stream, ['Reference lineage', json_encode($lineage, JSON_THROW_ON_ERROR)]);
-        fputcsv($stream, ['Metric', 'Metric key', 'Value', 'Unit', 'Provenance', 'Measured at']);
+        fputcsv($stream, ['Metric', 'Metric key', 'Value', 'Unit', 'Visualization', 'Time grain', 'Trend', 'Provenance', 'Measured at']);
         foreach ($rows as $row) {
-            fputcsv($stream, [$row['title'], $row['metric_key'], $row['value'], $row['unit'], $row['provenance'], $row['measured_at']]);
+            fputcsv($stream, [$row['title'], $row['metric_key'], $row['value'], $row['unit'], $row['visualization'], $row['time_grain'], json_encode($row['trend'], JSON_THROW_ON_ERROR), $row['provenance'], $row['measured_at']]);
         }
         rewind($stream);
         $contents = stream_get_contents($stream);
@@ -144,9 +147,9 @@ class ScheduledReportGenerator
             $writer = new Writer;
             $writer->openToFile($path);
             $writer->addRow(Row::fromValues(['Reference lineage', json_encode($lineage, JSON_THROW_ON_ERROR)]));
-            $writer->addRow(Row::fromValues(['Metric', 'Metric key', 'Value', 'Unit', 'Provenance', 'Measured at']));
+            $writer->addRow(Row::fromValues(['Metric', 'Metric key', 'Value', 'Unit', 'Visualization', 'Time grain', 'Trend', 'Provenance', 'Measured at']));
             foreach ($rows as $row) {
-                $writer->addRow(Row::fromValues([$row['title'], $row['metric_key'], $row['value'], $row['unit'], $row['provenance'], $row['measured_at']]));
+                $writer->addRow(Row::fromValues([$row['title'], $row['metric_key'], $row['value'], $row['unit'], $row['visualization'], $row['time_grain'], json_encode($row['trend'], JSON_THROW_ON_ERROR), $row['provenance'], $row['measured_at']]));
             }
             $writer->close();
             $contents = file_get_contents($path);
@@ -168,11 +171,11 @@ class ScheduledReportGenerator
      */
     private function pdf(AnalyticsDashboard $dashboard, array $rows, array $filters, ?County $county, array $lineage): string
     {
-        $body = collect($rows)->map(fn (array $row): string => '<tr><td>'.e($row['title']).'</td><td>'.e($row['metric_key']).'</td><td>'.e($row['value']).'</td><td>'.e($row['unit']).'</td><td>'.e($row['provenance']).'</td><td>'.e($row['measured_at']).'</td></tr>')->implode('');
+        $body = collect($rows)->map(fn (array $row): string => '<tr><td>'.e($row['title']).'</td><td>'.e($row['metric_key']).'</td><td>'.e($row['value']).'</td><td>'.e($row['unit']).'</td><td>'.e($row['visualization']).'</td><td>'.e($row['time_grain'] ?? '—').'</td><td>'.e(json_encode($row['trend'], JSON_THROW_ON_ERROR)).'</td><td>'.e($row['provenance']).'</td><td>'.e($row['measured_at']).'</td></tr>')->implode('');
         $period = e(($filters['from'] ?? 'All history').' to '.($filters['to'] ?? 'current'));
         $countyIdentity = $this->countyPdfIdentity($county);
         $dompdf = new Dompdf;
-        $dompdf->loadHtml('<style>body{font-family:sans-serif;color:#172b22;font-size:10px}h1{color:#123b2a}.identity{display:flex;align-items:center;margin-bottom:12px}.identity img{width:48px;height:48px;object-fit:contain;margin-right:10px}.identity strong{font-size:14px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd8d0;padding:7px;text-align:left;vertical-align:top}th{background:#edf5f0}.meta{color:#52665b}</style>'.$countyIdentity.'<h1>'.e($dashboard->name).'</h1><p class="meta">Dashboard '.e($dashboard->code).' · configuration '.e($dashboard->checksum).' · period '.$period.' · generated '.e(now()->toIso8601String()).'</p><p class="meta">Reference lineage '.e(json_encode($lineage, JSON_THROW_ON_ERROR)).'</p><table><thead><tr><th>Metric</th><th>Metric key</th><th>Value</th><th>Unit</th><th>Provenance</th><th>Measured at</th></tr></thead><tbody>'.$body.'</tbody></table>');
+        $dompdf->loadHtml('<style>body{font-family:sans-serif;color:#172b22;font-size:9px}h1{color:#123b2a}.identity{display:flex;align-items:center;margin-bottom:12px}.identity img{width:48px;height:48px;object-fit:contain;margin-right:10px}.identity strong{font-size:14px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd8d0;padding:5px;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#edf5f0}.meta{color:#52665b}</style>'.$countyIdentity.'<h1>'.e($dashboard->name).'</h1><p class="meta">Dashboard '.e($dashboard->code).' · configuration '.e($dashboard->checksum).' · period '.$period.' · generated '.e(now()->toIso8601String()).'</p><p class="meta">Reference lineage '.e(json_encode($lineage, JSON_THROW_ON_ERROR)).'</p><table><thead><tr><th>Metric</th><th>Metric key</th><th>Value</th><th>Unit</th><th>Visualization</th><th>Time grain</th><th>Trend</th><th>Provenance</th><th>Measured at</th></tr></thead><tbody>'.$body.'</tbody></table>');
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
