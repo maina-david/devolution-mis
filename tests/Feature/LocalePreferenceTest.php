@@ -35,6 +35,8 @@ class LocalePreferenceTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('localization.current', 'sw')
                 ->where('localization.copy.chooseLanguage', 'Chagua lugha')
+                ->where('localization.common.rows_per_page', 'Safu kwa kila ukurasa')
+                ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->has('localization.supported', 3));
 
         $this->flushSession();

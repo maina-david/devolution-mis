@@ -1,0 +1,70 @@
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { globSync } from 'node:fs';
+
+const limits = {
+    frontendLiterals: 1917,
+    backendMessages: 265,
+};
+
+let eslintOutput = '';
+
+try {
+    eslintOutput = execFileSync(
+        'npx',
+        [
+            'eslint',
+            'resources/js',
+            '--rule',
+            'react/jsx-no-literals:error',
+            '--format',
+            'json',
+        ],
+        { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 },
+    );
+} catch (error) {
+    eslintOutput = error.stdout;
+}
+
+const eslintResults = JSON.parse(eslintOutput);
+const frontendMessages = eslintResults.flatMap((result) =>
+    result.messages
+        .filter((message) => message.ruleId === 'react/jsx-no-literals')
+        .map((message) => ({
+            file: result.filePath,
+            line: message.line,
+            text: message.message,
+        })),
+);
+const backendPatterns = [
+    /abort\([^,]+,\s*['"]/gu,
+    /withErrors\(\[/gu,
+    /ValidationException::withMessages/gu,
+    /->with\(['"][^'"]+['"],\s*['"]/gu,
+];
+const backendMessages = globSync('app/**/*.php').flatMap((file) => {
+    const source = readFileSync(file, 'utf8');
+
+    return backendPatterns.flatMap((pattern) =>
+        [...source.matchAll(pattern)].map((match) => ({
+            file,
+            offset: match.index,
+        })),
+    );
+});
+const report = {
+    frontendLiterals: frontendMessages.length,
+    frontendFiles: new Set(frontendMessages.map((message) => message.file)).size,
+    backendMessages: backendMessages.length,
+    limits,
+};
+
+console.log(JSON.stringify(report, null, 2));
+
+if (
+    report.frontendLiterals > limits.frontendLiterals ||
+    report.backendMessages > limits.backendMessages
+) {
+    console.error('Localization debt increased. Extract new user-facing copy before merging.');
+    process.exitCode = 1;
+}

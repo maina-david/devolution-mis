@@ -103,6 +103,8 @@ class HandleInertiaRequests extends Middleware
                     'authenticationHelp' => __('idmis.public.authentication_help'),
                     'toggleNavigation' => __('idmis.public.toggle_navigation'),
                 ],
+                'common' => __('idmis.common'),
+                'navigation' => __('idmis.navigation'),
                 'citizen' => __('citizen'),
                 'dataRights' => __('data-rights'),
                 'dataGovernance' => __('data-governance'),
@@ -135,7 +137,7 @@ class HandleInertiaRequests extends Middleware
                 'unread' => $user?->unreadNotifications()->count() ?? 0,
                 'recent' => $user?->notifications()->latest()->limit(5)->get()->map(fn (DatabaseNotification $notification): array => [
                     'id' => $notification->id,
-                    'title' => (string) ($notification->data['title'] ?? 'Notification'),
+                    'title' => (string) ($notification->data['title'] ?? __('idmis.common.notification')),
                     'message' => (string) ($notification->data['message'] ?? ''),
                     'category' => (string) ($notification->data['category'] ?? 'general'),
                     'url' => is_string($notification->data['url'] ?? null) ? $notification->data['url'] : null,

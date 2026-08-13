@@ -25,7 +25,7 @@ type SearchResult = {
 };
 
 export function GlobalSearchDialog() {
-    const { auth } = usePage().props;
+    const { auth, localization } = usePage().props;
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -33,13 +33,16 @@ export function GlobalSearchDialog() {
     const [failed, setFailed] = useState(false);
     const pages = useMemo(
         () =>
-            appNavigationGroups(auth.user.permissions).flatMap((group) =>
+            appNavigationGroups(
+                auth.user.permissions,
+                localization.navigation,
+            ).flatMap((group) =>
                 group.items.map((item) => ({
                     ...item,
                     group: group.title,
                 })),
             ),
-        [auth.user.permissions],
+        [auth.user.permissions, localization.navigation],
     );
     const matchingPages = pages.filter((item) =>
         `${item.title} ${item.group}`

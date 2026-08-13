@@ -19,7 +19,8 @@ class AuthenticatedNavigationContractTest extends TestCase
 
         $sidebar = $this->source('resources/js/components/app-sidebar.tsx');
         $this->assertStringContainsString('appNavigationGroups(', $sidebar);
-        $this->assertStringContainsString('label="Work areas"', $sidebar);
+        $this->assertStringContainsString('label={page.props.localization.common.work_areas}', $sidebar);
+        $this->assertStringContainsString('page.props.localization.navigation', $sidebar);
         $navMain = $this->source('resources/js/components/nav-main.tsx');
         $this->assertStringNotContainsString('<Collapsible', $navMain);
         $this->assertStringNotContainsString('<SidebarMenuSub', $navMain);

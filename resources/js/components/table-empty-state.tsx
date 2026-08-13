@@ -6,22 +6,27 @@ import {
     EmptyMedia,
     EmptyTitle,
 } from '@/components/ui/empty';
+import { useCommonCopy } from '@/hooks/use-localization';
 
 export default function TableEmptyState({
-    title = 'No records found',
-    description = 'No records match the current filters.',
+    title,
+    description,
 }: {
     title?: string;
     description?: string;
 }) {
+    const copy = useCommonCopy();
+
     return (
         <Empty className="border-0 py-10" role="status">
             <EmptyHeader>
                 <EmptyMedia variant="icon">
                     <Database aria-hidden="true" />
                 </EmptyMedia>
-                <EmptyTitle>{title}</EmptyTitle>
-                <EmptyDescription>{description}</EmptyDescription>
+                <EmptyTitle>{title ?? copy.no_records_found}</EmptyTitle>
+                <EmptyDescription>
+                    {description ?? copy.no_records_match_filters}
+                </EmptyDescription>
             </EmptyHeader>
         </Empty>
     );

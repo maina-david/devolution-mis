@@ -1,4 +1,4 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { LogOut, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
@@ -17,6 +17,7 @@ type Props = {
 };
 
 export function UserMenuContent({ user }: Props) {
+    const { localization } = usePage().props;
     const cleanup = useMobileNavigation();
 
     const handleLogout = () => {
@@ -41,7 +42,7 @@ export function UserMenuContent({ user }: Props) {
                         onClick={cleanup}
                     >
                         <Settings className="mr-2" />
-                        Settings
+                        {localization.copy.settings}
                     </Link>
                 </DropdownMenuItem>
             </DropdownMenuGroup>
@@ -55,7 +56,7 @@ export function UserMenuContent({ user }: Props) {
                     data-test="logout-button"
                 >
                     <LogOut className="mr-2" />
-                    Log out
+                    {localization.common.log_out}
                 </Link>
             </DropdownMenuItem>
         </>

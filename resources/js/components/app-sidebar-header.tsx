@@ -54,9 +54,11 @@ export function AppSidebarHeader({
     const user = auth.user;
     const { appearance, updateAppearance } = useAppearance();
     const { currentUrl } = useCurrentUrl();
-    const groups = user ? appNavigationGroups(user.permissions) : [];
+    const groups = user
+        ? appNavigationGroups(user.permissions, localization.navigation)
+        : [];
     const activeGroup =
-        settingsNavigationGroup(currentUrl) ??
+        settingsNavigationGroup(currentUrl, localization.navigation) ??
         activeNavigationGroup(groups, currentUrl);
     const registryBreadcrumbs = navigationBreadcrumbs(groups, currentUrl);
     const resolvedBreadcrumbs = breadcrumbs.length
@@ -124,7 +126,7 @@ export function AppSidebarHeader({
             </div>
             {activeGroup && activeGroup.items.length > 1 && (
                 <ContextualNavigation
-                    label={`${activeGroup.title} pages`}
+                    label={activeGroup.title}
                     sections={contextualSections}
                     primaryItems={primaryContextItems}
                     subgroups={contextualSubgroups}

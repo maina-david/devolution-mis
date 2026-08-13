@@ -73,11 +73,12 @@ const visible = (items: Candidate[]): NavItem[] =>
 
 export function appNavigationGroups(
     permissions: string[],
+    translations: Record<string, string> = {},
 ): AppNavigationGroup[] {
     const can = (permission: string): boolean =>
         permissions.includes(permission);
 
-    return [
+    const groups = [
         {
             title: 'Dashboard',
             icon: LayoutGrid,
@@ -393,6 +394,34 @@ export function appNavigationGroups(
             ]),
         },
     ].filter((group) => group.items.length > 0);
+
+    return groups.map((group) => ({
+        ...group,
+        title: translatedNavigationTitle(group.title, translations),
+        items: group.items.map((item) => ({
+            ...item,
+            title: translatedNavigationTitle(item.title, translations),
+        })),
+        contextualSubgroups: group.contextualSubgroups?.map((subgroup) => ({
+            title: translatedNavigationTitle(subgroup.title, translations),
+            itemTitles: subgroup.itemTitles.map((title) =>
+                translatedNavigationTitle(title, translations),
+            ),
+        })),
+    }));
+}
+
+function translatedNavigationTitle(
+    title: string,
+    translations: Record<string, string>,
+): string {
+    const key = title
+        .toLocaleLowerCase()
+        .replace(/&/gu, ' ')
+        .replace(/[^a-z0-9]+/gu, '_')
+        .replace(/^_|_$/gu, '');
+
+    return translations[key] ?? title;
 }
 
 export function activeNavigationGroup(
@@ -457,18 +486,28 @@ export function contextualNavigationSections(
 
 export function settingsNavigationGroup(
     currentPath: string,
+    translations: Record<string, string> = {},
 ): AppNavigationGroup | undefined {
     if (!currentPath.startsWith('/settings')) {
         return undefined;
     }
 
     return {
-        title: 'Settings',
+        title: translatedNavigationTitle('Settings', translations),
         icon: Settings2,
         items: [
-            { title: 'Profile', href: profileEdit() },
-            { title: 'Security', href: securityEdit() },
-            { title: 'Appearance', href: appearanceEdit() },
+            {
+                title: translatedNavigationTitle('Profile', translations),
+                href: profileEdit(),
+            },
+            {
+                title: translatedNavigationTitle('Security', translations),
+                href: securityEdit(),
+            },
+            {
+                title: translatedNavigationTitle('Appearance', translations),
+                href: appearanceEdit(),
+            },
         ],
     };
 }

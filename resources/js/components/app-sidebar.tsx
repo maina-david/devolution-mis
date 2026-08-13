@@ -27,7 +27,12 @@ export function AppSidebar() {
     const { currentUrl, isCurrentUrl } = useCurrentUrl();
     const user = page.props.auth.user;
     const dashboardUrl = user ? dashboard() : home();
-    const navigationGroups = user ? appNavigationGroups(user.permissions) : [];
+    const navigationGroups = user
+        ? appNavigationGroups(
+              user.permissions,
+              page.props.localization.navigation,
+          )
+        : [];
     const activeGroup = activeNavigationGroup(navigationGroups, currentUrl);
     const groups = navigationGroups.map((group) => ({
         title: group.title,
@@ -66,7 +71,10 @@ export function AppSidebar() {
                     </SidebarMenu>
                 </SidebarHeader>
                 <SidebarContent className="py-3">
-                    <NavMain items={groups} label="Work areas" />
+                    <NavMain
+                        items={groups}
+                        label={page.props.localization.common.work_areas}
+                    />
                 </SidebarContent>
                 <SidebarFooter className="border-t border-sidebar-border p-3">
                     <SidebarMenu className="gap-1">

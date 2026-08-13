@@ -68,6 +68,8 @@ declare module '@inertiajs/core' {
                     authenticationHelp: string;
                     toggleNavigation: string;
                 };
+                common: Record<string, string>;
+                navigation: Record<string, string>;
                 citizen: Record<string, string>;
                 dataRights: Record<string, string>;
                 dataGovernance: Record<string, string>;

@@ -8,6 +8,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from '@/components/ui/popover';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { cn } from '@/lib/utils';
 
 export type SearchableSelectOption = {
@@ -37,6 +38,7 @@ export default function SearchableSelect({
     value?: string;
     onValueChange?: (value: string) => void;
 }) {
+    const copy = useCommonCopy();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [internalValue, setInternalValue] = useState(defaultValue);
@@ -69,7 +71,7 @@ export default function SearchableSelect({
                 htmlFor={controlId}
                 className={label ? undefined : 'sr-only'}
             >
-                {label || 'Select option'}
+                {label || copy.select_option}
             </Label>
             {name && <input type="hidden" name={name} value={value} />}
             <Popover open={open} onOpenChange={setOpen}>
@@ -102,8 +104,8 @@ export default function SearchableSelect({
                             <span className="truncate">
                                 {selected?.name ??
                                     (optional
-                                        ? 'Not specified'
-                                        : 'Select an option')}
+                                        ? copy.not_specified
+                                        : copy.select_an_option)}
                             </span>
                         </span>
                         <ChevronsUpDown
@@ -121,8 +123,12 @@ export default function SearchableSelect({
                         <Input
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder={`Search ${(label || 'options').toLocaleLowerCase()}`}
-                            aria-label={`Search ${(label || 'options').toLocaleLowerCase()}`}
+                            placeholder={interpolate(copy.search_options, {
+                                label: (label || copy.select_option).toLocaleLowerCase(),
+                            })}
+                            aria-label={interpolate(copy.search_options, {
+                                label: (label || copy.select_option).toLocaleLowerCase(),
+                            })}
                             className="pl-9"
                             autoFocus
                         />
@@ -135,7 +141,7 @@ export default function SearchableSelect({
                     >
                         {optional && (
                             <OptionButton
-                                option={{ id: '', name: 'Not specified' }}
+                                option={{ id: '', name: copy.not_specified }}
                                 value={value}
                                 onSelect={selectValue}
                             />
@@ -153,7 +159,7 @@ export default function SearchableSelect({
                                 role="status"
                                 className="px-2 py-6 text-center text-sm text-muted-foreground"
                             >
-                                No matching options.
+                                {copy.no_matching_options}
                             </p>
                         )}
                     </div>

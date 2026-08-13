@@ -57,6 +57,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { WorkspaceBulkExportActions } from '@/components/workspace-bulk-actions';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 
 export type WorkspaceRow = {
     id: string;
@@ -153,6 +154,7 @@ export default function WorkspaceDataTable({
     allowFilteredBulkSelection?: boolean;
 }) {
     const page = usePage();
+    const copy = useCommonCopy();
     const [sorting, setSorting] = useState<SortingState>([]);
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
     const [allFilteredSelected, setAllFilteredSelected] = useState(false);
@@ -176,7 +178,7 @@ export default function WorkspaceDataTable({
                                       Boolean(checked),
                                   )
                               }
-                              aria-label="Select all rows on this page"
+                              aria-label={copy.select_all_rows_page}
                           />
                       ),
                       cell: ({ row }) => (
@@ -186,7 +188,9 @@ export default function WorkspaceDataTable({
                               onCheckedChange={(checked) =>
                                   row.toggleSelected(Boolean(checked))
                               }
-                              aria-label={`Select row ${row.index + 1}`}
+                              aria-label={interpolate(copy.select_row, {
+                                  number: row.index + 1,
+                              })}
                           />
                       ),
                   }),
@@ -235,7 +239,9 @@ export default function WorkspaceDataTable({
             helper.accessor((): WorkspaceRow['cells'][number] => null, {
                 id: 'actions',
                 enableSorting: false,
-                header: () => <span className="sr-only">Actions</span>,
+            header: () => (
+                <span className="sr-only">{copy.actions}</span>
+            ),
                 cell: ({ row }) => (
                     <div className="flex justify-end">
                         {renderActionControl ? (
@@ -246,7 +252,7 @@ export default function WorkspaceDataTable({
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        aria-label="Open row actions"
+                                        aria-label={copy.open_row_actions}
                                     >
                                         <MoreHorizontal aria-hidden="true" />
                                     </Button>
@@ -334,12 +340,16 @@ export default function WorkspaceDataTable({
                 <div
                     className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/40 px-5 py-3"
                     role="region"
-                    aria-label="Bulk actions"
+                    aria-label={copy.bulk_actions}
                 >
                     <p className="text-sm font-medium" aria-live="polite">
                         {allFilteredSelected
-                            ? `${pagination.total} matching records selected`
-                            : `${selectedRows.length} selected on this page`}
+                            ? interpolate(copy.matching_records_selected, {
+                                  count: pagination.total,
+                              })
+                            : interpolate(copy.selected_page, {
+                                  count: selectedRows.length,
+                              })}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                         {allowFilteredBulkSelection &&
@@ -353,7 +363,9 @@ export default function WorkspaceDataTable({
                                     size="sm"
                                     onClick={() => setAllFilteredSelected(true)}
                                 >
-                                    Select all {pagination.total} matching
+                                    {interpolate(copy.select_all_matching, {
+                                        count: pagination.total,
+                                    })}
                                 </Button>
                             )}
                         {bulkExport && (
@@ -375,7 +387,7 @@ export default function WorkspaceDataTable({
                             size="sm"
                             onClick={clearSelection}
                         >
-                            Clear selection
+                            {copy.clear_selection}
                         </Button>
                     </div>
                 </div>
@@ -396,7 +408,16 @@ export default function WorkspaceDataTable({
                                                 variant="ghost"
                                                 className="-ml-3"
                                                 onClick={header.column.getToggleSortingHandler()}
-                                                aria-label={`Sort by ${String(header.column.columnDef.header)}`}
+                                                aria-label={interpolate(
+                                                    copy.sort_by,
+                                                    {
+                                                        column: String(
+                                                            header.column
+                                                                .columnDef
+                                                                .header,
+                                                        ),
+                                                    },
+                                                )}
                                             >
                                                 {flexRender(
                                                     header.column.columnDef
@@ -486,13 +507,15 @@ export default function WorkspaceDataTable({
             <div className="flex flex-col justify-between gap-4 border-t px-5 py-4 lg:flex-row lg:items-center">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <p className="text-sm text-muted-foreground">
-                        Showing {firstRecord.toLocaleString()}–
-                        {lastRecord.toLocaleString()} of{' '}
-                        {pagination.total.toLocaleString()} records
+                        {interpolate(copy.records_range, {
+                            first: firstRecord.toLocaleString(),
+                            last: lastRecord.toLocaleString(),
+                            total: pagination.total.toLocaleString(),
+                        })}
                     </p>
                     <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                            Rows per page
+                            {copy.rows_per_page}
                         </span>
                         <Select
                             value={String(pagination.perPage)}
@@ -500,13 +523,15 @@ export default function WorkspaceDataTable({
                         >
                             <SelectTrigger
                                 className="w-20"
-                                aria-label="Rows per page"
+                                aria-label={copy.rows_per_page}
                             >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    <SelectLabel>Rows per page</SelectLabel>
+                                    <SelectLabel>
+                                        {copy.rows_per_page}
+                                    </SelectLabel>
                                     {Array.from(
                                         new Set([
                                             pagination.perPage,

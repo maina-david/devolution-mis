@@ -13,6 +13,7 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "localization:audit": "node tests/Localization/source-audit.mjs",
         "test:accessibility": "node tests/Browser/accessibility.mjs",
         "test:resilience": "node tests/Browser/resilience.mjs && node tests/Browser/failure-recovery.mjs",
         "types:check": "tsc --noEmit"

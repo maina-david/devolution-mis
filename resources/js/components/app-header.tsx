@@ -46,23 +46,24 @@ const activeItemStyles =
 export function AppHeader({ breadcrumbs = [] }: Props) {
     const page = usePage();
     const { auth } = page.props;
+    const { copy, common } = page.props.localization;
     const getInitials = useInitials();
     const { isCurrentUrl, whenCurrentUrl } = useCurrentUrl();
     const dashboardUrl = auth.user ? dashboard() : home();
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: copy.dashboard,
             href: dashboardUrl,
             icon: LayoutGrid,
         },
         {
-            title: 'Help',
+            title: copy.help,
             href: help(),
             icon: CircleHelp,
         },
         {
-            title: 'FAQs',
+            title: copy.faqs,
             href: faqs(),
             icon: MessageCircleQuestion,
         },
@@ -89,7 +90,7 @@ export function AppHeader({ breadcrumbs = [] }: Props) {
                                 className="flex h-full w-64 flex-col items-stretch justify-between bg-sidebar"
                             >
                                 <SheetTitle className="sr-only">
-                                    Navigation menu
+                                    {common.navigation_menu}
                                 </SheetTitle>
                                 <SheetHeader className="flex justify-start text-left">
                                     <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
