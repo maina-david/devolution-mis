@@ -1,5 +1,5 @@
 import type { UrlMethodPair } from '@inertiajs/core';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { usePasskeyVerify } from '@laravel/passkeys/react';
 import { KeyRound } from 'lucide-react';
 import InputError from '@/components/input-error';
@@ -23,6 +23,7 @@ export default function PasskeyVerify({
     loadingLabel,
     separator,
 }: Props = {}) {
+    const copy = usePage().props.localization.copy;
     const { verify, isLoading, error, isSupported } = usePasskeyVerify({
         ...(routes && {
             routes: {
@@ -48,11 +49,16 @@ export default function PasskeyVerify({
                     className="w-full"
                     onClick={verify}
                     disabled={isLoading}
+                    aria-busy={isLoading}
                 >
-                    {isLoading ? <Spinner /> : <KeyRound className="h-4 w-4" />}
+                    {isLoading ? (
+                        <Spinner />
+                    ) : (
+                        <KeyRound className="h-4 w-4" aria-hidden="true" />
+                    )}
                     {isLoading
-                        ? (loadingLabel ?? 'Authenticating...')
-                        : (label ?? 'Sign in with a passkey')}
+                        ? (loadingLabel ?? copy.authenticating)
+                        : (label ?? copy.signInWithPasskey)}
                 </Button>
                 {error && (
                     <InputError message={error} className="text-center" />
@@ -65,7 +71,7 @@ export default function PasskeyVerify({
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                     <span className="bg-background px-2 text-muted-foreground">
-                        {separator ?? 'Or continue with email'}
+                        {separator ?? copy.continueWithEmail}
                     </span>
                 </div>
             </div>

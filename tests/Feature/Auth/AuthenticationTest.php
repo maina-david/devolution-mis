@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse;
 use Tests\TestCase;
@@ -19,6 +20,20 @@ class AuthenticationTest extends TestCase
         $response = $this->get(route('login'));
 
         $response->assertOk();
+    }
+
+    public function test_login_screen_uses_the_active_locale_without_registration_entry_points(): void
+    {
+        $this->withSession(['locale' => 'sw'])->get(route('login'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.copy.loginTitle', 'Ingia kwenye IDMIS')
+                ->where('localization.copy.signInWithPasskey', 'Ingia kwa ufunguo wa kuingia'));
+
+        $source = file_get_contents(resource_path('js/pages/auth/login.tsx'));
+        $this->assertIsString($source);
+        $this->assertStringNotContainsString('register', strtolower($source));
+        $this->assertStringNotContainsString('sign up', strtolower($source));
     }
 
     public function test_users_can_authenticate_using_the_login_screen()

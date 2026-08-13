@@ -111,5 +111,6 @@ return [
         'protect_credentials_description' => 'L’assistance IDMIS ne demandera jamais votre mot de passe, code de récupération ou code de vérification à usage unique.',
         'authentication_help' => 'Aide à l’authentification',
         'toggle_navigation' => 'Ouvrir ou fermer la navigation',
+        'log_in' => 'Se connecter', 'email_address' => 'Adresse électronique', 'work_email_placeholder' => 'nom@organisme.go.ke', 'password' => 'Mot de passe', 'forgot_password' => 'Mot de passe oublié ?', 'remember_me' => 'Se souvenir de moi', 'administrator_granted_access' => 'L’accès est accordé par un administrateur.', 'get_help' => 'Obtenir de l’aide', 'login_title' => 'Se connecter à IDMIS', 'login_description' => 'Utilisez l’adresse professionnelle associée à votre compte autorisé', 'authenticating' => 'Authentification…', 'sign_in_with_passkey' => 'Se connecter avec une clé d’accès', 'continue_with_email' => 'Ou continuer avec l’adresse électronique',
     ],
 ];

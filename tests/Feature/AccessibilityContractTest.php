@@ -102,6 +102,13 @@ class AccessibilityContractTest extends TestCase
         $login = $this->source('resources/js/pages/auth/login.tsx');
         $this->assertStringContainsString("errors.email ? 'email-error' : undefined", $login);
         $this->assertStringContainsString("? 'password-error'", $login);
+        $this->assertStringContainsString('props.localization.copy', $login);
+        $this->assertStringContainsString('aria-busy={processing}', $login);
+
+        $passkey = $this->source('resources/js/components/passkey-verify.tsx');
+        $this->assertStringContainsString('props.localization.copy', $passkey);
+        $this->assertStringContainsString('aria-busy={isLoading}', $passkey);
+        $this->assertStringContainsString('aria-hidden="true"', $passkey);
 
         $forgotPassword = $this->source('resources/js/pages/auth/forgot-password.tsx');
         $this->assertStringContainsString('aria-invalid={Boolean(errors.email)}', $forgotPassword);

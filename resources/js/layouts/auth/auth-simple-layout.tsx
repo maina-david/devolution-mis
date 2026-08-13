@@ -9,11 +9,15 @@ import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSimpleLayout({
     children,
+    name,
     title,
     description,
 }: AuthLayoutProps) {
     const { localization } = usePage().props;
     const { copy } = localization;
+    const resolvedTitle = name === 'login' ? copy.loginTitle : title;
+    const resolvedDescription =
+        name === 'login' ? copy.loginDescription : description;
 
     return (
         <div className="flex min-h-svh flex-col bg-muted/35">
@@ -101,10 +105,10 @@ export default function AuthSimpleLayout({
                         <div className="w-full max-w-md">
                             <div className="mb-8 border-b pb-6">
                                 <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-                                    {title}
+                                    {resolvedTitle}
                                 </h1>
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                    {description}
+                                    {resolvedDescription}
                                 </p>
                             </div>
                             {children}

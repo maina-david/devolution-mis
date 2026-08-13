@@ -157,5 +157,6 @@ return [
         'protect_credentials_description' => 'IDMIS support will never ask for your password, recovery code or one-time verification code.',
         'authentication_help' => 'Authentication help',
         'toggle_navigation' => 'Toggle navigation',
+        'log_in' => 'Log in', 'email_address' => 'Email address', 'work_email_placeholder' => 'name@agency.go.ke', 'password' => 'Password', 'forgot_password' => 'Forgot password?', 'remember_me' => 'Remember me', 'administrator_granted_access' => 'Access is granted by an administrator.', 'get_help' => 'Get help', 'login_title' => 'Sign in to IDMIS', 'login_description' => 'Use the work email linked to your authorized account', 'authenticating' => 'Authenticating…', 'sign_in_with_passkey' => 'Sign in with a passkey', 'continue_with_email' => 'Or continue with email',
     ],
 ];

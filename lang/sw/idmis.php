@@ -111,5 +111,6 @@ return [
         'protect_credentials_description' => 'Usaidizi wa IDMIS hautawahi kuomba nywila, msimbo wa urejeshaji au msimbo wa uthibitishaji wa mara moja.',
         'authentication_help' => 'Msaada wa uthibitishaji',
         'toggle_navigation' => 'Fungua au funga urambazaji',
+        'log_in' => 'Ingia', 'email_address' => 'Anwani ya barua pepe', 'work_email_placeholder' => 'jina@shirika.go.ke', 'password' => 'Nenosiri', 'forgot_password' => 'Umesahau nenosiri?', 'remember_me' => 'Nikumbuke', 'administrator_granted_access' => 'Ufikiaji hutolewa na msimamizi.', 'get_help' => 'Pata msaada', 'login_title' => 'Ingia kwenye IDMIS', 'login_description' => 'Tumia barua pepe ya kazi iliyounganishwa na akaunti yako iliyoidhinishwa', 'authenticating' => 'Inathibitisha…', 'sign_in_with_passkey' => 'Ingia kwa ufunguo wa kuingia', 'continue_with_email' => 'Au endelea kwa barua pepe',
     ],
 ];

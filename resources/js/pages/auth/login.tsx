@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasskeyVerify from '@/components/passkey-verify';
 import PasswordInput from '@/components/password-input';
@@ -18,9 +18,11 @@ type Props = {
 };
 
 export default function Login({ status, canResetPassword }: Props) {
+    const copy = usePage().props.localization.copy;
+
     return (
         <>
-            <Head title="Log in" />
+            <Head title={copy.logIn} />
 
             <PasskeyVerify />
 
@@ -33,14 +35,16 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">
+                                    {copy.emailAddress}
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
                                     name="email"
                                     required
                                     autoComplete="email"
-                                    placeholder="name@agency.go.ke"
+                                    placeholder={copy.workEmailPlaceholder}
                                     aria-invalid={Boolean(errors.email)}
                                     aria-describedby={
                                         errors.email ? 'email-error' : undefined
@@ -54,13 +58,15 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">
+                                        {copy.password}
+                                    </Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
                                             className="ml-auto text-sm"
                                         >
-                                            Forgot password?
+                                            {copy.forgotPassword}
                                         </TextLink>
                                     )}
                                 </div>
@@ -69,7 +75,7 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="password"
                                     required
                                     autoComplete="current-password"
-                                    placeholder="Password"
+                                    placeholder={copy.password}
                                     aria-invalid={Boolean(errors.password)}
                                     aria-describedby={
                                         errors.password
@@ -87,25 +93,28 @@ export default function Login({ status, canResetPassword }: Props) {
                                 <Checkbox
                                     id="remember"
                                     name="remember"
-                                    aria-label="Remember me"
+                                    aria-label={copy.rememberMe}
                                 />
-                                <Label htmlFor="remember">Remember me</Label>
+                                <Label htmlFor="remember">
+                                    {copy.rememberMe}
+                                </Label>
                             </div>
 
                             <Button
                                 type="submit"
                                 className="mt-4 min-h-11 w-full font-semibold"
                                 disabled={processing}
+                                aria-busy={processing}
                                 data-test="login-button"
                             >
                                 {processing && <Spinner />}
-                                Log in
+                                {copy.logIn}
                             </Button>
                         </div>
 
                         <div className="text-center text-sm text-muted-foreground">
-                            Access is granted by an administrator.{' '}
-                            <TextLink href={help()}>Get help</TextLink>
+                            {copy.administratorGrantedAccess}{' '}
+                            <TextLink href={help()}>{copy.getHelp}</TextLink>
                         </div>
                     </>
                 )}
@@ -125,6 +134,5 @@ export default function Login({ status, canResetPassword }: Props) {
 }
 
 Login.layout = {
-    title: 'Sign in to IDMIS',
-    description: 'Use the work email linked to your authorized account',
+    name: 'login',
 };
