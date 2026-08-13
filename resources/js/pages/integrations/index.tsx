@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -191,6 +191,7 @@ export default function IntegrationManagement({
     catalogue,
     options,
 }: Props) {
+    const copy = useIntegrationCopy();
     const exchangeRows: WorkspaceRow[] = exchanges.data.map((exchange) => ({
         id: exchange.id,
         status: exchange.status,
@@ -229,16 +230,13 @@ export default function IntegrationManagement({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Interoperability control plane
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Integration and reconciliation centre
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Versioned contracts, schema validation, payload
-                                integrity, encrypted exchanges, idempotency,
-                                controlled production activation and auditable
-                                exception resolution.
+                                {copy.description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -352,11 +350,11 @@ export default function IntegrationManagement({
                     <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
                         <div>
                             <h2 className="font-bold">
-                                Reconciliation exceptions
+                                {copy.reconciliation_exceptions}
                             </h2>
                             <p className="text-sm text-muted-foreground">
                                 {exceptions.total.toLocaleString()}{' '}
-                                discrepancies in the authorized portfolio
+                                {copy.discrepancies_authorized_portfolio}
                             </p>
                         </div>
                         <TriangleAlert className="size-5 text-amber-600" />
@@ -413,6 +411,7 @@ function SystemCard({
     capabilities: Props['capabilities'];
     counties: CountyIdentityValue[];
 }) {
+    const copy = useIntegrationCopy();
     const [surface, setSurface] = useState<string | null>(null);
     const published = system.contracts.find(
         (contract) => contract.status === 'published',
@@ -424,7 +423,7 @@ function SystemCard({
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
                         <CardTitle>
-                            {system.code} · {system.name}
+                            {system.code} {copy.separator} {system.name}
                         </CardTitle>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {system.owner}
@@ -444,13 +443,13 @@ function SystemCard({
                             <DropdownMenuItem
                                 onSelect={() => setSurface('details')}
                             >
-                                <Eye /> View contracts
+                                <Eye /> {copy.view_contracts}
                             </DropdownMenuItem>
                             {capabilities.manage && published && (
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('dispatch')}
                                 >
-                                    <Play /> Dispatch sandbox exchange
+                                    <Play /> {copy.dispatch_sandbox_exchange}
                                 </DropdownMenuItem>
                             )}
                             {capabilities.manage &&
@@ -459,8 +458,8 @@ function SystemCard({
                                     <DropdownMenuItem
                                         onSelect={() => setSurface('activate')}
                                     >
-                                        <ShieldCheck /> Record activation
-                                        approval
+                                        <ShieldCheck />{' '}
+                                        {copy.record_activation_approval}
                                     </DropdownMenuItem>
                                 )}
                         </DropdownMenuContent>
@@ -479,7 +478,7 @@ function SystemCard({
                             {humanize(system.transport)}
                         </Badge>
                         <Badge variant="outline">
-                            {system.contractCount} contracts
+                            {system.contractCount} {copy.contracts}
                         </Badge>
                     </div>
                 </CardContent>
@@ -496,8 +495,8 @@ function SystemCard({
                                 : humanize(surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
-                            {system.code} · {system.environment} ·{' '}
-                            {system.direction}
+                            {system.code} {copy.separator} {system.environment}{' '}
+                            {copy.separator} {system.direction}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-5 px-4 pt-4 pb-8">
@@ -528,6 +527,8 @@ function SystemDetails({
     system: System;
     canManage: boolean;
 }) {
+    const copy = useIntegrationCopy();
+
     return (
         <>
             <div className="grid gap-3 rounded-xl border p-4 text-sm md:grid-cols-2">
@@ -567,7 +568,9 @@ function SystemDetails({
                     <CardHeader>
                         <div className="flex items-center justify-between gap-3">
                             <CardTitle className="text-base">
-                                v{contract.version} · {contract.name}
+                                {copy.version_prefix}
+                                {contract.version} {copy.separator}{' '}
+                                {contract.name}
                             </CardTitle>
                             <Badge>{humanize(contract.status)}</Badge>
                         </div>
@@ -577,18 +580,21 @@ function SystemDetails({
                             <strong>{contract.method}</strong> {contract.path}
                         </p>
                         <p>
-                            Resource: {contract.resource} · Rate limit:{' '}
-                            {contract.rateLimit}/minute
+                            {copy.resource_label} {contract.resource}{' '}
+                            {copy.separator} {copy.rate_limit_label}{' '}
+                            {contract.rateLimit}
+                            {copy.per_minute}
                         </p>
                         <p className="font-mono text-xs break-all text-muted-foreground">
-                            SHA-256 {contract.checksum}
+                            {copy.sha256} {contract.checksum}
                         </p>
                         <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
                             {JSON.stringify(contract.requestSchema, null, 2)}
                         </pre>
                         <p className="text-muted-foreground">
-                            Submitted by {contract.submitter ?? '—'} · Approved
-                            by {contract.approver ?? 'Pending'}
+                            {copy.submitted_by} {contract.submitter ?? '—'}{' '}
+                            {copy.separator} {copy.approved_by}{' '}
+                            {contract.approver ?? 'Pending'}
                         </p>
                         {canManage && contract.status === 'review' && (
                             <PublishContractForm
@@ -610,6 +616,8 @@ function PublishContractForm({
     system: System;
     contract: Contract;
 }) {
+    const copy = useIntegrationCopy();
+
     return (
         <FormSheet
             title={`Publish ${contract.name} v${contract.version}`}
@@ -643,7 +651,7 @@ function PublishContractForm({
                     includeTime
                 />
                 <Button type="submit">
-                    <ShieldCheck /> Publish contract
+                    <ShieldCheck /> {copy.publish_contract}
                 </Button>
             </Form>
         </FormSheet>
@@ -657,6 +665,8 @@ function SystemForm({
     organizations: Option[];
     catalogue: Props['catalogue'];
 }) {
+    const copy = useIntegrationCopy();
+
     return (
         <FormSheet
             title="Register integration system"
@@ -767,7 +777,7 @@ function SystemForm({
                             label="Purpose and authorized data use"
                         />
                         <Button type="submit" disabled={processing}>
-                            Register system
+                            {copy.register_system}
                         </Button>
                     </>
                 )}
@@ -777,11 +787,13 @@ function SystemForm({
 }
 
 function IntegrationSystemExport({ filters }: { filters: Props['filters'] }) {
+    const copy = useIntegrationCopy();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                    <Download /> Export systems
+                    <Download /> {copy.export_systems}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -808,6 +820,8 @@ function IntegrationSystemExport({ filters }: { filters: Props['filters'] }) {
 }
 
 function ContractForm({ systems }: { systems: System[] }) {
+    const copy = useIntegrationCopy();
+
     return (
         <FormSheet
             title="Submit interface contract"
@@ -894,7 +908,7 @@ function ContractForm({ systems }: { systems: System[] }) {
                             }
                         />
                         <Button type="submit" disabled={processing}>
-                            Submit for independent review
+                            {copy.submit_independent_review}
                         </Button>
                     </>
                 )}
@@ -910,15 +924,15 @@ function DispatchForm({
     contract: Contract;
     counties: CountyIdentityValue[];
 }) {
+    const copy = useIntegrationCopy();
+
     return (
         <Form
             action={dispatch({ contract: contract.id })}
             className="grid gap-4"
         >
             <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-                Production delivery remains closed unless source-owner
-                activation, host allowlisting, and the vault credential are all
-                recorded.
+                {copy.production_delivery_gate}
             </p>
             <Field name="idempotency_key" label="Idempotency key" />
             <Field
@@ -944,18 +958,19 @@ function DispatchForm({
                 defaultValue="{}"
             />
             <Button type="submit">
-                <Play /> Validate and dispatch
+                <Play /> {copy.validate_dispatch}
             </Button>
         </Form>
     );
 }
 
 function ActivationForm({ system }: { system: System }) {
+    const copy = useIntegrationCopy();
+
     return (
         <Form action={activate({ system: system.id })} className="grid gap-4">
             <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-                Record activation only after source-owner approval, interface
-                agreement, allowlisting and vault provisioning are evidenced.
+                {copy.activation_evidence_gate}
             </p>
             <Field
                 name="production_approval_reference"
@@ -968,7 +983,7 @@ function ActivationForm({ system }: { system: System }) {
                 required
             />
             <Button type="submit">
-                <ShieldCheck /> Record controlled activation
+                <ShieldCheck /> {copy.record_controlled_activation}
             </Button>
         </Form>
     );
@@ -982,6 +997,7 @@ function ExchangeAction({
     canManage: boolean;
 }) {
     const [open, setOpen] = useState(false);
+    const copy = useIntegrationCopy();
     const canRetry =
         canManage &&
         exchange.direction === 'outbound' &&
@@ -1002,7 +1018,7 @@ function ExchangeAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setOpen(true)}>
-                            <Eye /> View attempt history
+                            <Eye /> {copy.view_attempt_history}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -1010,9 +1026,10 @@ function ExchangeAction({
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-4xl">
                     <SheetHeader>
-                        <SheetTitle>Exchange outcome</SheetTitle>
+                        <SheetTitle>{copy.exchange_outcome}</SheetTitle>
                         <SheetDescription>
-                            {exchange.system} · {exchange.correlationId}
+                            {exchange.system} {copy.separator}{' '}
+                            {exchange.correlationId}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1058,13 +1075,25 @@ function ExchangeAction({
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Attempt</TableHead>
-                                            <TableHead>Trigger</TableHead>
-                                            <TableHead>Outcome</TableHead>
-                                            <TableHead>Initiated by</TableHead>
-                                            <TableHead>HTTP</TableHead>
-                                            <TableHead>Duration</TableHead>
-                                            <TableHead>Evidence</TableHead>
+                                            <TableHead>
+                                                {copy.attempt}
+                                            </TableHead>
+                                            <TableHead>
+                                                {copy.trigger}
+                                            </TableHead>
+                                            <TableHead>
+                                                {copy.outcome}
+                                            </TableHead>
+                                            <TableHead>
+                                                {copy.initiated_by}
+                                            </TableHead>
+                                            <TableHead>{copy.http}</TableHead>
+                                            <TableHead>
+                                                {copy.duration}
+                                            </TableHead>
+                                            <TableHead>
+                                                {copy.evidence}
+                                            </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1094,7 +1123,8 @@ function ExchangeAction({
                                                             '—'}
                                                     </TableCell>
                                                     <TableCell>
-                                                        {attempt.durationMs} ms
+                                                        {attempt.durationMs}{' '}
+                                                        {copy.milliseconds}
                                                     </TableCell>
                                                     <TableCell className="max-w-56">
                                                         <p className="truncate text-xs">
@@ -1120,7 +1150,7 @@ function ExchangeAction({
                             <Form {...retry.form({ exchange: exchange.id })}>
                                 {({ processing }) => (
                                     <Button type="submit" disabled={processing}>
-                                        <RefreshCcw /> Retry exchange now
+                                        <RefreshCcw /> {copy.retry_exchange_now}
                                     </Button>
                                 )}
                             </Form>
@@ -1140,6 +1170,7 @@ function ExceptionAction({
     canResolve: boolean;
 }) {
     const [open, setOpen] = useState(false);
+    const copy = useIntegrationCopy();
 
     return (
         <>
@@ -1154,9 +1185,10 @@ function ExceptionAction({
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Reconciliation exception</SheetTitle>
+                        <SheetTitle>{copy.reconciliation_exception}</SheetTitle>
                         <SheetDescription>
-                            {exception.runReference} · {exception.system}
+                            {exception.runReference} {copy.separator}{' '}
+                            {exception.system}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1178,7 +1210,7 @@ function ExceptionAction({
                                     label="Verified resolution and evidence"
                                 />
                                 <Button type="submit">
-                                    <RefreshCcw /> Resolve exception
+                                    <RefreshCcw /> {copy.resolve_exception}
                                 </Button>
                             </Form>
                         )}
@@ -1198,6 +1230,8 @@ function RegisterHeader({
     description: string;
     filters: Props['filters'];
 }) {
+    const copy = useIntegrationCopy();
+
     return (
         <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
             <div>
@@ -1207,7 +1241,7 @@ function RegisterHeader({
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                        <Download /> Export
+                        <Download /> {copy.export}
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -1304,6 +1338,10 @@ function humanize(value: string) {
         .replaceAll('_', ' ')
         .replaceAll('-', ' ')
         .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function useIntegrationCopy(): Record<string, string> {
+    return usePage().props.localization.integrationManagement;
 }
 function page<T>(records: PageSet<T>): WorkspacePagination {
     return {
