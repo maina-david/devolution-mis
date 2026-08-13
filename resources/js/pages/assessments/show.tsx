@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Calculator,
@@ -152,6 +152,7 @@ type Props = {
 };
 
 export default function AssessmentShow({ assessment, capabilities }: Props) {
+    const copy = usePage().props.localization.assessmentRecord;
     const routeArguments = { assessment: assessment.id };
     const evidenceRequirements = assessment.functions.flatMap((fn) =>
         fn.themes.flatMap((theme) =>
@@ -176,14 +177,14 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                 <Button variant="ghost" asChild className="self-start">
                     <Link href={index.url()}>
                         <ArrowLeft data-icon="inline-start" />
-                        Assessments
+                        {copy.assessments}
                     </Link>
                 </Button>
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div>
                             <p className="text-xs font-bold tracking-[0.16em] uppercase">
-                                Governed county assessment
+                                {copy.governed_county_assessment}
                             </p>
                             <CountyIdentity
                                 county={assessment.county}
@@ -191,14 +192,15 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 className="mt-4"
                             />
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                {assessment.county.name} ·{' '}
+                                {assessment.county.name} {copy.separator}{' '}
                                 {assessment.cycle.name}
                             </h1>
                             <p className="mt-3 text-sm opacity-80">
                                 {assessment.scorecard
                                     ? `${assessment.scorecard.name} v${assessment.scorecard.version}`
                                     : 'Legacy scorecard'}{' '}
-                                · {assessment.cycle.periodStart ?? '—'} to{' '}
+                                {copy.separator}{' '}
+                                {assessment.cycle.periodStart ?? '—'} {copy.to}{' '}
                                 {assessment.cycle.periodEnd ?? '—'}
                             </p>
                         </div>
@@ -207,7 +209,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 {assessment.status.replaceAll('_', ' ')}
                             </Badge>
                             <Badge variant="secondary">
-                                {assessment.completeness}% complete
+                                {assessment.completeness}
+                                {copy.percent_complete}
                             </Badge>
                             <Badge variant="secondary">
                                 {assessment.attestationStatus}
@@ -218,7 +221,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Card>
                         <CardHeader>
-                            <CardDescription>Computed score</CardDescription>
+                            <CardDescription>{copy.computed_score}</CardDescription>
                             <CardTitle>
                                 {assessment.score ?? 'Not calculated'}
                             </CardTitle>
@@ -227,7 +230,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     <Card>
                         <CardHeader>
                             <CardDescription>
-                                Reference-data lineage
+                                {copy.reference_data_lineage}
                             </CardDescription>
                             <CardTitle className="text-base">
                                 {assessment.referenceRelease
@@ -237,7 +240,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                         </CardHeader>
                         <CardContent className="space-y-1 text-xs text-muted-foreground">
                             <p>
-                                Created by{' '}
+                                {copy.created_by}{' '}
                                 {assessment.createdBy ?? 'Legacy unrecorded'}
                             </p>
                             <p
@@ -254,7 +257,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardDescription>Open findings</CardDescription>
+                            <CardDescription>{copy.open_findings}</CardDescription>
                             <CardTitle>
                                 {
                                     assessment.findings.filter(
@@ -267,7 +270,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardDescription>Appeals</CardDescription>
+                            <CardDescription>{copy.appeals}</CardDescription>
                             <CardTitle>{assessment.appeals.length}</CardTitle>
                         </CardHeader>
                     </Card>
@@ -278,7 +281,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                             {({ processing }) => (
                                 <Button disabled={processing}>
                                     <Calculator data-icon="inline-start" />
-                                    Calculate verified result
+                                    {copy.calculate_verified_result}
                                 </Button>
                             )}
                         </Form>
@@ -290,7 +293,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 {({ processing }) => (
                                     <Button disabled={processing}>
                                         <FileCheck2 data-icon="inline-start" />
-                                        Publish immutable result
+                                        {copy.publish_immutable_result}
                                     </Button>
                                 )}
                             </Form>
@@ -304,7 +307,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                             >
                                 <div className="grid gap-1">
                                     <Label htmlFor="attestor-title">
-                                        Attestor title
+                                        {copy.attestor_title}
                                     </Label>
                                     <Input
                                         id="attestor-title"
@@ -314,7 +317,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 </div>
                                 <div className="grid min-w-72 flex-1 gap-1">
                                     <Label htmlFor="attestation-statement">
-                                        Attestation statement
+                                        {copy.attestation_statement}
                                     </Label>
                                     <Input
                                         id="attestation-statement"
@@ -325,7 +328,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 </div>
                                 <Button type="submit">
                                     <FileCheck2 data-icon="inline-start" />
-                                    Attest submission
+                                    {copy.attest_submission}
                                 </Button>
                             </Form>
                         )}
@@ -350,10 +353,11 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 <div className="flex items-center justify-between gap-3">
                                     <div>
                                         <CardTitle>
-                                            {fn.code} · {fn.name}
+                                            {fn.code} {copy.separator} {fn.name}
                                         </CardTitle>
                                         <CardDescription>
-                                            {fn.weight}% total score weight
+                                            {fn.weight}
+                                            {copy.percent_total_score_weight}
                                         </CardDescription>
                                     </div>
                                     <Scale aria-hidden="true" />
@@ -370,7 +374,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                             id={`theme-${theme.id}`}
                                             className="font-semibold"
                                         >
-                                            {theme.code} · {theme.name}
+                                            {theme.code} {copy.separator}{' '}
+                                            {theme.name}
                                         </h2>
                                         {theme.standards.map((standard) => (
                                             <div
@@ -379,7 +384,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                             >
                                                 <div>
                                                     <h3 className="font-medium">
-                                                        {standard.code} ·{' '}
+                                                        {standard.code}{' '}
+                                                        {copy.separator}{' '}
                                                         {standard.name}
                                                     </h3>
                                                     {standard.normReference && (
@@ -419,31 +425,32 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     assessment.attestations.length > 0) && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Governance record</CardTitle>
+                            <CardTitle>{copy.governance_record}</CardTitle>
                             <CardDescription>
-                                Attestations, findings and appeals retained with
-                                the assessment.
+                                {copy.governance_record_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4 lg:grid-cols-3">
                             <div className="flex flex-col gap-2">
-                                <h3 className="font-medium">Attestations</h3>
+                                <h3 className="font-medium">
+                                    {copy.attestations}
+                                </h3>
                                 {assessment.attestations.map((item) => (
                                     <p key={item.id} className="text-sm">
                                         <CheckCircle2
                                             className="mr-1 inline size-4"
                                             aria-hidden="true"
                                         />
-                                        {item.attestor_title} ·{' '}
+                                        {item.attestor_title} {copy.separator}{' '}
                                         {item.content_checksum.slice(0, 12)}
                                     </p>
                                 ))}
                             </div>
                             <div className="flex flex-col gap-2">
-                                <h3 className="font-medium">Findings</h3>
+                                <h3 className="font-medium">{copy.findings}</h3>
                                 {assessment.findings.map((item) => (
                                     <p key={item.id} className="text-sm">
-                                        {item.code} · {item.title}{' '}
+                                        {item.code} {copy.separator} {item.title}{' '}
                                         <Badge variant="outline">
                                             {item.status}
                                         </Badge>
@@ -451,7 +458,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 ))}
                             </div>
                             <div className="flex flex-col gap-2">
-                                <h3 className="font-medium">Appeals</h3>
+                                <h3 className="font-medium">{copy.appeals}</h3>
                                 {assessment.appeals.map((item) => (
                                     <p key={item.id} className="text-sm">
                                         {item.grounds}{' '}
@@ -478,11 +485,12 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     <Card>
                         <CardHeader>
                             <CardTitle>
-                                Published result and county benchmark
+                                {copy.published_result_county_benchmark}
                             </CardTitle>
                             <CardDescription>
-                                Immutable checksum{' '}
-                                {assessment.publication.checksum} ·{' '}
+                                {copy.immutable_checksum}{' '}
+                                {assessment.publication.checksum}{' '}
+                                {copy.separator}{' '}
                                 {assessment.publication.performanceBand}
                             </CardDescription>
                         </CardHeader>
@@ -494,7 +502,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                             key={item.code}
                                             variant="secondary"
                                         >
-                                            {item.code} {item.name}:{' '}
+                                            {item.code} {item.name}
+                                            {copy.colon}{' '}
                                             {item.score}
                                         </Badge>
                                     ),
@@ -504,11 +513,13 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b text-left">
-                                            <th className="p-2">Rank</th>
-                                            <th className="p-2">County</th>
-                                            <th className="p-2">Score</th>
-                                            <th className="p-2">Band</th>
-                                            <th className="p-2">Percentile</th>
+                                            <th className="p-2">{copy.rank}</th>
+                                            <th className="p-2">{copy.county}</th>
+                                            <th className="p-2">{copy.score}</th>
+                                            <th className="p-2">{copy.band}</th>
+                                            <th className="p-2">
+                                                {copy.percentile}
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -557,6 +568,8 @@ function GovernanceActions({
     assessment: Props['assessment'];
     capabilities: Record<string, boolean>;
 }) {
+    const copy = usePage().props.localization.assessmentRecord;
+
     return (
         <div className="grid gap-4 lg:grid-cols-2">
             {assessment.findings
@@ -564,9 +577,12 @@ function GovernanceActions({
                 .map((finding) => (
                     <Card key={finding.id}>
                         <CardHeader>
-                            <CardTitle>{finding.code} response</CardTitle>
+                            <CardTitle>
+                                {finding.code} {copy.response}
+                            </CardTitle>
                             <CardDescription>
-                                {finding.title} · {finding.severity}
+                                {finding.title} {copy.separator}{' '}
+                                {finding.severity}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-3">
@@ -586,7 +602,7 @@ function GovernanceActions({
                                         placeholder="Evidence-backed county response"
                                         required
                                     />
-                                    <Button type="submit">Respond</Button>
+                                    <Button type="submit">{copy.respond}</Button>
                                 </Form>
                             )}
                             {capabilities.review && finding.county_response && (
@@ -606,7 +622,7 @@ function GovernanceActions({
                                         required
                                     />
                                     <Button type="submit" variant="outline">
-                                        Resolve
+                                        {copy.resolve}
                                     </Button>
                                 </Form>
                             )}
@@ -622,7 +638,7 @@ function GovernanceActions({
                         capabilities.approve && (
                             <Card key={appeal.id}>
                                 <CardHeader>
-                                    <CardTitle>Appeal adjudication</CardTitle>
+                                    <CardTitle>{copy.appeal_adjudication}</CardTitle>
                                     <CardDescription>
                                         {appeal.grounds}
                                     </CardDescription>
@@ -639,7 +655,7 @@ function GovernanceActions({
                                         <Label
                                             htmlFor={`appeal-status-${appeal.id}`}
                                         >
-                                            Decision
+                                            {copy.decision}
                                         </Label>
                                         <select
                                             id={`appeal-status-${appeal.id}`}
@@ -648,13 +664,13 @@ function GovernanceActions({
                                             required
                                         >
                                             <option value="rejected">
-                                                Reject
+                                                {copy.reject}
                                             </option>
                                             <option value="upheld">
-                                                Uphold
+                                                {copy.uphold}
                                             </option>
                                             <option value="partially_upheld">
-                                                Partially uphold
+                                                {copy.partially_uphold}
                                             </option>
                                         </select>
                                         <Input
@@ -665,7 +681,7 @@ function GovernanceActions({
                                             required
                                         />
                                         <Button type="submit">
-                                            Record decision
+                                            {copy.record_decision}
                                         </Button>
                                     </Form>
                                 </CardContent>
@@ -685,6 +701,7 @@ function CriterionPanel({
     assessmentId: string;
     capabilities: Record<string, boolean>;
 }) {
+    const copy = usePage().props.localization.assessmentRecord;
     const args = { assessment: assessmentId, criterion: criterion.id };
 
     return (
@@ -692,10 +709,11 @@ function CriterionPanel({
             <div className="flex flex-col gap-3">
                 <div>
                     <p className="font-medium">
-                        {criterion.code} · {criterion.name}
+                        {criterion.code} {copy.separator} {criterion.name}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        Weight {criterion.weight}% · maximum{' '}
+                        {copy.weight} {criterion.weight}
+                        {copy.percent} {copy.separator} {copy.maximum}{' '}
                         {criterion.maximumScore}
                     </p>
                 </div>
@@ -710,15 +728,19 @@ function CriterionPanel({
                                     : 'outline'
                             }
                         >
-                            {requirement.code}: {requirement.verifiedDocuments}/
-                            {requirement.minimumDocuments} verified
+                            {requirement.code}
+                            {copy.colon} {requirement.verifiedDocuments}
+                            {copy.slash}
+                            {requirement.minimumDocuments} {copy.verified}
                         </Badge>
                     ))}
                 </div>
                 <p className="text-sm">
-                    Submitted {criterion.submittedScore ?? '—'} · verified{' '}
-                    {criterion.verifiedScore ?? '—'} · override{' '}
-                    {criterion.overrideScore ?? '—'} · weighted{' '}
+                    {copy.submitted} {criterion.submittedScore ?? '—'}{' '}
+                    {copy.separator} {copy.verified}{' '}
+                    {criterion.verifiedScore ?? '—'} {copy.separator}{' '}
+                    {copy.override} {criterion.overrideScore ?? '—'}{' '}
+                    {copy.separator} {copy.weighted}{' '}
                     {criterion.weightedScore ?? '—'}
                 </p>
             </div>
@@ -752,7 +774,7 @@ function CriterionPanel({
                                     size="sm"
                                     disabled={processing}
                                 >
-                                    Submit
+                                    {copy.submit}
                                 </Button>
                             </>
                         )}
@@ -791,7 +813,7 @@ function CriterionPanel({
                                     variant="outline"
                                     disabled={processing}
                                 >
-                                    Verify
+                                    {copy.verify}
                                 </Button>
                             </>
                         )}
