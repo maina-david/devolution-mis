@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ClipboardList, DownloadIcon } from 'lucide-react';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
@@ -6,7 +6,6 @@ import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
 import ProgrammeEvaluationDocumentControls from '@/components/programme-evaluation-document-controls';
 import SearchableSelect from '@/components/searchable-select';
-import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +61,8 @@ export default function ProgrammeEvaluationPanel({
     canApprove: boolean;
     filters: Record<string, string | undefined>;
 }) {
+    const copy = usePage().props.localization.evaluationPanel;
+
     return (
         <section className="rounded-xl border border-border bg-card shadow-xs">
             <div className="flex items-start justify-between gap-4 border-b p-5 sm:p-6">
@@ -70,11 +71,9 @@ export default function ProgrammeEvaluationPanel({
                         <ClipboardList aria-hidden="true" />
                     </span>
                     <div>
-                        <h2 className="font-bold">Programme evaluations</h2>
+                        <h2 className="font-bold">{copy.title}</h2>
                         <p className="text-sm text-muted-foreground">
-                            Register baseline, midline, endline, process, and
-                            impact studies with governed scope and reference
-                            lineage.
+                            {copy.description}
                         </p>
                     </div>
                 </div>
@@ -82,12 +81,12 @@ export default function ProgrammeEvaluationPanel({
                     <DropdownMenuTrigger asChild>
                         <Button variant="outline">
                             <DownloadIcon data-icon="inline-start" />
-                            Export
+                            {copy.export}
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>
-                            Evaluation register
+                            {copy.register}
                         </DropdownMenuLabel>
                         <DropdownMenuGroup>
                             {['csv', 'xlsx', 'pdf', 'json'].map((format) => (
@@ -113,11 +112,11 @@ export default function ProgrammeEvaluationPanel({
             {canManage && (
                 <div className="border-b p-5 sm:p-6">
                     <FormSheet
-                        title="Register programme evaluation"
-                        triggerLabel="Register evaluation"
+                        title={copy.register_evaluation}
+                        triggerLabel={copy.register_evaluation}
                         icon={ClipboardList}
                         size="xl"
-                        description="Register a baseline, midline, endline, process or impact study with governed scope and terms of reference."
+                        description={copy.register_description}
                     >
                         <Form
                             {...store.form({})}
@@ -126,34 +125,38 @@ export default function ProgrammeEvaluationPanel({
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    <Field label="Code" error={errors.code}>
+                                    <Field label={copy.code} error={errors.code}>
                                         <Input
                                             name="code"
                                             required
                                             placeholder="EVAL-2026-01"
                                         />
                                     </Field>
-                                    <Field label="Title" error={errors.title}>
+                                    <Field label={copy.evaluation} error={errors.title}>
                                         <Input name="title" required />
                                     </Field>
                                     <Field
-                                        label="Type"
+                                        label={copy.type}
                                         error={errors.evaluation_type}
                                     >
-                                        <StaticSearchableSelect
+                                        <SearchableSelect
                                             id="evaluation-type"
                                             name="evaluation_type"
-                                            values={[
+                                            label=""
+                                            options={[
                                                 'baseline',
                                                 'midline',
                                                 'endline',
                                                 'process',
                                                 'impact',
-                                            ]}
+                                            ].map((value) => ({
+                                                id: value,
+                                                name: copy[value],
+                                            }))}
                                         />
                                     </Field>
                                     <Field
-                                        label="Programme"
+                                        label={copy.programme}
                                         error={errors.programme_id}
                                     >
                                         <Options
@@ -163,7 +166,7 @@ export default function ProgrammeEvaluationPanel({
                                         />
                                     </Field>
                                     <Field
-                                        label="County"
+                                        label={copy.county}
                                         error={errors.county_id}
                                     >
                                         <Options
@@ -174,18 +177,18 @@ export default function ProgrammeEvaluationPanel({
                                     </Field>
                                     <DatePickerField
                                         name="period_start"
-                                        label="Period start"
+                                        label={copy.period_start}
                                         error={errors.period_start}
                                         required
                                     />
                                     <DatePickerField
                                         name="period_end"
-                                        label="Period end"
+                                        label={copy.period_end}
                                         error={errors.period_end}
                                         required
                                     />
                                     <div className="grid gap-2 md:col-span-2">
-                                        <Label>Terms of reference</Label>
+                                        <Label>{copy.terms_of_reference}</Label>
                                         <textarea
                                             name="terms_of_reference"
                                             required
@@ -202,7 +205,7 @@ export default function ProgrammeEvaluationPanel({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Register evaluation
+                                            {copy.register_evaluation}
                                         </Button>
                                     </div>
                                 </>
@@ -213,23 +216,23 @@ export default function ProgrammeEvaluationPanel({
             )}
             {evaluations.length === 0 ? (
                 <WorkspaceEmptyState
-                    title="No programme evaluations"
-                    description="Register a governed baseline, midline, endline, process, or impact evaluation to begin."
+                    title={copy.empty_title}
+                    description={copy.empty_description}
                     className="min-h-56 border-0"
                 />
             ) : (
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Code</TableHead>
-                            <TableHead>Evaluation</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Scope</TableHead>
-                            <TableHead>Period</TableHead>
-                            <TableHead>Reference release</TableHead>
-                            <TableHead>Status</TableHead>
+                            <TableHead>{copy.code}</TableHead>
+                            <TableHead>{copy.evaluation}</TableHead>
+                            <TableHead>{copy.type}</TableHead>
+                            <TableHead>{copy.scope}</TableHead>
+                            <TableHead>{copy.period}</TableHead>
+                            <TableHead>{copy.reference_release}</TableHead>
+                            <TableHead>{copy.status}</TableHead>
                             <TableHead className="text-right">
-                                Actions
+                                {copy.actions}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -240,7 +243,7 @@ export default function ProgrammeEvaluationPanel({
                                     {item.code}
                                 </TableCell>
                                 <TableCell>{item.title}</TableCell>
-                                <TableCell>{item.type}</TableCell>
+                                <TableCell>{copy[item.type] ?? item.type}</TableCell>
                                 <TableCell>
                                     <div className="flex flex-col gap-1.5">
                                         {item.county ? (
@@ -249,7 +252,7 @@ export default function ProgrammeEvaluationPanel({
                                                 compact
                                             />
                                         ) : (
-                                            <span>National</span>
+                                            <span>{copy.national}</span>
                                         )}
                                         {item.programme && (
                                             <span className="text-xs text-muted-foreground">
@@ -274,7 +277,7 @@ export default function ProgrammeEvaluationPanel({
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">
-                                        {item.status}
+                                        {copy[item.status] ?? item.status}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>
@@ -296,14 +299,14 @@ export default function ProgrammeEvaluationPanel({
                                                 <EvaluationTransition
                                                     evaluationId={item.id}
                                                     name="start"
-                                                    label="Start evaluation"
+                                                    label={copy.start_evaluation}
                                                     disabled={
                                                         !hasCleanDocument(
                                                             item,
                                                             'programme-evaluation-tor',
                                                         )
                                                     }
-                                                    disabledReason="Upload a clean terms-of-reference record first."
+                                                    disabledReason={copy.tor_required}
                                                 />
                                             )}
                                         {item.status === 'in_progress' &&
@@ -311,14 +314,14 @@ export default function ProgrammeEvaluationPanel({
                                                 <EvaluationTransition
                                                     evaluationId={item.id}
                                                     name="submit_review"
-                                                    label="Submit for review"
+                                                    label={copy.submit_for_review}
                                                     disabled={
                                                         !hasCleanDocument(
                                                             item,
                                                             'programme-evaluation-report',
                                                         )
                                                     }
-                                                    disabledReason="Upload a clean evaluation report first."
+                                                    disabledReason={copy.report_required}
                                                 />
                                             )}
                                         {item.status === 'review' &&
@@ -327,12 +330,12 @@ export default function ProgrammeEvaluationPanel({
                                                     <EvaluationTransition
                                                         evaluationId={item.id}
                                                         name="approve"
-                                                        label="Approve"
+                                                        label={copy.approve}
                                                     />
                                                     <EvaluationTransition
                                                         evaluationId={item.id}
                                                         name="return"
-                                                        label="Return"
+                                                        label={copy.return}
                                                     />
                                                 </>
                                             )}
@@ -360,14 +363,16 @@ function EvaluationTransition({
     disabled?: boolean;
     disabledReason?: string;
 }) {
+    const copy = usePage().props.localization.evaluationPanel;
+
     return (
         <FormSheet
             title={label}
             triggerLabel={label}
             description={
                 disabled
-                    ? (disabledReason ?? 'This transition is unavailable.')
-                    : `Record the decision basis for ${label.toLowerCase()}.`
+                    ? (disabledReason ?? copy.transition_unavailable)
+                    : `${copy.decision_basis} ${label.toLocaleLowerCase()}.`
             }
             triggerDisabled={disabled}
             triggerTitle={disabledReason}
@@ -384,7 +389,7 @@ function EvaluationTransition({
                             <Label
                                 htmlFor={`evaluation-comment-${evaluationId}-${name}`}
                             >
-                                Decision comment
+                                {copy.decision_comment}
                             </Label>
                             <textarea
                                 id={`evaluation-comment-${evaluationId}-${name}`}
