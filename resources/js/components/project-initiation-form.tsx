@@ -1,7 +1,8 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { BriefcaseBusiness } from 'lucide-react';
 import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import ReferenceCatalogSelect from '@/components/reference-catalog-select';
 import SearchableMultiSelect from '@/components/searchable-multi-select';
 import SearchableSelect from '@/components/searchable-select';
@@ -24,13 +25,15 @@ export default function ProjectInitiationForm({
     organizations: Option[];
     indicators: Option[];
 }) {
+    const copy = usePage().props.localization.projects;
+
     return (
         <FormSheet
-            title="Initiate a project"
-            triggerLabel="Initiate project"
+            title={copy.initiate_project}
+            triggerLabel={copy.initiate_project}
             icon={BriefcaseBusiness}
             size="xl"
-            description="Start the published project lifecycle and record county, sector, investment, climate, budget and M&E scope."
+            description={copy.initiate_project_description}
         >
             <Form
                 {...store.form({})}
@@ -39,20 +42,23 @@ export default function ProjectInitiationForm({
             >
                 {({ processing, errors }) => (
                     <>
-                        <Field label="Project code" error={errors.code}>
+                        <Field label={copy.project_code} error={errors.code}>
                             <Input
                                 name="code"
                                 required
                                 placeholder="PIM-2026-001"
                             />
                         </Field>
-                        <Field label="Title" error={errors.title}>
+                        <Field label={copy.title} error={errors.title}>
                             <Input name="title" required />
                         </Field>
-                        <Field label="Sector" error={errors.sector_id}>
+                        <Field label={copy.sector} error={errors.sector_id}>
                             <Select name="sector_id" options={sectors} />
                         </Field>
-                        <Field label="Programme" error={errors.programme_id}>
+                        <Field
+                            label={copy.programme}
+                            error={errors.programme_id}
+                        >
                             <Select
                                 name="programme_id"
                                 options={programmes}
@@ -60,19 +66,19 @@ export default function ProjectInitiationForm({
                             />
                         </Field>
                         <Field
-                            label="Lead county"
+                            label={copy.lead_county}
                             error={errors.lead_county_id}
                         >
                             <Select name="lead_county_id" options={counties} />
                         </Field>
                         <SearchableMultiSelect
                             name="county_ids[]"
-                            label="Participating counties"
+                            label={copy.participating_counties}
                             options={counties}
                             error={errors.county_ids}
                         />
                         <Field
-                            label="Funding organization"
+                            label={copy.funding_organization}
                             error={errors.funding_organization_id}
                         >
                             <Select
@@ -83,7 +89,7 @@ export default function ProjectInitiationForm({
                         </Field>
                         <SearchableMultiSelect
                             name="indicator_ids[]"
-                            label="M&E indicators"
+                            label={copy.me_indicators}
                             options={indicators.map((item) => ({
                                 id: item.id,
                                 name: `${item.code ? `${item.code} · ` : ''}${item.name}`,
@@ -93,18 +99,18 @@ export default function ProjectInitiationForm({
                         />
                         <DatePickerField
                             name="planned_start_date"
-                            label="Planned start"
+                            label={copy.planned_start}
                             error={errors.planned_start_date}
                             required
                         />
                         <DatePickerField
                             name="planned_end_date"
-                            label="Planned end"
+                            label={copy.planned_end}
                             error={errors.planned_end_date}
                             required
                         />
                         <Field
-                            label="Approved budget"
+                            label={copy.approved_budget}
                             error={errors.approved_budget}
                         >
                             <Input
@@ -118,24 +124,24 @@ export default function ProjectInitiationForm({
                         <ReferenceCatalogSelect
                             id="project-currency"
                             name="currency"
-                            label="Currency"
+                            label={copy.currency}
                             catalog="currency"
                             error={errors.currency}
                         />
                         <Field
-                            label="Investment registry reference"
+                            label={copy.investment_registry_reference}
                             error={errors.investment_registry_reference}
                         >
                             <Input name="investment_registry_reference" />
                         </Field>
                         <Field
-                            label="Funding source"
+                            label={copy.funding_source}
                             error={errors.funding_source}
                         >
                             <Input name="funding_source" />
                         </Field>
                         <Field
-                            label="Climate risk rating"
+                            label={copy.climate_risk_rating}
                             error={errors['climate_risk_screening.rating']}
                         >
                             <SearchableSelect
@@ -144,34 +150,46 @@ export default function ProjectInitiationForm({
                                 label=""
                                 defaultValue="moderate"
                                 options={[
-                                    { id: 'low', name: 'Low' },
-                                    { id: 'moderate', name: 'Moderate' },
-                                    { id: 'high', name: 'High' },
+                                    { id: 'low', name: copy.low },
+                                    { id: 'moderate', name: copy.moderate },
+                                    { id: 'high', name: copy.high },
                                 ]}
                             />
                         </Field>
                         <Field
-                            label="Climate screening notes"
+                            label={copy.climate_screening_notes}
                             error={errors['climate_risk_screening.notes']}
                         >
                             <Input name="climate_risk_screening[notes]" />
                         </Field>
                         <div className="grid gap-2 md:col-span-2">
-                            <Label>Description</Label>
+                            <Label htmlFor="project-description">
+                                {copy.description}
+                            </Label>
                             <textarea
+                                id="project-description"
                                 name="description"
                                 required
+                                aria-invalid={Boolean(errors.description)}
+                                aria-describedby={
+                                    errors.description
+                                        ? 'project-description-error'
+                                        : undefined
+                                }
                                 className="min-h-24 rounded-md border border-input bg-background px-3 py-2 text-sm"
                             />
-                            {errors.description && (
-                                <p className="text-xs text-destructive">
-                                    {errors.description}
-                                </p>
-                            )}
+                            <InputError
+                                id="project-description-error"
+                                message={errors.description}
+                            />
                         </div>
                         <div className="md:col-span-2">
-                            <Button type="submit" disabled={processing}>
-                                Initiate governed project
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                aria-busy={processing}
+                            >
+                                {copy.initiate_governed_project}
                             </Button>
                         </div>
                     </>
@@ -193,7 +211,7 @@ function Field({
         <div className="grid gap-2">
             <Label>{label}</Label>
             {children}
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            <InputError message={error} />
         </div>
     );
 }

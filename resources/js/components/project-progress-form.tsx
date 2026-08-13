@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ChartNoAxesCombined, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import DatePickerField from '@/components/date-picker-field';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { interpolate } from '@/hooks/use-localization';
 import { store as storeProgress } from '@/routes/projects/progress-updates';
 
 type Indicator = {
@@ -38,6 +39,7 @@ export default function ProjectProgressForm({
     indicators: Indicator[];
     counties: SearchableSelectOption[];
 }) {
+    const copy = usePage().props.localization.projects;
     const [nextKey, setNextKey] = useState(1);
     const [results, setResults] = useState<ResultRow[]>([]);
     const indicatorOptions = indicators.map((indicator) => ({
@@ -66,11 +68,11 @@ export default function ProjectProgressForm({
 
     return (
         <FormSheet
-            title="Submit project progress"
-            triggerLabel="Submit progress update"
+            title={copy.submit_project_progress}
+            triggerLabel={copy.submit_progress_update}
             icon={ChartNoAxesCombined}
             size="xl"
-            description="Submit portfolio progress and optional indicator results. Indicator results enter the M&E quality queue only after independent project verification."
+            description={copy.submit_progress_description}
         >
             <Form
                 {...storeProgress.form({ project: projectId })}
@@ -83,14 +85,14 @@ export default function ProjectProgressForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <DatePickerField
                                 name="reporting_date"
-                                label="Reporting date"
+                                label={copy.reporting_date}
                                 required
                                 error={errors.reporting_date}
                             />
                             <LabeledInput
                                 id="project-physical-progress"
                                 name="physical_progress"
-                                label="Physical progress (%)"
+                                label={copy.physical_progress_percent}
                                 type="number"
                                 min="0"
                                 max="100"
@@ -101,7 +103,7 @@ export default function ProjectProgressForm({
                             <LabeledInput
                                 id="project-financial-progress"
                                 name="financial_progress"
-                                label="Financial progress (%)"
+                                label={copy.financial_progress_percent}
                                 type="number"
                                 min="0"
                                 max="100"
@@ -112,14 +114,14 @@ export default function ProjectProgressForm({
                             <LabeledInput
                                 id="project-source-system"
                                 name="provenance[source_system]"
-                                label="Source system"
+                                label={copy.source_system}
                                 defaultValue="project-report"
                                 required
                                 error={errors['provenance.source_system']}
                             />
                             <DatePickerField
                                 name="provenance[captured_at]"
-                                label="Captured at"
+                                label={copy.captured_at}
                                 required
                                 includeTime
                                 error={errors['provenance.captured_at']}
@@ -127,25 +129,32 @@ export default function ProjectProgressForm({
                         </div>
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="project-progress-narrative">
-                                Progress narrative
+                                {copy.progress_narrative}
                             </Label>
                             <Textarea
                                 id="project-progress-narrative"
                                 name="narrative"
                                 required
                                 aria-invalid={Boolean(errors.narrative)}
+                                aria-describedby={
+                                    errors.narrative
+                                        ? 'project-progress-narrative-error'
+                                        : undefined
+                                }
                             />
-                            <FieldError error={errors.narrative} />
+                            <FieldError
+                                id="project-progress-narrative-error"
+                                error={errors.narrative}
+                            />
                         </div>
 
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <h3 className="font-semibold">
-                                    Indicator results
+                                    {copy.indicator_results}
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Add a result only when this progress report
-                                    contains a measured output or outcome.
+                                    {copy.indicator_results_help}
                                 </p>
                             </div>
                             <Button
@@ -155,7 +164,7 @@ export default function ProjectProgressForm({
                                 disabled={indicatorOptions.length === 0}
                             >
                                 <Plus data-icon="inline-start" />
-                                Add result
+                                {copy.add_result}
                             </Button>
                         </div>
 
@@ -173,13 +182,18 @@ export default function ProjectProgressForm({
                                 <Card key={result.key}>
                                     <CardHeader className="flex-row items-center justify-between">
                                         <CardTitle className="text-base">
-                                            Result {index + 1}
+                                            {interpolate(copy.result_number, {
+                                                number: index + 1,
+                                            })}
                                         </CardTitle>
                                         <Button
                                             type="button"
                                             size="icon"
                                             variant="ghost"
-                                            aria-label={`Remove result ${index + 1}`}
+                                            aria-label={interpolate(
+                                                copy.remove_result,
+                                                { number: index + 1 },
+                                            )}
                                             onClick={() =>
                                                 setResults((current) =>
                                                     current.filter(
@@ -197,7 +211,7 @@ export default function ProjectProgressForm({
                                         <SearchableSelect
                                             id={`project-result-indicator-${result.key}`}
                                             name={`indicator_results[${index}][indicator_definition_id]`}
-                                            label="Indicator"
+                                            label={copy.indicator}
                                             options={indicatorOptions}
                                             value={result.indicatorId}
                                             onValueChange={(indicatorId) =>
@@ -214,7 +228,7 @@ export default function ProjectProgressForm({
                                         <SearchableSelect
                                             id={`project-result-county-${result.key}`}
                                             name={`indicator_results[${index}][county_id]`}
-                                            label="Result county"
+                                            label={copy.result_county}
                                             options={counties}
                                             value={result.countyId}
                                             onValueChange={(countyId) =>
@@ -228,7 +242,7 @@ export default function ProjectProgressForm({
                                         />
                                         <DatePickerField
                                             name={`indicator_results[${index}][period_start]`}
-                                            label="Period start"
+                                            label={copy.period_start}
                                             required
                                             error={
                                                 errors[`${prefix}.period_start`]
@@ -236,7 +250,7 @@ export default function ProjectProgressForm({
                                         />
                                         <DatePickerField
                                             name={`indicator_results[${index}][period_end]`}
-                                            label="Period end"
+                                            label={copy.period_end}
                                             required
                                             error={
                                                 errors[`${prefix}.period_end`]
@@ -244,7 +258,9 @@ export default function ProjectProgressForm({
                                         />
                                         <LabeledInput
                                             id={`project-result-dimension-${result.key}`}
-                                            label="Disaggregation dimension"
+                                            label={
+                                                copy.disaggregation_dimension
+                                            }
                                             value={result.dimensionName}
                                             onChange={(event) =>
                                                 updateResult(result.key, {
@@ -252,11 +268,11 @@ export default function ProjectProgressForm({
                                                         event.target.value,
                                                 })
                                             }
-                                            placeholder="e.g. sex"
+                                            placeholder={copy.dimension_example}
                                         />
                                         <LabeledInput
                                             id={`project-result-category-${result.key}`}
-                                            label="Disaggregation category"
+                                            label={copy.disaggregation_category}
                                             value={result.dimensionValue}
                                             onChange={(event) =>
                                                 updateResult(result.key, {
@@ -264,7 +280,7 @@ export default function ProjectProgressForm({
                                                         event.target.value,
                                                 })
                                             }
-                                            placeholder="e.g. female"
+                                            placeholder={copy.category_example}
                                         />
                                         <input
                                             type="hidden"
@@ -284,7 +300,16 @@ export default function ProjectProgressForm({
                                         <LabeledInput
                                             id={`project-result-value-${result.key}`}
                                             name={`indicator_results[${index}][${indicator?.value_type === 'text' ? 'narrative_value' : 'numeric_value'}]`}
-                                            label={`Result value${indicator?.unit_of_measure ? ` (${indicator.unit_of_measure})` : ''}`}
+                                            label={
+                                                indicator?.unit_of_measure
+                                                    ? interpolate(
+                                                          copy.result_value_with_unit,
+                                                          {
+                                                              unit: indicator.unit_of_measure,
+                                                          },
+                                                      )
+                                                    : copy.result_value
+                                            }
                                             type={
                                                 indicator?.value_type === 'text'
                                                     ? 'text'
@@ -302,8 +327,12 @@ export default function ProjectProgressForm({
                                 </Card>
                             );
                         })}
-                        <Button type="submit" disabled={processing}>
-                            Submit for independent verification
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            aria-busy={processing}
+                        >
+                            {copy.submit_for_independent_verification}
                         </Button>
                     </>
                 )}
@@ -325,15 +354,20 @@ function LabeledInput({
     return (
         <div className="flex flex-col gap-2">
             <Label htmlFor={id}>{label}</Label>
-            <Input id={id} aria-invalid={Boolean(error)} {...props} />
-            <FieldError error={error} />
+            <Input
+                id={id}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? `${id}-error` : undefined}
+                {...props}
+            />
+            <FieldError id={`${id}-error`} error={error} />
         </div>
     );
 }
 
-function FieldError({ error }: { error?: string }) {
+function FieldError({ id, error }: { id?: string; error?: string }) {
     return error ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p id={id} role="alert" className="text-sm text-destructive">
             {error}
         </p>
     ) : null;

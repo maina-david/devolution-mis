@@ -10,6 +10,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { show } from '@/routes/projects';
 import { exportMethod } from '@/routes/workspace';
@@ -62,6 +63,8 @@ export default function ProjectIndex({
     options,
 }: Props) {
     const page = usePage();
+    const copy = page.props.localization.projects;
+    const locale = page.props.localization.current;
     const rows: WorkspaceRow[] = projects.data.map((project) => ({
         id: project.id,
         status: project.status,
@@ -71,10 +74,10 @@ export default function ProjectIndex({
             project.sector,
             project.referenceRelease
                 ? `v${project.referenceRelease.version}`
-                : 'Legacy unpinned',
+                : copy.legacy_unpinned,
             project.stage,
             `${Number(project.progress)}%`,
-            `${Number(project.expenditure).toLocaleString()} / ${Number(project.budget).toLocaleString()}`,
+            `${Number(project.expenditure).toLocaleString(locale)} / ${Number(project.budget).toLocaleString(locale)}`,
             project.status,
         ],
     }));
@@ -87,19 +90,17 @@ export default function ProjectIndex({
 
     return (
         <>
-            <Head title="Project delivery" />
+            <Head title={copy.project_delivery} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Investment delivery control
+                        {copy.investment_delivery_control}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold">
-                        Project management
+                        {copy.project_management}
                     </h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
-                        Initiation-to-closure governance with milestones,
-                        budgets, risks, procurement, county investment
-                        references, and verified results.
+                        {copy.project_management_description}
                     </p>
                 </section>
                 {capabilities.manage && <ProjectInitiationForm {...options} />}
@@ -117,11 +118,17 @@ export default function ProjectIndex({
                             />
                             <div>
                                 <h2 className="font-bold">
-                                    Authorized project portfolio
+                                    {copy.authorized_portfolio}
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
-                                    {projects.total.toLocaleString()} projects
-                                    in your county or national scope
+                                    {interpolate(
+                                        copy.authorized_portfolio_count,
+                                        {
+                                            count: projects.total.toLocaleString(
+                                                locale,
+                                            ),
+                                        },
+                                    )}
                                 </p>
                             </div>
                         </div>
@@ -149,14 +156,14 @@ export default function ProjectIndex({
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Project',
-                                'Lead county',
-                                'Sector',
-                                'Reference release',
-                                'Lifecycle stage',
-                                'Physical progress',
-                                'Expenditure / budget',
-                                'Status',
+                                copy.project,
+                                copy.lead_county,
+                                copy.sector,
+                                copy.reference_release,
+                                copy.lifecycle_stage,
+                                copy.physical_progress,
+                                copy.expenditure_budget,
+                                copy.status,
                             ]}
                             rows={rows}
                             pagination={pagination}
@@ -173,8 +180,8 @@ export default function ProjectIndex({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching projects"
-                            description="Adjust the search or reporting dates, or initiate a project if you have management access."
+                            title={copy.no_matching_projects}
+                            description={copy.no_matching_projects_description}
                             className="min-h-72 border-0"
                         />
                     )}

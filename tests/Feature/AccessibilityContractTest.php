@@ -128,6 +128,15 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-invalid={Boolean(errors.rationale)}', $indicatorVerification);
         $this->assertStringContainsString("? 'verification-rationale-error'", $indicatorVerification);
 
+        $projectInitiation = $this->source('resources/js/components/project-initiation-form.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.description)}', $projectInitiation);
+        $this->assertStringContainsString("? 'project-description-error'", $projectInitiation);
+
+        $projectProgress = $this->source('resources/js/components/project-progress-form.tsx');
+        $this->assertStringContainsString("? 'project-progress-narrative-error'", $projectProgress);
+        $this->assertStringContainsString('aria-describedby={error ? `${id}-error` : undefined}', $projectProgress);
+        $this->assertStringContainsString('aria-busy={processing}', $projectProgress);
+
         $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
         $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
         $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);

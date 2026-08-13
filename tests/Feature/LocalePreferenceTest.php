@@ -44,6 +44,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
                 ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
                 ->where('localization.monitoringResults.results_learning_control_plane', 'Kituo cha udhibiti wa matokeo na mafunzo')
+                ->where('localization.projects.investment_delivery_control', 'Udhibiti wa utekelezaji wa uwekezaji')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -138,6 +139,34 @@ class LocalePreferenceTest extends TestCase
         $english = $this->flattenTranslations(require lang_path('en/monitoring-results.php'));
         $this->assertArrayHasKey('trend_accessible_name', $english);
         $this->assertArrayHasKey('no_verified_actuals_description', $english);
+    }
+
+    public function test_project_portfolio_and_progress_workflows_use_synchronized_locale_copy(): void
+    {
+        $sources = [
+            resource_path('js/pages/projects/index.tsx'),
+            resource_path('js/components/project-initiation-form.tsx'),
+            resource_path('js/components/project-progress-form.tsx'),
+        ];
+
+        foreach ($sources as $path) {
+            $source = file_get_contents($path);
+
+            $this->assertIsString($source);
+            $this->assertStringContainsString('localization.projects', $source);
+        }
+
+        $portfolio = file_get_contents($sources[0]);
+        $initiation = file_get_contents($sources[1]);
+        $progress = file_get_contents($sources[2]);
+        $this->assertIsString($portfolio);
+        $this->assertIsString($initiation);
+        $this->assertIsString($progress);
+        $this->assertStringNotContainsString('Investment delivery control', $portfolio);
+        $this->assertStringNotContainsString('Initiate governed project', $initiation);
+        $this->assertStringNotContainsString('Submit for independent verification', $progress);
+        $this->assertStringContainsString('toLocaleString(locale)', $portfolio);
+        $this->assertStringContainsString('copy.remove_result', $progress);
     }
 
     public function test_saved_locale_drives_translated_queued_notification_payloads(): void
