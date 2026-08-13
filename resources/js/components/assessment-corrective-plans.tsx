@@ -285,11 +285,12 @@ function PlanCard({
             <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <h3 id={`plan-${plan.id}`} className="font-semibold">
-                        {plan.reference} · {plan.title}
+                        {plan.reference} {'·'} {plan.title}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                        {plan.source.label} · {copy.due}{' '}
-                        {formatDateTime(plan.dueAt, { dateStyle: 'medium' })} ·{' '}
+                        {plan.source.label} {'·'} {copy.due}{' '}
+                        {formatDateTime(plan.dueAt, { dateStyle: 'medium' })}{' '}
+                        {'·'}{' '}
                         {copy.submitted_by} {plan.submittedBy}
                     </p>
                 </div>
@@ -303,17 +304,18 @@ function PlanCard({
                         <div className="flex flex-wrap justify-between gap-3">
                             <div>
                                 <p className="font-medium">
-                                    {action.code} · {action.title}
+                                    {action.code} {'·'} {action.title}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {copy.owner}: {action.owner} · {copy.target}:{' '}
-                                    {action.target} · {copy.due}{' '}
+                                    {copy.owner}{':'} {action.owner} {'·'}{' '}
+                                    {copy.target}{':'} {action.target} {'·'}{' '}
+                                    {copy.due}{' '}
                                     {formatDateTime(action.dueAt, {
                                         dateStyle: 'medium',
                                     })}
                                 </p>
                             </div>
-                            <Badge>{action.progress}%</Badge>
+                            <Badge>{action.progress}{'%'}</Badge>
                         </div>
                         <Progress value={action.progress} className="mt-3" />
                         <p className="mt-3 text-sm">{action.description}</p>
@@ -351,8 +353,9 @@ function PlanCard({
                                 key={update.id}
                                 className="mt-2 text-xs text-muted-foreground"
                             >
-                                {update.progress}% · {update.document.title} ·{' '}
-                                {translateValue(copy, update.status)} ·{' '}
+                                {update.progress}{'%'} {'·'}{' '}
+                                {update.document.title} {'·'}{' '}
+                                {translateValue(copy, update.status)} {'·'}{' '}
                                 {update.submittedBy}
                             </p>
                         ))}
