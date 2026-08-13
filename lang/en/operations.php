@@ -1,6 +1,23 @@
 <?php
 
 return [
+    'ui' => [
+        'eyebrow' => 'Service assurance and recovery', 'title' => 'Operational readiness centre',
+        'description' => 'Dependency probes, SLO measurements, checksummed backups, isolated restore evidence, scheduled controls, and independently validated release and rollback history.',
+        'ms' => 'ms', 'operational_alerts' => 'Operational alerts', 'operational_alerts_description' => 'governed threshold alerts with deduplicated recurrence, acknowledgement and automatic recovery evidence. Thresholds remain provisional until service-owner approval.',
+        'failed_queue_jobs' => 'Failed queue jobs', 'failed_queue_jobs_description' => 'retained failures. Payload and exception contents remain hidden; operators receive checksums and safe classifications.',
+        'immutable_recovery_evidence' => 'Immutable recovery evidence', 'immutable_recovery_evidence_description' => 'Latest operator-attributed requeue outcomes; successful jobs may leave the failed register, but this evidence remains.',
+        'performance_assurance_evidence' => 'Performance assurance evidence', 'performance_assurance_evidence_description' => 'immutable, checksum-bound HTTP concurrency runs. Thresholds are environment snapshots and do not constitute Konza production certification.',
+        'release_rollback_evidence' => 'Release and rollback evidence', 'release_rollback_evidence_description' => 'Deployments require independent validation before they become approved rollback targets.',
+        'latest_service_measurements' => 'Latest service measurements', 'separator' => '·', 'measurements_empty' => 'Measurements will appear after the scheduled operational probe.', 'scheduled_controls' => 'Scheduled controls',
+        'view_alert_evidence' => 'View alert evidence', 'immutable_timeline' => 'Immutable timeline', 'showing_latest' => 'Showing the latest', 'of' => 'of', 'retained_events' => 'retained events.',
+        'accountable_response_note' => 'Accountable response note', 'acknowledge_alert' => 'Acknowledge alert', 'view_evidence' => 'View evidence', 'performance_run_evidence' => 'Performance run evidence', 'threshold_snapshot' => 'Threshold snapshot',
+        'view_recovery_evidence' => 'View recovery evidence', 'failed' => 'failed', 'requeue_description' => 'Requeue the retained payload without exposing it. The original failure leaves the active register only after the queue accepts it, and an immutable attributed attempt is retained either way.',
+        'retry_failed_job' => 'Retry failed job', 'backup_request_description' => 'The queue worker will record artifact size, SHA-256 checksum, timestamps and any failure. Restore verification is a separate controlled action.', 'queue_backup' => 'Queue backup',
+        'record_deployment' => 'Record deployment', 'restore_description' => 'Queue an isolated restore into a generated temporary database. The verifier counts restored tables and drops only that validated temporary target.',
+        'verify_isolated_restore' => 'Verify isolated restore', 'independently_validate' => 'Independently validate', 'record_rollback' => 'Record rollback', 'validate_release' => 'Validate release',
+        'record_rollback_decision' => 'Record rollback decision', 'backup_restore_evidence' => 'Backup and restore evidence', 'recovery_artifacts' => 'recovery artifacts', 'export' => 'Export',
+    ],
     'readiness' => [
         'search_indexes_available' => ':count required discovery indexes are available.',
         'search_indexes_missing' => 'Required discovery indexes are unavailable: :indexes',

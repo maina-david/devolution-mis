@@ -746,6 +746,7 @@ function AnalyticsRanking({
     title: string;
     rows: Array<{ name: string; total: number }>;
 }) {
+    const copy = usePage().props.localization.igr.ui;
     const maximum = Math.max(1, ...rows.map((row) => row.total));
 
     return (

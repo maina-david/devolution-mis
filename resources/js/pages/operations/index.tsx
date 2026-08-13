@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Activity,
     ArchiveRestore,
@@ -230,6 +230,7 @@ export default function Operations({
     filters,
     capabilities,
 }: Props) {
+    const copy = usePage().props.localization.operations.ui;
     const rows: WorkspaceRow[] = backups.data.map((backup) => ({
         id: backup.id,
         status: backup.status,
@@ -339,16 +340,13 @@ export default function Operations({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Service assurance and recovery
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Operational readiness centre
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Dependency probes, SLO measurements, checksummed
-                                backups, isolated restore evidence, scheduled
-                                controls, and independently validated release
-                                and rollback history.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.manage && (
@@ -406,7 +404,7 @@ export default function Operations({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-2xl font-bold">
-                                    {check.latency_ms ?? '—'} ms
+                                    {check.latency_ms ?? '—'} {copy.ms}
                                 </p>
                                 <p className="mt-2 text-sm text-muted-foreground">
                                     {check.detail}
@@ -431,13 +429,10 @@ export default function Operations({
                 />
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4 sm:px-6">
-                        <h2 className="font-bold">Operational alerts</h2>
+                        <h2 className="font-bold">{copy.operational_alerts}</h2>
                         <p className="text-sm text-muted-foreground">
-                            {operationalAlerts.total.toLocaleString()} governed
-                            threshold alerts with deduplicated recurrence,
-                            acknowledgement and automatic recovery evidence.
-                            Thresholds remain provisional until service-owner
-                            approval.
+                            {operationalAlerts.total.toLocaleString()}{' '}
+                            {copy.operational_alerts_description}
                         </p>
                     </div>
                     {alertRows.length ? (
@@ -523,12 +518,10 @@ export default function Operations({
                 <section className="grid gap-4 xl:grid-cols-2">
                     <div className="overflow-hidden rounded-xl border bg-card">
                         <div className="border-b px-5 py-4 sm:px-6">
-                            <h2 className="font-bold">Failed queue jobs</h2>
+                            <h2 className="font-bold">{copy.failed_queue_jobs}</h2>
                             <p className="text-sm text-muted-foreground">
-                                {failedJobs.total.toLocaleString()} retained
-                                failures. Payload and exception contents remain
-                                hidden; operators receive checksums and safe
-                                classifications.
+                                {failedJobs.total.toLocaleString()}{' '}
+                                {copy.failed_queue_jobs_description}
                             </p>
                         </div>
                         {failedJobRows.length ? (
@@ -567,12 +560,10 @@ export default function Operations({
                     <div className="overflow-hidden rounded-xl border bg-card">
                         <div className="border-b px-5 py-4 sm:px-6">
                             <h2 className="font-bold">
-                                Immutable recovery evidence
+                                {copy.immutable_recovery_evidence}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Latest operator-attributed requeue outcomes;
-                                successful jobs may leave the failed register,
-                                but this evidence remains.
+                                {copy.immutable_recovery_evidence_description}
                             </p>
                         </div>
                         {recoveryRows.length ? (
@@ -600,13 +591,11 @@ export default function Operations({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4 sm:px-6">
                         <h2 className="font-bold">
-                            Performance assurance evidence
+                            {copy.performance_assurance_evidence}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            {performanceRuns.total.toLocaleString()} immutable,
-                            checksum-bound HTTP concurrency runs. Thresholds are
-                            environment snapshots and do not constitute Konza
-                            production certification.
+                            {performanceRuns.total.toLocaleString()}{' '}
+                            {copy.performance_assurance_evidence_description}
                         </p>
                     </div>
                     {performanceRows.length ? (
@@ -644,11 +633,10 @@ export default function Operations({
                     <div className="grid content-start gap-4">
                         <div>
                             <h2 className="font-bold">
-                                Release and rollback evidence
+                                {copy.release_rollback_evidence}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Deployments require independent validation
-                                before they become approved rollback targets.
+                                {copy.release_rollback_evidence_description}
                             </p>
                         </div>
                         {releases.map((release) => (
@@ -670,8 +658,8 @@ export default function Operations({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-base">
-                                    <Activity className="size-4" /> Latest
-                                    service measurements
+                                    <Activity className="size-4" />{' '}
+                                    {copy.latest_service_measurements}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-3">
@@ -685,7 +673,8 @@ export default function Operations({
                                                 {humanize(measurement.metric)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {measurement.service} ·{' '}
+                                                {measurement.service}{' '}
+                                                {copy.separator}{' '}
                                                 {formatDate(
                                                     measurement.observedAt,
                                                 )}
@@ -705,8 +694,7 @@ export default function Operations({
                                 ))}
                                 {measurements.length === 0 && (
                                     <p className="text-sm text-muted-foreground">
-                                        Measurements will appear after the
-                                        scheduled operational probe.
+                                        {copy.measurements_empty}
                                     </p>
                                 )}
                             </CardContent>
@@ -714,8 +702,8 @@ export default function Operations({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-base">
-                                    <Gauge className="size-4" /> Scheduled
-                                    controls
+                                    <Gauge className="size-4" />{' '}
+                                    {copy.scheduled_controls}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-3">
@@ -748,6 +736,7 @@ function OperationalAlertAction({
     alert: OperationalAlert;
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.operations.ui;
     const [open, setOpen] = useState(false);
 
     return (
@@ -764,7 +753,7 @@ function OperationalAlertAction({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setOpen(true)}>
-                        <Eye /> View alert evidence
+                        <Eye /> {copy.view_alert_evidence}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -773,9 +762,9 @@ function OperationalAlertAction({
                     <SheetHeader>
                         <SheetTitle>{humanize(alert.metric)}</SheetTitle>
                         <SheetDescription>
-                            {humanize(alert.service)} ·{' '}
+                            {humanize(alert.service)} {copy.separator}{' '}
                             {humanize(alert.severity)}
-                            {' · '}
+                            {' '}{copy.separator}{' '}
                             {humanize(alert.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -824,12 +813,13 @@ function OperationalAlertAction({
                         <div className="flex flex-col gap-3">
                             <div>
                                 <h3 className="font-medium">
-                                    Immutable timeline
+                                    {copy.immutable_timeline}
                                 </h3>
                                 <p className="text-xs text-muted-foreground">
-                                    Showing the latest {alert.events.length} of{' '}
-                                    {alert.eventCount.toLocaleString()} retained
-                                    events.
+                                    {copy.showing_latest}{' '}
+                                    {alert.events.length} {copy.of}{' '}
+                                    {alert.eventCount.toLocaleString()}{' '}
+                                    {copy.retained_events}
                                 </p>
                             </div>
                             {alert.events.map((event) => (
@@ -869,7 +859,7 @@ function OperationalAlertAction({
                                             <Label
                                                 htmlFor={`alert-note-${alert.id}`}
                                             >
-                                                Accountable response note
+                                                {copy.accountable_response_note}
                                             </Label>
                                             <Textarea
                                                 id={`alert-note-${alert.id}`}
@@ -888,7 +878,7 @@ function OperationalAlertAction({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Acknowledge alert
+                                            {copy.acknowledge_alert}
                                         </Button>
                                     </>
                                 )}
@@ -902,6 +892,7 @@ function OperationalAlertAction({
 }
 
 function PerformanceRunAction({ run }: { run: PerformanceRun }) {
+    const copy = usePage().props.localization.operations.ui;
     const [open, setOpen] = useState(false);
 
     return (
@@ -918,16 +909,17 @@ function PerformanceRunAction({ run }: { run: PerformanceRun }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setOpen(true)}>
-                        <Eye /> View evidence
+                        <Eye /> {copy.view_evidence}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Performance run evidence</SheetTitle>
+                        <SheetTitle>{copy.performance_run_evidence}</SheetTitle>
                         <SheetDescription>
-                            {run.routePath} · {formatDate(run.startedAt)} ·{' '}
+                            {run.routePath} {copy.separator}{' '}
+                            {formatDate(run.startedAt)} {copy.separator}{' '}
                             {run.environment}
                         </SheetDescription>
                     </SheetHeader>
@@ -973,7 +965,7 @@ function PerformanceRunAction({ run }: { run: PerformanceRun }) {
                         </div>
                         <div className="grid gap-2">
                             <p className="text-sm font-medium">
-                                Threshold snapshot
+                                {copy.threshold_snapshot}
                             </p>
                             <pre className="overflow-x-auto rounded-lg border bg-muted/40 p-3 text-xs">
                                 {JSON.stringify(run.thresholdSnapshot, null, 2)}
@@ -1032,6 +1024,7 @@ function FailedJobAction({
     job: FailedJob;
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.operations.ui;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1048,7 +1041,7 @@ function FailedJobAction({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setOpen(true)}>
-                        <Eye /> View recovery evidence
+                        <Eye /> {copy.view_recovery_evidence}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -1057,7 +1050,8 @@ function FailedJobAction({
                     <SheetHeader>
                         <SheetTitle>{job.jobName}</SheetTitle>
                         <SheetDescription>
-                            {job.connection} · {job.queue} · failed{' '}
+                            {job.connection} {copy.separator} {job.queue}{' '}
+                            {copy.separator} {copy.failed}{' '}
                             {formatDate(job.failedAt)}
                         </SheetDescription>
                     </SheetHeader>
@@ -1085,18 +1079,13 @@ function FailedJobAction({
                                 {({ processing }) => (
                                     <>
                                         <p className="text-sm text-muted-foreground">
-                                            Requeue the retained payload without
-                                            exposing it. The original failure
-                                            leaves the active register only
-                                            after the queue accepts it, and an
-                                            immutable attributed attempt is
-                                            retained either way.
+                                            {copy.requeue_description}
                                         </p>
                                         <Button
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            <RotateCcw /> Retry failed job
+                                            <RotateCcw /> {copy.retry_failed_job}
                                         </Button>
                                     </>
                                 )}
@@ -1110,6 +1099,8 @@ function FailedJobAction({
 }
 
 function BackupRequest() {
+    const copy = usePage().props.localization.operations.ui;
+
     return (
         <FormSheet
             title="Request database backup"
@@ -1119,12 +1110,10 @@ function BackupRequest() {
         >
             <Form action={requestBackup()} className="grid gap-4 pt-4">
                 <p className="text-sm text-muted-foreground">
-                    The queue worker will record artifact size, SHA-256
-                    checksum, timestamps and any failure. Restore verification
-                    is a separate controlled action.
+                    {copy.backup_request_description}
                 </p>
                 <Button type="submit">
-                    <ArchiveRestore /> Queue backup
+                    <ArchiveRestore /> {copy.queue_backup}
                 </Button>
             </Form>
         </FormSheet>
@@ -1132,6 +1121,8 @@ function BackupRequest() {
 }
 
 function ReleaseForm() {
+    const copy = usePage().props.localization.operations.ui;
+
     return (
         <FormSheet
             title="Record deployment"
@@ -1188,7 +1179,7 @@ function ReleaseForm() {
                             optional
                         />
                         <Button type="submit" disabled={processing}>
-                            Record deployment
+                            {copy.record_deployment}
                         </Button>
                     </>
                 )}
@@ -1204,6 +1195,7 @@ function BackupAction({
     backup: Backup;
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.operations.ui;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1221,7 +1213,8 @@ function BackupAction({
                     <SheetHeader>
                         <SheetTitle>{backup.reference}</SheetTitle>
                         <SheetDescription>
-                            {backup.database} · {humanize(backup.status)}
+                            {backup.database} {copy.separator}{' '}
+                            {humanize(backup.status)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1253,13 +1246,11 @@ function BackupAction({
                                 className="grid gap-4 rounded-lg border p-4"
                             >
                                 <p className="text-sm">
-                                    Queue an isolated restore into a generated
-                                    temporary database. The verifier counts
-                                    restored tables and drops only that
-                                    validated temporary target.
+                                    {copy.restore_description}
                                 </p>
                                 <Button type="submit">
-                                    <ShieldCheck /> Verify isolated restore
+                                    <ShieldCheck />{' '}
+                                    {copy.verify_isolated_restore}
                                 </Button>
                             </Form>
                         )}
@@ -1279,6 +1270,7 @@ function ReleaseCard({
     releases: Release[];
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.operations.ui;
     const [surface, setSurface] = useState<string | null>(null);
     const rollbackTargets = releases.filter(
         (candidate) =>
@@ -1293,7 +1285,8 @@ function ReleaseCard({
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
                         <CardTitle className="text-base">
-                            {release.version} · {humanize(release.environment)}
+                            {release.version} {copy.separator}{' '}
+                            {humanize(release.environment)}
                         </CardTitle>
                         <p className="mt-1 font-mono text-xs text-muted-foreground">
                             {release.gitSha.slice(0, 12)}
@@ -1313,13 +1306,14 @@ function ReleaseCard({
                             <DropdownMenuItem
                                 onSelect={() => setSurface('details')}
                             >
-                                <Eye /> View evidence
+                                <Eye /> {copy.view_evidence}
                             </DropdownMenuItem>
                             {canManage && release.status === 'deployed' && (
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('validate')}
                                 >
-                                    <ShieldCheck /> Independently validate
+                                    <ShieldCheck />{' '}
+                                    {copy.independently_validate}
                                 </DropdownMenuItem>
                             )}
                             {canManage &&
@@ -1330,7 +1324,7 @@ function ReleaseCard({
                                     <DropdownMenuItem
                                         onSelect={() => setSurface('rollback')}
                                     >
-                                        <RotateCcw /> Record rollback
+                                        <RotateCcw /> {copy.record_rollback}
                                     </DropdownMenuItem>
                                 )}
                         </DropdownMenuContent>
@@ -1360,7 +1354,8 @@ function ReleaseCard({
                                 : humanize(surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
-                            {release.environment} · {release.changeReference}
+                            {release.environment} {copy.separator}{' '}
+                            {release.changeReference}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1397,7 +1392,7 @@ function ReleaseCard({
                                     label="Post-deployment validation evidence"
                                 />
                                 <Button type="submit">
-                                    <ShieldCheck /> Validate release
+                                    <ShieldCheck /> {copy.validate_release}
                                 </Button>
                             </Form>
                         ) : surface === 'rollback' ? (
@@ -1419,7 +1414,8 @@ function ReleaseCard({
                                     label="Rollback trigger and evidence"
                                 />
                                 <Button type="submit" variant="destructive">
-                                    <RotateCcw /> Record rollback decision
+                                    <RotateCcw />{' '}
+                                    {copy.record_rollback_decision}
                                 </Button>
                             </Form>
                         ) : null}
@@ -1437,18 +1433,22 @@ function RegisterHeader({
     filters: Props['filters'];
     total: number;
 }) {
+    const copy = usePage().props.localization.operations.ui;
+
     return (
         <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
             <div>
-                <h2 className="font-bold">Backup and restore evidence</h2>
+                <h2 className="font-bold">
+                    {copy.backup_restore_evidence}
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                    {total.toLocaleString()} recovery artifacts
+                    {total.toLocaleString()} {copy.recovery_artifacts}
                 </p>
             </div>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                        <Download /> Export
+                        <Download /> {copy.export}
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

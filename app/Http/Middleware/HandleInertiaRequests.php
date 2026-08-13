@@ -114,6 +114,7 @@ class HandleInertiaRequests extends Middleware
                 'supportDesk' => __('support-desk'),
                 'assessmentRecord' => __('assessment-record'),
                 'igr' => __('igr'),
+                'operations' => __('operations'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),
                 'security' => __('security'),
