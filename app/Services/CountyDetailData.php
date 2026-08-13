@@ -6,6 +6,7 @@ use App\Models\Assessment;
 use App\Models\AssessmentDocument;
 use App\Models\County;
 use App\Models\CountyGrant;
+use App\Models\SubCounty;
 use App\Support\WorkspaceFilters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +24,7 @@ class CountyDetailData
         $assessments = (clone $assessmentsQuery)->with(['county:id,name', 'assessor:id,name'])->withCount('documents')->latest()->paginate($filters->perPage, pageName: 'assessments_page')->withQueryString()->through(fn (Assessment $assessment): array => [
             'id' => $assessment->id,
             'status' => $assessment->status->value,
-            'cells' => [$assessment->cycle, $assessment->status->value, $assessment->score ?? '—', $assessment->documents_count, $assessment->assessor_id ? $assessment->assessor->name : 'Unassigned'],
+            'cells' => [$assessment->cycle, $assessment->status->value, $assessment->score ?? __('county-detail.empty_value'), $assessment->documents_count, $assessment->assessor_id ? $assessment->assessor->name : __('county-detail.unassigned')],
         ]);
         $documents = (clone $documentsQuery)->with(['county:id,name', 'assessment:id,cycle', 'uploader:id,name'])->latest()->paginate($filters->perPage, pageName: 'evidence_page')->withQueryString()->through(fn (AssessmentDocument $document): array => [
             'id' => $document->id,
@@ -39,7 +40,7 @@ class CountyDetailData
                 'mimeType' => $document->mime_type,
                 'originalName' => $document->original_name,
             ],
-            'cells' => [$document->title, $document->assessment->cycle, "{$document->category} · ".($document->source_type === 'scanned' ? 'Scanned copy' : 'Digital file'), $document->verification_status, $document->uploaded_by ? $document->uploader->name : 'System migration'],
+            'cells' => [$document->title, $document->assessment->cycle, "{$document->category} · ".($document->source_type === 'scanned' ? __('county-detail.scanned_copy') : __('county-detail.digital_file')), $document->verification_status, $document->uploaded_by ? $document->uploader->name : __('county-detail.system_migration')],
         ]);
         $grants = (clone $grantsQuery)->with('county:id,name')->latest()->paginate($filters->perPage, pageName: 'grants_page')->withQueryString()->through(fn (CountyGrant $grant): array => [
             'id' => $grant->id,
@@ -57,9 +58,59 @@ class CountyDetailData
                 'allocatedGrants' => (float) (clone $grantsQuery)->sum('allocated_amount'),
                 'disbursedGrants' => (float) (clone $grantsQuery)->sum('disbursed_amount'),
             ],
-            'assessments' => $this->table(['Cycle', 'Status', 'Score', 'Evidence', 'Assessor'], $assessments),
-            'documents' => $this->table(['Document', 'Cycle', 'Category', 'Verification', 'Uploaded by'], $documents),
-            'grants' => $this->table(['Programme', 'Financial year', 'Allocated (KES)', 'Disbursed (KES)', 'Status'], $grants),
+            'administrativeHierarchy' => $this->administrativeHierarchy($county),
+            'assessments' => $this->table([__('county-detail.column_cycle'), __('county-detail.column_status'), __('county-detail.column_score'), __('county-detail.column_evidence'), __('county-detail.column_assessor')], $assessments),
+            'documents' => $this->table([__('county-detail.column_document'), __('county-detail.column_cycle'), __('county-detail.column_category'), __('county-detail.column_verification'), __('county-detail.column_uploaded_by')], $documents),
+            'grants' => $this->table([__('county-detail.column_programme'), __('county-detail.column_financial_year'), __('county-detail.column_allocated'), __('county-detail.column_disbursed'), __('county-detail.column_status')], $grants),
+        ];
+    }
+
+    /** @return array{subCountyCount:int,wardCount:int,registeredVoters:int,units:list<array{id:string,code:string,name:string,classification:string,sourceAuthority:string,effectiveFrom:string,registeredVoters:int,wards:list<array{id:string,code:string,name:string,registeredVoters:int}>}>} */
+    private function administrativeHierarchy(County $county): array
+    {
+        $subCounties = SubCounty::query()
+            ->whereBelongsTo($county)
+            ->with(['wards' => fn ($query) => $query->orderBy('code')])
+            ->orderBy('code')
+            ->get();
+        $units = [];
+        $wardCount = 0;
+        $registeredVoters = 0;
+
+        foreach ($subCounties as $subCounty) {
+            $wards = [];
+            $subCountyRegisteredVoters = 0;
+
+            foreach ($subCounty->wards as $ward) {
+                $wardRegisteredVoters = $ward->registered_voters_2022;
+                $wards[] = [
+                    'id' => $ward->id,
+                    'code' => $ward->code,
+                    'name' => $ward->name,
+                    'registeredVoters' => $wardRegisteredVoters,
+                ];
+                $subCountyRegisteredVoters += $wardRegisteredVoters;
+            }
+
+            $wardCount += count($wards);
+            $registeredVoters += $subCountyRegisteredVoters;
+            $units[] = [
+                'id' => $subCounty->id,
+                'code' => $subCounty->code,
+                'name' => $subCounty->name,
+                'classification' => $subCounty->classification,
+                'sourceAuthority' => $subCounty->source_authority,
+                'effectiveFrom' => $subCounty->effective_from->toDateString(),
+                'registeredVoters' => $subCountyRegisteredVoters,
+                'wards' => $wards,
+            ];
+        }
+
+        return [
+            'subCountyCount' => count($units),
+            'wardCount' => $wardCount,
+            'registeredVoters' => $registeredVoters,
+            'units' => $units,
         ];
     }
 

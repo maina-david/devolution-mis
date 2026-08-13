@@ -16,6 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property CarbonImmutable $effective_from
  * @property CarbonImmutable|null $effective_to
+ * @property string $id
+ * @property string $code
+ * @property string $name
+ * @property string $classification
+ * @property string $source_authority
  * @property-read County $county
  * @property-read Collection<int, Ward> $wards
  */

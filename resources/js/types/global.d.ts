@@ -111,6 +111,7 @@ declare module '@inertiajs/core' {
                 assessmentAnalytics: Record<string, string>;
                 exchequer: Record<string, string>;
                 correctivePlans: Record<string, string>;
+                countyDetail: Record<string, string>;
                 evaluationPanel: Record<string, string>;
                 indicatorDefinitions: Record<string, string>;
                 programmeUserProfile: Record<string, string>;

@@ -1,10 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowLeftIcon,
     BanknoteIcon,
     FileCheck2Icon,
     FilesIcon,
     ExternalLinkIcon,
+    ChevronDownIcon,
     MapPinIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -23,7 +24,12 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
-import { DEFAULT_COUNTRY_NAME, formatCurrency } from '@/lib/reference-catalog';
+import { interpolate } from '@/hooks/use-localization';
+import {
+    DEFAULT_COUNTRY_NAME,
+    formatCurrency,
+    formatNumber,
+} from '@/lib/reference-catalog';
 import { index as countiesIndex } from '@/routes/counties';
 
 type TableData = {
@@ -48,6 +54,26 @@ type Props = {
     assessments: TableData;
     documents: TableData;
     grants: TableData;
+    administrativeHierarchy: {
+        subCountyCount: number;
+        wardCount: number;
+        registeredVoters: number;
+        units: Array<{
+            id: string;
+            code: string;
+            name: string;
+            classification: string;
+            sourceAuthority: string;
+            effectiveFrom: string;
+            registeredVoters: number;
+            wards: Array<{
+                id: string;
+                code: string;
+                name: string;
+                registeredVoters: number;
+            }>;
+        }>;
+    };
     filters: {
         from?: string;
         to?: string;
@@ -70,43 +96,53 @@ export default function CountyShow({
     assessments,
     documents,
     grants,
+    administrativeHierarchy,
     filters,
     capabilities,
     cycles,
 }: Props) {
+    const { localization } = usePage().props;
+    const copy = localization.countyDetail;
     const cards = [
         {
-            label: 'Assessment cycles',
+            label: copy.assessment_cycles,
             value: summary.assessments,
             icon: FileCheck2Icon,
         },
         {
-            label: 'Evidence documents',
+            label: copy.evidence_documents,
             value: summary.documents,
             icon: FilesIcon,
         },
         {
-            label: 'Verified evidence',
+            label: copy.verified_evidence,
             value: summary.verifiedDocuments,
             icon: FileCheck2Icon,
         },
         {
-            label: 'Grant disbursement',
+            label: copy.grant_disbursement,
             value: formatCompactCurrency(summary.disbursedGrants),
-            detail: `of ${formatCompactCurrency(summary.allocatedGrants)}`,
+            detail: interpolate(copy.of_amount, {
+                amount: formatCompactCurrency(summary.allocatedGrants),
+            }),
             icon: BanknoteIcon,
         },
     ];
 
     return (
         <>
-            <Head title={`${county.name} county`} />
+            <Head
+                title={interpolate(copy.page_title, { county: county.name })}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <Button variant="secondary" size="sm" asChild>
                         <Link href={countiesIndex()}>
-                            <ArrowLeftIcon data-icon="inline-start" />
-                            All counties
+                            <ArrowLeftIcon
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                            />
+                            {copy.all_counties}
                         </Link>
                     </Button>
                     <div className="mt-3 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
@@ -114,16 +150,23 @@ export default function CountyShow({
                             <CountyIdentity county={county} />
                             <div>
                                 <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                    County 0{county.code} ·{' '}
-                                    {county.region ?? DEFAULT_COUNTRY_NAME}
+                                    {interpolate(copy.county_code_region, {
+                                        code: String(county.code).padStart(
+                                            3,
+                                            '0',
+                                        ),
+                                        region:
+                                            county.region ??
+                                            DEFAULT_COUNTRY_NAME,
+                                    })}
                                 </p>
                                 <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                                    {county.name} County
+                                    {interpolate(copy.page_title, {
+                                        county: county.name,
+                                    })}
                                 </h1>
                                 <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                    Complete assessment, evidence, verification,
-                                    and exchequer record within your authorized
-                                    scope.
+                                    {copy.description}
                                 </p>
                             </div>
                         </div>
@@ -135,14 +178,14 @@ export default function CountyShow({
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        Official website
+                                        {copy.official_website}
                                         <ExternalLinkIcon aria-hidden="true" />
                                     </a>
                                 </Button>
                             )}
                             <Badge className="w-fit border-white/20 bg-white/10 text-white">
-                                <MapPinIcon />
-                                County record
+                                <MapPinIcon aria-hidden="true" />
+                                {copy.county_record}
                             </Badge>
                         </div>
                     </div>
@@ -158,7 +201,7 @@ export default function CountyShow({
 
                 <section
                     className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-                    aria-label="County summary"
+                    aria-label={copy.county_summary}
                 >
                     {cards.map(({ label, value, detail, icon: Icon }) => (
                         <Card key={label}>
@@ -166,7 +209,10 @@ export default function CountyShow({
                                 <CardTitle className="text-sm text-muted-foreground">
                                     {label}
                                 </CardTitle>
-                                <Icon className="size-5 text-[#147a55]" />
+                                <Icon
+                                    className="size-5 text-[#147a55]"
+                                    aria-hidden="true"
+                                />
                             </CardHeader>
                             <CardContent>
                                 <p className="text-2xl font-bold">{value}</p>
@@ -180,9 +226,134 @@ export default function CountyShow({
                     ))}
                 </section>
 
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{copy.administrative_hierarchy}</CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                            {copy.administrative_hierarchy_description}
+                        </p>
+                    </CardHeader>
+                    <CardContent>
+                        {administrativeHierarchy.units.length > 0 ? (
+                            <>
+                                <dl className="mb-5 grid gap-3 sm:grid-cols-3">
+                                    {[
+                                        [
+                                            copy.sub_counties,
+                                            administrativeHierarchy.subCountyCount,
+                                        ],
+                                        [
+                                            copy.wards,
+                                            administrativeHierarchy.wardCount,
+                                        ],
+                                        [
+                                            copy.registered_voters,
+                                            administrativeHierarchy.registeredVoters,
+                                        ],
+                                    ].map(([label, value]) => (
+                                        <div
+                                            key={String(label)}
+                                            className="rounded-lg border p-3"
+                                        >
+                                            <dt className="text-xs text-muted-foreground">
+                                                {label}
+                                            </dt>
+                                            <dd className="mt-1 text-xl font-bold">
+                                                {formatNumber(Number(value))}
+                                            </dd>
+                                        </div>
+                                    ))}
+                                </dl>
+                                <div className="grid gap-3 lg:grid-cols-2">
+                                    {administrativeHierarchy.units.map(
+                                        (unit) => (
+                                            <details
+                                                key={unit.id}
+                                                className="group rounded-lg border bg-background p-4"
+                                            >
+                                                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+                                                    <span>
+                                                        {unit.code}{' '}
+                                                        {copy.separator}{' '}
+                                                        {unit.name}
+                                                    </span>
+                                                    <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        {interpolate(
+                                                            copy.ward_count,
+                                                            {
+                                                                count: formatNumber(
+                                                                    unit.wards
+                                                                        .length,
+                                                                ),
+                                                            },
+                                                        )}
+                                                        <ChevronDownIcon
+                                                            className="size-4 transition-transform group-open:rotate-180"
+                                                            aria-hidden="true"
+                                                        />
+                                                    </span>
+                                                </summary>
+                                                <p className="mt-2 text-xs text-muted-foreground">
+                                                    {interpolate(
+                                                        copy.source_lineage,
+                                                        {
+                                                            authority:
+                                                                unit.sourceAuthority,
+                                                            date: new Date(
+                                                                unit.effectiveFrom,
+                                                            ).toLocaleDateString(
+                                                                localization.current,
+                                                            ),
+                                                        },
+                                                    )}
+                                                </p>
+                                                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                                                    {unit.wards.map((ward) => (
+                                                        <li
+                                                            key={ward.id}
+                                                            className="rounded-md bg-muted/50 px-3 py-2 text-sm"
+                                                        >
+                                                            <span className="font-medium">
+                                                                {ward.code}{' '}
+                                                                {copy.separator}{' '}
+                                                                {ward.name}
+                                                            </span>
+                                                            <span className="block text-xs text-muted-foreground">
+                                                                {
+                                                                    copy.registered_voters
+                                                                }
+                                                                {
+                                                                    copy.label_separator
+                                                                }{' '}
+                                                                {formatNumber(
+                                                                    ward.registeredVoters,
+                                                                )}
+                                                            </span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </details>
+                                        ),
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <WorkspaceEmptyState
+                                title={copy.no_administrative_units}
+                                description={
+                                    copy.no_administrative_units_description
+                                }
+                                className="min-h-48 border-0"
+                            />
+                        )}
+                    </CardContent>
+                </Card>
+
                 <CountyTable
-                    title="Assessment history"
+                    title={copy.assessment_history}
                     data={assessments}
+                    locale={localization.current}
+                    copy={copy}
                     renderActions={(row) => (
                         <AssessmentRowAction
                             assessmentId={row.id}
@@ -192,8 +363,10 @@ export default function CountyShow({
                     )}
                 />
                 <CountyTable
-                    title="Document management"
+                    title={copy.document_management}
                     data={documents}
+                    locale={localization.current}
+                    copy={copy}
                     renderActions={(row) => (
                         <EvidenceRowAction
                             documentId={row.id}
@@ -206,8 +379,10 @@ export default function CountyShow({
                     )}
                 />
                 <CountyTable
-                    title="Exchequer and grants"
+                    title={copy.exchequer_grants}
                     data={grants}
+                    locale={localization.current}
+                    copy={copy}
                     renderActions={
                         capabilities.manageGrants
                             ? (row) => (
@@ -229,17 +404,23 @@ function CountyTable({
     title,
     data,
     renderActions,
+    locale,
+    copy,
 }: {
     title: string;
     data: TableData;
     renderActions?: (row: WorkspaceRow) => ReactNode;
+    locale: string;
+    copy: Record<string, string>;
 }) {
     return (
         <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
             <div className="border-b px-5 py-4">
                 <h2 className="font-bold">{title}</h2>
                 <p className="text-sm text-muted-foreground">
-                    {data.pagination.total.toLocaleString()} matching records
+                    {interpolate(copy.matching_records, {
+                        count: data.pagination.total.toLocaleString(locale),
+                    })}
                 </p>
             </div>
             {data.rows.length > 0 ? (
@@ -251,8 +432,8 @@ function CountyTable({
                 />
             ) : (
                 <WorkspaceEmptyState
-                    title="No matching county records"
-                    description="Adjust the search or date range. Records remain limited to this county and your assigned access."
+                    title={copy.no_matching_county_records}
+                    description={copy.no_matching_county_records_description}
                     className="min-h-60 border-0"
                 />
             )}

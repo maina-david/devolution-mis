@@ -178,6 +178,13 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('toLocaleString(', $programmeWorkspace);
         $this->assertStringContainsString('copy.no_matching_records', $programmeWorkspace);
         $this->assertStringContainsString('aria-hidden="true"', $programmeWorkspace);
+
+        $countyDetail = $this->source('resources/js/pages/counties/show.tsx');
+        $this->assertStringContainsString('<details', $countyDetail);
+        $this->assertStringContainsString('<summary', $countyDetail);
+        $this->assertStringContainsString('focus-visible:ring-2', $countyDetail);
+        $this->assertStringContainsString('localization.countyDetail', $countyDetail);
+        $this->assertStringContainsString('aria-label={copy.county_summary}', $countyDetail);
     }
 
     private function source(string $path): string

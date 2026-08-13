@@ -137,6 +137,7 @@ class HandleInertiaRequests extends Middleware
                 'assessmentAnalytics' => __('assessment-analytics'),
                 'exchequer' => __('exchequer'),
                 'correctivePlans' => __('corrective-plans'),
+                'countyDetail' => __('county-detail'),
                 'evaluationPanel' => __('evaluation-panel'),
                 'indicatorDefinitions' => __('indicator-definitions'),
                 'programmeUserProfile' => __('programme-user-profile'),

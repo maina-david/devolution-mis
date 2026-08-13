@@ -14,6 +14,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @property CarbonImmutable $effective_from
  * @property CarbonImmutable|null $effective_to
+ * @property string $id
+ * @property string $code
+ * @property string $name
+ * @property int $registered_voters_2022
  * @property-read SubCounty $subCounty
  */
 #[Fillable(['sub_county_id', 'code', 'name', 'slug', 'source_authority', 'source_reference', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256', 'registered_voters_2022', 'effective_from', 'effective_to'])]
