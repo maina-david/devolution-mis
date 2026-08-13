@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Notifications\ProgrammeAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Tests\TestCase;
 
 class LocalePreferenceTest extends TestCase
@@ -69,6 +71,26 @@ class LocalePreferenceTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('localization.current', 'sw')
                 ->where('localization.copy.citizenEngagement', 'Ushirikishwaji wa wananchi'));
+    }
+
+    public function test_saved_locale_drives_translated_queued_notification_payloads(): void
+    {
+        $user = User::factory()->create();
+        $user->localePreference()->create(['locale' => 'fr']);
+        $user->load('localePreference');
+
+        $this->assertSame('fr', $user->preferredLocale());
+
+        App::setLocale($user->preferredLocale());
+        $payload = ProgrammeAlert::translated(
+            titleKey: 'assessment-record.notifications.workflow_updated_title',
+            messageKey: 'assessment-record.notifications.workflow_updated_message',
+            category: 'assessment',
+            messageParameters: ['cycle' => 'ACPA-2027-28', 'county' => 'Makueni'],
+        )->toArray($user);
+
+        $this->assertSame('Flux d’évaluation mis à jour', $payload['title']);
+        $this->assertSame('L’évaluation ACPA-2027-28 de Makueni est passée à l’étape suivante de son flux gouverné.', $payload['message']);
     }
 
     public function test_locale_change_rejects_an_unsupported_locale(): void

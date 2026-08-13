@@ -6,6 +6,7 @@ namespace App\Models;
 use App\Enums\UserRole;
 use App\Services\DelegatedAccessResolver;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -52,7 +53,7 @@ use Spatie\Permission\Traits\HasRoles;
  */
 #[Fillable(['name', 'email', 'password', 'county_id', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum', 'profile_photo_updated_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'profile_photo_disk', 'profile_photo_path', 'profile_photo_mime_type', 'profile_photo_size_bytes', 'profile_photo_checksum'])]
-class User extends Authenticatable implements OAuthenticatable, PasskeyUser
+class User extends Authenticatable implements HasLocalePreference, OAuthenticatable, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasRoles, HasUuids, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
@@ -91,6 +92,17 @@ class User extends Authenticatable implements OAuthenticatable, PasskeyUser
     public function localePreference(): HasOne
     {
         return $this->hasOne(UserLocalePreference::class);
+    }
+
+    public function preferredLocale(): string
+    {
+        $preference = $this->relationLoaded('localePreference')
+            ? $this->localePreference?->locale
+            : $this->localePreference()->value('locale');
+
+        return $preference instanceof \BackedEnum
+            ? (string) $preference->value
+            : (is_string($preference) ? $preference : (string) config('app.locale'));
     }
 
     public function canAccessCounty(County $county): bool

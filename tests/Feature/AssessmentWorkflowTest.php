@@ -86,7 +86,8 @@ class AssessmentWorkflowTest extends TestCase
         $this->actingAs($manager)->patch(route('assessments.approve', [$assessment]))->assertRedirect();
 
         $this->assertSame(AssessmentStatus::Approved, $assessment->fresh()?->status);
-        Notification::assertSentTo($countyOfficial, ProgrammeAlert::class);
+        Notification::assertSentTo($countyOfficial, ProgrammeAlert::class, fn (ProgrammeAlert $notification): bool => $notification->titleTranslationKey === 'assessment-record.notifications.workflow_updated_title'
+            && $notification->messageTranslationKey === 'assessment-record.notifications.workflow_updated_message');
     }
 
     public function test_invalid_state_transition_is_rejected(): void
@@ -95,6 +96,10 @@ class AssessmentWorkflowTest extends TestCase
         $admin = User::factory()->countyAdmin($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Approved]);
 
-        $this->actingAs($admin)->patch(route('assessments.submit', [$assessment]))->assertStatus(409);
+        $this->withSession(['locale' => 'sw'])
+            ->actingAs($admin)
+            ->patch(route('assessments.submit', [$assessment]))
+            ->assertStatus(409)
+            ->assertSeeText('Tathmini hii haiko katika hali halali kwa kitendo hicho.');
     }
 }

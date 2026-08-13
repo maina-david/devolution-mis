@@ -68,7 +68,7 @@ class AssessmentWorkflowController extends Controller
             $request->string('county_id')->toString(),
             $request->string('assessment_cycle_id')->toString(),
         );
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'County assessment initiated with governed catalogue and scorecard lineage.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('assessment-record.outcomes.assessment_initiated')]);
 
         return to_route('assessments.show', $assessment);
     }
@@ -103,10 +103,10 @@ class AssessmentWorkflowController extends Controller
     public function score(ScoreAssessmentRequest $request, Assessment $assessment): RedirectResponse
     {
         $this->authorizeCounty($request, $assessment);
-        abort_if($assessment->assessment_scorecard_version_id !== null, 409, 'Governed assessments must be calculated from verified criterion results.');
-        abort_unless($assessment->status === AssessmentStatus::UnderAssessment, 409, 'Only an assessment under review can be scored.');
+        abort_if($assessment->assessment_scorecard_version_id !== null, 409, __('assessment-record.conflicts.governed_score_calculation_required'));
+        abort_unless($assessment->status === AssessmentStatus::UnderAssessment, 409, __('assessment-record.conflicts.assessment_not_under_review'));
         $this->transition->handle($assessment, AssessmentStatus::Assessed, $this->user($request), (float) $request->validated('score'));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Assessment score recorded.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('assessment-record.outcomes.legacy_score_recorded')]);
 
         return back();
     }
@@ -114,8 +114,8 @@ class AssessmentWorkflowController extends Controller
     public function approve(Request $request, Assessment $assessment): RedirectResponse
     {
         if ($assessment->assessment_scorecard_version_id !== null) {
-            abort_unless($assessment->score !== null && $assessment->completeness_percentage >= 100 && $assessment->attestation_status === 'attested', 409, 'A calculated, complete and attested assessment is required for approval.');
-            abort_if($assessment->findings()->where('status', '!=', 'resolved')->exists(), 409, 'Resolve all findings before approval.');
+            abort_unless($assessment->score !== null && $assessment->completeness_percentage >= 100 && $assessment->attestation_status === 'attested', 409, __('assessment-record.conflicts.approval_readiness_required'));
+            abort_if($assessment->findings()->where('status', '!=', 'resolved')->exists(), 409, __('assessment-record.conflicts.unresolved_findings'));
         }
 
         return $this->transition($request, $assessment, ProgrammePermission::ApproveAssessment, [AssessmentStatus::Assessed], AssessmentStatus::Approved);
@@ -125,7 +125,7 @@ class AssessmentWorkflowController extends Controller
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $criterion, $this->user($request), (float) $request->validated('score'), $request->validated('rationale'));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Criterion score submitted.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('assessment-record.outcomes.criterion_score_submitted')]);
 
         return back();
     }
@@ -229,7 +229,7 @@ class AssessmentWorkflowController extends Controller
     {
         $this->authorizeCounty($request, $assessment);
         $action->handle($assessment, $this->user($request), $request->payload());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Corrective plan submitted for independent review.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('assessment-record.outcomes.corrective_plan_submitted')]);
 
         return back();
     }
@@ -285,9 +285,14 @@ class AssessmentWorkflowController extends Controller
     {
         Gate::authorize($permission->value);
         $this->authorizeCounty($request, $assessment);
-        abort_unless(in_array($assessment->status, $from), 409, 'This assessment is not in a valid state for that action.');
+        abort_unless(in_array($assessment->status, $from), 409, __('assessment-record.conflicts.invalid_transition'));
         $this->transition->handle($assessment, $to, $this->user($request));
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Assessment moved to {$to->value}."]);
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => __('assessment-record.outcomes.assessment_transitioned', [
+                'status' => __('assessment-record.statuses.'.$to->value),
+            ]),
+        ]);
 
         return back();
     }

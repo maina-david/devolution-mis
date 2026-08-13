@@ -30,7 +30,9 @@ class TransitionAssessment
         });
 
         $this->notifyNextActors($assessment, $status);
-        $this->auditLogger->record($actor, $assessment, "assessment.{$status->value}", "Assessment moved to {$status->value}.", $assessment->county_id, ['score' => $score]);
+        $this->auditLogger->record($actor, $assessment, "assessment.{$status->value}", __('assessment-record.audit.assessment_transitioned', [
+            'status' => __('assessment-record.statuses.'.$status->value),
+        ]), $assessment->county_id, ['score' => $score]);
 
         return $assessment;
     }
@@ -48,10 +50,14 @@ class TransitionAssessment
             return;
         }
 
-        Notification::send($recipients, (new ProgrammeAlert(
-            title: "Assessment {$status->value}",
-            message: "The {$assessment->cycle} assessment for {$assessment->county->name} is now {$status->value}.",
+        Notification::send($recipients, ProgrammeAlert::translated(
+            titleKey: 'assessment-record.notifications.workflow_updated_title',
+            messageKey: 'assessment-record.notifications.workflow_updated_message',
             category: 'assessment',
-        ))->afterCommit());
+            messageParameters: [
+                'cycle' => $assessment->cycle,
+                'county' => $assessment->county->name,
+            ],
+        ));
     }
 }
