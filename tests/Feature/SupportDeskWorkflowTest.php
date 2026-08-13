@@ -13,6 +13,7 @@ use App\Models\SupportTicketActivity;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use App\Services\BusinessTimeCalculator;
+use App\Services\EffectiveServiceDeskPolicyResolver;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SupportDeskWorkflowTest extends TestCase
@@ -33,6 +35,28 @@ class SupportDeskWorkflowTest extends TestCase
         $this->assertStringContainsString('The alert limit must be an integer between 1 and 5000.', Artisan::output());
         $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 5001]));
         $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 'unbounded']));
+    }
+
+    public function test_service_policy_failures_and_catalogues_follow_the_active_locale(): void
+    {
+        app()->setLocale('sw');
+
+        try {
+            app(EffectiveServiceDeskPolicyResolver::class)->resolve(now());
+            $this->fail('Ticket intake without an effective governed service policy must fail closed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(503, $exception->getStatusCode());
+            $this->assertSame(__('support-desk.policy.errors.no_effective_policy'), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/support-desk.php');
+        $kiswahili = require lang_path('sw/support-desk.php');
+        $french = require lang_path('fr/support-desk.php');
+
+        foreach (['errors', 'audit'] as $section) {
+            $this->assertSame(array_keys($english['policy'][$section]), array_keys($kiswahili['policy'][$section]));
+            $this->assertSame(array_keys($english['policy'][$section]), array_keys($french['policy'][$section]));
+        }
     }
 
     public function test_county_request_follows_governed_assignment_resolution_and_acceptance_workflow(): void

@@ -55,4 +55,16 @@ return [
     'file' => 'File',
     'upload_governed_record' => 'Upload governed record',
     'action_narrative' => 'Action narrative',
+    'policy' => [
+        'errors' => [
+            'draft_required' => 'Only draft service-desk policies can be published.', 'independent_publisher' => 'Service-desk policy publication requires an actor independent of the author.',
+            'published_calendar_required' => 'The selected business calendar must be published and checksum-bound.', 'calendar_effective_from' => 'The business calendar must be effective when the service policy commences.',
+            'calendar_effective_to' => 'A finite business calendar requires the service policy to end no later than the calendar expiry.', 'overlapping_versions' => 'Published versions of this service policy cannot overlap.',
+            'national_tier_required' => 'An active nationally scoped tier :tier resolver is required at policy commencement.', 'approval_reference_required' => 'Approved policy publication requires an accountable approval reference.',
+            'no_effective_policy' => 'No effective published service-desk policy is available.', 'calendar_not_effective' => 'The effective service-desk business calendar has expired or is not yet effective.',
+            'integrity_failed' => 'The pinned service-desk policy failed its integrity check.', 'invalid_target' => 'The :priority service target is invalid.',
+            'invalid_escalation_matrix' => 'The pinned service-desk escalation matrix is invalid.', 'missing_escalation_rule' => 'The pinned service-desk policy has no :priority :stage escalation rule.',
+        ],
+        'audit' => ['published' => 'Service-desk policy :code v:version independently published.'],
+    ],
 ];

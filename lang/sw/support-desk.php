@@ -55,4 +55,16 @@ return [
     'file' => 'Faili',
     'upload_governed_record' => 'Pakia rekodi inayosimamiwa',
     'action_narrative' => 'Maelezo ya kitendo',
+    'policy' => [
+        'errors' => [
+            'draft_required' => 'Sera za dawati la huduma zilizo rasimu pekee ndizo zinaweza kuchapishwa.', 'independent_publisher' => 'Uchapishaji wa sera ya dawati la huduma unahitaji mhusika aliye huru dhidi ya mwandishi.',
+            'published_calendar_required' => 'Kalenda ya biashara iliyochaguliwa lazima iwe imechapishwa na kufungamanishwa na jumla hakiki.', 'calendar_effective_from' => 'Kalenda ya biashara lazima ianze kutumika sera ya huduma inapoanza.',
+            'calendar_effective_to' => 'Kalenda ya biashara yenye mwisho inahitaji sera ya huduma kuisha kabla au wakati kalenda inaisha.', 'overlapping_versions' => 'Matoleo yaliyochapishwa ya sera hii ya huduma hayawezi kuingiliana.',
+            'national_tier_required' => 'Mtatua wa kitaifa aliye hai wa ngazi :tier anahitajika sera inapoanza.', 'approval_reference_required' => 'Uchapishaji wa sera iliyoidhinishwa unahitaji rejeleo la idhini lenye uwajibikaji.',
+            'no_effective_policy' => 'Hakuna sera ya dawati la huduma iliyochapishwa na inayotumika.', 'calendar_not_effective' => 'Kalenda ya biashara ya dawati la huduma imeisha au bado haijaanza kutumika.',
+            'integrity_failed' => 'Sera ya dawati la huduma iliyofungamanishwa imeshindwa ukaguzi wa uadilifu.', 'invalid_target' => 'Lengo la huduma la :priority si halali.',
+            'invalid_escalation_matrix' => 'Mpangilio wa upandishaji wa dawati la huduma si halali.', 'missing_escalation_rule' => 'Sera ya dawati la huduma haina kanuni ya upandishaji ya :priority :stage.',
+        ],
+        'audit' => ['published' => 'Sera ya dawati la huduma :code v:version imechapishwa kwa uhuru.'],
+    ],
 ];

@@ -55,4 +55,16 @@ return [
     'file' => 'Fichier',
     'upload_governed_record' => 'Téléverser le dossier gouverné',
     'action_narrative' => "Détail de l'action",
+    'policy' => [
+        'errors' => [
+            'draft_required' => 'Seules les politiques de service d’assistance à l’état de brouillon peuvent être publiées.', 'independent_publisher' => 'La publication d’une politique de service exige un acteur indépendant de son auteur.',
+            'published_calendar_required' => 'Le calendrier ouvré sélectionné doit être publié et lié à une somme de contrôle.', 'calendar_effective_from' => 'Le calendrier ouvré doit être en vigueur au commencement de la politique de service.',
+            'calendar_effective_to' => 'Un calendrier ouvré à durée limitée exige que la politique prenne fin au plus tard à son expiration.', 'overlapping_versions' => 'Les versions publiées de cette politique de service ne peuvent pas se chevaucher.',
+            'national_tier_required' => 'Un résolveur national actif de niveau :tier est requis au commencement de la politique.', 'approval_reference_required' => 'La publication d’une politique approuvée exige une référence d’approbation responsable.',
+            'no_effective_policy' => 'Aucune politique publiée et effective de service d’assistance n’est disponible.', 'calendar_not_effective' => 'Le calendrier ouvré effectif du service d’assistance a expiré ou n’est pas encore en vigueur.',
+            'integrity_failed' => 'La politique de service d’assistance rattachée a échoué au contrôle d’intégrité.', 'invalid_target' => 'La cible de service :priority n’est pas valide.',
+            'invalid_escalation_matrix' => 'La matrice d’escalade rattachée du service d’assistance n’est pas valide.', 'missing_escalation_rule' => 'La politique rattachée du service d’assistance ne comporte aucune règle d’escalade :priority :stage.',
+        ],
+        'audit' => ['published' => 'La politique de service d’assistance :code v:version a été publiée indépendamment.'],
+    ],
 ];

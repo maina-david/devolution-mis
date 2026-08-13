@@ -24,23 +24,23 @@ class EffectiveServiceDeskPolicyResolver
             ->latest('version')
             ->first();
 
-        abort_unless($policy !== null && $policy->checksum !== null, 503, 'No effective published service-desk policy is available.');
+        abort_unless($policy !== null && $policy->checksum !== null, 503, __('support-desk.policy.errors.no_effective_policy'));
         $this->verifyPinned($policy, $policy->checksum);
-        abort_unless($policy->businessCalendar->effective_from->lessThanOrEqualTo($at) && ($policy->businessCalendar->effective_to === null || $policy->businessCalendar->effective_to->greaterThan($at)), 503, 'The effective service-desk business calendar has expired or is not yet effective.');
+        abort_unless($policy->businessCalendar->effective_from->lessThanOrEqualTo($at) && ($policy->businessCalendar->effective_to === null || $policy->businessCalendar->effective_to->greaterThan($at)), 503, __('support-desk.policy.errors.calendar_not_effective'));
 
         return $policy;
     }
 
     public function verifyPinned(ServiceDeskPolicy $policy, string $expectedChecksum): void
     {
-        abort_unless($policy->status === 'published' && $policy->checksum !== null && hash_equals($expectedChecksum, $policy->checksum) && hash_equals($policy->checksum, $this->canonicalJson->checksum($policy->canonicalPayload())), 503, 'The pinned service-desk policy failed its integrity check.');
+        abort_unless($policy->status === 'published' && $policy->checksum !== null && hash_equals($expectedChecksum, $policy->checksum) && hash_equals($policy->checksum, $this->canonicalJson->checksum($policy->canonicalPayload())), 503, __('support-desk.policy.errors.integrity_failed'));
     }
 
     /** @return array{first_response: float, resolution: float, reminder: float} */
     public function target(ServiceDeskPolicy $policy, string $priority): array
     {
         $target = $policy->priority_targets[$priority] ?? null;
-        abort_unless(is_array($target) && is_numeric($target['first_response'] ?? null) && is_numeric($target['resolution'] ?? null) && is_numeric($target['reminder'] ?? null), 503, "The {$priority} service target is invalid.");
+        abort_unless(is_array($target) && is_numeric($target['first_response'] ?? null) && is_numeric($target['resolution'] ?? null) && is_numeric($target['reminder'] ?? null), 503, __('support-desk.policy.errors.invalid_target', ['priority' => $priority]));
 
         return [
             'first_response' => (float) $target['first_response'],
@@ -57,12 +57,12 @@ class EffectiveServiceDeskPolicyResolver
             }
 
             $tier = $rule['tier'] ?? null;
-            abort_unless(is_int($tier) && $tier >= 1 && $tier <= 3, 503, 'The pinned service-desk escalation matrix is invalid.');
+            abort_unless(is_int($tier) && $tier >= 1 && $tier <= 3, 503, __('support-desk.policy.errors.invalid_escalation_matrix'));
 
             return $tier;
         }
 
-        abort(503, "The pinned service-desk policy has no {$priority} {$stage} escalation rule.");
+        abort(503, __('support-desk.policy.errors.missing_escalation_rule', ['priority' => $priority, 'stage' => $stage]));
     }
 
     /** @return Collection<int, User> */
