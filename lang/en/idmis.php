@@ -83,6 +83,7 @@ return [
         'work_areas' => 'Work areas',
         'verified' => 'Verified',
         'verified_county_identity' => 'Verified county identity',
+        'map_status_assessed' => 'Assessed', 'map_status_pending' => 'Assessment pending', 'map_outside_access_scope' => 'Outside your current access scope', 'map_kenya_label' => 'Interactive map of Kenya’s 47 counties', 'map_county_label' => 'Interactive county map for :county', 'your_county' => 'your county', 'map_boundary_notice' => 'County boundaries are indicative, not cadastral.',
     ],
     'navigation' => [
         'access_accountability' => 'Access & accountability',

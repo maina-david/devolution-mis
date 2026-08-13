@@ -83,6 +83,7 @@ return [
         'work_areas' => 'Maeneo ya kazi',
         'verified' => 'Imethibitishwa',
         'verified_county_identity' => 'Utambulisho wa kaunti uliothibitishwa',
+        'map_status_assessed' => 'Imetathminiwa', 'map_status_pending' => 'Tathmini inasubiri', 'map_outside_access_scope' => 'Nje ya wigo wako wa sasa wa ufikiaji', 'map_kenya_label' => 'Ramani shirikishi ya kaunti 47 za Kenya', 'map_county_label' => 'Ramani shirikishi ya kaunti ya :county', 'your_county' => 'kaunti yako', 'map_boundary_notice' => 'Mipaka ya kaunti ni ya kuonyesha tu, si ya upimaji wa ardhi.',
     ],
     'navigation' => [
         'access_accountability' => 'Ufikiaji na uwajibikaji', 'analytics' => 'Uchanganuzi', 'appearance' => 'Mwonekano',

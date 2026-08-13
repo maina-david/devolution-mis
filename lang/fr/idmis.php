@@ -83,6 +83,7 @@ return [
         'work_areas' => 'Espaces de travail',
         'verified' => 'Vérifié',
         'verified_county_identity' => 'Identité du comté vérifiée',
+        'map_status_assessed' => 'Évalué', 'map_status_pending' => 'Évaluation en attente', 'map_outside_access_scope' => 'Hors de votre périmètre d’accès actuel', 'map_kenya_label' => 'Carte interactive des 47 comtés du Kenya', 'map_county_label' => 'Carte interactive du comté de :county', 'your_county' => 'votre comté', 'map_boundary_notice' => 'Les limites des comtés sont indicatives et non cadastrales.',
     ],
     'navigation' => [
         'access_accountability' => 'Accès et responsabilité', 'analytics' => 'Analyses', 'appearance' => 'Apparence',

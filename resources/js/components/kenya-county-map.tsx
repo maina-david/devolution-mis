@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { useEffect, useId, useRef } from 'react';
 import kenyaCounties from '@/data/kenya-counties.json';
 import countyBoundaries from '@/data/kenya-county-boundaries-osm.json';
@@ -37,14 +38,17 @@ function normalizeCountyName(name: string): string {
     return name.toLowerCase().replaceAll(/[^a-z]/g, '');
 }
 
-function statusLabel(county: CountyMapItem): string {
+function statusLabel(
+    county: CountyMapItem,
+    copy: Record<string, string>,
+): string {
     if (county.mapLabel) {
         return county.mapLabel;
     }
 
     return ['assessed', 'approved'].includes(county.assessmentStatus)
-        ? 'Assessed'
-        : 'Assessment pending';
+        ? copy.map_status_assessed
+        : copy.map_status_pending;
 }
 
 function countyColour(county: CountyMapItem | undefined): string {
@@ -63,7 +67,11 @@ function countyColour(county: CountyMapItem | undefined): string {
     return '#147a55';
 }
 
-function tooltipContent(county: CountyMapItem | undefined, name: string) {
+function tooltipContent(
+    county: CountyMapItem | undefined,
+    name: string,
+    copy: Record<string, string>,
+) {
     const container = document.createElement('div');
     container.className = 'flex items-center gap-2';
 
@@ -75,17 +83,17 @@ function tooltipContent(county: CountyMapItem | undefined, name: string) {
         container.append(logo);
     }
 
-    const copy = document.createElement('span');
+    const content = document.createElement('span');
     const title = document.createElement('strong');
     const status = document.createElement('span');
     title.className = 'block';
     status.className = 'block text-xs';
     title.textContent = name;
     status.textContent = county
-        ? statusLabel(county)
-        : 'Outside your current access scope';
-    copy.append(title, status);
-    container.append(copy);
+        ? statusLabel(county, copy)
+        : copy.map_outside_access_scope;
+    content.append(title, status);
+    container.append(content);
 
     return container;
 }
@@ -97,6 +105,7 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
     onSelect,
     className,
 }: Props<TCounty>) {
+    const copy = usePage().props.localization.common;
     const containerRef = useRef<HTMLDivElement>(null);
     const mapLabelId = useId();
 
@@ -178,7 +187,7 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
                         normalizeCountyName(name),
                     );
 
-                    layer.bindTooltip(tooltipContent(county, name), {
+                    layer.bindTooltip(tooltipContent(county, name, copy), {
                         direction: 'top',
                         sticky: true,
                     });
@@ -205,7 +214,7 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
             disposed = true;
             destroyMap?.();
         };
-    }, [counties, onSelect, selectedCountyId, showFullCountry]);
+    }, [copy, counties, onSelect, selectedCountyId, showFullCountry]);
 
     return (
         <div
@@ -216,8 +225,11 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
         >
             <p id={mapLabelId} className="sr-only">
                 {showFullCountry
-                    ? "Interactive map of Kenya's 47 counties"
-                    : `Interactive county map for ${counties[0]?.name ?? 'your county'}`}
+                    ? copy.map_kenya_label
+                    : copy.map_county_label.replace(
+                          ':county',
+                          counties[0]?.name ?? copy.your_county,
+                      )}
             </p>
             <div
                 ref={containerRef}
@@ -226,7 +238,7 @@ export default function KenyaCountyMap<TCounty extends CountyMapItem>({
                 aria-labelledby={mapLabelId}
             />
             <div className="pointer-events-none absolute bottom-7 left-2 rounded-md border bg-background/90 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
-                County boundaries are indicative, not cadastral.
+                {copy.map_boundary_notice}
             </div>
         </div>
     );

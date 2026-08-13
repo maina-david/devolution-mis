@@ -49,6 +49,8 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.programmeWorkspace.setting_value', 'Thamani ya mpangilio')
                 ->where('localization.dswg.form_create_series_submit', 'Unda mfululizo na ratiba')
                 ->where('localization.partnerCoordination.form_create_partner_profile', 'Unda wasifu wa mshirika')
+                ->where('localization.common.map_boundary_notice', 'Mipaka ya kaunti ni ya kuonyesha tu, si ya upimaji wa ardhi.')
+                ->where('localization.settingsProfile.appearance_settings', 'Mipangilio ya mwonekano')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -125,6 +127,19 @@ class LocalePreferenceTest extends TestCase
         foreach (['Register partner', 'Authorised partner users', 'Catalogue MoUs', 'Report contribution', 'Source system'] as $literal) {
             $this->assertStringNotContainsString($literal, $source);
         }
+    }
+
+    public function test_map_and_appearance_settings_use_the_active_locale(): void
+    {
+        $map = (string) file_get_contents(resource_path('js/components/kenya-county-map.tsx'));
+        $appearance = (string) file_get_contents(resource_path('js/pages/settings/appearance.tsx'));
+
+        $this->assertStringContainsString('props.localization.common', $map);
+        $this->assertStringContainsString('copy.map_boundary_notice', $map);
+        $this->assertStringNotContainsString('County boundaries are indicative', $map);
+        $this->assertStringContainsString('props.localization.settingsProfile', $appearance);
+        $this->assertStringContainsString('copy.appearance_settings', $appearance);
+        $this->assertStringNotContainsString('Appearance settings', $appearance);
     }
 
     public function test_guest_can_change_session_locale_without_creating_a_profile_preference(): void

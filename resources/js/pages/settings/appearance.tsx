@@ -1,20 +1,27 @@
-import { Head } from '@inertiajs/react';
+import { Head, setLayoutProps, usePage } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
 import Heading from '@/components/heading';
 import { edit as editAppearance } from '@/routes/appearance';
 
 export default function Appearance() {
+    const copy = usePage().props.localization.settingsProfile;
+    setLayoutProps({
+        breadcrumbs: [
+            { title: copy.appearance_settings, href: editAppearance() },
+        ],
+    });
+
     return (
         <>
-            <Head title="Appearance settings" />
+            <Head title={copy.appearance_settings} />
 
-            <h1 className="sr-only">Appearance settings</h1>
+            <h1 className="sr-only">{copy.appearance_settings}</h1>
 
             <div className="space-y-6">
                 <Heading
                     variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
+                    title={copy.appearance_settings}
+                    description={copy.appearance_settings_description}
                 />
                 <AppearanceTabs />
             </div>
@@ -22,11 +29,4 @@ export default function Appearance() {
     );
 }
 
-Appearance.layout = {
-    breadcrumbs: [
-        {
-            title: 'Appearance settings',
-            href: editAppearance(),
-        },
-    ],
-};
+Appearance.layout = { breadcrumbs: [] };
