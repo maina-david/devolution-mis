@@ -153,6 +153,24 @@ class LocalePreferenceTest extends TestCase
         $this->assertSame('Les dossiers de performance sont verrouillés en dehors de l’étape applicable de leur cycle de vie.', __('linked-documents.errors.performance_stage'));
     }
 
+    public function test_historical_and_reference_import_application_controls_use_the_active_locale(): void
+    {
+        $source = file_get_contents(app_path('Actions/ApplyHistoricalDataMigration.php'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString("__('migration.apply.independent_operator')", $source);
+        $this->assertStringContainsString("__('migration.apply.acpa_component_conflict')", $source);
+        $this->assertStringContainsString("__('migration.apply.bulk_audit'", $source);
+        $this->assertStringNotContainsString('Only an approved migration batch can be applied.', $source);
+
+        App::setLocale('sw');
+        $this->assertSame('Mtekelezaji wa tatu aliye huru lazima atekeleze uhamishaji ulioidhinishwa.', __('migration.apply.independent_operator'));
+        $this->assertSame('Uundaji upya wa ACPA ya zamani umetumika kwa rekodi 6 zisizobadilika.', __('migration.apply.acpa_audit', ['count' => 6]));
+
+        App::setLocale('fr');
+        $this->assertSame('Une référence de programme ou de comté a changé après l’examen. Préparez à nouveau la source.', __('migration.apply.programme_county_changed'));
+    }
+
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
     {
         $logo = file_get_contents(resource_path('js/components/app-logo-icon.tsx'));

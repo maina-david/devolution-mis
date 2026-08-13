@@ -34,8 +34,8 @@ class ApplyHistoricalDataMigration
     {
         return DB::transaction(function () use ($batch, $actor): DataMigrationBatch {
             $locked = DataMigrationBatch::query()->lockForUpdate()->findOrFail($batch->id);
-            abort_unless($locked->status === 'approved', 409, 'Only an approved migration batch can be applied.');
-            abort_if(in_array($actor->id, [$locked->submitted_by, $locked->reviewed_by], true), 403, 'A third independent operator must apply the approved migration.');
+            abort_unless($locked->status === 'approved', 409, __('migration.apply.approved_only'));
+            abort_if(in_array($actor->id, [$locked->submitted_by, $locked->reviewed_by], true), 403, __('migration.apply.independent_operator'));
 
             if (in_array($locked->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users', 'sub_counties', 'wards'], true)) {
                 return $this->applyReferenceData($locked, $actor);
@@ -51,7 +51,7 @@ class ApplyHistoricalDataMigration
                 ->orderBy('row_number')
                 ->lockForUpdate()
                 ->get();
-            abort_unless($rows->count() === $locked->valid_rows && $locked->invalid_rows === 0, 409, 'The approved row reconciliation no longer matches the staged batch.');
+            abort_unless($rows->count() === $locked->valid_rows && $locked->invalid_rows === 0, 409, __('migration.apply.reconciliation_changed'));
 
             $naturalKeys = $rows->map(fn (DataMigrationRow $row): string => implode('|', [$locked->dataset_type, $row->county_id, $row->period?->toDateString(), Str::upper((string) $row->metric_code)]))->sort()->values();
             foreach ($naturalKeys as $naturalKey) {
@@ -68,11 +68,11 @@ class ApplyHistoricalDataMigration
                     }
                 })
                 ->exists();
-            abort_if($hasAppliedConflict, 409, 'Applied history already contains one or more selected county, period and metric keys. Restage the source and resolve the reconciliation exceptions.');
+            abort_if($hasAppliedConflict, 409, __('migration.apply.history_conflict'));
 
             $importedAt = now();
             foreach ($rows as $row) {
-                abort_unless($row->county_id !== null && $row->period !== null && $row->metric_code !== null && $row->metric_name !== null, 409, 'A staged row is missing required reconciled values.');
+                abort_unless($row->county_id !== null && $row->period !== null && $row->metric_code !== null && $row->metric_name !== null, 409, __('migration.apply.row_values_missing'));
                 $record = [
                     'data_migration_batch_id' => $locked->id,
                     'data_migration_row_id' => $row->id,
@@ -97,7 +97,7 @@ class ApplyHistoricalDataMigration
             }
 
             $locked->update(['status' => 'applied', 'applied_by' => $actor->id, 'applied_at' => $importedAt]);
-            $this->auditLogger->record($actor, $locked, 'data_migration.applied', "Historical data migration applied with {$rows->count()} immutable records.", null, ['file_checksum' => $locked->file_checksum, 'records' => $rows->count()]);
+            $this->auditLogger->record($actor, $locked, 'data_migration.applied', __('migration.apply.history_audit', ['count' => $rows->count()]), null, ['file_checksum' => $locked->file_checksum, 'records' => $rows->count()]);
 
             return $locked->refresh();
         });
@@ -106,7 +106,7 @@ class ApplyHistoricalDataMigration
     private function applyLegacyAcpa(DataMigrationBatch $batch, User $actor): DataMigrationBatch
     {
         $rows = DataMigrationRow::query()->where('data_migration_batch_id', $batch->id)->where('validation_status', 'valid')->orderBy('row_number')->lockForUpdate()->get();
-        abort_unless($rows->count() === $batch->valid_rows && $batch->invalid_rows === 0, 409, 'The approved legacy ACPA reconciliation no longer matches the staged batch.');
+        abort_unless($rows->count() === $batch->valid_rows && $batch->invalid_rows === 0, 409, __('migration.apply.acpa_reconciliation_changed'));
 
         $lockKeys = $rows->map(function (DataMigrationRow $row): string {
             $payload = $row->source_payload ?? [];
@@ -121,9 +121,9 @@ class ApplyHistoricalDataMigration
         $assessments = [];
         foreach ($rows->filter(fn (DataMigrationRow $row): bool => ($row->source_payload['record_type'] ?? null) === 'assessment') as $row) {
             $payload = $row->source_payload ?? [];
-            abort_unless($row->county_id !== null && $row->period !== null, 409, 'A legacy ACPA assessment header lost its reconciled county or period.');
+            abort_unless($row->county_id !== null && $row->period !== null, 409, __('migration.apply.acpa_header_values_missing'));
             $conflict = LegacyAcpaAssessment::query()->where('county_id', $row->county_id)->whereRaw('upper(assessment_reference) = ?', [Str::upper((string) $payload['assessment_reference'])])->exists();
-            abort_if($conflict, 409, 'A legacy ACPA assessment reference now exists. Restage and reconcile the source.');
+            abort_if($conflict, 409, __('migration.apply.acpa_assessment_conflict'));
             $record = [
                 'data_migration_batch_id' => $batch->id,
                 'data_migration_row_id' => $row->id,
@@ -149,9 +149,9 @@ class ApplyHistoricalDataMigration
             $payload = $row->source_payload ?? [];
             $assessmentKey = $row->county_id.'|'.Str::upper((string) $payload['assessment_reference']);
             $assessment = $assessments[$assessmentKey] ?? LegacyAcpaAssessment::query()->where('county_id', $row->county_id)->whereRaw('upper(assessment_reference) = ?', [Str::upper((string) $payload['assessment_reference'])])->first();
-            abort_unless($assessment instanceof LegacyAcpaAssessment, 409, 'The referenced legacy ACPA assessment header is unavailable.');
+            abort_unless($assessment instanceof LegacyAcpaAssessment, 409, __('migration.apply.acpa_header_unavailable'));
             $conflict = LegacyAcpaComponent::query()->where('legacy_acpa_assessment_id', $assessment->id)->where('record_type', $payload['record_type'])->whereRaw('upper(record_reference) = ?', [Str::upper((string) $payload['record_reference'])])->exists();
-            abort_if($conflict, 409, 'A legacy ACPA component now exists. Restage and reconcile the source.');
+            abort_if($conflict, 409, __('migration.apply.acpa_component_conflict'));
             $record = [
                 'legacy_acpa_assessment_id' => $assessment->id,
                 'data_migration_batch_id' => $batch->id,
@@ -183,7 +183,7 @@ class ApplyHistoricalDataMigration
         }
 
         $batch->update(['status' => 'applied', 'applied_by' => $actor->id, 'applied_at' => $importedAt]);
-        $this->auditLogger->record($actor, $batch, 'data_migration.legacy_acpa_applied', "Legacy ACPA reconstruction applied with {$rows->count()} immutable records.", metadata: ['file_checksum' => $batch->file_checksum, 'records' => $rows->count(), 'assessments' => count($assessments)]);
+        $this->auditLogger->record($actor, $batch, 'data_migration.legacy_acpa_applied', __('migration.apply.acpa_audit', ['count' => $rows->count()]), metadata: ['file_checksum' => $batch->file_checksum, 'records' => $rows->count(), 'assessments' => count($assessments)]);
 
         return $batch->refresh();
     }
@@ -207,7 +207,7 @@ class ApplyHistoricalDataMigration
             ->orderBy('row_number')
             ->lockForUpdate()
             ->get();
-        abort_unless($rows->count() === $batch->valid_rows && $batch->invalid_rows === 0, 409, 'The approved row validation no longer matches the staged batch.');
+        abort_unless($rows->count() === $batch->valid_rows && $batch->invalid_rows === 0, 409, __('migration.apply.validation_changed'));
 
         $codes = $rows->pluck('source_payload')->map(fn (?array $payload): string => Str::upper((string) ($payload['code'] ?? '')))->all();
         $emails = $rows->pluck('source_payload')->map(fn (?array $payload): string => Str::lower((string) ($payload['email'] ?? '')))->all();
@@ -222,14 +222,14 @@ class ApplyHistoricalDataMigration
             'users' => User::query()->withTrashed()->whereIn('email', $emails)->exists(),
             default => true,
         };
-        abort_if($hasConflict, 409, 'One or more codes now exist. Restage the file against current reference data.');
+        abort_if($hasConflict, 409, __('migration.apply.code_conflict'));
 
         if ($batch->dataset_type === 'programme_county_coverages') {
             $lockKeys = $rows->map(function (DataMigrationRow $row): string {
                 $payload = $row->source_payload ?? [];
                 $programmeId = Programme::query()->whereRaw('upper(code) = ?', [Str::upper((string) ($payload['programme_code'] ?? ''))])->value('id');
                 $countyId = County::query()->where('code', (int) ($payload['county_code'] ?? 0))->value('id');
-                abort_unless(is_string($programmeId) && is_string($countyId), 409, 'A programme or county reference changed after review. Restage the source.');
+                abort_unless(is_string($programmeId) && is_string($countyId), 409, __('migration.apply.programme_county_changed'));
 
                 return "programme-coverage:{$programmeId}:{$countyId}";
             })->unique()->sort()->values();
@@ -307,7 +307,7 @@ class ApplyHistoricalDataMigration
                     'effective_from' => $payload['effective_from'],
                     'effective_to' => $payload['effective_to'] ?: null,
                 ]),
-                default => abort(409, 'The approved bulk-import dataset is not supported.'),
+                default => abort(409, __('migration.apply.dataset_unsupported')),
             };
             $row->update(['validation_status' => 'applied', 'applied_at' => $importedAt]);
         }
@@ -342,7 +342,7 @@ class ApplyHistoricalDataMigration
             'applied_at' => $importedAt,
             'validation_report' => $validationReport,
         ]);
-        $this->auditLogger->record($actor, $batch, 'data_import.applied', "Bulk {$batch->dataset_type} import atomically applied with {$rows->count()} records.", metadata: [
+        $this->auditLogger->record($actor, $batch, 'data_import.applied', __('migration.apply.bulk_audit', ['dataset' => $batch->dataset_type, 'count' => $rows->count()]), metadata: [
             'file_checksum' => $batch->file_checksum,
             'records' => $rows->count(),
             'reference_data_release_id' => $release?->id,
@@ -361,8 +361,8 @@ class ApplyHistoricalDataMigration
         $implementationLeadId = $payload['implementation_lead_code'] !== ''
             ? Organization::query()->where('status', 'active')->whereRaw('upper(code) = ?', [Str::upper($payload['implementation_lead_code'])])->value('id')
             : null;
-        abort_unless($programme !== null && $county !== null, 409, 'A programme or county reference changed after review. Restage the source.');
-        abort_if($payload['implementation_lead_code'] !== '' && ! is_string($implementationLeadId), 409, 'An implementation-lead reference changed after review. Restage the source.');
+        abort_unless($programme !== null && $county !== null, 409, __('migration.apply.programme_county_changed'));
+        abort_if($payload['implementation_lead_code'] !== '' && ! is_string($implementationLeadId), 409, __('migration.apply.implementation_lead_changed'));
 
         return $this->createProgrammeCountyCoverage->handle($actor, [
             'programme_id' => $programme->id,
