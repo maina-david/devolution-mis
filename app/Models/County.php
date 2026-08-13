@@ -88,6 +88,12 @@ class County extends Model
         return $this->hasMany(ProgrammeCountyCoverage::class);
     }
 
+    /** @return HasMany<SubCounty, $this> */
+    public function subCounties(): HasMany
+    {
+        return $this->hasMany(SubCounty::class);
+    }
+
     protected function casts(): array
     {
         return ['code' => 'integer', 'logo_verified_at' => 'immutable_date', 'map_x' => 'float', 'map_y' => 'float'];

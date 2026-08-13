@@ -67,6 +67,12 @@ class LearningCourse extends Model
         return $this->hasMany(LearningModule::class);
     }
 
+    /** @return HasMany<LearningQuestionBank, $this> */
+    public function questionBanks(): HasMany
+    {
+        return $this->hasMany(LearningQuestionBank::class);
+    }
+
     /** @return HasMany<LearningEnrollment, $this> */
     public function enrollments(): HasMany
     {

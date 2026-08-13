@@ -7,21 +7,26 @@ use App\Actions\AddAnalyticsWidget;
 use App\Actions\CreateAnalyticsDashboard;
 use App\Actions\CreateReportSchedule;
 use App\Actions\PublishAnalyticsDashboard;
+use App\Actions\SaveAnalyticsFilterView;
 use App\Enums\ProgrammePermission;
 use App\Enums\UserRole;
 use App\Http\Requests\ActivateReportScheduleRequest;
+use App\Http\Requests\DeleteAnalyticsFilterViewRequest;
 use App\Http\Requests\PublishAnalyticsDashboardRequest;
 use App\Http\Requests\StoreAnalyticsDashboardRequest;
+use App\Http\Requests\StoreAnalyticsFilterViewRequest;
 use App\Http\Requests\StoreAnalyticsWidgetRequest;
 use App\Http\Requests\StoreReportScheduleRequest;
 use App\Http\Requests\WorkspaceIndexRequest;
 use App\Jobs\GenerateScheduledReport;
 use App\Models\AnalyticsDashboard;
+use App\Models\AnalyticsFilterView;
 use App\Models\AnalyticsWidget;
 use App\Models\ReportRun;
 use App\Models\ReportSchedule;
 use App\Models\User;
 use App\Services\AnalyticsMetricCatalogue;
+use App\Services\AuditLogger;
 use App\Services\EffectiveReferenceDataReleaseResolver;
 use App\Services\ProgrammeCountyScope;
 use Illuminate\Database\Eloquent\Builder;
@@ -39,12 +44,20 @@ class AnalyticsReportingController extends Controller
         private ProgrammeCountyScope $countyScope,
         private AnalyticsMetricCatalogue $metricCatalogue,
         private EffectiveReferenceDataReleaseResolver $referenceDataReleaseResolver,
+        private AuditLogger $auditLogger,
     ) {}
 
-    public function index(WorkspaceIndexRequest $request): Response
+    public function index(WorkspaceIndexRequest $request): RedirectResponse|Response
     {
         Gate::authorize(ProgrammePermission::ViewAnalytics->value);
         $user = $this->user($request);
+        $hasExplicitFilter = collect(['from', 'to', 'search', 'status', 'county_id', 'per_page'])->contains(fn (string $key): bool => $request->filled($key));
+        if (! $hasExplicitFilter) {
+            $defaultView = AnalyticsFilterView::query()->where('user_id', $user->id)->where('is_default', true)->first();
+            if ($defaultView instanceof AnalyticsFilterView && $defaultView->filters !== []) {
+                return redirect()->route('analytics.index', $defaultView->filters);
+            }
+        }
         $countyIds = $this->countyScope->query($user)->pluck('id');
         $mayManage = $user->can(ProgrammePermission::ManageAnalytics->value);
         $mayApproveDashboard = $user->can(ProgrammePermission::ApproveAnalytics->value);
@@ -114,6 +127,7 @@ class AnalyticsReportingController extends Controller
 
         return Inertia::render('analytics/index', [
             'dashboards' => $dashboardPayload,
+            'savedFilterViews' => AnalyticsFilterView::query()->where('user_id', $user->id)->latest()->get()->map(fn (AnalyticsFilterView $view): array => ['id' => $view->id, 'name' => $view->name, 'filters' => $view->filters, 'isDefault' => $view->is_default])->values(),
             'schedules' => $schedules,
             'runs' => $runs,
             'filters' => $request->safe()->only(['from', 'to', 'search', 'status', 'county_id', 'per_page']),
@@ -127,6 +141,27 @@ class AnalyticsReportingController extends Controller
             'catalogue' => $referenceDataRelease === null ? ['available' => false] : ['available' => true, 'version' => $referenceDataRelease->version, 'effectiveFrom' => $referenceDataRelease->effective_from?->toDateString(), 'checksum' => $referenceDataRelease->checksum],
             'capabilities' => ['manage' => $mayManage, 'approveDashboard' => $mayApproveDashboard, 'approveSchedule' => $mayApproveSchedule],
         ]);
+    }
+
+    public function storeFilterView(StoreAnalyticsFilterViewRequest $request, SaveAnalyticsFilterView $action): RedirectResponse
+    {
+        $validated = $request->validated();
+        $view = $action->handle($this->user($request), [
+            'name' => $validated['name'],
+            'filters' => $validated['filters'],
+            'is_default' => $validated['is_default'] ?? false,
+        ]);
+
+        return back()->with('success', __('analytics.filter_saved', ['name' => $view->name]));
+    }
+
+    public function destroyFilterView(DeleteAnalyticsFilterViewRequest $request, AnalyticsFilterView $filterView): RedirectResponse
+    {
+        $actor = $this->user($request);
+        $this->auditLogger->record($actor, $filterView, 'analytics.filter_view.deleted', "Analytics filter view {$filterView->name} removed.", metadata: ['filter_keys' => array_keys($filterView->filters)]);
+        $filterView->delete();
+
+        return back()->with('success', __('analytics.filter_deleted'));
     }
 
     public function storeDashboard(StoreAnalyticsDashboardRequest $request, CreateAnalyticsDashboard $action): RedirectResponse

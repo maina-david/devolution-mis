@@ -19,9 +19,9 @@ class ProgrammeWorkspaceTest extends TestCase
     {
         yield 'county official' => [UserRole::CountyOfficial, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index'], ['reports.index', 'programme-users.index', 'audit.index', 'platform.index']];
         yield 'county admin' => [UserRole::CountyAdmin, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index', 'programme-users.index'], ['reports.index', 'audit.index', 'platform.index']];
-        yield 'assessor' => [UserRole::Assessor, ['counties.index', 'assessments.index', 'evidence.index', 'audit.index'], ['grants.index', 'reports.index', 'programme-users.index', 'platform.index']];
+        yield 'assessor' => [UserRole::Assessor, ['counties.index', 'assessments.index', 'evidence.index'], ['grants.index', 'reports.index', 'programme-users.index', 'audit.index', 'platform.index']];
         yield 'development partner' => [UserRole::DevelopmentPartner, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index', 'reports.index'], ['programme-users.index', 'audit.index', 'platform.index']];
-        yield 'top management' => [UserRole::TopManagement, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index', 'reports.index', 'audit.index'], ['programme-users.index', 'platform.index']];
+        yield 'top management' => [UserRole::TopManagement, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index', 'reports.index'], ['programme-users.index', 'audit.index', 'platform.index']];
         yield 'devolution admin' => [UserRole::DevolutionAdmin, ['counties.index', 'assessments.index', 'evidence.index', 'grants.index', 'reports.index', 'programme-users.index', 'audit.index'], ['platform.index']];
         yield 'platform admin' => [UserRole::PlatformAdmin, ['counties.index', 'assessments.index', 'evidence.index', 'reports.index', 'programme-users.index', 'audit.index', 'platform.index'], ['grants.index']];
     }

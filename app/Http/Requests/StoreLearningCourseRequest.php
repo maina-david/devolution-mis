@@ -32,6 +32,11 @@ class StoreLearningCourseRequest extends FormRequest
             'maximum_attempts' => ['required', 'integer', 'between:1,10'],
             'sector_id' => ['nullable', 'uuid', 'exists:sectors,id'],
             'county_id' => ['nullable', 'uuid', 'exists:counties,id'],
+            'question_bank' => ['nullable', 'array:selection_count,randomize_questions,randomize_options,description'],
+            'question_bank.selection_count' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'question_bank.randomize_questions' => ['nullable', 'boolean'],
+            'question_bank.randomize_options' => ['nullable', 'boolean'],
+            'question_bank.description' => ['nullable', 'string', 'max:2000'],
             'modules' => ['required', 'array', 'min:1', 'max:30'],
             'modules.*.title' => ['required', 'string', 'max:255'],
             'modules.*.description' => ['nullable', 'string', 'max:3000'],
@@ -49,6 +54,10 @@ class StoreLearningCourseRequest extends FormRequest
             'modules.*.lessons.*.questions.*.correct_option' => ['required_with:modules.*.lessons.*.questions', 'string', 'max:10'],
             'modules.*.lessons.*.questions.*.explanation' => ['nullable', 'string', 'max:3000'],
             'modules.*.lessons.*.questions.*.points' => ['required_with:modules.*.lessons.*.questions', 'numeric', 'gt:0'],
+            'modules.*.lessons.*.questions.*.variant_group' => ['nullable', 'string', 'max:100'],
+            'modules.*.lessons.*.questions.*.difficulty' => ['nullable', Rule::in(['foundation', 'standard', 'advanced'])],
+            'modules.*.lessons.*.questions.*.tags' => ['nullable', 'array', 'max:20'],
+            'modules.*.lessons.*.questions.*.tags.*' => ['string', 'max:50'],
         ];
     }
 
@@ -62,6 +71,19 @@ class StoreLearningCourseRequest extends FormRequest
                         $validator->errors()->add("modules.{$moduleIndex}.lessons.{$lessonIndex}.questions", 'Quiz lessons require at least one question.');
                     }
                 }
+            }
+            $selectionCount = $this->integer('question_bank.selection_count');
+            $variantGroups = [];
+            foreach ($this->array('modules') as $moduleIndex => $module) {
+                foreach (($module['lessons'] ?? []) as $lessonIndex => $lesson) {
+                    foreach (($lesson['questions'] ?? []) as $questionIndex => $question) {
+                        $fallbackGroup = "question-{$moduleIndex}-{$lessonIndex}-{$questionIndex}";
+                        $variantGroups[(string) ($question['variant_group'] ?? $fallbackGroup)] = true;
+                    }
+                }
+            }
+            if ($selectionCount > 0 && $selectionCount > count($variantGroups)) {
+                $validator->errors()->add('question_bank.selection_count', 'Selection count cannot exceed the available question variant groups.');
             }
         }];
     }

@@ -14,6 +14,7 @@ use App\Http\Requests\StoreHistoricalDataMigrationRequest;
 use App\Http\Requests\StoreReferenceDataImportRequest;
 use App\Models\DataMigrationBatch;
 use App\Models\User;
+use App\Services\LegacyReferenceInventory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +30,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HistoricalDataMigrationController extends Controller
 {
-    public function index(HistoricalDataMigrationIndexRequest $request): Response
+    public function index(HistoricalDataMigrationIndexRequest $request, LegacyReferenceInventory $legacyInventory): Response
     {
         $this->authorizeView();
         $filters = $request->validated();
@@ -81,6 +82,7 @@ class HistoricalDataMigrationController extends Controller
                 'review' => $request->user()?->can(ProgrammePermission::ApproveReferenceData->value) === true,
                 'apply' => $request->user()?->can(ProgrammePermission::ManageOperations->value) === true,
             ],
+            'legacyInventory' => $legacyInventory->report(),
         ]);
     }
 
@@ -112,9 +114,11 @@ class HistoricalDataMigrationController extends Controller
     {
         $this->authorizeView();
         $headers = StageReferenceDataImport::HEADERS[$datasetType]
-            ?? (in_array($datasetType, ['acpa_scores', 'performance_metrics', 'evaluation_baselines'], true)
-                ? StageHistoricalDataMigration::REQUIRED_HEADERS
-                : null);
+            ?? match ($datasetType) {
+                'acpa_reconstruction' => StageHistoricalDataMigration::LEGACY_ACPA_HEADERS,
+                'acpa_scores', 'performance_metrics', 'evaluation_baselines' => StageHistoricalDataMigration::REQUIRED_HEADERS,
+                default => null,
+            };
         abort_unless(is_array($headers), 404);
         $format = strtolower((string) $request->query('format', 'csv'));
         abort_unless(in_array($format, ['csv', 'xlsx'], true), 404);

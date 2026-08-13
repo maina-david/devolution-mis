@@ -35,6 +35,7 @@ use App\Models\User;
 use App\Models\WorkflowInstance;
 use App\Notifications\ProgrammeAlert;
 use App\Services\AuditLogger;
+use App\Services\IgrDependencyAnalytics;
 use App\Services\IgrGapAnalytics;
 use App\Services\IgrGapScope;
 use App\Services\ProgrammeCountyScope;
@@ -50,7 +51,7 @@ use Inertia\Response;
 
 class IgrResolutionController extends Controller
 {
-    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, IgrGapAnalytics $gapAnalytics, IgrGapScope $gapScope): Response
+    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, IgrGapAnalytics $gapAnalytics, IgrGapScope $gapScope, IgrDependencyAnalytics $dependencyAnalytics): Response
     {
         Gate::authorize(ProgrammePermission::ViewIgrResolutions->value);
         $user = $this->user($request);
@@ -62,6 +63,7 @@ class IgrResolutionController extends Controller
                     ->with(['category:id,code,name', 'county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'owner:id,name', 'resolver:id,name', 'accepter:id,name']);
             }, 'assignments.user:id,name', 'assignments.organization:id,name', 'assignments.county:id,name,code,logo_path,logo_source_authority,logo_verified_at', 'updates' => fn ($query) => $query->latest('reported_at')->limit(5), 'documentLinks.document:id,title,category,source_type,original_name,mime_type,scan_status,ocr_status'])
             ->latest('resolved_on')->limit(50)->get();
+        $visibleResolutionIds = $resolutions->modelKeys();
         $gapQuery = $this->filteredGaps($gapScope->visibleTo($user), $request);
 
         return Inertia::render('igr-resolutions/index', [
@@ -69,6 +71,7 @@ class IgrResolutionController extends Controller
             'gapWorkspace' => $workspaceData->igrResolutionGaps($user, WorkspaceFilters::fromRequest($request)),
             'filters' => WorkspaceFilters::fromRequest($request),
             'gapAnalytics' => $gapAnalytics->report($gapQuery),
+            'dependencyAnalytics' => $dependencyAnalytics->report($resolutions),
             'capabilities' => ['manage' => $user->can(ProgrammePermission::ManageIgrResolutions->value), 'update' => $user->can(ProgrammePermission::UpdateIgrResolutions->value), 'close' => $user->can(ProgrammePermission::CloseIgrResolutions->value)],
             'resolutions' => $resolutions->map(fn (IgrResolution $resolution): array => [
                 'id' => $resolution->id, 'number' => $resolution->resolution_number, 'title' => $resolution->title, 'text' => $resolution->resolution_text,
@@ -77,8 +80,8 @@ class IgrResolutionController extends Controller
                 'status' => $resolution->status, 'progress' => $resolution->progress_percentage, 'gap' => $gapScope->activeHeadline($resolution), 'closureEvidence' => $resolution->closure_evidence,
                 'referenceRelease' => $resolution->referenceDataRelease ? "v{$resolution->referenceDataRelease->version} · {$resolution->referenceDataRelease->effective_from?->toDateString()}" : 'Legacy unpinned',
                 'referenceChecksum' => $resolution->referenceDataRelease?->checksum,
-                'dependencies' => $resolution->dependencies->map(fn (IgrResolutionDependency $dependency): array => ['id' => $dependency->id, 'type' => $dependency->dependency_type, 'rationale' => $dependency->rationale, 'resolutionId' => $dependency->prerequisiteResolution->id, 'number' => $dependency->prerequisiteResolution->resolution_number, 'title' => $dependency->prerequisiteResolution->title, 'status' => $dependency->prerequisiteResolution->status])->values()->all(),
-                'dependents' => $resolution->dependents->map(fn (IgrResolutionDependency $dependency): array => ['id' => $dependency->id, 'type' => $dependency->dependency_type, 'resolutionId' => $dependency->dependentResolution->id, 'number' => $dependency->dependentResolution->resolution_number, 'title' => $dependency->dependentResolution->title, 'status' => $dependency->dependentResolution->status])->values()->all(),
+                'dependencies' => $resolution->dependencies->whereIn('prerequisite_resolution_id', $visibleResolutionIds)->map(fn (IgrResolutionDependency $dependency): array => ['id' => $dependency->id, 'type' => $dependency->dependency_type, 'rationale' => $dependency->rationale, 'resolutionId' => $dependency->prerequisiteResolution->id, 'number' => $dependency->prerequisiteResolution->resolution_number, 'title' => $dependency->prerequisiteResolution->title, 'status' => $dependency->prerequisiteResolution->status])->values()->all(),
+                'dependents' => $resolution->dependents->whereIn('dependent_resolution_id', $visibleResolutionIds)->map(fn (IgrResolutionDependency $dependency): array => ['id' => $dependency->id, 'type' => $dependency->dependency_type, 'resolutionId' => $dependency->dependentResolution->id, 'number' => $dependency->dependentResolution->resolution_number, 'title' => $dependency->dependentResolution->title, 'status' => $dependency->dependentResolution->status])->values()->all(),
                 'gaps' => $resolution->gaps->map(fn (IgrResolutionGap $gap): array => ['id' => $gap->id, 'category' => "{$gap->category->code} · {$gap->category->name}", 'title' => $gap->title, 'description' => $gap->description, 'impact' => $gap->impact, 'severity' => $gap->severity, 'status' => $gap->status, 'dueOn' => $gap->due_on->toDateString(), 'overdue' => $gap->status !== 'accepted' && $gap->due_on->isPast(), 'county' => $gap->county?->identityCell(), 'owner' => $gap->owner->name, 'mitigationPlan' => $gap->mitigation_plan, 'resolutionNote' => $gap->resolution_note, 'resolver' => $gap->resolver?->name, 'accepter' => $gap->accepter?->name])->values()->all(),
                 'assignments' => $resolution->assignments->map(fn (IgrResolutionAssignment $assignment): array => ['userId' => $assignment->user_id, 'countyId' => $assignment->county_id, 'user' => $assignment->user_id ? $assignment->user?->name : null, 'organization' => $assignment->organization_id ? $assignment->organization?->name : null, 'county' => $assignment->county?->identityCell(), 'role' => $assignment->responsibility_role, 'lead' => $assignment->is_lead])->values()->all(),
                 'updates' => $resolution->updates->map(fn (IgrResolutionUpdate $update): array => ['id' => $update->id, 'progress' => $update->progress_percentage, 'narrative' => $update->narrative, 'gap' => $update->implementation_gap, 'evidence' => $update->evidence_reference, 'reportedAt' => $update->reported_at->toIso8601String()])->values()->all(),

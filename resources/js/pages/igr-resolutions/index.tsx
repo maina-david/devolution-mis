@@ -187,6 +187,33 @@ type Props = {
             overdue: number;
         }>;
     };
+    dependencyAnalytics: {
+        summary: {
+            totalLinks: number;
+            blockingLinks: number;
+            unresolvedBlockingLinks: number;
+            blockedResolutions: number;
+            longestPathDepth: number;
+        };
+        criticalPaths: Array<{
+            depth: number;
+            blocked: boolean;
+            nodes: Array<{
+                id: string;
+                number: string;
+                title: string;
+                status: string;
+                dueOn: string;
+            }>;
+        }>;
+        bottlenecks: Array<{
+            id: string;
+            number: string;
+            title: string;
+            status: string;
+            dependentCount: number;
+        }>;
+    };
     capabilities: { manage: boolean; update: boolean; close: boolean };
     resolutions: Resolution[];
     options: {
@@ -210,6 +237,7 @@ export default function IgrResolutionsIndex({
     gapWorkspace,
     filters,
     gapAnalytics,
+    dependencyAnalytics,
     capabilities,
     resolutions,
     options,
@@ -318,6 +346,104 @@ export default function IgrResolutionsIndex({
                                         {label}
                                     </dt>
                                     <dd className="mt-1 text-xl font-semibold">
+                                        {value}
+                                    </dd>
+                                </div>
+                            ))}
+                        </dl>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Resolution dependency paths</CardTitle>
+                        <CardDescription>
+                            Scope-safe prerequisite chains and unresolved
+                            blocking relationships that determine whether a
+                            resolution can proceed to closure.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(18rem,.8fr)]">
+                        <div className="grid gap-3">
+                            {dependencyAnalytics.criticalPaths.length === 0 ? (
+                                <WorkspaceEmptyState
+                                    title="No dependency paths in scope"
+                                    description="Add a blocking or informative prerequisite to expose path analysis."
+                                />
+                            ) : (
+                                dependencyAnalytics.criticalPaths.map(
+                                    (path, pathIndex) => (
+                                        <ol
+                                            key={`${path.nodes.at(-1)?.id}-${pathIndex}`}
+                                            className="flex flex-wrap items-center gap-2 rounded-lg border p-3"
+                                            aria-label={`Dependency path with ${path.depth} links`}
+                                        >
+                                            {path.nodes.map((node, index) => (
+                                                <li
+                                                    key={node.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    {index > 0 && (
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="text-muted-foreground"
+                                                        >
+                                                            →
+                                                        </span>
+                                                    )}
+                                                    <span className="rounded-md bg-muted px-2 py-1 text-xs">
+                                                        <strong>
+                                                            {node.number}
+                                                        </strong>{' '}
+                                                        ·{' '}
+                                                        {node.status.replaceAll(
+                                                            '_',
+                                                            ' ',
+                                                        )}
+                                                    </span>
+                                                </li>
+                                            ))}
+                                            {path.blocked && (
+                                                <li>
+                                                    <Badge variant="destructive">
+                                                        Blocked
+                                                    </Badge>
+                                                </li>
+                                            )}
+                                        </ol>
+                                    ),
+                                )
+                            )}
+                        </div>
+                        <dl className="grid grid-cols-2 gap-3 self-start">
+                            {[
+                                ['Links', dependencyAnalytics.summary.totalLinks],
+                                [
+                                    'Blocking',
+                                    dependencyAnalytics.summary.blockingLinks,
+                                ],
+                                [
+                                    'Unresolved',
+                                    dependencyAnalytics.summary
+                                        .unresolvedBlockingLinks,
+                                ],
+                                [
+                                    'Blocked resolutions',
+                                    dependencyAnalytics.summary
+                                        .blockedResolutions,
+                                ],
+                                [
+                                    'Longest path',
+                                    `${dependencyAnalytics.summary.longestPathDepth} links`,
+                                ],
+                            ].map(([label, value]) => (
+                                <div
+                                    key={String(label)}
+                                    className="rounded-lg border p-3"
+                                >
+                                    <dt className="text-xs text-muted-foreground">
+                                        {label}
+                                    </dt>
+                                    <dd className="mt-1 text-lg font-semibold">
                                         {value}
                                     </dd>
                                 </div>

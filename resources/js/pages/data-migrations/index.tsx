@@ -95,10 +95,22 @@ type Props = {
     batches: PageSet<Batch>;
     filters: Record<string, string | undefined>;
     capabilities: { stage: boolean; review: boolean; apply: boolean };
+    legacyInventory: {
+        total: number;
+        recordTypes: number;
+        records: Array<{
+            type: string;
+            model: string;
+            count: number;
+            oldestAt: string | null;
+            latestAt: string | null;
+        }>;
+    };
 };
 
 const datasetOptions = [
     { id: 'acpa_scores', name: 'ACPA scores' },
+    { id: 'acpa_reconstruction', name: 'Legacy ACPA reconstruction' },
     { id: 'performance_metrics', name: 'Performance metrics' },
     { id: 'evaluation_baselines', name: 'Evaluation baselines' },
 ];
@@ -113,6 +125,8 @@ const referenceDatasetOptions = [
         name: 'Programme county coverages',
     },
     { id: 'users', name: 'Users and role assignments' },
+    { id: 'sub_counties', name: 'Sub-counties' },
+    { id: 'wards', name: 'Wards' },
 ];
 
 const statusOptions = [
@@ -127,6 +141,7 @@ export default function HistoricalDataMigrations({
     batches,
     filters,
     capabilities,
+    legacyInventory,
 }: Props) {
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
@@ -197,6 +212,53 @@ export default function HistoricalDataMigrations({
                         and their checksum-bound provenance are immutable.
                     </AlertDescription>
                 </Alert>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Legacy and unpinned inventory</CardTitle>
+                        <CardDescription>
+                            Explicit records without governed reference-release
+                            lineage. Inventory does not silently assign a modern
+                            catalogue to historical records.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {legacyInventory.total === 0 ? (
+                            <WorkspaceEmptyState
+                                title="No unpinned records detected"
+                                description="All inventoried product records carry governed reference-release lineage."
+                            />
+                        ) : (
+                            <div className="grid gap-4 lg:grid-cols-[12rem_1fr]">
+                                <dl className="rounded-lg border p-4">
+                                    <dt className="text-sm text-muted-foreground">
+                                        Records requiring disposition
+                                    </dt>
+                                    <dd className="mt-1 text-3xl font-semibold">
+                                        {legacyInventory.total}
+                                    </dd>
+                                    <dt className="mt-4 text-sm text-muted-foreground">
+                                        Record types
+                                    </dt>
+                                    <dd className="font-semibold">
+                                        {legacyInventory.recordTypes}
+                                    </dd>
+                                </dl>
+                                <ul className="divide-y rounded-lg border">
+                                    {legacyInventory.records.map((record) => (
+                                        <li
+                                            key={record.model}
+                                            className="flex items-center justify-between gap-4 p-3 text-sm"
+                                        >
+                                            <span>{record.type}</span>
+                                            <strong>{record.count}</strong>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <DateRangeFilter
                     initialFrom={filters.from}
@@ -368,6 +430,10 @@ export default function HistoricalDataMigrations({
 
 function MigrationForm() {
     const [datasetType, setDatasetType] = useState('acpa_scores');
+    const requiredColumns =
+        datasetType === 'acpa_reconstruction'
+            ? 'county_code, assessment_reference, period, record_type, record_reference, criterion_code, title, numeric_value, maximum_value, status, assignment_role, person_identifier, person_name, description, decision, file_name, mime_type, file_checksum, source_reference'
+            : 'county_code, period, metric_code, metric_name, numeric_value, narrative_value, unit, source_reference';
 
     return (
         <FormSheet
@@ -393,10 +459,10 @@ function MigrationForm() {
                                 required
                             />
                             <p className="text-xs text-muted-foreground">
-                                Required columns: county_code, period,
-                                metric_code, metric_name, numeric_value,
-                                narrative_value, unit, source_reference. Maximum
-                                5,000 rows and 20 MB.
+                                Required columns: {requiredColumns}. Maximum
+                                5,000 rows and 20 MB. Legacy ACPA files use one
+                                assessment header followed by criterion,
+                                evidence, finding, assessor and appeal records.
                             </p>
                             {errors.file && (
                                 <ErrorText>{errors.file}</ErrorText>

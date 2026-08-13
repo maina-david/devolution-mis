@@ -1304,6 +1304,29 @@ function CourseForm({
                             error={errors.description}
                         />
                         <div className="grid gap-3 rounded-xl border p-4">
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <Field
+                                    name="question_bank[selection_count]"
+                                    label="Questions per attempt"
+                                    type="number"
+                                    defaultValue="1"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="question_bank[randomize_questions]"
+                                    value="1"
+                                />
+                                <input
+                                    type="hidden"
+                                    name="question_bank[randomize_options]"
+                                    value="1"
+                                />
+                                <p className="self-end text-sm text-muted-foreground md:col-span-2">
+                                    Quiz variants are selected reproducibly,
+                                    one question per objective group, with a
+                                    checksum retained on every attempt.
+                                </p>
+                            </div>
                             <input
                                 type="hidden"
                                 name="modules[0][title]"
@@ -1455,6 +1478,31 @@ function CourseForm({
                                                     label="Points"
                                                     type="number"
                                                     defaultValue="1"
+                                                />
+                                                <Field
+                                                    name={`modules[0][lessons][${index}][questions][0][variant_group]`}
+                                                    label="Objective / variant group"
+                                                    defaultValue={`objective-${index + 1}`}
+                                                />
+                                                <SearchableSelect
+                                                    id={`question-difficulty-${lesson.key}`}
+                                                    name={`modules[0][lessons][${index}][questions][0][difficulty]`}
+                                                    label="Difficulty"
+                                                    options={[
+                                                        {
+                                                            id: 'foundation',
+                                                            name: 'Foundation',
+                                                        },
+                                                        {
+                                                            id: 'standard',
+                                                            name: 'Standard',
+                                                        },
+                                                        {
+                                                            id: 'advanced',
+                                                            name: 'Advanced',
+                                                        },
+                                                    ]}
+                                                    defaultValue="standard"
                                                 />
                                                 <Field
                                                     name={`modules[0][lessons][${index}][questions][0][explanation]`}

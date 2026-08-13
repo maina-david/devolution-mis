@@ -22,6 +22,7 @@ return [
     'recurring_signals' => 'Recurring issue signals',
     'recurring_description' => 'Aggregate complaint and grievance categories.',
     'no_recurring_signals' => 'No recurring issue pattern is available yet.',
+    'recurring_privacy_threshold' => 'Only signals with at least :count cases are published to protect citizen privacy.',
     'submit_action' => 'Submit feedback or grievance',
     'submit_title' => 'Submit a citizen case',
     'submit_description' => 'Required fields are marked. Do not include passwords, banking PINs or unnecessary sensitive information.',

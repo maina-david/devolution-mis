@@ -11,6 +11,7 @@ use App\Models\CitizenCaseMessage;
 use App\Models\County;
 use App\Models\Sector;
 use App\Services\AuditLogger;
+use App\Services\CitizenIssueAnalytics;
 use App\Services\EffectiveReferenceDataReleaseResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,7 +20,7 @@ use Inertia\Response;
 
 class PublicCitizenCaseController extends Controller
 {
-    public function index(EffectiveReferenceDataReleaseResolver $referenceDataResolver): Response
+    public function index(EffectiveReferenceDataReleaseResolver $referenceDataResolver, CitizenIssueAnalytics $issueAnalytics): Response
     {
         $release = $referenceDataResolver->availableForCitizenIntake(now());
         $countyIds = $this->snapshotIds($release?->snapshot['counties'] ?? []);
@@ -30,7 +31,7 @@ class PublicCitizenCaseController extends Controller
             'sectors' => Sector::query()->whereIn('id', $sectorIds)->where('is_active', true)->orderBy('name')->get(['id', 'name']),
             'catalogue' => ['available' => $release !== null, 'version' => $release?->version, 'effectiveFrom' => $release?->effective_from?->toIso8601String()],
             'privacyNoticeVersion' => (string) config('privacy.public_notice.version'),
-            'dashboard' => $this->dashboardData(),
+            'dashboard' => [...$this->dashboardData(), 'issueAnalytics' => $issueAnalytics->report(public: true)],
         ]);
     }
 

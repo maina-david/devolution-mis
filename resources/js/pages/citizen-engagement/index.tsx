@@ -52,6 +52,17 @@ type Props = {
         pending: number;
         satisfaction: string | null;
         recurringIssues: Array<{ category: string; total: number }>;
+        issueAnalytics: {
+            categories: Array<{ label: string; total: number }>;
+            monthlyTrend: Array<{
+                month: string;
+                total: number;
+                resolved: number;
+            }>;
+            overdue: number;
+            averageResolutionHours: number;
+            minimumPublishedCount: number;
+        };
     };
     privacyNoticeVersion: string;
 };
@@ -171,15 +182,15 @@ export default function CitizenEngagementIndex({
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {dashboard.recurringIssues.length ? (
+                            {dashboard.issueAnalytics.categories.length ? (
                                 <ul className="flex flex-col gap-2">
-                                    {dashboard.recurringIssues.map((issue) => (
+                                    {dashboard.issueAnalytics.categories.map((issue) => (
                                         <li
-                                            key={issue.category}
+                                            key={issue.label}
                                             className="flex justify-between gap-3 text-sm"
                                         >
                                             <span className="capitalize">
-                                                {issue.category}
+                                                {copy[issue.label] ?? issue.label}
                                             </span>
                                             <strong>{issue.total}</strong>
                                         </li>
@@ -190,6 +201,15 @@ export default function CitizenEngagementIndex({
                                     {copy.no_recurring_signals}
                                 </p>
                             )}
+                            <p className="mt-4 text-xs text-muted-foreground">
+                                {copy.recurring_privacy_threshold.replace(
+                                    ':count',
+                                    String(
+                                        dashboard.issueAnalytics
+                                            .minimumPublishedCount,
+                                    ),
+                                )}
+                            </p>
                         </CardContent>
                     </Card>
                 </section>

@@ -6,12 +6,17 @@ use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\DataMigrationRow;
 use App\Models\HistoricalMetric;
+use App\Models\LegacyAcpaAssessment;
+use App\Models\LegacyAcpaComponent;
 use App\Models\Organization;
 use App\Models\Programme;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\Sector;
+use App\Models\SubCounty;
 use App\Models\User;
+use App\Models\Ward;
 use App\Services\AuditLogger;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -32,8 +37,11 @@ class ApplyHistoricalDataMigration
             abort_unless($locked->status === 'approved', 409, 'Only an approved migration batch can be applied.');
             abort_if(in_array($actor->id, [$locked->submitted_by, $locked->reviewed_by], true), 403, 'A third independent operator must apply the approved migration.');
 
-            if (in_array($locked->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users'], true)) {
+            if (in_array($locked->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages', 'users', 'sub_counties', 'wards'], true)) {
                 return $this->applyReferenceData($locked, $actor);
+            }
+            if ($locked->dataset_type === 'acpa_reconstruction') {
+                return $this->applyLegacyAcpa($locked, $actor);
             }
 
             $rows = DataMigrationRow::query()
@@ -95,6 +103,102 @@ class ApplyHistoricalDataMigration
         });
     }
 
+    private function applyLegacyAcpa(DataMigrationBatch $batch, User $actor): DataMigrationBatch
+    {
+        $rows = DataMigrationRow::query()->where('data_migration_batch_id', $batch->id)->where('validation_status', 'valid')->orderBy('row_number')->lockForUpdate()->get();
+        abort_unless($rows->count() === $batch->valid_rows && $batch->invalid_rows === 0, 409, 'The approved legacy ACPA reconciliation no longer matches the staged batch.');
+
+        $lockKeys = $rows->map(function (DataMigrationRow $row): string {
+            $payload = $row->source_payload ?? [];
+
+            return 'legacy-acpa:'.$row->county_id.':'.Str::upper((string) ($payload['assessment_reference'] ?? ''));
+        })->unique()->sort()->values();
+        foreach ($lockKeys as $lockKey) {
+            DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$lockKey]);
+        }
+
+        $importedAt = now();
+        $assessments = [];
+        foreach ($rows->filter(fn (DataMigrationRow $row): bool => ($row->source_payload['record_type'] ?? null) === 'assessment') as $row) {
+            $payload = $row->source_payload ?? [];
+            abort_unless($row->county_id !== null && $row->period !== null, 409, 'A legacy ACPA assessment header lost its reconciled county or period.');
+            $conflict = LegacyAcpaAssessment::query()->where('county_id', $row->county_id)->whereRaw('upper(assessment_reference) = ?', [Str::upper((string) $payload['assessment_reference'])])->exists();
+            abort_if($conflict, 409, 'A legacy ACPA assessment reference now exists. Restage and reconcile the source.');
+            $record = [
+                'data_migration_batch_id' => $batch->id,
+                'data_migration_row_id' => $row->id,
+                'county_id' => $row->county_id,
+                'assessment_reference' => $payload['assessment_reference'],
+                'period' => $row->period->toDateString(),
+                'cycle_name' => $payload['title'],
+                'status' => $payload['status'],
+                'overall_score' => $payload['numeric_value'] !== '' ? $payload['numeric_value'] : null,
+                'source_name' => $batch->source_name,
+                'source_reference' => $payload['source_reference'] ?: $batch->source_reference,
+                'source_checksum' => $row->source_checksum,
+                'imported_by' => $actor->id,
+                'imported_at' => $importedAt,
+            ];
+            $record['record_checksum'] = $this->checksum($record, $importedAt);
+            $assessment = LegacyAcpaAssessment::create($record);
+            $assessments[$row->county_id.'|'.Str::upper($payload['assessment_reference'])] = $assessment;
+            $row->update(['validation_status' => 'applied', 'applied_at' => $importedAt]);
+        }
+
+        foreach ($rows->reject(fn (DataMigrationRow $row): bool => ($row->source_payload['record_type'] ?? null) === 'assessment') as $row) {
+            $payload = $row->source_payload ?? [];
+            $assessmentKey = $row->county_id.'|'.Str::upper((string) $payload['assessment_reference']);
+            $assessment = $assessments[$assessmentKey] ?? LegacyAcpaAssessment::query()->where('county_id', $row->county_id)->whereRaw('upper(assessment_reference) = ?', [Str::upper((string) $payload['assessment_reference'])])->first();
+            abort_unless($assessment instanceof LegacyAcpaAssessment, 409, 'The referenced legacy ACPA assessment header is unavailable.');
+            $conflict = LegacyAcpaComponent::query()->where('legacy_acpa_assessment_id', $assessment->id)->where('record_type', $payload['record_type'])->whereRaw('upper(record_reference) = ?', [Str::upper((string) $payload['record_reference'])])->exists();
+            abort_if($conflict, 409, 'A legacy ACPA component now exists. Restage and reconcile the source.');
+            $record = [
+                'legacy_acpa_assessment_id' => $assessment->id,
+                'data_migration_batch_id' => $batch->id,
+                'data_migration_row_id' => $row->id,
+                'record_type' => $payload['record_type'],
+                'record_reference' => $payload['record_reference'],
+                'criterion_code' => $payload['criterion_code'] ?: null,
+                'title' => $payload['title'] ?: null,
+                'numeric_value' => $payload['numeric_value'] !== '' ? $payload['numeric_value'] : null,
+                'maximum_value' => $payload['maximum_value'] !== '' ? $payload['maximum_value'] : null,
+                'status' => $payload['status'] ?: null,
+                'assignment_role' => $payload['assignment_role'] ?: null,
+                'person_identifier' => $payload['person_identifier'] ?: null,
+                'person_name' => $payload['person_name'] ?: null,
+                'description' => $payload['description'] ?: null,
+                'decision' => $payload['decision'] ?: null,
+                'file_name' => $payload['file_name'] ?: null,
+                'mime_type' => $payload['mime_type'] ?: null,
+                'file_checksum' => $payload['file_checksum'] ?: null,
+                'source_reference' => $payload['source_reference'] ?: $batch->source_reference,
+                'source_payload' => $payload,
+                'source_checksum' => $row->source_checksum,
+                'imported_by' => $actor->id,
+                'imported_at' => $importedAt,
+            ];
+            $record['record_checksum'] = $this->checksum($record, $importedAt);
+            LegacyAcpaComponent::create($record);
+            $row->update(['validation_status' => 'applied', 'applied_at' => $importedAt]);
+        }
+
+        $batch->update(['status' => 'applied', 'applied_by' => $actor->id, 'applied_at' => $importedAt]);
+        $this->auditLogger->record($actor, $batch, 'data_migration.legacy_acpa_applied', "Legacy ACPA reconstruction applied with {$rows->count()} immutable records.", metadata: ['file_checksum' => $batch->file_checksum, 'records' => $rows->count(), 'assessments' => count($assessments)]);
+
+        return $batch->refresh();
+    }
+
+    /** @param array<string, mixed> $record */
+    private function checksum(array $record, CarbonInterface $importedAt): string
+    {
+        $payload = [...$record, 'imported_at' => $importedAt->toIso8601String()];
+        if (isset($payload['source_payload'])) {
+            $payload['source_payload'] = hash('sha256', json_encode($payload['source_payload'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+        }
+
+        return hash('sha256', json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+    }
+
     private function applyReferenceData(DataMigrationBatch $batch, User $actor): DataMigrationBatch
     {
         $rows = DataMigrationRow::query()
@@ -112,6 +216,8 @@ class ApplyHistoricalDataMigration
             'organizations' => Organization::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'sectors' => Sector::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'programmes' => Programme::query()->withTrashed()->whereIn('code', $codes)->exists(),
+            'sub_counties' => SubCounty::query()->withTrashed()->whereIn('code', $codes)->exists(),
+            'wards' => Ward::query()->withTrashed()->whereIn('code', $codes)->exists(),
             'programme_county_coverages' => false,
             'users' => User::query()->withTrashed()->whereIn('email', $emails)->exists(),
             default => true,
@@ -175,13 +281,39 @@ class ApplyHistoricalDataMigration
                 ]),
                 'programme_county_coverages' => $this->createImportedProgrammeCountyCoverage($payload, $actor),
                 'users' => $this->createImportedUser($payload, $actor),
+                'sub_counties' => SubCounty::create([
+                    'county_id' => County::query()->where('code', (int) $payload['county_code'])->value('id'),
+                    'code' => Str::upper($payload['code']),
+                    'name' => $payload['name'],
+                    'slug' => Str::slug($payload['name']),
+                    'source_authority' => $batch->source_name,
+                    'source_reference' => $batch->source_reference,
+                    'source_checksum_sha256' => Str::lower($payload['source_checksum_sha256']),
+                    'boundary_geojson' => filled($payload['boundary_geojson']) ? json_decode($payload['boundary_geojson'], true, flags: JSON_THROW_ON_ERROR) : null,
+                    'boundary_checksum_sha256' => filled($payload['boundary_checksum_sha256']) ? Str::lower($payload['boundary_checksum_sha256']) : null,
+                    'effective_from' => $payload['effective_from'],
+                    'effective_to' => $payload['effective_to'] ?: null,
+                ]),
+                'wards' => Ward::create([
+                    'sub_county_id' => SubCounty::query()->whereRaw('upper(code) = ?', [Str::upper($payload['sub_county_code'])])->value('id'),
+                    'code' => Str::upper($payload['code']),
+                    'name' => $payload['name'],
+                    'slug' => Str::slug($payload['name']),
+                    'source_authority' => $batch->source_name,
+                    'source_reference' => $batch->source_reference,
+                    'source_checksum_sha256' => Str::lower($payload['source_checksum_sha256']),
+                    'boundary_geojson' => filled($payload['boundary_geojson']) ? json_decode($payload['boundary_geojson'], true, flags: JSON_THROW_ON_ERROR) : null,
+                    'boundary_checksum_sha256' => filled($payload['boundary_checksum_sha256']) ? Str::lower($payload['boundary_checksum_sha256']) : null,
+                    'effective_from' => $payload['effective_from'],
+                    'effective_to' => $payload['effective_to'] ?: null,
+                ]),
                 default => abort(409, 'The approved bulk-import dataset is not supported.'),
             };
             $row->update(['validation_status' => 'applied', 'applied_at' => $importedAt]);
         }
 
         $release = null;
-        if (in_array($batch->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages'], true)) {
+        if (in_array($batch->dataset_type, ['counties', 'organizations', 'sectors', 'programmes', 'programme_county_coverages', 'sub_counties', 'wards'], true)) {
             $release = $this->createReferenceDataRelease->handle(
                 $actor,
                 "Automated candidate from governed {$batch->dataset_type} import {$batch->reference}; source {$batch->source_reference}; file SHA-256 {$batch->file_checksum}; {$rows->count()} records. Independent publication required.",

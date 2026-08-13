@@ -8,7 +8,9 @@ use App\Models\Programme;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
+use App\Models\SubCounty;
 use App\Models\User;
+use App\Models\Ward;
 use App\Services\AuditLogger;
 use App\Support\CanonicalJson;
 use Illuminate\Support\Facades\Cache;
@@ -70,6 +72,16 @@ class CreateReferenceDataRelease
                 'ends_on' => $coverage->ends_on?->toDateString(), 'status' => $coverage->status,
                 'funding_allocation' => $coverage->funding_allocation, 'currency' => $coverage->currency,
                 'source_reference' => $coverage->source_reference,
+            ])->all(),
+            'sub_counties' => SubCounty::query()->orderBy('county_id')->orderBy('code')->get()->map(fn (SubCounty $subCounty): array => [
+                'id' => $subCounty->id, 'county_id' => $subCounty->county_id, 'code' => $subCounty->code, 'name' => $subCounty->name,
+                'source_checksum_sha256' => $subCounty->source_checksum_sha256, 'boundary_checksum_sha256' => $subCounty->boundary_checksum_sha256,
+                'effective_from' => $subCounty->effective_from->toDateString(), 'effective_to' => $subCounty->effective_to?->toDateString(),
+            ])->all(),
+            'wards' => Ward::query()->orderBy('sub_county_id')->orderBy('code')->get()->map(fn (Ward $ward): array => [
+                'id' => $ward->id, 'sub_county_id' => $ward->sub_county_id, 'code' => $ward->code, 'name' => $ward->name,
+                'source_checksum_sha256' => $ward->source_checksum_sha256, 'boundary_checksum_sha256' => $ward->boundary_checksum_sha256,
+                'effective_from' => $ward->effective_from->toDateString(), 'effective_to' => $ward->effective_to?->toDateString(),
             ])->all(),
         ];
     }

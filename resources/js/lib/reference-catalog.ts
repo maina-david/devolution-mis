@@ -37,6 +37,16 @@ export const DEFAULT_TIMEZONE = referenceSnapshot.defaults.timezone;
 export const DEFAULT_LANGUAGE_CODE = referenceSnapshot.defaults.languageCode;
 export const DEFAULT_LOCALE = referenceSnapshot.defaults.locale;
 
+export function activeLocale(): string {
+    if (typeof document === 'undefined') {
+        return DEFAULT_LOCALE;
+    }
+
+    const language = document.documentElement.lang.trim();
+
+    return language || DEFAULT_LOCALE;
+}
+
 export function countryCodeForName(name: string): string | undefined {
     return countries.find((country) => country.name === name)?.id;
 }
@@ -46,7 +56,7 @@ export function formatCurrency(
     currency = DEFAULT_CURRENCY_CODE,
     options: Omit<Intl.NumberFormatOptions, 'style' | 'currency'> = {},
 ): string {
-    return new Intl.NumberFormat(DEFAULT_LOCALE, {
+    return new Intl.NumberFormat(activeLocale(), {
         style: 'currency',
         currency,
         ...options,
@@ -57,14 +67,14 @@ export function formatNumber(
     value: number,
     options: Intl.NumberFormatOptions = {},
 ): string {
-    return new Intl.NumberFormat(DEFAULT_LOCALE, options).format(value);
+    return new Intl.NumberFormat(activeLocale(), options).format(value);
 }
 
 export function formatDateTime(
     value: string | number | Date,
     options: Intl.DateTimeFormatOptions = {},
 ): string {
-    return new Intl.DateTimeFormat(DEFAULT_LOCALE, options).format(
+    return new Intl.DateTimeFormat(activeLocale(), options).format(
         new Date(value),
     );
 }

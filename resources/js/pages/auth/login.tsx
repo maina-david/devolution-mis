@@ -39,7 +39,6 @@ export default function Login({ status, canResetPassword }: Props) {
                                     type="email"
                                     name="email"
                                     required
-                                    autoFocus
                                     autoComplete="email"
                                     placeholder="name@agency.go.ke"
                                     aria-invalid={Boolean(errors.email)}
@@ -85,7 +84,11 @@ export default function Login({ status, canResetPassword }: Props) {
                             </div>
 
                             <div className="flex items-center space-x-3">
-                                <Checkbox id="remember" name="remember" />
+                                <Checkbox
+                                    id="remember"
+                                    name="remember"
+                                    aria-label="Remember me"
+                                />
                                 <Label htmlFor="remember">Remember me</Label>
                             </div>
 

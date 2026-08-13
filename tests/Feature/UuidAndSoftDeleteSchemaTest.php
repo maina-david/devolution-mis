@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AnalyticsDashboard;
+use App\Models\AnalyticsFilterView;
 use App\Models\AnalyticsWidget;
 use App\Models\Assessment;
 use App\Models\AssessmentAppeal;
@@ -35,6 +36,8 @@ use App\Models\IgrGapCategory;
 use App\Models\IgrResolutionDependency;
 use App\Models\IgrResolutionGap;
 use App\Models\IntegrationExchangeAttempt;
+use App\Models\LearningQuestionBank;
+use App\Models\LearningQuestionBankItem;
 use App\Models\Organization;
 use App\Models\PartnerCollaborationAction;
 use App\Models\PartnerCollaborationPlan;
@@ -124,6 +127,7 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             AssessmentAttestation::class,
             AssessmentAppeal::class,
             AnalyticsDashboard::class,
+            AnalyticsFilterView::class,
             AnalyticsWidget::class,
             ReportSchedule::class,
             PartnerOperationalAlert::class,
@@ -135,6 +139,8 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             IgrResolutionGap::class,
             ServiceDeskPolicy::class,
             ServiceDeskRosterMember::class,
+            LearningQuestionBank::class,
+            LearningQuestionBankItem::class,
         ];
 
         foreach ($models as $modelClass) {

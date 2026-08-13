@@ -276,6 +276,8 @@ Route::middleware(['auth', 'verified'])
         Route::post('security-governance/identity-lifecycle', [IdentityLifecycleController::class, 'store'])->name('security-governance.identity-lifecycle.store');
         Route::patch('security-governance/identity-lifecycle/{identityLifecycleRequest}/decide', [IdentityLifecycleController::class, 'decide'])->name('security-governance.identity-lifecycle.decide');
         Route::get('analytics', [AnalyticsReportingController::class, 'index'])->name('analytics.index');
+        Route::post('analytics/filter-views', [AnalyticsReportingController::class, 'storeFilterView'])->name('analytics.filter-views.store');
+        Route::delete('analytics/filter-views/{filterView}', [AnalyticsReportingController::class, 'destroyFilterView'])->name('analytics.filter-views.destroy');
         Route::post('analytics/dashboards', [AnalyticsReportingController::class, 'storeDashboard'])->name('analytics.dashboards.store');
         Route::post('analytics/dashboards/{dashboard}/widgets', [AnalyticsReportingController::class, 'storeWidget'])->name('analytics.widgets.store');
         Route::patch('analytics/dashboards/{dashboard}/publish', [AnalyticsReportingController::class, 'publish'])->name('analytics.dashboards.publish');

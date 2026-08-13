@@ -47,6 +47,7 @@ use App\Models\VirtualClassroom;
 use App\Services\AuditLogger;
 use App\Services\DocumentIntegrityVerifier;
 use App\Services\EffectiveReferenceDataReleaseResolver;
+use App\Services\LearningQuestionSelector;
 use App\Services\ProgrammeWorkspaceData;
 use App\Services\VirtualClassroomAccess;
 use App\Support\WorkspaceFilters;
@@ -64,6 +65,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LearningController extends Controller
 {
+    public function __construct(private LearningQuestionSelector $questionSelector) {}
+
     public function index(WorkspaceIndexRequest $request, VirtualClassroomAccess $classroomAccess, EffectiveReferenceDataReleaseResolver $referenceDataReleaseResolver): InertiaResponse
     {
         Gate::authorize(ProgrammePermission::ViewLearning->value);
@@ -75,6 +78,7 @@ class LearningController extends Controller
         })->latest()->paginate($request->integer('per_page', 12))->withQueryString();
         $courseCollection = new EloquentCollection($courses->items());
         $courseCollection->load(['knowledgeItems' => fn ($query) => $query->where('status', 'published')->when(! $user->programmeRole()->hasNationalScope(), fn ($scope) => $scope->where(fn ($countyScope) => $countyScope->whereNull('county_id')->orWhereIn('county_id', $this->countyIds($user))))->orderBy('title')]);
+        $courseCollection->load(['questionBanks' => fn ($query) => $query->where('status', 'published')->latest('version'), 'questionBanks.items.question']);
         $courses->setCollection($courseCollection);
         $enrollments = $this->visibleEnrollments($user)->with(['course:id,code,title,passing_score,maximum_attempts', 'progress', 'attempts', 'certificate'])->latest()->get()->keyBy('learning_course_id');
 
@@ -318,20 +322,51 @@ class LearningController extends Controller
         $latestAttempt = $course->latestOfflinePackage;
         $package = $course->latestReadyOfflinePackage;
         $recommendations = $course->knowledgeItems->map(fn ($item): array => ['id' => $item->id, 'reference' => $item->reference, 'title' => $item->title, 'summary' => $item->summary, 'type' => $item->item_type])->values()->all();
+        $bank = $course->questionBanks->first();
+        $visibleQuestionIds = null;
+        $questionOptions = [];
+        $canReviewQuestions = $user->canAny([
+            ProgrammePermission::ManageLearning->value,
+            ProgrammePermission::ReviewLearning->value,
+        ]);
+        if ($bank !== null && $enrollment === null && ! $canReviewQuestions) {
+            $visibleQuestionIds = [];
+        }
+        if ($enrollment !== null && $bank !== null) {
+            $attemptNumber = $enrollment->attempts->count() + 1;
+            $selectedQuestions = $this->questionSelector->select($bank, $enrollment->id, $attemptNumber);
+            $visibleQuestionIds = [];
+            foreach ($selectedQuestions as $selectedQuestion) {
+                $visibleQuestionIds[] = $selectedQuestion->id;
+            }
+            foreach ($selectedQuestions as $question) {
+                $questionOptions[$question->id] = $this->questionSelector->options($bank, $question, $enrollment->id, $attemptNumber);
+            }
+        }
 
-        return ['id' => $course->id, 'code' => $course->code, 'title' => $course->title, 'summary' => $course->summary, 'description' => $course->description, 'category' => $course->category, 'level' => $course->level, 'deliveryMode' => $course->delivery_mode, 'language' => $course->language, 'estimatedMinutes' => $course->estimated_minutes, 'passingScore' => $course->passing_score, 'maximumAttempts' => $course->maximum_attempts, 'status' => $course->status, 'sector' => $course->sector?->name, 'county' => $course->county?->identityCell(), 'referenceData' => $course->referenceDataRelease ? ['version' => $course->referenceDataRelease->version, 'effectiveFrom' => $course->referenceDataRelease->effective_from?->toIso8601String(), 'checksum' => $course->referenceDataRelease->checksum] : null, 'owner' => $course->owner->name, 'moduleCount' => $course->modules_count, 'enrollmentCount' => $course->enrollments_count, 'knowledgeRecommendations' => $recommendations, 'offlinePackageAttempt' => $latestAttempt ? ['version' => $latestAttempt->package_version, 'status' => $latestAttempt->status, 'failedAt' => $latestAttempt->failed_at?->toIso8601String(), 'failureMessage' => $latestAttempt->failure_message] : null, 'offlinePackage' => $package ? ['id' => $package->id, 'version' => $package->package_version, 'status' => $package->status, 'sizeBytes' => $package->size_bytes, 'checksum' => $package->content_checksum, 'manifestChecksum' => $package->manifest_checksum, 'generatedAt' => $package->generated_at?->toIso8601String(), 'canDownload' => $enrollment !== null || $user->canAny([ProgrammePermission::ManageLearning->value, ProgrammePermission::ReviewLearning->value])] : null, 'modules' => $course->modules->map(fn ($module): array => $this->modulePayload($module))->values()->all(), 'classrooms' => $course->classrooms->map(fn (VirtualClassroom $classroom): array => $this->classroomPayload($classroom, $user, $classroomAccess))->values()->all(), 'enrollment' => $enrollment ? $this->enrollmentPayload($enrollment) : null];
+        return ['id' => $course->id, 'code' => $course->code, 'title' => $course->title, 'summary' => $course->summary, 'description' => $course->description, 'category' => $course->category, 'level' => $course->level, 'deliveryMode' => $course->delivery_mode, 'language' => $course->language, 'estimatedMinutes' => $course->estimated_minutes, 'passingScore' => $course->passing_score, 'maximumAttempts' => $course->maximum_attempts, 'status' => $course->status, 'sector' => $course->sector?->name, 'county' => $course->county?->identityCell(), 'referenceData' => $course->referenceDataRelease ? ['version' => $course->referenceDataRelease->version, 'effectiveFrom' => $course->referenceDataRelease->effective_from?->toIso8601String(), 'checksum' => $course->referenceDataRelease->checksum] : null, 'owner' => $course->owner->name, 'moduleCount' => $course->modules_count, 'enrollmentCount' => $course->enrollments_count, 'knowledgeRecommendations' => $recommendations, 'offlinePackageAttempt' => $latestAttempt ? ['version' => $latestAttempt->package_version, 'status' => $latestAttempt->status, 'failedAt' => $latestAttempt->failed_at?->toIso8601String(), 'failureMessage' => $latestAttempt->failure_message] : null, 'offlinePackage' => $package ? ['id' => $package->id, 'version' => $package->package_version, 'status' => $package->status, 'sizeBytes' => $package->size_bytes, 'checksum' => $package->content_checksum, 'manifestChecksum' => $package->manifest_checksum, 'generatedAt' => $package->generated_at?->toIso8601String(), 'canDownload' => $enrollment !== null || $user->canAny([ProgrammePermission::ManageLearning->value, ProgrammePermission::ReviewLearning->value])] : null, 'questionBank' => $bank ? ['id' => $bank->id, 'version' => $bank->version, 'selectionCount' => $bank->selection_count, 'checksum' => $bank->checksum] : null, 'modules' => $course->modules->map(fn ($module): array => $this->modulePayload($module, $visibleQuestionIds, $questionOptions))->values()->all(), 'classrooms' => $course->classrooms->map(fn (VirtualClassroom $classroom): array => $this->classroomPayload($classroom, $user, $classroomAccess))->values()->all(), 'enrollment' => $enrollment ? $this->enrollmentPayload($enrollment) : null];
     }
 
-    /** @return array<string, mixed> */
-    private function modulePayload(LearningModule $module): array
+    /**
+     * @param  list<string>|null  $visibleQuestionIds
+     * @param  array<string, array<string, string>>  $questionOptions
+     * @return array<string, mixed>
+     */
+    private function modulePayload(LearningModule $module, ?array $visibleQuestionIds = null, array $questionOptions = []): array
     {
-        return ['id' => $module->id, 'title' => $module->title, 'description' => $module->description, 'lessons' => $module->lessons->map(fn (LearningLesson $lesson): array => $this->lessonPayload($lesson))->values()->all()];
+        return ['id' => $module->id, 'title' => $module->title, 'description' => $module->description, 'lessons' => $module->lessons->map(fn (LearningLesson $lesson): array => $this->lessonPayload($lesson, $visibleQuestionIds, $questionOptions))->values()->all()];
     }
 
-    /** @return array<string, mixed> */
-    private function lessonPayload(LearningLesson $lesson): array
+    /**
+     * @param  list<string>|null  $visibleQuestionIds
+     * @param  array<string, array<string, string>>  $questionOptions
+     * @return array<string, mixed>
+     */
+    private function lessonPayload(LearningLesson $lesson, ?array $visibleQuestionIds = null, array $questionOptions = []): array
     {
-        return ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'contentType' => $lesson->content_type, 'contentBody' => $lesson->content_body, 'contentUrl' => $lesson->content_url, 'downloadable' => $lesson->is_downloadable, 'estimatedMinutes' => $lesson->estimated_minutes, 'assetMetadata' => $lesson->metadata, 'assets' => $lesson->documentLinks->filter(fn (DocumentLink $link): bool => $link->document->record_status === 'active')->map(fn (DocumentLink $link): array => ['id' => $link->document->id, 'title' => $link->document->title, 'originalName' => $link->document->original_name, 'mimeType' => $link->document->mime_type, 'sourceType' => $link->document->source_type, 'scanStatus' => $link->document->scan_status, 'ocrStatus' => $link->document->ocr_status, 'checksum' => $link->document->content_checksum])->values()->all(), 'questions' => $lesson->questions->map(fn ($question): array => ['id' => $question->id, 'question' => $question->question, 'options' => $question->options, 'points' => $question->points])->values()->all()];
+        $questions = $visibleQuestionIds === null ? $lesson->questions : $lesson->questions->whereIn('id', $visibleQuestionIds);
+
+        return ['id' => $lesson->id, 'title' => $lesson->title, 'summary' => $lesson->summary, 'contentType' => $lesson->content_type, 'contentBody' => $lesson->content_body, 'contentUrl' => $lesson->content_url, 'downloadable' => $lesson->is_downloadable, 'estimatedMinutes' => $lesson->estimated_minutes, 'assetMetadata' => $lesson->metadata, 'assets' => $lesson->documentLinks->filter(fn (DocumentLink $link): bool => $link->document->record_status === 'active')->map(fn (DocumentLink $link): array => ['id' => $link->document->id, 'title' => $link->document->title, 'originalName' => $link->document->original_name, 'mimeType' => $link->document->mime_type, 'sourceType' => $link->document->source_type, 'scanStatus' => $link->document->scan_status, 'ocrStatus' => $link->document->ocr_status, 'checksum' => $link->document->content_checksum])->values()->all(), 'questions' => $questions->map(fn ($question): array => ['id' => $question->id, 'question' => $question->question, 'options' => $questionOptions[$question->id] ?? $question->options, 'points' => $question->points])->values()->all()];
     }
 
     /** @return array<string, mixed> */

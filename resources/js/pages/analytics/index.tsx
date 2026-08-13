@@ -1,6 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     BarChart3,
+    Bookmark,
     CalendarClock,
     Download,
     Eye,
@@ -9,8 +10,10 @@ import {
     Play,
     Plus,
     Send,
+    Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
@@ -21,6 +24,13 @@ import SearchableSelect from '@/components/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { ChartConfig } from '@/components/ui/chart';
+import {
+    ChartContainer,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,10 +55,15 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
+import { index as analyticsIndex } from '@/routes/analytics';
 import {
     publish,
     store as storeDashboard,
 } from '@/routes/analytics/dashboards';
+import {
+    destroy as destroyFilterView,
+    store as storeFilterView,
+} from '@/routes/analytics/filter-views';
 import { download } from '@/routes/analytics/runs';
 import {
     activate,
@@ -92,6 +107,13 @@ type Dashboard = {
     publisher: string | null;
     widgets: Widget[];
 };
+
+const analyticsChartConfig = {
+    value: {
+        label: 'Measured value',
+        color: 'var(--primary)',
+    },
+} satisfies ChartConfig;
 type ReportSchedule = {
     id: string;
     code: string;
@@ -138,6 +160,12 @@ type Props = {
     schedules: ReportSchedule[];
     runs: PageSet<ReportRun> | null;
     filters: Record<string, string | undefined>;
+    savedFilterViews: Array<{
+        id: string;
+        name: string;
+        filters: Record<string, string>;
+        isDefault: boolean;
+    }>;
     options: {
         counties: CountyIdentityValue[];
         metrics: Option[];
@@ -158,6 +186,7 @@ export default function AnalyticsReporting({
     schedules,
     runs,
     filters,
+    savedFilterViews,
     options,
     catalogue,
     capabilities,
@@ -192,7 +221,7 @@ export default function AnalyticsReporting({
     return (
         <>
             <Head title="Analytics and scheduled reporting" />
-            <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
@@ -271,6 +300,11 @@ export default function AnalyticsReporting({
                             value: filters.county_id,
                         },
                     ]}
+                />
+
+                <SavedFilterViews
+                    views={savedFilterViews}
+                    filters={filters}
                 />
 
                 <section className="grid gap-5">
@@ -363,8 +397,110 @@ export default function AnalyticsReporting({
                         )}
                     </section>
                 )}
-            </main>
+            </div>
         </>
+    );
+}
+
+function SavedFilterViews({
+    views,
+    filters,
+}: {
+    views: Props['savedFilterViews'];
+    filters: Props['filters'];
+}) {
+    return (
+        <Card>
+            <CardHeader className="flex-row items-start justify-between gap-4">
+                <div>
+                    <CardTitle>Saved filter views</CardTitle>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Reuse a named, personal analytics context without
+                        changing another user&apos;s filters.
+                    </p>
+                </div>
+                <FormSheet
+                    title="Save current filters"
+                    description="Name the current analytics context and optionally use it as your default view."
+                    triggerLabel="Save view"
+                    icon={Bookmark}
+                    size="md"
+                >
+                    <Form {...storeFilterView.form()} className="grid gap-5">
+                        {({ errors, processing }) => (
+                            <>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="filter-view-name">
+                                        View name
+                                    </Label>
+                                    <Input
+                                        id="filter-view-name"
+                                        name="name"
+                                        maxLength={100}
+                                        required
+                                        aria-invalid={Boolean(errors.name)}
+                                    />
+                                    {errors.name && (
+                                        <p className="text-sm text-destructive" role="alert">
+                                            {errors.name}
+                                        </p>
+                                    )}
+                                </div>
+                                {Object.entries(filters).map(([key, value]) =>
+                                    value ? (
+                                        <input
+                                            key={key}
+                                            type="hidden"
+                                            name={`filters[${key}]`}
+                                            value={value}
+                                        />
+                                    ) : null,
+                                )}
+                                <label className="flex items-center gap-2 text-sm">
+                                    <Checkbox name="is_default" value="1" />
+                                    Use as my default analytics view
+                                </label>
+                                <Button type="submit" disabled={processing}>
+                                    <Bookmark data-icon="inline-start" />
+                                    {processing ? 'Saving…' : 'Save filter view'}
+                                </Button>
+                            </>
+                        )}
+                    </Form>
+                </FormSheet>
+            </CardHeader>
+            <CardContent>
+                {views.length ? (
+                    <div className="flex flex-wrap gap-2" aria-label="Saved analytics filter views">
+                        {views.map((view) => (
+                            <div key={view.id} className="flex items-center rounded-md border bg-background">
+                                <Button variant="ghost" asChild>
+                                    <Link href={analyticsIndex({ query: view.filters })}>
+                                        {view.name}
+                                        {view.isDefault && <Badge variant="secondary">Default</Badge>}
+                                    </Link>
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={`Delete saved view ${view.name}`}
+                                    onClick={() => router.delete(destroyFilterView.url(view.id), { preserveScroll: true })}
+                                >
+                                    <Trash2 />
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <WorkspaceEmptyState
+                        title="No saved filter views"
+                        description="Apply analytics filters, then save the context for quick reuse."
+                        className="min-h-40 border-0"
+                    />
+                )}
+            </CardContent>
+        </Card>
     );
 }
 
@@ -487,6 +623,53 @@ function WidgetCard({ widget }: { widget: Widget }) {
                             value={Math.min(100, widget.measurement.value)}
                             aria-label={`${widget.title}: ${widget.measurement.value}${widget.measurement.unit === 'percent' ? '%' : ''}`}
                         />
+                    )}
+                {widget.visualization === 'bar' &&
+                    widget.measurement.series.length > 0 && (
+                        <div className="grid gap-2">
+                            <ChartContainer
+                                config={analyticsChartConfig}
+                                className="min-h-64 w-full"
+                                role="img"
+                                aria-label={`${widget.title} by county`}
+                            >
+                                <BarChart
+                                    accessibilityLayer
+                                    data={widget.measurement.series.map(
+                                        (entry) => ({
+                                            county: entry.county.name,
+                                            value: entry.value ?? 0,
+                                        }),
+                                    )}
+                                    margin={{ left: 4, right: 4 }}
+                                >
+                                    <CartesianGrid vertical={false} />
+                                    <XAxis
+                                        dataKey="county"
+                                        tickLine={false}
+                                        axisLine={false}
+                                        interval="preserveStartEnd"
+                                        tickFormatter={(value: string) =>
+                                            value.slice(0, 8)
+                                        }
+                                    />
+                                    <YAxis
+                                        tickLine={false}
+                                        axisLine={false}
+                                        width={36}
+                                    />
+                                    <ChartTooltip
+                                        cursor={false}
+                                        content={<ChartTooltipContent />}
+                                    />
+                                    <Bar
+                                        dataKey="value"
+                                        fill="var(--color-value)"
+                                        radius={[4, 4, 0, 0]}
+                                    />
+                                </BarChart>
+                            </ChartContainer>
+                        </div>
                     )}
                 {widget.measurement.series.length > 0 && (
                     <div className="grid gap-2">

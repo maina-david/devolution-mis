@@ -13,6 +13,8 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
+        "test:accessibility": "node tests/Browser/accessibility.mjs",
+        "test:resilience": "node tests/Browser/resilience.mjs",
         "types:check": "tsc --noEmit"
     },
     "devDependencies": {

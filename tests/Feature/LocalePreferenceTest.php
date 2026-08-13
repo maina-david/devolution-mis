@@ -104,4 +104,55 @@ class LocalePreferenceTest extends TestCase
         $this->assertFileExists(public_path('apple-touch-icon.png'));
         $this->assertFileDoesNotExist(public_path('favicon.svg'));
     }
+
+    public function test_every_translation_catalogue_has_matching_keys_and_placeholders_in_all_supported_locales(): void
+    {
+        $englishFiles = collect(glob(lang_path('en/*.php')) ?: [])->map(fn (string $path): string => basename($path))->sort()->values();
+
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedFiles = collect(glob(lang_path("{$locale}/*.php")) ?: [])->map(fn (string $path): string => basename($path))->sort()->values();
+            $this->assertSame($englishFiles->all(), $localizedFiles->all(), "{$locale} must contain every English translation domain.");
+
+            foreach ($englishFiles as $file) {
+                $english = $this->flattenTranslations(require lang_path("en/{$file}"));
+                $localized = $this->flattenTranslations(require lang_path("{$locale}/{$file}"));
+                $this->assertSame(array_keys($english), array_keys($localized), "{$locale}/{$file} translation keys diverge from English.");
+                foreach ($english as $key => $message) {
+                    preg_match_all('/:[A-Za-z_][A-Za-z0-9_]*/', $message, $englishPlaceholders);
+                    preg_match_all('/:[A-Za-z_][A-Za-z0-9_]*/', $localized[$key], $localizedPlaceholders);
+                    $this->assertEqualsCanonicalizing(array_values(array_unique($englishPlaceholders[0])), array_values(array_unique($localizedPlaceholders[0])), "{$locale}/{$file}:{$key} must preserve replacement placeholders.");
+                }
+            }
+        }
+    }
+
+    public function test_framework_validation_messages_are_actually_localized_instead_of_falling_back_to_english(): void
+    {
+        $english = $this->flattenTranslations(require lang_path('en/validation.php'));
+        foreach (['sw', 'fr'] as $locale) {
+            $localized = $this->flattenTranslations(require lang_path("{$locale}/validation.php"));
+            foreach ($english as $key => $message) {
+                $this->assertNotSame($message, $localized[$key], "{$locale} validation message {$key} still falls back to English.");
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $translations
+     * @return array<string, string>
+     */
+    private function flattenTranslations(array $translations, string $prefix = ''): array
+    {
+        $flattened = [];
+        foreach ($translations as $key => $value) {
+            $path = $prefix === '' ? (string) $key : "{$prefix}.{$key}";
+            if (is_array($value)) {
+                $flattened += $this->flattenTranslations($value, $path);
+            } elseif (is_string($value)) {
+                $flattened[$path] = $value;
+            }
+        }
+
+        return $flattened;
+    }
 }

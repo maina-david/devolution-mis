@@ -10,9 +10,12 @@ use App\Models\Organization;
 use App\Models\Programme;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\Sector;
+use App\Models\SubCounty;
 use App\Models\User;
+use App\Models\Ward;
 use App\Services\AuditLogger;
 use App\Services\TabularImportReader;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -38,6 +41,8 @@ class StageReferenceDataImport
         'programmes' => ['code', 'name', 'description', 'lead_organization_code', 'sector_code', 'starts_on', 'ends_on', 'status', 'budget_amount', 'currency'],
         'programme_county_coverages' => ['programme_code', 'county_code', 'implementation_lead_code', 'starts_on', 'ends_on', 'status', 'funding_allocation', 'currency', 'source_reference', 'notes'],
         'users' => ['name', 'email', 'role', 'home_county_code', 'assigned_county_codes'],
+        'sub_counties' => ['county_code', 'code', 'name', 'effective_from', 'effective_to', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256'],
+        'wards' => ['sub_county_code', 'code', 'name', 'effective_from', 'effective_to', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256'],
     ];
 
     public function __construct(
@@ -107,6 +112,11 @@ class StageReferenceDataImport
         }
     }
 
+    private function validDate(string $value): bool
+    {
+        return $value !== '' && CarbonImmutable::hasFormat($value, 'Y-m-d');
+    }
+
     /** @return list<array<string, mixed>> */
     private function parse(UploadedFile $file, string $datasetType): array
     {
@@ -131,6 +141,8 @@ class StageReferenceDataImport
             'organizations' => Organization::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'sectors' => Sector::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'programmes' => Programme::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
+            'sub_counties' => SubCounty::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
+            'wards' => Ward::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'programme_county_coverages' => [],
             'users' => User::query()->withTrashed()->pluck('email')->map(fn (string $email): string => Str::lower($email))->all(),
             default => throw ValidationException::withMessages(['dataset_type' => 'The selected bulk-import dataset is not supported.']),
@@ -256,6 +268,27 @@ class StageReferenceDataImport
             }
             if (! in_array($payload['status'], ['active', 'inactive'], true)) {
                 $errors[] = 'invalid_status';
+            }
+        }
+        if ($datasetType === 'sub_counties' || $datasetType === 'wards') {
+            $parentField = $datasetType === 'sub_counties' ? 'county_code' : 'sub_county_code';
+            $parentExists = $datasetType === 'sub_counties'
+                ? County::query()->where('code', (int) $payload[$parentField])->exists()
+                : SubCounty::query()->whereRaw('upper(code) = ?', [Str::upper($payload[$parentField])])->exists();
+            if ($payload[$parentField] === '' || ! $parentExists) {
+                $errors[] = $datasetType === 'sub_counties' ? 'unknown_county_code' : 'unknown_sub_county_code';
+            }
+            if (! preg_match('/^[a-f0-9]{64}$/i', $payload['source_checksum_sha256'])) {
+                $errors[] = 'invalid_source_checksum';
+            }
+            if ($payload['boundary_checksum_sha256'] !== '' && ! preg_match('/^[a-f0-9]{64}$/i', $payload['boundary_checksum_sha256'])) {
+                $errors[] = 'invalid_boundary_checksum';
+            }
+            if ($payload['boundary_geojson'] !== '' && ! is_array(json_decode($payload['boundary_geojson'], true))) {
+                $errors[] = 'invalid_boundary_geojson';
+            }
+            if (! $this->validDate($payload['effective_from']) || ($payload['effective_to'] !== '' && (! $this->validDate($payload['effective_to']) || $payload['effective_to'] < $payload['effective_from']))) {
+                $errors[] = 'invalid_effective_period';
             }
         }
 
