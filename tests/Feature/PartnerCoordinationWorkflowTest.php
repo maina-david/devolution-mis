@@ -455,6 +455,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
             ->where('operationalAlerts.0.county.logoUrl', '/counties/monitor.svg')
             ->where('localization.current', 'sw')
             ->where('localization.partnerCoordination.operational_control_alerts', 'Tahadhari za udhibiti wa uendeshaji')
+            ->where('localization.partnerCoordination.geographic_partner_portfolio', 'Jalada la kijiografia la washirika')
             ->where('localization.partnerCoordination.status_accepted_risk', 'Hatari imekubaliwa'));
         $export = $this->actingAs($manager)->get(route('workspace.export', ['partners', 'json']))->assertOk()->streamedContent();
         $this->assertStringContainsString('Open alerts', $export);

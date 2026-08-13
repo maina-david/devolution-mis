@@ -173,6 +173,19 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-busy={processing}', $partnerAlerts);
         $this->assertStringContainsString('aria-hidden="true"', $partnerAlerts);
 
+        $partnerWorkspace = $this->source('resources/js/pages/partners/index.tsx');
+        $this->assertStringContainsString('props.localization.partnerCoordination', $partnerWorkspace);
+        $this->assertStringContainsString('aria-invalid={Boolean(', $partnerWorkspace);
+        $this->assertStringContainsString('partner-alert-${alert.id}-resolution-error', $partnerWorkspace);
+        $this->assertStringContainsString('<InputError', $partnerWorkspace);
+        $this->assertStringContainsString('aria-busy={processing}', $partnerWorkspace);
+
+        $partnerMap = $this->source('resources/js/components/partner-portfolio-map.tsx');
+        $this->assertStringContainsString('const copy = localization.partnerCoordination', $partnerMap);
+        $this->assertStringContainsString('<Card aria-live="polite">', $partnerMap);
+        $this->assertStringContainsString('counties.length === 1 ? counties[0] : null', $partnerMap);
+        $this->assertStringContainsString('formatCurrency(', $partnerMap);
+
         $programmeWorkspace = $this->source('resources/js/pages/programme/workspace.tsx');
         $this->assertStringContainsString('localization.programmeWorkspace', $programmeWorkspace);
         $this->assertStringContainsString('toLocaleString(', $programmeWorkspace);

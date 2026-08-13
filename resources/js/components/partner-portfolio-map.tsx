@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import { Handshake, MapPinned } from 'lucide-react';
 import { useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
@@ -11,6 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { formatCurrency, formatNumber } from '@/lib/reference-catalog';
 
 export type PartnerPortfolioCounty = CountyIdentityValue & {
     assessmentStatus: string;
@@ -29,11 +31,13 @@ export default function PartnerPortfolioMap({
     showFullCountry: boolean;
     counties: PartnerPortfolioCounty[];
 }) {
+    const { localization } = usePage().props;
+    const copy = localization.partnerCoordination;
     const [selected, setSelected] = useState<PartnerPortfolioCounty | null>(
         counties.length === 1 ? counties[0] : null,
     );
     const money = (value: number) =>
-        `KES ${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+        formatCurrency(value, 'KES', { maximumFractionDigits: 0 });
 
     return (
         <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(19rem,0.7fr)]">
@@ -44,14 +48,13 @@ export default function PartnerPortfolioMap({
                             className="text-primary"
                             aria-hidden="true"
                         />
-                        Geographic partner portfolio
+                        {copy.geographic_partner_portfolio}
                     </CardTitle>
                     <CardDescription>
                         {showFullCountry
-                            ? 'Nationwide geography with only authorized portfolio counties activated.'
-                            : 'Your county is automatically zoomed and isolated.'}{' '}
-                        Select an active county to inspect its partner
-                        portfolio.
+                            ? copy.nationwide_portfolio_description
+                            : copy.single_county_portfolio_description}{' '}
+                        {copy.select_active_county_description}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
@@ -66,9 +69,9 @@ export default function PartnerPortfolioMap({
             </Card>
             <Card aria-live="polite">
                 <CardHeader>
-                    <CardDescription>County portfolio</CardDescription>
+                    <CardDescription>{copy.county_portfolio}</CardDescription>
                     <CardTitle>
-                        {selected?.name ?? 'Select an authorized county'}
+                        {selected?.name ?? copy.select_authorized_county}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -77,19 +80,21 @@ export default function PartnerPortfolioMap({
                             <CountyIdentity county={selected} />
                             <div className="grid grid-cols-2 gap-3">
                                 <Metric
-                                    label="Partners"
-                                    value={selected.partnerCount.toString()}
+                                    label={copy.partners}
+                                    value={formatNumber(selected.partnerCount)}
                                 />
                                 <Metric
-                                    label="Active agreements"
-                                    value={selected.activeAgreementCount.toString()}
+                                    label={copy.active_agreements}
+                                    value={formatNumber(
+                                        selected.activeAgreementCount,
+                                    )}
                                 />
                                 <Metric
-                                    label="Committed"
+                                    label={copy.committed}
                                     value={money(selected.committedAmount)}
                                 />
                                 <Metric
-                                    label="Disbursed"
+                                    label={copy.disbursed}
                                     value={money(selected.disbursedAmount)}
                                 />
                             </div>
@@ -98,14 +103,12 @@ export default function PartnerPortfolioMap({
                                 {selected.mapLabel}
                             </Badge>
                             <p className="text-xs text-muted-foreground">
-                                The selection updates this portfolio summary
-                                without leaving the partner workspace.
+                                {copy.portfolio_selection_notice}
                             </p>
                         </div>
                     ) : (
                         <div className="grid min-h-56 place-items-center text-center text-sm text-muted-foreground">
-                            Select an authorized county on the map to inspect
-                            its portfolio.
+                            {copy.select_county_on_map}
                         </div>
                     )}
                 </CardContent>

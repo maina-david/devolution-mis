@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import { Download, Handshake, Radar } from 'lucide-react';
 import {
     analyze,
@@ -6,6 +6,7 @@ import {
 } from '@/actions/App/Http/Controllers/PartnerCoordinationController';
 import DateRangeFilter from '@/components/date-range-filter';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import PartnerAgreementRegister from '@/components/partner-agreement-register';
 import type { PartnerAgreement } from '@/components/partner-agreement-register';
 import PartnerCollaborationPlans from '@/components/partner-collaboration-plans';
@@ -33,6 +34,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { exportMethod } from '@/routes/workspace';
 
 type Option = {
@@ -115,21 +117,21 @@ export default function PartnerCoordinationIndex({
     catalogue,
     options,
 }: Props) {
+    const copy = usePage().props.localization.partnerCoordination;
+
     return (
         <>
-            <Head title="Partner coordination" />
+            <Head title={copy.partner_coordination} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Development cooperation intelligence
+                        {copy.development_cooperation_intelligence}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold">
-                        Partner coordination
+                        {copy.partner_coordination}
                     </h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
-                        A governed directory of partners, agreements, financial
-                        and in-kind contributions, geographic coverage,
-                        overlaps, and collaboration opportunities.
+                        {copy.partner_coordination_description}
                     </p>
                 </section>
                 <PartnerCoordinationForms
@@ -164,7 +166,7 @@ export default function PartnerCoordinationIndex({
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties.map((county) => ({
                                 id: county.id,
                                 name: county.name,
@@ -173,7 +175,7 @@ export default function PartnerCoordinationIndex({
                         },
                         {
                             key: 'sector_id',
-                            label: 'Sector',
+                            label: copy.sector,
                             options: options.sectors.map((sector) => ({
                                 id: sector.id,
                                 name: sector.name,
@@ -182,22 +184,28 @@ export default function PartnerCoordinationIndex({
                         },
                         {
                             key: 'status',
-                            label: 'Status',
+                            label: copy.status,
                             options: [
-                                { id: 'draft', name: 'Draft' },
+                                { id: 'draft', name: copy.status_draft },
                                 {
                                     id: 'pending_approval',
-                                    name: 'Pending approval',
+                                    name: copy.status_pending_approval,
                                 },
-                                { id: 'active', name: 'Active' },
-                                { id: 'open', name: 'Open' },
+                                { id: 'active', name: copy.status_active },
+                                { id: 'open', name: copy.status_open },
                                 {
                                     id: 'in_progress',
-                                    name: 'In progress',
+                                    name: copy.status_in_progress,
                                 },
-                                { id: 'completed', name: 'Completed' },
-                                { id: 'suspended', name: 'Suspended' },
-                                { id: 'rejected', name: 'Rejected' },
+                                {
+                                    id: 'completed',
+                                    name: copy.status_completed,
+                                },
+                                {
+                                    id: 'suspended',
+                                    name: copy.status_suspended,
+                                },
+                                { id: 'rejected', name: copy.status_rejected },
                             ],
                             value: filters.status,
                         },
@@ -251,8 +259,10 @@ export default function PartnerCoordinationIndex({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No matching partner profiles"
-                                description="Adjust the search or reporting dates, or add an authorized development partner profile."
+                                title={copy.no_matching_partner_profiles}
+                                description={
+                                    copy.no_matching_partner_profiles_description
+                                }
                                 className="min-h-72 border-0"
                             />
                         )}
@@ -267,11 +277,12 @@ export default function PartnerCoordinationIndex({
                             />
                             <div>
                                 <CardTitle>
-                                    Collaboration intelligence
+                                    {copy.collaboration_intelligence}
                                 </CardTitle>
                                 <CardDescription>
-                                    Potential overlaps and synergies detected
-                                    from shared projects, counties, and sectors.
+                                    {
+                                        copy.collaboration_intelligence_description
+                                    }
                                 </CardDescription>
                             </div>
                         </div>
@@ -281,8 +292,9 @@ export default function PartnerCoordinationIndex({
                                     <Button
                                         variant="outline"
                                         disabled={processing}
+                                        aria-busy={processing}
                                     >
-                                        Refresh analysis
+                                        {copy.refresh_analysis}
                                     </Button>
                                 )}
                             </Form>
@@ -291,8 +303,10 @@ export default function PartnerCoordinationIndex({
                     <CardContent className="grid gap-3">
                         {alerts.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No collaboration alerts"
-                                description="Run the portfolio analysis after partner activities and commitments have been recorded."
+                                title={copy.no_collaboration_alerts}
+                                description={
+                                    copy.no_collaboration_alerts_description
+                                }
                                 className="min-h-52 border"
                             />
                         )}
@@ -304,34 +318,56 @@ export default function PartnerCoordinationIndex({
                                 <div className="grid gap-2">
                                     <div className="flex flex-wrap items-center gap-2">
                                         <Badge variant="outline">
-                                            {alert.type}
+                                            {copy[`alert_type_${alert.type}`] ??
+                                                alert.type}
                                         </Badge>
                                         <Badge variant="secondary">
-                                            {alert.severity}
+                                            {copy[
+                                                `severity_${alert.severity}`
+                                            ] ?? alert.severity}
                                         </Badge>
                                         <Badge variant="outline">
-                                            {alert.status}
+                                            {copy[`status_${alert.status}`] ??
+                                                alert.status}
                                         </Badge>
                                     </div>
                                     <p className="font-medium">
-                                        {alert.primaryPartner} ×{' '}
-                                        {alert.relatedPartner}
+                                        {interpolate(copy.partner_pair, {
+                                            primary: alert.primaryPartner,
+                                            related: alert.relatedPartner,
+                                        })}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
                                         {alert.summary}
                                     </p>
                                     {alert.resolution && (
                                         <p className="text-sm">
-                                            Resolution: {alert.resolution}
+                                            {interpolate(
+                                                copy.resolution_value,
+                                                {
+                                                    resolution:
+                                                        alert.resolution,
+                                                },
+                                            )}
                                         </p>
                                     )}
                                 </div>
                                 {capabilities.resolveAlerts &&
                                     alert.status === 'open' && (
                                         <FormSheet
-                                            title="Resolve collaboration alert"
-                                            triggerLabel="Resolve alert"
-                                            description={`${alert.primaryPartner} and ${alert.relatedPartner}: record the agreed resolution and next action.`}
+                                            title={
+                                                copy.resolve_collaboration_alert
+                                            }
+                                            triggerLabel={copy.resolve_alert}
+                                            description={interpolate(
+                                                copy.resolve_collaboration_alert_description,
+                                                {
+                                                    primary:
+                                                        alert.primaryPartner,
+                                                    related:
+                                                        alert.relatedPartner,
+                                                },
+                                            )}
                                         >
                                             <Form
                                                 action={resolveAlert({
@@ -339,7 +375,7 @@ export default function PartnerCoordinationIndex({
                                                 })}
                                                 className="grid gap-4"
                                             >
-                                                {({ processing }) => (
+                                                {({ processing, errors }) => (
                                                     <>
                                                         <input
                                                             type="hidden"
@@ -349,16 +385,37 @@ export default function PartnerCoordinationIndex({
                                                         <Input
                                                             name="resolution"
                                                             required
-                                                            placeholder="Resolution and next action"
-                                                            aria-label="Resolution"
+                                                            placeholder={
+                                                                copy.resolution_and_next_action
+                                                            }
+                                                            aria-label={
+                                                                copy.resolution
+                                                            }
+                                                            aria-invalid={Boolean(
+                                                                errors.resolution,
+                                                            )}
+                                                            aria-describedby={
+                                                                errors.resolution
+                                                                    ? `partner-alert-${alert.id}-resolution-error`
+                                                                    : undefined
+                                                            }
+                                                        />
+                                                        <InputError
+                                                            id={`partner-alert-${alert.id}-resolution-error`}
+                                                            message={
+                                                                errors.resolution
+                                                            }
                                                         />
                                                         <Button
                                                             type="submit"
                                                             disabled={
                                                                 processing
                                                             }
+                                                            aria-busy={
+                                                                processing
+                                                            }
                                                         >
-                                                            Resolve alert
+                                                            {copy.resolve_alert}
                                                         </Button>
                                                     </>
                                                 )}
