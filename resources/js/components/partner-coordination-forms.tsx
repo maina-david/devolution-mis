@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Handshake, Landmark, WalletCards } from 'lucide-react';
 import {
     storeAgreement,
@@ -42,18 +42,20 @@ export default function PartnerCoordinationForms(props: Props) {
 }
 
 function ProfileForm({ organizations, counties, sectors, users }: Props) {
+    const copy = usePage().props.localization.partnerCoordination;
+
     return (
         <FormSheet
-            title="Register partner"
-            triggerLabel="Register partner"
+            title={copy.form_register_partner}
+            triggerLabel={copy.form_register_partner}
             icon={Handshake}
-            description="Define the organization, authorised representatives, counties, sectors and delivery modalities."
+            description={copy.form_register_partner_description}
         >
             <Form action={storeProfile()} className="grid gap-4" resetOnSuccess>
                 {({ errors, processing }) => (
                     <>
                         <Field
-                            label="Organization"
+                            label={copy.form_organization}
                             error={errors.organization_id}
                         >
                             <Select
@@ -61,7 +63,10 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                                 options={organizations}
                             />
                         </Field>
-                        <Field label="Partner type" error={errors.partner_type}>
+                        <Field
+                            label={copy.form_partner_type}
+                            error={errors.partner_type}
+                        >
                             <StaticSelect
                                 name="partner_type"
                                 values={[
@@ -78,20 +83,20 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                         <ReferenceCatalogSelect
                             id="partner-country"
                             name="country"
-                            label="Country"
+                            label={copy.form_country}
                             catalog="country-name"
                             error={errors.country}
                             optional
                         />
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="Focal point"
+                                label={copy.form_focal_point}
                                 error={errors.focal_point_name}
                             >
                                 <Input name="focal_point_name" required />
                             </Field>
                             <Field
-                                label="Focal email"
+                                label={copy.form_focal_email}
                                 error={errors.focal_point_email}
                             >
                                 <Input
@@ -101,7 +106,7 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                                 />
                             </Field>
                         </div>
-                        <Field label="Website" error={errors.website}>
+                        <Field label={copy.form_website} error={errors.website}>
                             <Input
                                 name="website"
                                 type="url"
@@ -109,7 +114,7 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                             />
                         </Field>
                         <Field
-                            label="County portfolio"
+                            label={copy.form_county_portfolio}
                             error={errors.county_ids}
                         >
                             <MultiSelect
@@ -118,7 +123,7 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                             />
                         </Field>
                         <Field
-                            label="Sector portfolio"
+                            label={copy.form_sector_portfolio}
                             error={errors.sector_ids}
                         >
                             <MultiSelect
@@ -127,7 +132,7 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                             />
                         </Field>
                         <Field
-                            label="Authorised partner users"
+                            label={copy.form_authorized_partner_users}
                             error={errors.user_ids}
                         >
                             <MultiSelect
@@ -137,7 +142,7 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                             />
                         </Field>
                         <Field
-                            label="Strategic priorities"
+                            label={copy.form_strategic_priorities}
                             error={errors.strategic_priorities}
                         >
                             <textarea
@@ -148,8 +153,9 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
                         <Button
                             type="submit"
                             disabled={processing || organizations.length === 0}
+                            aria-busy={processing}
                         >
-                            Create partner profile
+                            {copy.form_create_partner_profile}
                         </Button>
                     </>
                 )}
@@ -159,12 +165,14 @@ function ProfileForm({ organizations, counties, sectors, users }: Props) {
 }
 
 function AgreementForm({ partners }: Props) {
+    const copy = usePage().props.localization.partnerCoordination;
+
     return (
         <FormSheet
-            title="Register agreement"
-            triggerLabel="Register agreement"
+            title={copy.form_register_agreement}
+            triggerLabel={copy.form_register_agreement}
             icon={Landmark}
-            description="Catalogue MoUs, financing instruments and cooperation frameworks."
+            description={copy.form_register_agreement_description}
         >
             <Form
                 action={storeAgreement()}
@@ -174,7 +182,7 @@ function AgreementForm({ partners }: Props) {
                 {({ errors, processing }) => (
                     <>
                         <Field
-                            label="Partner"
+                            label={copy.form_partner}
                             error={errors.partner_profile_id}
                         >
                             <Select
@@ -183,11 +191,14 @@ function AgreementForm({ partners }: Props) {
                             />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Reference" error={errors.reference}>
+                            <Field
+                                label={copy.form_reference}
+                                error={errors.reference}
+                            >
                                 <Input name="reference" required />
                             </Field>
                             <Field
-                                label="Agreement type"
+                                label={copy.form_agreement_type}
                                 error={errors.agreement_type}
                             >
                                 <StaticSelect
@@ -202,25 +213,25 @@ function AgreementForm({ partners }: Props) {
                                 />
                             </Field>
                         </div>
-                        <Field label="Title" error={errors.title}>
+                        <Field label={copy.form_title} error={errors.title}>
                             <Input name="title" required />
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <DatePickerField
                                 name="starts_on"
-                                label="Starts on"
+                                label={copy.form_starts_on}
                                 error={errors.starts_on}
                                 required
                             />
                             <DatePickerField
                                 name="ends_on"
-                                label="Ends on"
+                                label={copy.form_ends_on}
                                 error={errors.ends_on}
                             />
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="Committed value"
+                                label={copy.form_committed_value}
                                 error={errors.committed_value}
                             >
                                 <Input
@@ -233,21 +244,23 @@ function AgreementForm({ partners }: Props) {
                             <ReferenceCatalogSelect
                                 id="partner-agreement-currency"
                                 name="currency"
-                                label="Currency"
+                                label={copy.form_currency}
                                 catalog="currency"
                                 error={errors.currency}
                             />
                         </div>
                         <Field
-                            label="Document reference"
+                            label={copy.form_document_reference}
                             error={errors.document_reference}
                         >
                             <Input
                                 name="document_reference"
-                                placeholder="Repository record or secure URL"
+                                placeholder={
+                                    copy.form_document_reference_placeholder
+                                }
                             />
                         </Field>
-                        <Field label="Summary" error={errors.summary}>
+                        <Field label={copy.form_summary} error={errors.summary}>
                             <textarea
                                 name="summary"
                                 required
@@ -257,8 +270,9 @@ function AgreementForm({ partners }: Props) {
                         <Button
                             type="submit"
                             disabled={processing || partners.length === 0}
+                            aria-busy={processing}
                         >
-                            Register agreement
+                            {copy.form_register_agreement}
                         </Button>
                     </>
                 )}
@@ -268,12 +282,14 @@ function AgreementForm({ partners }: Props) {
 }
 
 function ContributionForm({ partners, projects }: Props) {
+    const copy = usePage().props.localization.partnerCoordination;
+
     return (
         <FormSheet
-            title="Report contribution"
-            triggerLabel="Report contribution"
+            title={copy.form_report_contribution}
+            triggerLabel={copy.form_report_contribution}
             icon={WalletCards}
-            description="Record who funds what, where and how with traceable source provenance."
+            description={copy.form_report_contribution_description}
         >
             <Form
                 action={storeContribution()}
@@ -283,7 +299,7 @@ function ContributionForm({ partners, projects }: Props) {
                 {({ errors, processing }) => (
                     <>
                         <Field
-                            label="Partner"
+                            label={copy.form_partner}
                             error={errors.partner_profile_id}
                         >
                             <Select
@@ -292,7 +308,7 @@ function ContributionForm({ partners, projects }: Props) {
                             />
                         </Field>
                         <Field
-                            label="Project"
+                            label={copy.form_project}
                             error={errors.devolution_project_id}
                         >
                             <Select
@@ -302,7 +318,7 @@ function ContributionForm({ partners, projects }: Props) {
                         </Field>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="Financial year"
+                                label={copy.form_financial_year}
                                 error={errors.financial_year}
                             >
                                 <Input
@@ -312,7 +328,7 @@ function ContributionForm({ partners, projects }: Props) {
                                 />
                             </Field>
                             <Field
-                                label="Contribution type"
+                                label={copy.form_contribution_type}
                                 error={errors.contribution_type}
                             >
                                 <StaticSelect
@@ -330,7 +346,7 @@ function ContributionForm({ partners, projects }: Props) {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="Committed"
+                                label={copy.form_committed}
                                 error={errors.committed_amount}
                             >
                                 <Input
@@ -342,7 +358,7 @@ function ContributionForm({ partners, projects }: Props) {
                                 />
                             </Field>
                             <Field
-                                label="Disbursed"
+                                label={copy.form_disbursed}
                                 error={errors.disbursed_amount}
                             >
                                 <Input
@@ -356,7 +372,7 @@ function ContributionForm({ partners, projects }: Props) {
                         </div>
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Field
-                                label="In-kind value"
+                                label={copy.form_in_kind_value}
                                 error={errors.in_kind_value}
                             >
                                 <Input
@@ -369,18 +385,18 @@ function ContributionForm({ partners, projects }: Props) {
                             <ReferenceCatalogSelect
                                 id="partner-contribution-currency"
                                 name="currency"
-                                label="Currency"
+                                label={copy.form_currency}
                                 catalog="currency"
                                 error={errors.currency}
                             />
                         </div>
                         <Field
-                            label="Source system"
+                            label={copy.form_source_system}
                             error={errors['provenance.source_system']}
                         >
                             <Input
                                 name="provenance[source_system]"
-                                defaultValue="Partner portal"
+                                defaultValue={copy.form_partner_portal}
                                 required
                             />
                         </Field>
@@ -390,7 +406,10 @@ function ContributionForm({ partners, projects }: Props) {
                             value={new Date().toISOString()}
                         />
                         <input type="hidden" name="status" value="committed" />
-                        <Field label="Description" error={errors.description}>
+                        <Field
+                            label={copy.form_description}
+                            error={errors.description}
+                        >
                             <textarea
                                 name="description"
                                 className={textareaClass}
@@ -403,8 +422,9 @@ function ContributionForm({ partners, projects }: Props) {
                                 partners.length === 0 ||
                                 projects.length === 0
                             }
+                            aria-busy={processing}
                         >
-                            Record contribution
+                            {copy.form_record_contribution}
                         </Button>
                     </>
                 )}

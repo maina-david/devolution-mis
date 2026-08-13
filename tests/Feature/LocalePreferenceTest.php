@@ -48,6 +48,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.accessControl.grant_programme_access', 'Toa ufikiaji wa programu')
                 ->where('localization.programmeWorkspace.setting_value', 'Thamani ya mpangilio')
                 ->where('localization.dswg.form_create_series_submit', 'Unda mfululizo na ratiba')
+                ->where('localization.partnerCoordination.form_create_partner_profile', 'Unda wasifu wa mshirika')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -108,6 +109,20 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('copy.form_schedule_meeting_submit', $source);
 
         foreach (['Create a recurring meeting series', 'Establish a working group', 'Schedule and invite', 'Working group', 'Duration (minutes)'] as $literal) {
+            $this->assertStringNotContainsString($literal, $source);
+        }
+    }
+
+    public function test_partner_creation_forms_use_the_shared_locale_catalogue(): void
+    {
+        $source = (string) file_get_contents(resource_path('js/components/partner-coordination-forms.tsx'));
+
+        $this->assertStringContainsString('props.localization.partnerCoordination', $source);
+        $this->assertStringContainsString('copy.form_create_partner_profile', $source);
+        $this->assertStringContainsString('copy.form_register_agreement', $source);
+        $this->assertStringContainsString('copy.form_record_contribution', $source);
+
+        foreach (['Register partner', 'Authorised partner users', 'Catalogue MoUs', 'Report contribution', 'Source system'] as $literal) {
             $this->assertStringNotContainsString($literal, $source);
         }
     }
