@@ -64,13 +64,13 @@ class EvidenceController extends Controller
     public function preview(Request $request, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
     {
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
-        abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
+        abort_unless($document->scan_status === 'clean', 423, __('evidence.errors.document_quarantined'));
         abort_unless(Storage::exists($document->path), 404);
         abort_unless($this->hasValidIntegrity($document), 409, __('evidence.errors.integrity_failed'));
         if (! $this->isPreviewableMimeType((string) $document->mime_type)) {
             abort(415, __('evidence.errors.preview_unavailable'));
         }
-        $auditLogger->record($this->user($request), $document, 'evidence.previewed', "Document previewed: {$document->title}.", $document->county_id);
+        $auditLogger->record($this->user($request), $document, 'evidence.previewed', __('evidence.audit.previewed', ['title' => $document->title]), $document->county_id);
 
         if ($this->isMediaMimeType((string) $document->mime_type)) {
             return $this->streamMedia($request, (string) config('filesystems.default'), $document->path, $document->original_name, (string) $document->mime_type);
@@ -86,10 +86,10 @@ class EvidenceController extends Controller
     public function download(Request $request, AssessmentDocument $document, AuditLogger $auditLogger): StreamedResponse
     {
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
-        abort_unless($document->scan_status === 'clean', 423, 'This document is quarantined until its security scan passes.');
+        abort_unless($document->scan_status === 'clean', 423, __('evidence.errors.document_quarantined'));
         abort_unless(Storage::exists($document->path), 404);
-        abort_unless($this->hasValidIntegrity($document), 409, 'Document integrity verification failed.');
-        $auditLogger->record($this->user($request), $document, 'evidence.downloaded', "Document downloaded: {$document->title}.", $document->county_id);
+        abort_unless($this->hasValidIntegrity($document), 409, __('evidence.errors.integrity_failed'));
+        $auditLogger->record($this->user($request), $document, 'evidence.downloaded', __('evidence.audit.downloaded', ['title' => $document->title]), $document->county_id);
 
         $extension = pathinfo($document->path, PATHINFO_EXTENSION);
         $downloadName = str($document->title)->slug()->append($extension ? ".{$extension}" : '')->toString();
@@ -100,8 +100,8 @@ class EvidenceController extends Controller
     public function previewVersion(Request $request, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
     {
         $this->authorizeVersionAccess($request, $document, $version);
-        abort_unless($this->isPreviewableMimeType($version->mime_type), 415, 'Preview is not available for this file type.');
-        $auditLogger->record($this->user($request), $version, 'evidence.version_previewed', "Document version {$version->version_number} previewed: {$document->title}.", $document->county_id);
+        abort_unless($this->isPreviewableMimeType($version->mime_type), 415, __('evidence.errors.preview_unavailable'));
+        $auditLogger->record($this->user($request), $version, 'evidence.version_previewed', __('evidence.audit.version_previewed', ['version' => $version->version_number, 'title' => $document->title]), $document->county_id);
 
         if ($this->isMediaMimeType($version->mime_type)) {
             return $this->streamMedia($request, $version->storage_disk, $version->path, $version->original_name, $version->mime_type);
@@ -117,7 +117,7 @@ class EvidenceController extends Controller
     public function downloadVersion(Request $request, AssessmentDocument $document, DocumentVersion $version, AuditLogger $auditLogger): StreamedResponse
     {
         $this->authorizeVersionAccess($request, $document, $version);
-        $auditLogger->record($this->user($request), $version, 'evidence.version_downloaded', "Document version {$version->version_number} downloaded: {$document->title}.", $document->county_id);
+        $auditLogger->record($this->user($request), $version, 'evidence.version_downloaded', __('evidence.audit.version_downloaded', ['version' => $version->version_number, 'title' => $document->title]), $document->county_id);
 
         return Storage::disk($version->storage_disk)->download($version->path, $version->original_name);
     }
@@ -125,7 +125,7 @@ class EvidenceController extends Controller
     public function store(StoreEvidenceRequest $request, Assessment $assessment, StoreAssessmentEvidence $storeEvidence): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($assessment->county), 403);
-        abort_if(in_array($assessment->status, [AssessmentStatus::Assessed, AssessmentStatus::Approved, AssessmentStatus::Published]), 409, 'Evidence is locked after assessment.');
+        abort_if(in_array($assessment->status, [AssessmentStatus::Assessed, AssessmentStatus::Approved, AssessmentStatus::Published]), 409, __('evidence.errors.assessment_locked'));
         $storeEvidence->handle($assessment, $this->user($request), $request->file('document'), [
             'title' => $request->string('title')->toString(),
             'category' => $request->string('category')->toString(),
@@ -150,12 +150,12 @@ class EvidenceController extends Controller
     public function update(UpdateDocumentRequest $request, AssessmentDocument $document, AuditLogger $auditLogger): RedirectResponse
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
-        abort_if($document->hasActiveLegalHold() && $request->validated('retention_until') !== $document->retention_until?->toDateString(), 409, 'Retention cannot be changed while a legal hold is active.');
+        abort_if($document->hasActiveLegalHold() && $request->validated('retention_until') !== $document->retention_until?->toDateString(), 409, __('evidence.errors.retention_locked'));
         $document->update([
             ...$request->safe()->only(['title', 'category', 'description', 'document_date', 'retention_until']),
             'tags' => $request->string('tags')->explode(',')->map(fn (string $tag): string => str($tag)->trim()->toString())->filter()->values()->all(),
         ]);
-        $auditLogger->record($this->user($request), $document, 'evidence.metadata_updated', "Document metadata updated: {$document->title}.", $document->county_id);
+        $auditLogger->record($this->user($request), $document, 'evidence.metadata_updated', __('evidence.audit.metadata_updated', ['title' => $document->title]), $document->county_id);
         Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.metadata_updated')]);
 
         return back();
@@ -165,8 +165,8 @@ class EvidenceController extends Controller
     {
         Gate::authorize(ProgrammePermission::UploadEvidence->value);
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
-        abort_if($document->hasActiveLegalHold(), 409, 'A document under legal hold cannot be archived.');
-        $auditLogger->record($this->user($request), $document, 'evidence.archived', "Document archived: {$document->title}.", $document->county_id);
+        abort_if($document->hasActiveLegalHold(), 409, __('evidence.errors.archive_locked'));
+        $auditLogger->record($this->user($request), $document, 'evidence.archived', __('evidence.audit.archived', ['title' => $document->title]), $document->county_id);
         $document->delete();
         Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.archived')]);
 
@@ -185,7 +185,7 @@ class EvidenceController extends Controller
     {
         Gate::authorize(ProgrammePermission::ManageRecords->value);
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
-        abort_unless($document->scan_status === 'clean' && $document->current_version_id !== null, 409, 'Only a clean current document version can be processed.');
+        abort_unless($document->scan_status === 'clean' && $document->current_version_id !== null, 409, __('evidence.errors.clean_current_version_required'));
         $document->update(['ocr_status' => 'pending']);
         ExtractDocumentText::dispatch((string) $document->current_version_id, true, $this->user($request)->id, 'manual_retry');
         Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.extraction_queued')]);
@@ -209,10 +209,10 @@ class EvidenceController extends Controller
     {
         abort_unless($this->user($request)->canAccessCounty($document->county), 403);
         abort_unless($legalHold->assessment_document_id === $document->id && $legalHold->released_at === null, 404);
-        abort_if($legalHold->placed_by === $this->user($request)->id, 409, 'The officer who placed a legal hold cannot release it.');
+        abort_if($legalHold->placed_by === $this->user($request)->id, 409, __('evidence.errors.hold_separation_required'));
         $validated = $request->validated();
         $legalHold->update(['released_by' => $this->user($request)->id, 'released_at' => now(), 'release_reason' => $validated['release_reason']]);
-        $auditLogger->record($this->user($request), $legalHold, 'document.legal_hold_released', "Legal hold {$legalHold->reference} released.", $document->county_id, ['reason' => $validated['release_reason']]);
+        $auditLogger->record($this->user($request), $legalHold, 'document.legal_hold_released', __('evidence.audit.hold_released', ['reference' => $legalHold->reference]), $document->county_id, ['reason' => $validated['release_reason']]);
         Inertia::flash('toast', ['type' => 'success', 'message' => __('evidence.outcomes.hold_released')]);
 
         return back();
@@ -271,9 +271,9 @@ class EvidenceController extends Controller
     {
         abort_unless($this->documentAccess->allows($this->user($request), $document), 403);
         abort_unless($version->assessment_document_id === $document->id, 404);
-        abort_unless($version->scan_status === 'clean', 423, 'This document version is quarantined until its security scan passes.');
+        abort_unless($version->scan_status === 'clean', 423, __('evidence.errors.version_quarantined'));
         abort_unless(Storage::disk($version->storage_disk)->exists($version->path), 404);
-        abort_unless($this->integrityVerifier->matches($version->storage_disk, $version->path, $version->content_checksum), 409, 'Document version integrity verification failed.');
+        abort_unless($this->integrityVerifier->matches($version->storage_disk, $version->path, $version->content_checksum), 409, __('evidence.errors.version_integrity_failed'));
     }
 
     private function isPreviewableMimeType(string $mimeType): bool
@@ -296,19 +296,19 @@ class EvidenceController extends Controller
         $range = $request->header('Range');
 
         if ($range !== null) {
-            abort_unless(preg_match('/^bytes=(\d*)-(\d*)$/', $range, $matches) === 1, 416, "The requested media range is invalid: {$range}.");
-            abort_if($matches[1] === '' && $matches[2] === '', 416, 'The requested media range is invalid.');
+            abort_unless(preg_match('/^bytes=(\d*)-(\d*)$/', $range, $matches) === 1, 416, __('evidence.errors.media_range_invalid_with_value', ['range' => $range]));
+            abort_if($matches[1] === '' && $matches[2] === '', 416, __('evidence.errors.media_range_invalid'));
 
             if ($matches[1] === '') {
                 $suffixLength = min((int) $matches[2], $size);
-                abort_if($suffixLength < 1, 416, 'The requested media range is invalid.');
+                abort_if($suffixLength < 1, 416, __('evidence.errors.media_range_invalid'));
                 $start = $size - $suffixLength;
             } else {
                 $start = (int) $matches[1];
                 $end = $matches[2] === '' ? $end : min((int) $matches[2], $end);
             }
 
-            abort_if($start >= $size || $start > $end, 416, "The requested media range {$start}-{$end} is outside the {$size}-byte file.");
+            abort_if($start >= $size || $start > $end, 416, __('evidence.errors.media_range_outside_file', ['start' => $start, 'end' => $end, 'size' => $size]));
             $status = 206;
         }
 

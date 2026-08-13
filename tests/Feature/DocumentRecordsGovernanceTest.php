@@ -135,8 +135,16 @@ class DocumentRecordsGovernanceTest extends TestCase
 
         $document = AssessmentDocument::query()->sole();
         $this->assertSame('infected', $document->scan_status);
-        $this->actingAs($official)->get(route('evidence.preview', [$document]))->assertStatus(423);
-        $this->actingAs($official)->get(route('evidence.download', [$document]))->assertStatus(423);
+        $this->actingAs($official)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('evidence.preview', [$document]))
+            ->assertStatus(423)
+            ->assertSeeText('Hati hii imetengwa hadi ukaguzi wake wa usalama ufaulu.');
+        $this->actingAs($official)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('evidence.download', [$document]))
+            ->assertStatus(423)
+            ->assertSeeText('Ce document est en quarantaine jusqu’à la réussite de son analyse de sécurité.');
         $this->actingAs($assessor)->patch(route('evidence.verify', [$document]), ['status' => 'verified'])->assertStatus(409);
     }
 
@@ -181,12 +189,20 @@ class DocumentRecordsGovernanceTest extends TestCase
             'document' => UploadedFile::fake()->createWithContent('replacement.txt', 'replacement version'),
             'change_summary' => 'Attempted replacement',
         ])->assertStatus(409);
-        $this->actingAs($official)->patch(route('evidence.update', [$document]), [
-            'title' => $document->title,
-            'category' => $document->category,
-            'retention_until' => '2031-01-01',
-        ])->assertStatus(409);
-        $this->actingAs($official)->delete(route('evidence.destroy', [$document]))->assertStatus(409);
+        $this->actingAs($official)
+            ->withSession(['locale' => 'sw'])
+            ->patch(route('evidence.update', [$document]), [
+                'title' => $document->title,
+                'category' => $document->category,
+                'retention_until' => '2031-01-01',
+            ])
+            ->assertStatus(409)
+            ->assertSeeText('Muda wa kuhifadhi hauwezi kubadilishwa wakati zuio la kisheria linatumika.');
+        $this->actingAs($official)
+            ->withSession(['locale' => 'fr'])
+            ->delete(route('evidence.destroy', [$document]))
+            ->assertStatus(409)
+            ->assertSeeText('Un document sous gel juridique ne peut pas être archivé.');
         $this->assertDatabaseHas('assessment_documents', ['id' => $document->id, 'deleted_at' => null]);
         $this->assertSame(1, DocumentLegalHold::query()->count());
     }
@@ -216,7 +232,7 @@ class DocumentRecordsGovernanceTest extends TestCase
             'content_checksum' => hash('sha256', '%PDF other county'),
         ]);
 
-        $this->actingAs($admin)->get(route('evidence.versions.preview', [$document, $version]))
+        $this->actingAs($admin)->withSession(['locale' => 'sw'])->get(route('evidence.versions.preview', [$document, $version]))
             ->assertOk()
             ->assertHeader('Content-Type', 'application/pdf');
         $this->actingAs($admin)->get(route('evidence.versions.download', [$document, $version]))
@@ -225,6 +241,7 @@ class DocumentRecordsGovernanceTest extends TestCase
         $this->actingAs($admin)->get(route('evidence.versions.download', [$document, $otherVersion]))->assertNotFound();
         $this->actingAs($admin)->get(route('evidence.versions.download', [$otherDocument, $otherVersion]))->assertForbidden();
         $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_previewed']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_previewed', 'description' => "Toleo la hati {$version->version_number} limehakikiwa: {$document->title}."]);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $version->id, 'action' => 'evidence.version_downloaded']);
 
         Storage::put($version->path, '%PDF tampered retained version');
@@ -274,6 +291,17 @@ class DocumentRecordsGovernanceTest extends TestCase
             ->assertHeader('Accept-Ranges', 'bytes')
             ->assertHeader('Content-Range', 'bytes 0-9/'.strlen($content))
             ->assertHeader('Content-Type', 'video/mp4');
+        $this->withoutHeader('Range');
+
+        $invalidRangeResponse = $this->actingAs($admin)
+            ->withSession(['locale' => 'fr'])
+            ->withHeader('Range', 'bytes=999999-1000000')
+            ->get(route('evidence.versions.preview', [$document, $version]));
+        $invalidRangeResponse->assertStatus(416);
+        $this->assertSame(
+            'La plage média 999999-'.(strlen($content) - 1).' se trouve hors du fichier de '.strlen($content).' octets.',
+            $invalidRangeResponse->exception?->getMessage(),
+        );
         $this->withoutHeader('Range');
 
         $this->actingAs($admin)
