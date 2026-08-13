@@ -279,6 +279,10 @@ return [
             'audio_requires_transcript' => 'Audio lessons require a digital audio asset and transcript.',
         ],
     ],
+    'attendance' => [
+        'errors' => ['before_start' => 'Attendance cannot be recorded before the classroom starts.', 'not_enrolled' => 'The learner is not enrolled in this classroom course.', 'provider_event_conflict' => 'The provider event identifier was already used with different attendance data.', 'amendment_note_required' => 'An attendance amendment requires an explanatory note.', 'capacity_reached' => 'The classroom attendance capacity has been reached.', 'times_outside_session' => 'Attendance times must fall within the classroom start and end times.', 'duration_classification' => 'The recorded duration is classified as :status attendance.'],
+        'audit' => ['recorded' => ':status attendance recorded for :learner in :classroom.'],
+    ],
     'outcomes' => [
         'course_created' => 'Course :code created.',
         'cohort_created' => 'Learning cohort :code created.',

@@ -23,11 +23,11 @@ class RecordVirtualClassroomAttendance
         return DB::transaction(function () use ($classroom, $actor, $attributes): VirtualClassroomAttendance {
             $lockedClassroom = VirtualClassroom::query()->with('course.county')->lockForUpdate()->findOrFail($classroom->id);
             abort_unless($this->access->canManageAttendance($actor, $lockedClassroom), 403);
-            abort_if(now()->isBefore($lockedClassroom->starts_at), 409, 'Attendance cannot be recorded before the classroom starts.');
+            abort_if(now()->isBefore($lockedClassroom->starts_at), 409, __('learning.attendance.errors.before_start'));
 
             $enrollmentId = (string) $attributes['learning_enrollment_id'];
             $enrollment = LearningEnrollment::query()->with('user')->lockForUpdate()->findOrFail($enrollmentId);
-            abort_unless($enrollment->learning_course_id === $lockedClassroom->learning_course_id && $enrollment->user_id === $enrollment->user->id, 409, 'The learner is not enrolled in this classroom course.');
+            abort_unless($enrollment->learning_course_id === $lockedClassroom->learning_course_id && $enrollment->user_id === $enrollment->user->id, 409, __('learning.attendance.errors.not_enrolled'));
 
             $normalized = $this->normalizedAttendance($lockedClassroom, $enrollment, $attributes);
             $checksum = hash('sha256', json_encode($normalized, JSON_THROW_ON_ERROR));
@@ -36,7 +36,7 @@ class RecordVirtualClassroomAttendance
             if (is_string($providerEventId)) {
                 $existingEvent = VirtualClassroomAttendance::query()->where('virtual_classroom_id', $lockedClassroom->id)->where('provider_event_id', $providerEventId)->first();
                 if ($existingEvent !== null) {
-                    abort_unless(hash_equals($existingEvent->payload_checksum, $checksum), 409, 'The provider event identifier was already used with different attendance data.');
+                    abort_unless(hash_equals($existingEvent->payload_checksum, $checksum), 409, __('learning.attendance.errors.provider_event_conflict'));
 
                     return $existingEvent;
                 }
@@ -44,12 +44,12 @@ class RecordVirtualClassroomAttendance
 
             $attendance = VirtualClassroomAttendance::query()->where('virtual_classroom_id', $lockedClassroom->id)->where('learning_enrollment_id', $enrollment->id)->first();
             if ($attendance !== null) {
-                abort_if(trim((string) ($attributes['notes'] ?? '')) === '', 422, 'An attendance amendment requires an explanatory note.');
+                abort_if(trim((string) ($attributes['notes'] ?? '')) === '', 422, __('learning.attendance.errors.amendment_note_required'));
             }
 
             if ($normalized['attendance_status'] !== 'absent' && $lockedClassroom->capacity !== null) {
                 $occupied = VirtualClassroomAttendance::query()->where('virtual_classroom_id', $lockedClassroom->id)->where('learning_enrollment_id', '!=', $enrollment->id)->whereIn('attendance_status', ['present', 'partial'])->count();
-                abort_if($occupied >= $lockedClassroom->capacity, 409, 'The classroom attendance capacity has been reached.');
+                abort_if($occupied >= $lockedClassroom->capacity, 409, __('learning.attendance.errors.capacity_reached'));
             }
 
             $beforeChecksum = $attendance?->payload_checksum;
@@ -60,7 +60,7 @@ class RecordVirtualClassroomAttendance
                 $attendance->update($values);
             }
 
-            $this->auditLogger->record($actor, $attendance, $beforeChecksum === null ? 'learning.classroom_attendance_recorded' : 'learning.classroom_attendance_amended', "{$normalized['attendance_status']} attendance recorded for {$enrollment->user->name} in {$lockedClassroom->title}.", $enrollment->county_id, ['classroom_id' => $lockedClassroom->id, 'enrollment_id' => $enrollment->id, 'source' => $normalized['source'], 'attended_minutes' => $normalized['attended_minutes'], 'before_checksum' => $beforeChecksum, 'payload_checksum' => $checksum]);
+            $this->auditLogger->record($actor, $attendance, $beforeChecksum === null ? 'learning.classroom_attendance_recorded' : 'learning.classroom_attendance_amended', __('learning.attendance.audit.recorded', ['status' => $normalized['attendance_status'], 'learner' => $enrollment->user->name, 'classroom' => $lockedClassroom->title]), $enrollment->county_id, ['classroom_id' => $lockedClassroom->id, 'enrollment_id' => $enrollment->id, 'source' => $normalized['source'], 'attended_minutes' => $normalized['attended_minutes'], 'before_checksum' => $beforeChecksum, 'payload_checksum' => $checksum]);
 
             return $attendance->refresh();
         });
@@ -83,14 +83,14 @@ class RecordVirtualClassroomAttendance
             $joinedAt = CarbonImmutable::parse((string) $attributes['joined_at']);
             $leftAt = CarbonImmutable::parse((string) $attributes['left_at']);
             if ($joinedAt->isBefore($classroom->starts_at) || $leftAt->isAfter($classroom->ends_at) || ! $leftAt->isAfter($joinedAt)) {
-                throw ValidationException::withMessages(['joined_at' => 'Attendance times must fall within the classroom start and end times.']);
+                throw ValidationException::withMessages(['joined_at' => __('learning.attendance.errors.times_outside_session')]);
             }
 
             $attendedMinutes = (int) $joinedAt->diffInMinutes($leftAt);
             $sessionMinutes = max(1, (int) $classroom->starts_at->diffInMinutes($classroom->ends_at));
             $expectedStatus = $attendedMinutes >= (int) ceil($sessionMinutes * 0.75) ? 'present' : 'partial';
             if ($status !== $expectedStatus) {
-                throw ValidationException::withMessages(['attendance_status' => "The recorded duration is classified as {$expectedStatus} attendance."]);
+                throw ValidationException::withMessages(['attendance_status' => __('learning.attendance.errors.duration_classification', ['status' => $expectedStatus])]);
             }
         }
 

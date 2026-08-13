@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\RecordVirtualClassroomAttendance;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\LearningCourse;
@@ -11,6 +12,7 @@ use App\Models\VirtualClassroom;
 use App\Models\VirtualClassroomAttendance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class VirtualClassroomAttendanceWorkflowTest extends TestCase
@@ -100,6 +102,27 @@ class VirtualClassroomAttendanceWorkflowTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('localization.learning.governed_attendance_register', 'Rejesta ya mahudhurio inayosimamiwa')
                 ->where('localization.learning.value_present', 'Amehudhuria'));
+    }
+
+    public function test_attendance_safeguards_use_the_active_locale(): void
+    {
+        [$classroom, $facilitator, $enrollment] = $this->classroomWithRoster();
+        $futureClassroom = VirtualClassroom::factory()->create([
+            'learning_course_id' => $classroom->learning_course_id,
+            'facilitator_id' => $facilitator->id,
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addDay()->addHours(2),
+        ]);
+        app()->setLocale('fr');
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('La présence ne peut pas être enregistrée avant le début de la classe.');
+
+        app(RecordVirtualClassroomAttendance::class)->handle($futureClassroom, $facilitator, [
+            'learning_enrollment_id' => $enrollment->id,
+            'attendance_status' => 'absent',
+            'source' => 'manual',
+        ]);
     }
 
     /** @return array{VirtualClassroom, User, LearningEnrollment, LearningEnrollment} */

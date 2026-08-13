@@ -279,6 +279,10 @@ return [
             'audio_requires_transcript' => 'Masomo ya sauti yanahitaji sauti ya kidijitali na nakala yake.',
         ],
     ],
+    'attendance' => [
+        'errors' => ['before_start' => 'Mahudhurio hayawezi kurekodiwa kabla ya darasa kuanza.', 'not_enrolled' => 'Mwanafunzi hajasajiliwa katika kozi ya darasa hili.', 'provider_event_conflict' => 'Kitambulisho cha tukio la mtoa huduma tayari kimetumiwa na data tofauti ya mahudhurio.', 'amendment_note_required' => 'Marekebisho ya mahudhurio yanahitaji maelezo ya sababu.', 'capacity_reached' => 'Uwezo wa mahudhurio wa darasa umefikiwa.', 'times_outside_session' => 'Muda wa mahudhurio lazima uwe ndani ya muda wa kuanza na kumalizika kwa darasa.', 'duration_classification' => 'Muda uliorekodiwa umeainishwa kama mahudhurio ya hali :status.'],
+        'audit' => ['recorded' => 'Mahudhurio ya hali :status yamerekodiwa kwa :learner katika :classroom.'],
+    ],
     'outcomes' => [
         'course_created' => 'Kozi :code imeundwa.',
         'cohort_created' => 'Kundi la mafunzo :code limeundwa.',

@@ -279,6 +279,10 @@ return [
             'audio_requires_transcript' => 'Les leçons audio nécessitent un fichier audio numérique et une transcription.',
         ],
     ],
+    'attendance' => [
+        'errors' => ['before_start' => 'La présence ne peut pas être enregistrée avant le début de la classe.', 'not_enrolled' => 'L’apprenant n’est pas inscrit au cours de cette classe.', 'provider_event_conflict' => 'L’identifiant d’événement du fournisseur a déjà été utilisé avec des données de présence différentes.', 'amendment_note_required' => 'Une modification de présence nécessite une note explicative.', 'capacity_reached' => 'La capacité de présence de la classe est atteinte.', 'times_outside_session' => 'Les heures de présence doivent être comprises entre le début et la fin de la classe.', 'duration_classification' => 'La durée enregistrée est classée comme présence :status.'],
+        'audit' => ['recorded' => 'Présence :status enregistrée pour :learner dans :classroom.'],
+    ],
     'outcomes' => [
         'course_created' => 'Cours :code créé.',
         'cohort_created' => 'Cohorte de formation :code créée.',
