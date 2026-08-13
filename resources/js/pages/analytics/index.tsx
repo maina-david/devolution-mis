@@ -242,22 +242,19 @@ export default function AnalyticsReporting({
 
     return (
         <>
-            <Head title="Analytics and scheduled reporting" />
+            <Head title={analyticsCopy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-75">
-                                Governed evidence and decision support
+                                {analyticsCopy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Analytics and reporting centre
+                                {analyticsCopy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl opacity-80">
-                                Configure county-safe dashboards, preserve
-                                metric provenance, independently approve
-                                publication and generate private checksummed
-                                report artifacts.
+                                {analyticsCopy.description}
                             </p>
                         </div>
                         {capabilities.manage && (
@@ -382,11 +379,10 @@ export default function AnalyticsReporting({
                     <section className="grid gap-4">
                         <div>
                             <h2 className="font-bold">
-                                Scheduled delivery controls
+                                {analyticsCopy.schedules_title}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Draft schedules require a different authorized
-                                actor before background generation begins.
+                                {analyticsCopy.schedules_description}
                             </p>
                         </div>
                         <div className="grid gap-4 lg:grid-cols-2">
@@ -411,11 +407,13 @@ export default function AnalyticsReporting({
                     <section className="overflow-hidden rounded-xl border bg-card">
                         <div className="border-b px-5 py-4 sm:px-6">
                             <h2 className="font-bold">
-                                Generated report register
+                                {analyticsCopy.runs_title}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {runs.total.toLocaleString()} immutable
-                                execution records
+                                {analyticsCopy.immutable_runs.replace(
+                                    ':count',
+                                    runs.total.toLocaleString(),
+                                )}
                             </p>
                         </div>
                         {runRows.length ? (
@@ -463,14 +461,15 @@ function SavedFilterViews({
     views: Props['savedFilterViews'];
     filters: Props['filters'];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <Card>
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle>Saved filter views</CardTitle>
+                    <CardTitle>{analyticsCopy.saved_views}</CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Reuse a named, personal analytics context without
-                        changing another user&apos;s filters.
+                        {analyticsCopy.saved_views_description}
                     </p>
                 </div>
                 <FormSheet
@@ -485,7 +484,7 @@ function SavedFilterViews({
                             <>
                                 <div className="grid gap-2">
                                     <Label htmlFor="filter-view-name">
-                                        View name
+                                        {analyticsCopy.view_name}
                                     </Label>
                                     <Input
                                         id="filter-view-name"
@@ -515,7 +514,7 @@ function SavedFilterViews({
                                 )}
                                 <label className="flex items-center gap-2 text-sm">
                                     <Checkbox name="is_default" value="1" />
-                                    Use as my default analytics view
+                                    {analyticsCopy.default_view}
                                 </label>
                                 <Button type="submit" disabled={processing}>
                                     <Bookmark data-icon="inline-start" />
@@ -548,7 +547,7 @@ function SavedFilterViews({
                                         {view.name}
                                         {view.isDefault && (
                                             <Badge variant="secondary">
-                                                Default
+                                                {analyticsCopy.default}
                                             </Badge>
                                         )}
                                     </Link>
@@ -593,6 +592,8 @@ function DashboardPanel({
     capabilities: Props['capabilities'];
     filters: Props['filters'];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <section className="overflow-hidden rounded-xl border bg-card">
             <div className="flex flex-col justify-between gap-4 border-b p-5 sm:flex-row sm:items-start">
@@ -620,7 +621,7 @@ function DashboardPanel({
                         {dashboard.description}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                        Configured by {dashboard.creator}
+                        {analyticsCopy.configured_by} {dashboard.creator}
                         {dashboard.publisher
                             ? ` · published by ${dashboard.publisher}`
                             : ''}
@@ -653,7 +654,8 @@ function DashboardPanel({
                                     )
                                 }
                             >
-                                <FileCheck2 /> Publish independently
+                                <FileCheck2 />
+                                {analyticsCopy.publish_independently}
                             </Button>
                         )}
                 </div>
@@ -809,7 +811,10 @@ function WidgetCard({
                     </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                    Measured {formatDate(widget.measurement.measured_at)}
+                    {analyticsCopy.measured.replace(
+                        ':date',
+                        formatDate(widget.measurement.measured_at),
+                    )}
                 </p>
             </CardContent>
         </Card>
@@ -941,7 +946,7 @@ function DashboardForm({
                         />
                         <div className="grid gap-4 rounded-xl border p-4">
                             <h3 className="font-semibold">
-                                First governed widget
+                                {analyticsCopy.first_widget}
                             </h3>
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Field
@@ -997,7 +1002,7 @@ function DashboardForm({
                             </div>
                         </div>
                         <Button type="submit" disabled={processing}>
-                            <Plus /> Save governed draft
+                            <Plus /> {analyticsCopy.save_draft}
                         </Button>
                     </>
                 )}
@@ -1080,7 +1085,7 @@ function WidgetForm({
                     defaultValue="1"
                 />
                 <input type="hidden" name="position" value={nextPosition} />
-                <Button type="submit">Add governed widget</Button>
+                <Button type="submit">{analyticsCopy.add_widget}</Button>
             </Form>
         </FormSheet>
     );
@@ -1093,6 +1098,8 @@ function ScheduleForm({
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <FormSheet
             title="Create report schedule"
@@ -1182,7 +1189,7 @@ function ScheduleForm({
                             />
                         </div>
                         <Button type="submit" disabled={processing}>
-                            <Send /> Save for independent activation
+                            <Send /> {analyticsCopy.save_activation}
                         </Button>
                     </>
                 )}
@@ -1198,15 +1205,22 @@ function ScheduleCard({
     schedule: ReportSchedule;
     capabilities: Props['capabilities'];
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <Card>
             <CardHeader className="flex-row items-start justify-between">
                 <div>
                     <CardTitle className="text-base">
-                        {schedule.code} · {schedule.name}
+                        {schedule.code}
+                        {' · '}
+                        {schedule.name}
                     </CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Next run {formatDate(schedule.nextRunAt)}
+                        {analyticsCopy.next_run.replace(
+                            ':date',
+                            formatDate(schedule.nextRunAt),
+                        )}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                         {schedule.referenceData
@@ -1227,7 +1241,8 @@ function ScheduleCard({
                     <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
                             <span>
-                                <Eye /> {schedule.format.toUpperCase()} ·{' '}
+                                <Eye /> {schedule.format.toUpperCase()}
+                                {' · '}
                                 {humanize(schedule.frequency)}
                             </span>
                         </DropdownMenuItem>
@@ -1242,7 +1257,8 @@ function ScheduleCard({
                                         )
                                     }
                                 >
-                                    <FileCheck2 /> Independently activate
+                                    <FileCheck2 />
+                                    {analyticsCopy.activate_independently}
                                 </DropdownMenuItem>
                             )}
                         {capabilities.manage &&
@@ -1254,7 +1270,7 @@ function ScheduleCard({
                                         )
                                     }
                                 >
-                                    <Play /> Queue now
+                                    <Play /> {analyticsCopy.queue_now}
                                 </DropdownMenuItem>
                             )}
                     </DropdownMenuContent>
@@ -1267,7 +1283,10 @@ function ScheduleCard({
                         {schedule.format.toUpperCase()}
                     </Badge>
                     <Badge variant="outline">
-                        {schedule.recipientCount} recipient(s)
+                        {analyticsCopy.recipients.replace(
+                            ':count',
+                            String(schedule.recipientCount),
+                        )}
                     </Badge>
                 </div>
                 {schedule.county ? (
@@ -1276,11 +1295,14 @@ function ScheduleCard({
                     </Link>
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        National scope · national recipients only
+                        {analyticsCopy.national_recipients}
                     </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                    Created by {schedule.creator}
+                    {analyticsCopy.created_by.replace(
+                        ':name',
+                        schedule.creator,
+                    )}
                     {schedule.approver
                         ? ` · approved by ${schedule.approver}`
                         : ''}
@@ -1291,6 +1313,7 @@ function ScheduleCard({
 }
 
 function RunAction({ report }: { report: ReportRun }) {
+    const analyticsCopy = usePage().props.localization.analytics;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1307,12 +1330,12 @@ function RunAction({ report }: { report: ReportRun }) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setOpen(true)}>
-                        <Eye /> View execution evidence
+                        <Eye /> {analyticsCopy.view_execution}
                     </DropdownMenuItem>
                     {report.status === 'completed' && (
                         <DropdownMenuItem asChild>
                             <a href={download.url({ run: report.id })}>
-                                <Download /> Download verified artifact
+                                <Download /> {analyticsCopy.download_artifact}
                             </a>
                         </DropdownMenuItem>
                     )}
@@ -1322,10 +1345,15 @@ function RunAction({ report }: { report: ReportRun }) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {report.schedule.code} report run
+                            {analyticsCopy.report_run.replace(
+                                ':code',
+                                report.schedule.code,
+                            )}
                         </SheetTitle>
                         <SheetDescription>
-                            {report.schedule.name} · {humanize(report.status)}
+                            {report.schedule.name}
+                            {' · '}
+                            {humanize(report.status)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
@@ -1399,12 +1427,17 @@ function Field({
     error?: string;
     optional?: boolean;
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <div className="grid gap-2">
             <Label htmlFor={name}>
                 {label}
                 {optional && (
-                    <span className="text-muted-foreground"> (optional)</span>
+                    <span className="text-muted-foreground">
+                        {' '}
+                        {analyticsCopy.optional}
+                    </span>
                 )}
             </Label>
             <Input id={name} name={name} aria-invalid={Boolean(error)} />
@@ -1423,12 +1456,17 @@ function TextField({
     error?: string;
     optional?: boolean;
 }) {
+    const analyticsCopy = usePage().props.localization.analytics;
+
     return (
         <div className="grid gap-2">
             <Label htmlFor={name}>
                 {label}
                 {optional && (
-                    <span className="text-muted-foreground"> (optional)</span>
+                    <span className="text-muted-foreground">
+                        {' '}
+                        {analyticsCopy.optional}
+                    </span>
                 )}
             </Label>
             <Textarea
