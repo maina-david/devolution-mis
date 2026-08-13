@@ -120,20 +120,6 @@ const formatCompactCurrency = (value: number) =>
         maximumFractionDigits: 1,
     });
 
-const cycleChartConfig = {
-    averageScore: { label: 'Average score', color: 'var(--chart-1)' },
-    completionPercent: { label: 'Cycle completion', color: 'var(--chart-2)' },
-} satisfies ChartConfig;
-
-const fundingChartConfig = {
-    allocatedGrant: { label: 'Allocated', color: 'var(--chart-2)' },
-    disbursedGrant: { label: 'Disbursed', color: 'var(--chart-1)' },
-} satisfies ChartConfig;
-
-const evidenceChartConfig = {
-    documents: { label: 'Evidence documents', color: 'var(--chart-3)' },
-} satisfies ChartConfig;
-
 export default function Dashboard({
     dashboardProfile,
     stats,
@@ -144,6 +130,21 @@ export default function Dashboard({
     filters,
 }: Props) {
     const page = usePage();
+    const copy = page.props.localization.dashboard;
+    const cycleChartConfig = {
+        averageScore: { label: copy.average_score, color: 'var(--chart-1)' },
+        completionPercent: {
+            label: copy.cycle_completion,
+            color: 'var(--chart-2)',
+        },
+    } satisfies ChartConfig;
+    const fundingChartConfig = {
+        allocatedGrant: { label: copy.allocated, color: 'var(--chart-2)' },
+        disbursedGrant: { label: copy.disbursed, color: 'var(--chart-1)' },
+    } satisfies ChartConfig;
+    const evidenceChartConfig = {
+        documents: { label: copy.evidence_documents, color: 'var(--chart-3)' },
+    } satisfies ChartConfig;
     const [selectedCounty, setSelectedCounty] = useState<CountyMetric | null>(
         counties.length === 1 ? counties[0] : null,
     );
@@ -187,12 +188,12 @@ export default function Dashboard({
                     const reasons = [
                         !['assessed', 'approved', 'published'].includes(
                             county.assessmentStatus,
-                        ) && 'Assessment incomplete',
-                        county.documents === 0 && 'No evidence indexed',
+                        ) && copy.assessment_incomplete,
+                        county.documents === 0 && copy.no_evidence_indexed,
                         county.latestScore !== null &&
                             county.latestScore < 60 &&
-                            'Score below 60%',
-                        grantGap > 0 && 'Undisbursed allocation',
+                            copy.score_below_threshold,
+                        grantGap > 0 && copy.undisbursed_allocation,
                     ].filter((reason): reason is string => Boolean(reason));
 
                     return { county, grantGap, reasons };
@@ -204,69 +205,69 @@ export default function Dashboard({
                         b.grantGap - a.grantGap,
                 )
                 .slice(0, 12),
-        [counties],
+        [counties, copy],
     );
     const operationalRows = [
         {
-            label: 'Evidence awaiting review',
+            label: copy.evidence_awaiting_review,
             value: operationalSignals.evidenceAwaitingReview,
-            detail: 'Active records without a verification decision',
+            detail: copy.evidence_awaiting_review_detail,
             tone: 'warning' as const,
         },
         {
-            label: 'Evidence scan attention',
+            label: copy.evidence_scan_attention,
             value: operationalSignals.evidenceScanAttention,
-            detail: 'Pending, failed, or quarantined scan outcomes',
+            detail: copy.evidence_scan_attention_detail,
             tone: 'critical' as const,
         },
         {
-            label: 'Overdue citizen cases',
+            label: copy.overdue_citizen_cases,
             value: operationalSignals.overdueCitizenCases,
-            detail: 'Unresolved cases past their resolution deadline',
+            detail: copy.overdue_citizen_cases_detail,
             tone: 'critical' as const,
         },
         {
-            label: 'Delayed exchequer requests',
+            label: copy.delayed_exchequer_requests,
             value: operationalSignals.delayedExchequerRequests,
-            detail: 'Open requests beyond the current-stage SLA',
+            detail: copy.delayed_exchequer_requests_detail,
             tone: 'critical' as const,
         },
         {
-            label: 'Overdue evaluation findings',
+            label: copy.overdue_evaluation_findings,
             value: operationalSignals.overdueEvaluationFindings,
-            detail: 'Recommendations past due and not closed',
+            detail: copy.overdue_evaluation_findings_detail,
             tone: 'warning' as const,
         },
         {
-            label: 'Open partner alerts',
+            label: copy.open_partner_alerts,
             value: operationalSignals.openPartnerAlerts,
-            detail: 'Unresolved agreement or contribution exceptions',
+            detail: copy.open_partner_alerts_detail,
             tone: 'warning' as const,
         },
     ];
     const cards = [
         {
-            label: 'Counties in view',
+            label: copy.counties_in_view,
             value: stats.counties,
-            detail: `${stats.assessed} assessed · ${stats.pending} pending`,
+            detail: `${stats.assessed} ${copy.assessed} ${copy.separator} ${stats.pending} ${copy.pending}`,
             icon: MapPinned,
         },
         {
-            label: 'Average score',
+            label: copy.average_score,
             value: stats.averageScore === null ? '—' : `${stats.averageScore}%`,
-            detail: 'Across completed assessments',
+            detail: copy.completed_assessments_detail,
             icon: TrendingUp,
         },
         {
-            label: 'Evidence documents',
+            label: copy.evidence_documents,
             value: stats.documents.toLocaleString(),
-            detail: 'Within the selected period',
+            detail: copy.selected_period_detail,
             icon: FileCheck2,
         },
         {
-            label: 'Grant disbursement',
+            label: copy.grant_disbursement,
             value: `${disbursementRate}%`,
-            detail: `${formatCompactCurrency(stats.disbursedGrants)} disbursed`,
+            detail: `${formatCompactCurrency(stats.disbursedGrants)} ${copy.disbursed_lower}`,
             icon: Banknote,
         },
     ];
@@ -302,13 +303,13 @@ export default function Dashboard({
                         className="max-w-full overflow-x-auto"
                     >
                         <TabsTrigger value="overview">
-                            <Gauge /> Overview
+                            <Gauge /> {copy.overview}
                         </TabsTrigger>
                         <TabsTrigger value="cycles">
-                            <ChartNoAxesCombined /> Assessment cycles
+                            <ChartNoAxesCombined /> {copy.assessment_cycles}
                         </TabsTrigger>
                         <TabsTrigger value="action-queue">
-                            <ClipboardList /> Action queue
+                            <ClipboardList /> {copy.action_queue}
                             {exceptionCount > 0 && (
                                 <Badge variant="destructive">
                                     {exceptionCount}
@@ -316,7 +317,7 @@ export default function Dashboard({
                             )}
                         </TabsTrigger>
                         <TabsTrigger value="delivery">
-                            <Banknote /> Funds & evidence
+                            <Banknote /> {copy.funds_evidence}
                         </TabsTrigger>
                     </TabsList>
 
@@ -359,11 +360,12 @@ export default function Dashboard({
                                     <div className="flex flex-wrap items-center justify-between gap-3">
                                         <div>
                                             <CardTitle>
-                                                Operational control position
+                                                {copy.operational_control}
                                             </CardTitle>
                                             <CardDescription className="mt-1">
-                                                Cross-module exceptions in your
-                                                authorized portfolio.
+                                                {
+                                                    copy.operational_control_description
+                                                }
                                             </CardDescription>
                                         </div>
                                         <Badge
@@ -391,11 +393,11 @@ export default function Dashboard({
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Role operating brief</CardTitle>
+                                    <CardTitle>{copy.role_brief}</CardTitle>
                                     <CardDescription>
-                                        Priority decisions for{' '}
+                                        {copy.priority_decisions_for}{' '}
                                         {dashboardProfile.roleLabel.toLowerCase()}
-                                        .
+                                        {copy.full_stop}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -416,8 +418,7 @@ export default function Dashboard({
                                     </ol>
                                     <div className="mt-5 border-t pt-4 text-sm text-muted-foreground">
                                         {operationalSignals.activeProjects.toLocaleString()}{' '}
-                                        active projects are currently visible in
-                                        this scope.
+                                        {copy.active_projects_visible}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -428,10 +429,10 @@ export default function Dashboard({
                                 <Card className="min-w-0 gap-0 overflow-hidden py-0">
                                     <CardHeader className="py-6">
                                         <CardDescription>
-                                            County coverage
+                                            {copy.county_coverage}
                                         </CardDescription>
                                         <CardTitle>
-                                            Kenya assessment map
+                                            {copy.kenya_assessment_map}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="p-0">
@@ -453,7 +454,7 @@ export default function Dashboard({
                                 <Card aria-live="polite">
                                     <CardHeader>
                                         <CardDescription>
-                                            County detail
+                                            {copy.county_detail}
                                         </CardDescription>
                                         <CardTitle>
                                             {selectedCounty?.name ??
@@ -539,8 +540,9 @@ export default function Dashboard({
                                                             page.url,
                                                         )}
                                                     >
-                                                        Open complete county
-                                                        record
+                                                        {
+                                                            copy.open_county_record
+                                                        }
                                                     </Link>
                                                 </Button>
                                             </div>
@@ -563,11 +565,11 @@ export default function Dashboard({
                     >
                         <Card className="min-w-0 gap-0 py-0">
                             <CardHeader className="border-b py-5">
-                                <CardTitle>County intervention queue</CardTitle>
+                                <CardTitle>
+                                    {copy.county_intervention_queue}
+                                </CardTitle>
                                 <CardDescription>
-                                    Ranked from filtered, authorized records;
-                                    select a county to continue with its full
-                                    evidence and delivery record.
+                                    {copy.county_intervention_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
@@ -607,7 +609,7 @@ export default function Dashboard({
                                                     </div>
                                                     <div className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:text-right">
                                                         <span className="text-muted-foreground">
-                                                            Score
+                                                            {copy.score}
                                                         </span>
                                                         <strong>
                                                             {county.latestScore ===
@@ -616,7 +618,7 @@ export default function Dashboard({
                                                                 : `${county.latestScore}%`}
                                                         </strong>
                                                         <span className="text-muted-foreground">
-                                                            Funding gap
+                                                            {copy.funding_gap}
                                                         </span>
                                                         <strong>
                                                             {formatCompactCurrency(
@@ -650,13 +652,12 @@ export default function Dashboard({
                                         <div className="max-w-sm">
                                             <CircleCheckBig className="mx-auto size-9 text-primary" />
                                             <h3 className="mt-3 font-semibold">
-                                                No county intervention flags
+                                                {copy.no_county_flags}
                                             </h3>
                                             <p className="mt-1 text-sm text-muted-foreground">
-                                                No incomplete assessment,
-                                                missing evidence, low score, or
-                                                grant gap was found in this
-                                                filtered scope.
+                                                {
+                                                    copy.no_county_flags_description
+                                                }
                                             </p>
                                         </div>
                                     </div>
@@ -666,10 +667,9 @@ export default function Dashboard({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Exception register</CardTitle>
+                                <CardTitle>{copy.exception_register}</CardTitle>
                                 <CardDescription>
-                                    Cross-module workload requiring accountable
-                                    follow-up.
+                                    {copy.exception_register_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-3">
@@ -707,10 +707,11 @@ export default function Dashboard({
                     >
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle>Performance across cycles</CardTitle>
+                                <CardTitle>
+                                    {copy.performance_across_cycles}
+                                </CardTitle>
                                 <CardDescription>
-                                    Average verified score and county completion
-                                    for the authorized portfolio.
+                                    {copy.performance_across_cycles_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -772,7 +773,8 @@ export default function Dashboard({
                                                     {cycle.name}
                                                 </CardTitle>
                                                 <CardDescription>
-                                                    {cycle.periodStart} –{' '}
+                                                    {cycle.periodStart}{' '}
+                                                    {copy.range_separator}{' '}
                                                     {cycle.periodEnd}
                                                 </CardDescription>
                                             </div>
@@ -791,12 +793,15 @@ export default function Dashboard({
                                         <CardContent className="flex flex-col gap-3">
                                             <div className="flex items-center justify-between gap-3 text-sm">
                                                 <span className="text-muted-foreground">
-                                                    County completion
+                                                    {copy.county_completion}
                                                 </span>
                                                 <strong>
-                                                    {cycle.countiesAssessed}/
-                                                    {cycle.countiesTotal} ·{' '}
-                                                    {cycle.completionPercent}%
+                                                    {cycle.countiesAssessed}
+                                                    {copy.slash}
+                                                    {cycle.countiesTotal}{' '}
+                                                    {copy.separator}{' '}
+                                                    {cycle.completionPercent}
+                                                    {copy.percent}
                                                 </strong>
                                             </div>
                                             <Progress
@@ -805,7 +810,7 @@ export default function Dashboard({
                                             <div className="grid grid-cols-2 gap-3 text-sm">
                                                 <div>
                                                     <p className="text-muted-foreground">
-                                                        Average score
+                                                        {copy.average_score}
                                                     </p>
                                                     <p className="font-bold">
                                                         {cycle.averageScore ===
@@ -816,7 +821,7 @@ export default function Dashboard({
                                                 </div>
                                                 <div>
                                                     <p className="text-muted-foreground">
-                                                        Evidence
+                                                        {copy.evidence}
                                                     </p>
                                                     <p className="font-bold">
                                                         {cycle.evidenceDocuments.toLocaleString()}
@@ -830,11 +835,12 @@ export default function Dashboard({
                                 <Card>
                                     <CardHeader>
                                         <CardTitle>
-                                            No assessment cycles
+                                            {copy.no_assessment_cycles}
                                         </CardTitle>
                                         <CardDescription>
-                                            Cycle analytics will appear after an
-                                            assessment cycle is configured.
+                                            {
+                                                copy.no_assessment_cycles_description
+                                            }
                                         </CardDescription>
                                     </CardHeader>
                                 </Card>
@@ -849,11 +855,10 @@ export default function Dashboard({
                         <Card className="min-w-0">
                             <CardHeader>
                                 <CardTitle>
-                                    Grant allocation and disbursement
+                                    {copy.grant_allocation_disbursement}
                                 </CardTitle>
                                 <CardDescription>
-                                    Top counties by allocated value in the
-                                    current filtered portfolio.
+                                    {copy.grant_chart_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
@@ -912,10 +917,9 @@ export default function Dashboard({
 
                         <Card className="min-w-0">
                             <CardHeader>
-                                <CardTitle>Evidence coverage</CardTitle>
+                                <CardTitle>{copy.evidence_coverage}</CardTitle>
                                 <CardDescription>
-                                    Counties with the largest document
-                                    collections in the selected period.
+                                    {copy.evidence_coverage_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>

@@ -121,6 +121,7 @@ class HandleInertiaRequests extends Middleware
                 'integrationManagement' => __('integration-management'),
                 'workflowManagement' => __('workflow-management'),
                 'partnerCoordination' => __('partner-coordination'),
+                'dashboard' => __('dashboard'),
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),
