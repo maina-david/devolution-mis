@@ -26,6 +26,7 @@ type SearchResult = {
 
 export function GlobalSearchDialog() {
     const { auth, localization } = usePage().props;
+    const copy = localization.globalSearch;
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<SearchResult[]>([]);
@@ -151,35 +152,45 @@ export function GlobalSearchDialog() {
                 variant="outline"
                 className="h-9 justify-start gap-2 border-primary-foreground/30 bg-background text-foreground hover:bg-background/90 hover:text-foreground sm:w-48 lg:w-64"
                 onClick={() => setOpen(true)}
-                aria-label="Search IDMIS"
+                aria-label={copy.button}
             >
-                <SearchIcon data-icon="inline-start" />
-                <span className="hidden sm:inline">Search IDMIS…</span>
-                <kbd className="ml-auto hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium lg:inline">
-                    ⌘K
+                <SearchIcon data-icon="inline-start" aria-hidden="true" />
+                <span className="hidden sm:inline">{copy.button}</span>
+                <kbd
+                    className="ml-auto hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[10px] font-medium lg:inline"
+                    aria-label={copy.button_shortcut}
+                >
+                    {'⌘K'}
                 </kbd>
             </Button>
             <CommandDialog
                 open={open}
                 onOpenChange={changeOpen}
-                title="Search IDMIS"
-                description="Search pages and records available within your authorized portfolio."
+                title={copy.button}
+                description={copy.description}
             >
                 <CommandInput
                     value={query}
                     onValueChange={changeQuery}
-                    placeholder="Search counties, assessments, documents, projects…"
+                    placeholder={copy.placeholder}
                     autoFocus
                 />
                 <CommandList>
                     {loading && (
-                        <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
-                            <Spinner /> Searching authorized records…
+                        <div
+                            className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <Spinner /> {copy.searching}
                         </div>
                     )}
                     {failed && (
-                        <div className="py-10 text-center text-sm text-destructive">
-                            Search is temporarily unavailable. Please try again.
+                        <div
+                            className="py-10 text-center text-sm text-destructive"
+                            role="alert"
+                        >
+                            {copy.failed}
                         </div>
                     )}
                     {!loading &&
@@ -187,12 +198,10 @@ export function GlobalSearchDialog() {
                         query.length > 0 &&
                         matchingPages.length === 0 &&
                         results.length === 0 && (
-                            <CommandEmpty>
-                                No authorized pages or records found.
-                            </CommandEmpty>
+                            <CommandEmpty>{copy.empty}</CommandEmpty>
                         )}
                     {!loading && matchingPages.length > 0 && (
-                        <CommandGroup heading="Pages & navigation">
+                        <CommandGroup heading={copy.pages_navigation}>
                             {matchingPages.map((item) => (
                                 <CommandItem
                                     key={`${item.group}-${item.title}`}
@@ -240,8 +249,7 @@ export function GlobalSearchDialog() {
                         ))}
                     {!query && (
                         <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                            Type at least two characters to search every record
-                            you are authorized to view.
+                            {copy.guidance}
                         </div>
                     )}
                 </CommandList>

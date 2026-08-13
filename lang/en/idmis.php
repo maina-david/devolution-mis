@@ -32,6 +32,17 @@ return [
         'unread' => 'unread',
         'view_all_notifications' => 'View all notifications',
     ],
+    'global_search' => [
+        'button' => 'Search IDMIS',
+        'button_shortcut' => 'Command K',
+        'description' => 'Search pages and records available within your authorized portfolio.',
+        'empty' => 'No authorized pages or records found.',
+        'failed' => 'Search is temporarily unavailable. Please try again.',
+        'guidance' => 'Type at least two characters to search every record you are authorized to view.',
+        'pages_navigation' => 'Pages and navigation',
+        'placeholder' => 'Search counties, assessments, documents, projects…',
+        'searching' => 'Searching authorized records…',
+    ],
     'common' => [
         'actions' => 'Actions',
         'bulk_actions' => 'Bulk actions',

@@ -38,6 +38,8 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.current', 'sw')
                 ->where('localization.copy.chooseLanguage', 'Chagua lugha')
                 ->where('localization.common.rows_per_page', 'Safu kwa kila ukurasa')
+                ->where('localization.globalSearch.button', 'Tafuta IDMIS')
+                ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -117,6 +119,20 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringContainsString('lang={locale.code}', $source);
         $this->assertStringContainsString('aria-hidden="true">{locale.flag}', $source);
         $this->assertStringContainsString('<LocaleMenu inverse />', $publicShell);
+    }
+
+    public function test_global_authorized_search_uses_localized_accessible_status_contracts(): void
+    {
+        $source = file_get_contents(resource_path('js/components/global-search-dialog.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('const copy = localization.globalSearch;', $source);
+        $this->assertStringContainsString('aria-label={copy.button}', $source);
+        $this->assertStringContainsString('role="status"', $source);
+        $this->assertStringContainsString('aria-live="polite"', $source);
+        $this->assertStringContainsString('role="alert"', $source);
+        $this->assertStringNotContainsString('Searching authorized records…', $source);
+        $this->assertStringNotContainsString('Search is temporarily unavailable.', $source);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void

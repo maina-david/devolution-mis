@@ -32,6 +32,17 @@ return [
         'unread' => 'non lues',
         'view_all_notifications' => 'Voir toutes les notifications',
     ],
+    'global_search' => [
+        'button' => 'Rechercher dans IDMIS',
+        'button_shortcut' => 'Commande K',
+        'description' => 'Recherchez les pages et dossiers disponibles dans votre portefeuille autorisé.',
+        'empty' => 'Aucune page ni aucun dossier autorisé trouvé.',
+        'failed' => 'La recherche est temporairement indisponible. Veuillez réessayer.',
+        'guidance' => 'Saisissez au moins deux caractères pour rechercher tous les dossiers que vous êtes autorisé à consulter.',
+        'pages_navigation' => 'Pages et navigation',
+        'placeholder' => 'Rechercher des comtés, évaluations, documents, projets…',
+        'searching' => 'Recherche dans les dossiers autorisés…',
+    ],
     'common' => [
         'actions' => 'Actions',
         'bulk_actions' => 'Actions groupées',

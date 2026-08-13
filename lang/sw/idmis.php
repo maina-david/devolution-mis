@@ -32,6 +32,17 @@ return [
         'unread' => 'hazijasomwa',
         'view_all_notifications' => 'Tazama arifa zote',
     ],
+    'global_search' => [
+        'button' => 'Tafuta IDMIS',
+        'button_shortcut' => 'Command K',
+        'description' => 'Tafuta kurasa na rekodi zinazopatikana katika jalada lako lililoidhinishwa.',
+        'empty' => 'Hakuna kurasa au rekodi zilizoidhinishwa zilizopatikana.',
+        'failed' => 'Utafutaji haupatikani kwa muda. Tafadhali jaribu tena.',
+        'guidance' => 'Andika angalau herufi mbili ili kutafuta kila rekodi uliyoidhinishwa kutazama.',
+        'pages_navigation' => 'Kurasa na urambazaji',
+        'placeholder' => 'Tafuta kaunti, tathmini, hati, miradi…',
+        'searching' => 'Inatafuta rekodi zilizoidhinishwa…',
+    ],
     'common' => [
         'actions' => 'Vitendo',
         'bulk_actions' => 'Vitendo vya pamoja',
