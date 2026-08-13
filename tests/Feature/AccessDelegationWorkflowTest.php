@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateAccessDelegation;
 use App\Enums\ProgrammePermission;
 use App\Models\AccessDelegation;
 use App\Models\County;
 use App\Models\ReferenceDataRelease;
 use App\Models\User;
+use App\Notifications\ProgrammeAlert;
 use App\Services\DelegatedAccessResolver;
 use App\Services\ProgrammeCountyScope;
 use App\Support\CanonicalJson;
@@ -16,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AccessDelegationWorkflowTest extends TestCase
@@ -88,12 +91,28 @@ class AccessDelegationWorkflowTest extends TestCase
         app(DelegatedAccessResolver::class)->forget($beneficiary);
         $this->assertSame('active', $delegation->refresh()->status);
         $this->assertTrue($beneficiary->can(ProgrammePermission::ManageCitizenCases->value));
+        Notification::assertSentTo($beneficiary, ProgrammeAlert::class, function (ProgrammeAlert $notification) use ($delegation): bool {
+            app()->setLocale('sw');
+            $content = $notification->toArray(new \stdClass);
+
+            return $notification->titleTranslationKey === 'security.delegation.notifications.activated_title'
+                && $content['title'] === __('security.delegation.notifications.activated_title')
+                && $content['message'] === __('security.delegation.notifications.activated_message', ['reference' => $delegation->reference, 'expires_at' => $delegation->expires_at->toIso8601String()]);
+        });
 
         $this->travelTo($startsAt->copy()->addHours(4)->addMinute());
         $this->assertSame(0, Artisan::call('security:reconcile-delegated-access'));
         app(DelegatedAccessResolver::class)->forget($beneficiary);
         $this->assertSame('review_pending', $delegation->refresh()->status);
         $this->assertFalse($beneficiary->can(ProgrammePermission::ManageCitizenCases->value));
+        Notification::assertSentTo($beneficiary, ProgrammeAlert::class, function (ProgrammeAlert $notification) use ($delegation): bool {
+            app()->setLocale('fr');
+            $content = $notification->toArray(new \stdClass);
+
+            return $notification->titleTranslationKey === 'security.delegation.notifications.emergency_expired_title'
+                && $content['title'] === __('security.delegation.notifications.emergency_expired_title')
+                && $content['message'] === __('security.delegation.notifications.expired_message', ['reference' => $delegation->reference]);
+        });
         $review = ['post_use_outcome' => 'appropriate', 'post_use_findings' => 'Audit evidence shows the grant remained within the approved county, permission set and incident recovery purpose.'];
         $this->actingAs($approver)->patch(route('security-governance.access-delegations.review', [$delegation]), $review)->assertForbidden();
         $this->actingAs($reviewer)->patch(route('security-governance.access-delegations.review', [$delegation]), $review)->assertRedirect();
@@ -111,6 +130,43 @@ class AccessDelegationWorkflowTest extends TestCase
         $strongBeneficiary = User::factory()->countyOfficial()->withTwoFactor()->create();
         $this->actingAs($requester)->post(route('security-governance.access-delegations.store'), $this->payload($strongBeneficiary, [$county], [ProgrammePermission::ManageSecurityGovernance->value]))->assertUnprocessable();
         $this->assertDatabaseCount('access_delegations', 0);
+    }
+
+    public function test_delegation_fail_closed_messages_and_catalogues_follow_the_active_locale(): void
+    {
+        $requester = User::factory()->devolutionAdmin()->withTwoFactor()->create();
+        $weakBeneficiary = User::factory()->countyOfficial()->create();
+        $county = County::factory()->create();
+        $action = app(CreateAccessDelegation::class);
+
+        app()->setLocale('sw');
+
+        try {
+            $action->handle($requester, $this->payload($weakBeneficiary, [$county], [ProgrammePermission::ManageProjects->value]));
+            $this->fail('Delegation to an identity without strong authentication must fail closed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('security.delegation.errors.beneficiary_strong_authentication'), $exception->getMessage());
+        }
+
+        app()->setLocale('fr');
+
+        try {
+            $action->handle($requester, $this->payload($requester, [$county], [ProgrammePermission::ManageProjects->value]));
+            $this->fail('Self-delegation must fail closed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame(__('security.delegation.errors.self_delegation'), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/security.php');
+        $kiswahili = require lang_path('sw/security.php');
+        $french = require lang_path('fr/security.php');
+
+        foreach (['errors', 'audit', 'notifications', 'console'] as $section) {
+            $this->assertSame(array_keys($english['delegation'][$section]), array_keys($kiswahili['delegation'][$section]));
+            $this->assertSame(array_keys($english['delegation'][$section]), array_keys($french['delegation'][$section]));
+        }
     }
 
     public function test_delegation_fails_closed_without_a_complete_effective_county_catalogue(): void

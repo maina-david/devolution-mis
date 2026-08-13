@@ -21,37 +21,37 @@ class CreateAccessDelegation
     {
         return DB::transaction(function () use ($requester, $attributes): AccessDelegation {
             $beneficiary = User::query()->whereKey($attributes['beneficiary_id'])->lockForUpdate()->sole();
-            abort_if($beneficiary->id === $requester->id, 403, 'Users cannot request delegated access for themselves.');
-            abort_if($beneficiary->access_revoked_at !== null, 409, 'Access cannot be delegated to a suspended identity.');
-            abort_unless($beneficiary->two_factor_confirmed_at !== null || $beneficiary->passkeys()->exists(), 409, 'The beneficiary must complete strong authentication before delegated access can be requested.');
+            abort_if($beneficiary->id === $requester->id, 403, __('security.delegation.errors.self_delegation'));
+            abort_if($beneficiary->access_revoked_at !== null, 409, __('security.delegation.errors.suspended_beneficiary'));
+            abort_unless($beneficiary->two_factor_confirmed_at !== null || $beneficiary->passkeys()->exists(), 409, __('security.delegation.errors.beneficiary_strong_authentication'));
 
             $permissionScope = $attributes['permission_scope'];
-            abort_unless(is_array($permissionScope), 422, 'The permission scope must be a list.');
+            abort_unless(is_array($permissionScope), 422, __('security.delegation.errors.permission_scope_list'));
             $permissions = collect(array_values(array_filter($permissionScope, fn (mixed $permission): bool => is_string($permission))))->map(fn (string $permission): string => ProgrammePermission::from($permission)->value)->unique()->sort()->values();
             $nonDelegable = [ProgrammePermission::ManageUserAccess->value, ProgrammePermission::ConfigurePlatform->value, ProgrammePermission::ManageSecurityGovernance->value, ProgrammePermission::CertifyAccess->value];
-            abort_if($permissions->intersect($nonDelegable)->isNotEmpty(), 422, 'Identity, platform and access-certification permissions cannot be delegated.');
-            abort_unless($permissions->every(fn (string $permission): bool => $requester->hasPermissionTo($permission)), 403, 'The requester may delegate only permissions held through their permanent role.');
+            abort_if($permissions->intersect($nonDelegable)->isNotEmpty(), 422, __('security.delegation.errors.non_delegable_permissions'));
+            abort_unless($permissions->every(fn (string $permission): bool => $requester->hasPermissionTo($permission)), 403, __('security.delegation.errors.permanent_permissions_only'));
 
             $startsAt = CarbonImmutable::parse((string) $attributes['starts_at']);
             $expiresAt = CarbonImmutable::parse((string) $attributes['expires_at']);
             $maximumMinutes = $attributes['access_type'] === 'emergency' ? 240 : 60 * 24 * 90;
-            abort_if($startsAt->diffInMinutes($expiresAt) > $maximumMinutes, 422, $attributes['access_type'] === 'emergency' ? 'Emergency access is limited to four hours.' : 'Delegated access is limited to ninety days.');
+            abort_if($startsAt->diffInMinutes($expiresAt) > $maximumMinutes, 422, __($attributes['access_type'] === 'emergency' ? 'security.delegation.errors.emergency_duration' : 'security.delegation.errors.delegated_duration'));
 
             $counties = collect();
             $countyIds = [];
             if ($attributes['scope_type'] === 'county_portfolio') {
                 $submittedCountyIds = $attributes['county_ids'];
-                abort_unless(is_array($submittedCountyIds), 422, 'One or more county scopes are invalid.');
+                abort_unless(is_array($submittedCountyIds), 422, __('security.delegation.errors.invalid_county_scope'));
                 foreach ($submittedCountyIds as $countyId) {
-                    abort_unless(is_string($countyId), 422, 'One or more county scopes are invalid.');
+                    abort_unless(is_string($countyId), 422, __('security.delegation.errors.invalid_county_scope'));
                     $countyIds[] = $countyId;
                 }
                 $countyIds = array_values(array_unique($countyIds));
                 $counties = County::query()->whereKey($countyIds)->orderBy('code')->get();
-                abort_unless($counties->count() === count($countyIds), 422, 'One or more county scopes are invalid.');
-                abort_unless($counties->every(fn (County $county): bool => $requester->canAccessCounty($county)), 403, 'The requester may delegate only county scope they already hold.');
+                abort_unless($counties->count() === count($countyIds), 422, __('security.delegation.errors.invalid_county_scope'));
+                abort_unless($counties->every(fn (County $county): bool => $requester->canAccessCounty($county)), 403, __('security.delegation.errors.held_county_scope_only'));
             } else {
-                abort_unless($requester->programmeRole()->hasNationalScope(), 403, 'Only a permanent national role may request national delegated access.');
+                abort_unless($requester->programmeRole()->hasNationalScope(), 403, __('security.delegation.errors.permanent_national_requester'));
             }
 
             $release = $this->referenceDataReleaseResolver->forAccessDelegation($countyIds, now());
@@ -67,7 +67,7 @@ class CreateAccessDelegation
                 'expires_at' => $expiresAt,
                 'status' => 'pending',
             ]);
-            $this->auditLogger->record($requester, $delegation, 'security.delegation.requested', "Temporary access {$delegation->reference} requested for {$beneficiary->name}.", metadata: ['access_type' => $delegation->access_type, 'permissions' => $delegation->permission_scope, 'county_scope' => collect($delegation->county_scope_snapshot)->pluck('id')->all(), 'starts_at' => $startsAt->toIso8601String(), 'expires_at' => $expiresAt->toIso8601String(), 'reference_data_release_id' => $release->id, 'reference_data_release_version' => $release->version, 'reference_data_release_checksum' => $release->checksum]);
+            $this->auditLogger->record($requester, $delegation, 'security.delegation.requested', __('security.delegation.audit.requested', ['reference' => $delegation->reference, 'beneficiary' => $beneficiary->name]), metadata: ['access_type' => $delegation->access_type, 'permissions' => $delegation->permission_scope, 'county_scope' => collect($delegation->county_scope_snapshot)->pluck('id')->all(), 'starts_at' => $startsAt->toIso8601String(), 'expires_at' => $expiresAt->toIso8601String(), 'reference_data_release_id' => $release->id, 'reference_data_release_version' => $release->version, 'reference_data_release_checksum' => $release->checksum]);
 
             return $delegation->load(['requester', 'beneficiary']);
         });

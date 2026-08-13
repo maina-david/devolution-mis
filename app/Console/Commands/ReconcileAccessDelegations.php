@@ -28,8 +28,8 @@ class ReconcileAccessDelegations extends Command
                     $locked->update(['status' => 'active', 'activated_at' => now()]);
                     $delegatedAccess->forget($locked->beneficiary_id);
                     $locked->load('beneficiary');
-                    $locked->beneficiary->notify(new ProgrammeAlert('Temporary access activated', "{$locked->reference} is active until {$locked->expires_at->toDayDateTimeString()}.", 'security-governance'));
-                    $auditLogger->record(null, $locked, 'security.delegation.activated', "Temporary access {$locked->reference} activated by schedule.");
+                    $locked->beneficiary->notify(ProgrammeAlert::translated('security.delegation.notifications.activated_title', 'security.delegation.notifications.activated_message', 'security-governance', messageParameters: ['reference' => $locked->reference, 'expires_at' => $locked->expires_at->toIso8601String()]));
+                    $auditLogger->record(null, $locked, 'security.delegation.activated', __('security.delegation.audit.activated', ['reference' => $locked->reference]));
                     $changed++;
                 });
             }
@@ -46,14 +46,14 @@ class ReconcileAccessDelegations extends Command
                     $locked->update(['status' => $status, 'expired_at' => now()]);
                     $delegatedAccess->forget($locked->beneficiary_id);
                     $locked->load('beneficiary');
-                    $locked->beneficiary->notify(new ProgrammeAlert($status === 'review_pending' ? 'Emergency access expired — review required' : 'Temporary access expired', "{$locked->reference} is no longer active.", 'security-governance'));
-                    $auditLogger->record(null, $locked, 'security.delegation.expired', "Temporary access {$locked->reference} expired.", metadata: ['post_use_review_required' => $status === 'review_pending']);
+                    $locked->beneficiary->notify(ProgrammeAlert::translated($status === 'review_pending' ? 'security.delegation.notifications.emergency_expired_title' : 'security.delegation.notifications.expired_title', 'security.delegation.notifications.expired_message', 'security-governance', messageParameters: ['reference' => $locked->reference]));
+                    $auditLogger->record(null, $locked, 'security.delegation.expired', __('security.delegation.audit.expired', ['reference' => $locked->reference]), metadata: ['post_use_review_required' => $status === 'review_pending']);
                     $changed++;
                 });
             }
         });
 
-        $this->components->info("Reconciled {$changed} delegated-access grant(s).");
+        $this->components->info(__('security.delegation.console.reconciled', ['count' => $changed]));
 
         return self::SUCCESS;
     }

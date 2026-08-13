@@ -16,10 +16,10 @@ class RevokeAccessDelegation
     {
         return DB::transaction(function () use ($accessDelegation, $actor, $reason): AccessDelegation {
             $delegation = AccessDelegation::query()->lockForUpdate()->whereKey($accessDelegation->id)->sole();
-            abort_unless(in_array($delegation->status, ['scheduled', 'active'], true), 409, 'Only scheduled or active delegated access may be revoked.');
+            abort_unless(in_array($delegation->status, ['scheduled', 'active'], true), 409, __('security.delegation.errors.revocable_status'));
             $delegation->update(['revoked_by' => $actor->id, 'revoked_at' => now(), 'revocation_reason' => $reason, 'status' => 'revoked']);
             $this->delegatedAccess->forget($delegation->beneficiary_id);
-            $this->auditLogger->record($actor, $delegation, 'security.delegation.revoked', "Temporary access {$delegation->reference} revoked.", metadata: ['reason' => $reason]);
+            $this->auditLogger->record($actor, $delegation, 'security.delegation.revoked', __('security.delegation.audit.revoked', ['reference' => $delegation->reference]), metadata: ['reason' => $reason]);
 
             return $delegation->refresh();
         });

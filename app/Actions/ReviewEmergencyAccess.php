@@ -16,10 +16,10 @@ class ReviewEmergencyAccess
     {
         return DB::transaction(function () use ($accessDelegation, $reviewer, $attributes): AccessDelegation {
             $delegation = AccessDelegation::query()->lockForUpdate()->whereKey($accessDelegation->id)->sole();
-            abort_unless($delegation->access_type === 'emergency' && $delegation->status === 'review_pending', 409, 'This emergency grant is not awaiting post-use review.');
-            abort_if(in_array($reviewer->id, [$delegation->requested_by, $delegation->beneficiary_id, $delegation->approved_by], true), 403, 'Post-use review requires a fourth independent actor.');
+            abort_unless($delegation->access_type === 'emergency' && $delegation->status === 'review_pending', 409, __('security.delegation.errors.review_not_pending'));
+            abort_if(in_array($reviewer->id, [$delegation->requested_by, $delegation->beneficiary_id, $delegation->approved_by], true), 403, __('security.delegation.errors.independent_post_use_reviewer'));
             $delegation->update(['reviewed_by' => $reviewer->id, 'reviewed_at' => now(), 'post_use_outcome' => $attributes['post_use_outcome'], 'post_use_findings' => $attributes['post_use_findings'], 'status' => 'reviewed']);
-            $this->auditLogger->record($reviewer, $delegation, 'security.delegation.post-use-reviewed', "Emergency access {$delegation->reference} received independent post-use review.", metadata: ['outcome' => $attributes['post_use_outcome']]);
+            $this->auditLogger->record($reviewer, $delegation, 'security.delegation.post-use-reviewed', __('security.delegation.audit.post_use_reviewed', ['reference' => $delegation->reference]), metadata: ['outcome' => $attributes['post_use_outcome']]);
 
             return $delegation->refresh();
         });
