@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property string $id
  * @property string|null $assessment_id
  * @property string|null $county_id
+ * @property string|null $folder_id
  * @property string $title
  * @property string $category
  * @property string $source_type
@@ -36,7 +37,7 @@ use Illuminate\Support\Carbon;
  * @property int $version
  * @property bool $active_legal_hold
  */
-#[Fillable(['assessment_id', 'assessment_criterion_id', 'criterion_evidence_requirement_id', 'county_id', 'category', 'source_type', 'title', 'path', 'current_version_id', 'original_name', 'mime_type', 'size_bytes', 'content_checksum', 'scan_status', 'ocr_status', 'security_classification', 'record_status', 'description', 'document_date', 'version', 'tags', 'retention_until', 'verification_status', 'uploaded_by'])]
+#[Fillable(['assessment_id', 'assessment_criterion_id', 'criterion_evidence_requirement_id', 'county_id', 'folder_id', 'category', 'source_type', 'title', 'path', 'current_version_id', 'original_name', 'mime_type', 'size_bytes', 'content_checksum', 'scan_status', 'ocr_status', 'security_classification', 'record_status', 'description', 'document_date', 'version', 'tags', 'retention_until', 'verification_status', 'uploaded_by'])]
 class AssessmentDocument extends Model
 {
     /** @use HasFactory<AssessmentDocumentFactory> */
@@ -75,6 +76,12 @@ class AssessmentDocument extends Model
     public function county(): BelongsTo
     {
         return $this->belongsTo(County::class);
+    }
+
+    /** @return BelongsTo<DocumentFolder, $this> */
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(DocumentFolder::class, 'folder_id');
     }
 
     /** @return BelongsTo<User, $this> */

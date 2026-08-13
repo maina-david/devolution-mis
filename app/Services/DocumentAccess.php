@@ -36,6 +36,13 @@ class DocumentAccess
                 && $user->can(ProgrammePermission::ViewCountyData->value);
         }
 
+        if ($document->folder_id !== null) {
+            return $user->can(ProgrammePermission::ViewCountyData->value)
+                && ($document->county_id === null
+                    ? $user->programmeRole()->hasNationalScope()
+                    : $user->canAccessCounty($document->county));
+        }
+
         return $document->links()->with('subject')->get()->contains(function ($link) use ($user): bool {
             $subject = $link->subject;
 

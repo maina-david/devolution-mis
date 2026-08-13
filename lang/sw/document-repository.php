@@ -1,0 +1,16 @@
+<?php
+
+return [
+    'title' => 'Hazina ya hati',
+    'description' => 'Panga faili zinazodhibitiwa katika folda za kaunti bila kukwepa ukaguzi wa programu hasidi, matoleo yasiyobadilika, uhifadhi au vizuizi vya kisheria.',
+    'all_files' => 'Faili zote', 'folders' => 'Folda', 'folder_tree' => 'Mti wa folda za hazina', 'no_folders' => 'Hakuna folda zilizotolewa katika wigo wako ulioidhinishwa.',
+    'new_folder' => 'Folda mpya', 'create_folder' => 'Unda folda', 'edit_folder' => 'Hariri folda', 'delete_folder' => 'Futa folda', 'folder_name' => 'Jina la folda', 'parent_folder' => 'Folda kuu', 'root_folder' => 'Kiwango cha juu', 'county_scope' => 'Wigo wa kaunti', 'national_scope' => 'Hazina ya kitaifa',
+    'upload_file' => 'Pakia faili', 'upload_description' => 'Faili hubaki za faragha na hukaguliwa, huwekewa cheksamu, huhifadhiwa kwa matoleo na kuwekwa kwenye foleni ya utoaji wa maandishi yanayotafutika.',
+    'move_selected' => 'Hamisha zilizochaguliwa', 'move_documents' => 'Hamisha hati :count', 'move_description' => 'Hamisha hati zilizochaguliwa ndani ya wigo uleule wa kaunti au kitaifa ulioidhinishwa.', 'destination_folder' => 'Folda lengwa', 'confirm_move' => 'Hamisha hati', 'save_folder' => 'Hifadhi folda', 'confirm_delete_folder' => 'Futa folda tupu', 'delete_description' => 'Folda tupu pekee ndizo zinaweza kufutwa. Hati na folda ndogo lazima zihamishwe kwanza.',
+    'current_folder' => 'Folda ya sasa', 'files_count' => 'Faili :count', 'storage_used' => ':size zimehifadhiwa katika matokeo ya sasa',
+    'document_title' => 'Kichwa cha hati', 'category' => 'Aina', 'source_type' => 'Aina ya chanzo', 'digital_file' => 'Faili la kidijitali', 'scanned_copy' => 'Nakala iliyochanganuliwa', 'description_label' => 'Maelezo', 'document_date' => 'Tarehe ya hati', 'tags' => 'Lebo', 'tags_placeholder' => 'mipango, ukaguzi, MW2026', 'file' => 'Faili', 'uploading' => 'Inapakia :percentage%',
+    'errors' => ['folder_cycle' => 'Folda haiwezi kuhamishwa ndani yake yenyewe au mojawapo ya folda zake ndogo.', 'folder_scope_mismatch' => 'Folda kuu na ndogo lazima ziwe na wigo uleule wa kaunti au kitaifa.', 'folder_name_taken' => 'Folda yenye jina hili tayari ipo katika kiwango kilichochaguliwa.', 'folder_not_empty' => 'Hamisha hati zote na folda ndogo kabla ya kufuta folda hii.', 'document_scope_mismatch' => ':title haiwezi kuhamishwa kwenye folda nje ya wigo wake wa kaunti au kitaifa.', 'document_hold_move' => ':title haiwezi kuhamishwa ikiwa chini ya zuio la kisheria.', 'store_failed' => 'Hati ya hazina haikuweza kuhifadhiwa.'],
+    'outcomes' => ['folder_created' => 'Folda :name imeundwa.', 'folder_updated' => 'Folda :name imesasishwa.', 'folder_deleted' => 'Folda imefutwa.', 'document_uploaded' => ':title imepakiwa kwa usalama.', 'documents_moved' => '{1} Hati :count imehamishwa hadi :folder.|[2,*] Hati :count zimehamishwa hadi :folder.'],
+    'audit' => ['folder_created' => 'Folda ya hazina imeundwa: :name.', 'folder_updated' => 'Folda ya hazina imesasishwa: :name.', 'folder_deleted' => 'Folda ya hazina imefutwa: :name.', 'document_uploaded' => 'Hati ya hazina imepakiwa: :title katika :folder.', 'document_moved' => 'Hati ya hazina :title imehamishwa hadi :folder.'],
+    'version' => ['initial_upload' => 'Upakiaji wa awali wa hazina'],
+];

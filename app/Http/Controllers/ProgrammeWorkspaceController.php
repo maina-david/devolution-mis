@@ -30,7 +30,7 @@ class ProgrammeWorkspaceController extends Controller
         return Inertia::render('programme/workspace', [
             'workspace' => $this->workspaceData->assessments($this->user($request), WorkspaceFilters::fromRequest($request)),
             'workspaceType' => 'assessments',
-            'filters' => $request->safe()->only(['from', 'to', 'search', 'per_page', 'cycle_id']),
+            'filters' => $request->safe()->only(['from', 'to', 'search', 'per_page', 'cycle_id', 'folder_id']),
             'cycles' => $this->cycleOptions(),
             'capabilities' => [
                 'create' => $request->user()?->can(ProgrammePermission::ManageAssessmentConfiguration->value),
@@ -49,7 +49,7 @@ class ProgrammeWorkspaceController extends Controller
         return Inertia::render('programme/workspace', [
             'workspace' => $this->workspaceData->evidence($this->user($request), WorkspaceFilters::fromRequest($request)),
             'workspaceType' => 'evidence',
-            'filters' => $request->safe()->only(['from', 'to', 'search', 'per_page', 'cycle_id']),
+            'filters' => $request->safe()->only(['from', 'to', 'search', 'per_page', 'cycle_id', 'folder_id']),
             'cycles' => $this->cycleOptions(),
             'capabilities' => [
                 'download' => true,

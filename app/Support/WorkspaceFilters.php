@@ -18,6 +18,7 @@ class WorkspaceFilters
         public readonly ?string $classroomId = null,
         public readonly ?string $severity = null,
         public readonly ?string $gapCategoryId = null,
+        public readonly ?string $folderId = null,
     ) {}
 
     public static function fromRequest(WorkspaceIndexRequest $request, ?string $classroomId = null): self
@@ -34,6 +35,7 @@ class WorkspaceFilters
             $classroomId ?? ($request->filled('classroom_id') ? $request->string('classroom_id')->toString() : null),
             $request->filled('severity') ? $request->string('severity')->toString() : null,
             $request->filled('gap_category_id') ? $request->string('gap_category_id')->toString() : null,
+            $request->filled('folder_id') ? $request->string('folder_id')->toString() : null,
         );
     }
 }

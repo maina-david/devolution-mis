@@ -131,6 +131,12 @@ declare module '@inertiajs/core' {
                 indicatorDefinitions: Record<string, string>;
                 programmeUserProfile: Record<string, string>;
                 programmeWorkspace: Record<string, string>;
+                documentRepository: Record<string, string> & {
+                    errors: Record<string, string>;
+                    outcomes: Record<string, string>;
+                    audit: Record<string, string>;
+                    version: Record<string, string>;
+                };
                 evaluationDocuments: Record<string, string>;
                 help: Record<string, string>;
                 accessControl: Record<string, string>;

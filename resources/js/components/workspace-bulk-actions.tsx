@@ -8,6 +8,7 @@ import {
     UserXIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import type { RepositoryFolder } from '@/components/document-repository-manager';
 import SearchableSelect from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,9 +29,11 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import type { WorkspaceRow } from '@/components/workspace-data-table';
+import { interpolate } from '@/hooks/use-localization';
 import { bulkTransition } from '@/routes/assessments';
 import { bulkTriage } from '@/routes/citizen-cases';
 import { bulkVerification } from '@/routes/evidence';
+import { move as moveRepositoryDocuments } from '@/routes/evidence/repository/documents';
 import { bulkDestroy } from '@/routes/programme-users';
 import { exportMethod } from '@/routes/workspace';
 
@@ -189,23 +192,119 @@ export function WorkspaceBulkExportActions({
 export function EvidenceBulkActions({
     rows,
     clearSelection,
+    folders = [],
+    canManageRecords = false,
+    canVerify = true,
 }: {
     rows: WorkspaceRow[];
     clearSelection: () => void;
+    folders?: RepositoryFolder[];
+    canManageRecords?: boolean;
+    canVerify?: boolean;
 }) {
     return (
         <div className="flex flex-wrap gap-2">
-            <EvidenceDecisionSheet
-                rows={rows}
-                status="verified"
-                clearSelection={clearSelection}
-            />
-            <EvidenceDecisionSheet
-                rows={rows}
-                status="rejected"
-                clearSelection={clearSelection}
-            />
+            {canManageRecords && folders.length > 0 && (
+                <EvidenceMoveSheet
+                    rows={rows}
+                    folders={folders}
+                    clearSelection={clearSelection}
+                />
+            )}
+            {canVerify && (
+                <>
+                    <EvidenceDecisionSheet
+                        rows={rows}
+                        status="verified"
+                        clearSelection={clearSelection}
+                    />
+                    <EvidenceDecisionSheet
+                        rows={rows}
+                        status="rejected"
+                        clearSelection={clearSelection}
+                    />
+                </>
+            )}
         </div>
+    );
+}
+
+function EvidenceMoveSheet({
+    rows,
+    folders,
+    clearSelection,
+}: {
+    rows: WorkspaceRow[];
+    folders: RepositoryFolder[];
+    clearSelection: () => void;
+}) {
+    const copy = usePage().props.localization.documentRepository;
+    const [open, setOpen] = useState(false);
+    const countyIds = new Set(rows.map((row) => row.meta?.countyId ?? null));
+    const destinations = folders.filter((folder) =>
+        countyIds.has(folder.countyId),
+    );
+
+    if (countyIds.size !== 1 || destinations.length === 0) {
+        return null;
+    }
+
+    return (
+        <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+                <Button type="button" size="sm" variant="outline">
+                    {copy.move_selected}
+                </Button>
+            </SheetTrigger>
+            <SheetContent className="overflow-y-auto sm:max-w-md">
+                <SheetHeader>
+                    <SheetTitle>
+                        {interpolate(copy.move_documents, {
+                            count: rows.length,
+                        })}
+                    </SheetTitle>
+                    <SheetDescription>{copy.move_description}</SheetDescription>
+                </SheetHeader>
+                <Form
+                    {...moveRepositoryDocuments.form()}
+                    className="grid gap-5 px-4 pb-6"
+                    onSuccess={() => {
+                        setOpen(false);
+                        clearSelection();
+                    }}
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            {rows.map((row) => (
+                                <input
+                                    key={row.id}
+                                    type="hidden"
+                                    name="ids[]"
+                                    value={row.id}
+                                />
+                            ))}
+                            <SearchableSelect
+                                id="repository-move-destination"
+                                name="folder_id"
+                                label={copy.destination_folder}
+                                options={destinations.map((folder) => ({
+                                    id: folder.id,
+                                    name: folder.name,
+                                }))}
+                                error={errors.folder_id}
+                            />
+                            <Button
+                                type="submit"
+                                disabled={processing}
+                                aria-busy={processing}
+                            >
+                                {copy.confirm_move}
+                            </Button>
+                        </>
+                    )}
+                </Form>
+            </SheetContent>
+        </Sheet>
     );
 }
 

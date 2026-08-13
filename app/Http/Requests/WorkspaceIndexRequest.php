@@ -43,6 +43,7 @@ class WorkspaceIndexRequest extends FormRequest
             'report_search' => ['nullable', 'string', 'max:100'],
             'severity' => ['nullable', 'in:low,medium,high,critical'],
             'gap_category_id' => ['nullable', 'uuid', 'exists:igr_gap_categories,id'],
+            'folder_id' => ['nullable', 'uuid', 'exists:document_folders,id'],
             'ids' => ['nullable', 'array', 'min:1', 'max:100'],
             'ids.*' => ['required', 'uuid', 'distinct'],
         ];

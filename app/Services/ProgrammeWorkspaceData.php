@@ -13,10 +13,12 @@ use App\Models\AuditAssuranceRun;
 use App\Models\AuditEvent;
 use App\Models\BusinessCalendar;
 use App\Models\CitizenCase;
+use App\Models\County;
 use App\Models\CountyGrant;
 use App\Models\DevolutionInnovation;
 use App\Models\DevolutionProject;
 use App\Models\DocumentDisposition;
+use App\Models\DocumentFolder;
 use App\Models\DocumentLink;
 use App\Models\DswgAction;
 use App\Models\DswgMeeting;
@@ -282,6 +284,20 @@ class ProgrammeWorkspaceData
     /** @return array<string, mixed> */
     public function evidence(User $user, WorkspaceFilters $filters): array
     {
+        $foldersQuery = DocumentFolder::query()
+            ->with(['county:id,name,code,logo_path'])
+            ->withCount(['documents' => fn (Builder $query) => $query->where('record_status', 'active')])
+            ->where(function (Builder $query) use ($user): void {
+                $query->whereIn('county_id', $this->countyScope->query($user)->select('id'));
+                if ($user->programmeRole()->hasNationalScope()) {
+                    $query->orWhereNull('county_id');
+                }
+            });
+        $currentFolder = $filters->folderId === null
+            ? null
+            : (clone $foldersQuery)->whereKey($filters->folderId)->firstOrFail();
+        $folders = (clone $foldersQuery)->orderBy('name')->get();
+
         $query = AssessmentDocument::query()
             ->when($user->can('records:manage'), fn (Builder $query) => $query->withTrashed())
             ->where(function (Builder $query) use ($user): void {
@@ -333,9 +349,11 @@ class ProgrammeWorkspaceData
                         ->orWhere(fn (Builder $links) => $links->where('subject_type', $performancePlanMorphClass)->whereIn('subject_id', $visiblePerformancePlanIds))
                         ->orWhere(fn (Builder $links) => $links->where('subject_type', $securityIncidentMorphClass)->whereIn('subject_id', $visibleSecurityIncidentIds)));
             })
+            ->when($filters->folderId, fn (Builder $query, string $folderId) => $query->where('folder_id', $folderId))
             ->when($filters->cycleId, fn (Builder $query, string $cycleId) => $query->whereHas('assessment', fn (Builder $assessmentQuery) => $assessmentQuery->where('assessment_cycle_id', $cycleId)))
             ->with([
                 'county:id,name,code,logo_path',
+                'folder:id,parent_id,county_id,name',
                 'assessment:id,cycle',
                 'links:id,assessment_document_id,subject_type,subject_id,purpose',
                 'links.subject',
@@ -483,6 +501,8 @@ class ProgrammeWorkspaceData
                 'countyName' => $document->county?->name,
                 'countyCode' => $document->county !== null ? (string) $document->county->code : null,
                 'countyLogoUrl' => $document->county?->logo_path,
+                'folderId' => $document->folder_id,
+                'folderName' => $document->folder?->name,
             ],
             'cells' => [$document->title, $document->county?->identityCell() ?? 'National', $document->assessment_id !== null ? $document->assessment->cycle : str($document->links->isEmpty() ? 'Linked record' : $document->links->first()->purpose)->headline()->toString(), "{$document->category} · ".($document->source_type === 'scanned' ? 'Scanned copy' : 'Digital file'), "v{$document->version} · scan {$document->scan_status} · extraction {$document->ocr_status} · ".($document->currentVersion?->extraction?->attempts->count() ?? 0).' attempt(s)'.($document->active_legal_hold ? ' · legal hold' : ''), $document->verification_status],
         ]));
@@ -495,8 +515,43 @@ class ProgrammeWorkspaceData
             ->get()
             ->map(fn (Assessment $assessment) => ['id' => $assessment->id, 'label' => "{$assessment->county->name} · {$assessment->cycle}"])
             ->values();
+        $workspace['repository'] = [
+            'currentFolderId' => $currentFolder?->id,
+            'breadcrumbs' => $currentFolder === null ? [] : $this->folderBreadcrumbs($currentFolder),
+            'folders' => $folders->map(fn (DocumentFolder $folder): array => [
+                'id' => $folder->id,
+                'parentId' => $folder->parent_id,
+                'name' => $folder->name,
+                'countyId' => $folder->county_id,
+                'county' => $folder->county?->identityCell(),
+                'documentCount' => $folder->documents_count,
+            ])->values(),
+            'scopes' => $this->countyScope->query($user)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn (County $county): array => ['id' => $county->id, 'name' => $county->name])
+                ->when($user->programmeRole()->hasNationalScope(), fn ($scopes) => $scopes->prepend(['id' => '', 'name' => __('document-repository.national_scope')]))
+                ->values(),
+            'storageBytes' => (int) (clone $query)->sum('size_bytes'),
+        ];
 
         return $workspace;
+    }
+
+    /** @return list<array{id: string, name: string}> */
+    private function folderBreadcrumbs(DocumentFolder $folder): array
+    {
+        $breadcrumbs = [];
+        $cursor = $folder;
+        while (true) {
+            array_unshift($breadcrumbs, ['id' => $cursor->id, 'name' => $cursor->name]);
+            if ($cursor->parent_id === null) {
+                break;
+            }
+            $cursor = DocumentFolder::query()->findOrFail($cursor->parent_id);
+        }
+
+        return $breadcrumbs;
     }
 
     /** @return array<string, mixed> */

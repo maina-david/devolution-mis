@@ -49,5 +49,6 @@ class DatabaseSeeder extends Seeder
         $this->call(SupportDeskSeeder::class);
         $this->call(EnterpriseScenarioSeeder::class);
         $this->call(ServiceDeskPolicySeeder::class);
+        $this->call(DocumentRepositorySeeder::class);
     }
 }

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('assessment_id')->nullable();
             $table->uuid('county_id')->nullable();
+            $table->uuid('folder_id')->nullable();
             $table->string('category', 255);
             $table->string('title', 255);
             $table->string('path', 255);
@@ -53,6 +54,11 @@ return new class extends Migration
                 ->on('counties')
                 ->onDelete('cascade')
                 ->onUpdate('no action');
+            $table->foreign(['folder_id'], 'assessment_documents_folder_id_foreign')
+                ->references(['id'])
+                ->on('document_folders')
+                ->onDelete('restrict')
+                ->onUpdate('no action');
             $table->foreign(['criterion_evidence_requirement_id'], 'assessment_documents_criterion_evidence_requirement_id_foreign')
                 ->references(['id'])
                 ->on('criterion_evidence_requirements')
@@ -69,6 +75,7 @@ return new class extends Migration
 CREATE INDEX assessment_documents_category_index ON public.assessment_documents USING btree (category);
 CREATE INDEX assessment_documents_content_checksum_index ON public.assessment_documents USING btree (content_checksum);
 CREATE INDEX assessment_documents_document_date_index ON public.assessment_documents USING btree (document_date);
+CREATE INDEX assessment_documents_folder_id_index ON public.assessment_documents USING btree (folder_id);
 CREATE INDEX assessment_documents_mime_type_index ON public.assessment_documents USING btree (mime_type);
 CREATE INDEX assessment_documents_ocr_status_index ON public.assessment_documents USING btree (ocr_status);
 CREATE INDEX assessment_documents_record_status_index ON public.assessment_documents USING btree (record_status);

@@ -125,6 +125,7 @@ class HandleInertiaRequests extends Middleware
                 'dataGovernance' => __('data-governance'),
                 'privacyDocuments' => __('privacy-documents'),
                 'evidence' => __('evidence'),
+                'documentRepository' => __('document-repository'),
                 'learning' => __('learning'),
                 'learningAnalytics' => __('learning-analytics'),
                 'knowledge' => __('knowledge'),

@@ -15,6 +15,8 @@ import {
 } from '@/components/audit-assurance-controls';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DateRangeFilter from '@/components/date-range-filter';
+import DocumentRepositoryManager from '@/components/document-repository-manager';
+import type { DocumentRepository } from '@/components/document-repository-manager';
 import EvidenceRowAction from '@/components/evidence-row-action';
 import EvidenceUploadForm from '@/components/evidence-upload-form';
 import GrantRowAction from '@/components/grant-row-action';
@@ -64,6 +66,7 @@ type Props = {
         rows: WorkspaceRow[];
         pagination: WorkspacePagination;
         assessmentOptions?: Array<{ id: string; label: string }>;
+        repository?: DocumentRepository;
         accessOptions?: {
             roles: Array<{ value: string; label: string }>;
             counties: CountyIdentityValue[];
@@ -82,6 +85,7 @@ type Props = {
         search?: string;
         cycle_id?: string;
         status?: string;
+        folder_id?: string;
     };
     cycles?: Array<{ id: string; name: string }>;
 };
@@ -225,10 +229,25 @@ export default function ProgrammeWorkspace({
                     </div>
                 </section>
 
-                {workspaceType === 'evidence' && capabilities.upload && (
-                    <EvidenceUploadForm
-                        assessments={workspace.assessmentOptions ?? []}
-                    />
+                {workspaceType === 'evidence' && workspace.repository && (
+                    <div className="grid gap-3">
+                        <DocumentRepositoryManager
+                            repository={workspace.repository}
+                            filters={filters}
+                            canUpload={Boolean(capabilities.upload)}
+                            canManage={Boolean(capabilities.manageRecords)}
+                        />
+                        {capabilities.upload &&
+                            (workspace.assessmentOptions?.length ?? 0) > 0 && (
+                                <div className="flex justify-end">
+                                    <EvidenceUploadForm
+                                        assessments={
+                                            workspace.assessmentOptions ?? []
+                                        }
+                                    />
+                                </div>
+                            )}
+                    </div>
                 )}
                 {workspaceType === 'users' &&
                     capabilities.manage &&
@@ -401,10 +420,21 @@ export default function ProgrammeWorkspace({
                                         />
                                     )}
                                     {workspaceType === 'evidence' &&
-                                        capabilities.verify && (
+                                        (capabilities.verify ||
+                                            capabilities.manageRecords) && (
                                             <EvidenceBulkActions
                                                 rows={selectedRows}
                                                 clearSelection={clearSelection}
+                                                folders={
+                                                    workspace.repository
+                                                        ?.folders ?? []
+                                                }
+                                                canManageRecords={Boolean(
+                                                    capabilities.manageRecords,
+                                                )}
+                                                canVerify={Boolean(
+                                                    capabilities.verify,
+                                                )}
                                             />
                                         )}
                                     {workspaceType === 'users' &&
