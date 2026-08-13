@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { Download, Eye, FileCheck2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { storePartnerAgreementChange } from '@/actions/App/Http/Controllers/LinkedDocumentController';
@@ -88,6 +88,10 @@ export type PartnerAgreement = {
     canRequestChange: boolean;
 };
 
+function usePartnerCopy(): Record<string, string> {
+    return usePage().props.localization.partnerCoordination;
+}
+
 export default function PartnerAgreementRegister({
     agreements,
     canManage,
@@ -97,6 +101,7 @@ export default function PartnerAgreementRegister({
     canManage: boolean;
     canApprove: boolean;
 }) {
+    const copy = usePartnerCopy();
     const [previewDocument, setPreviewDocument] =
         useState<AgreementDocument | null>(null);
 
@@ -105,19 +110,17 @@ export default function PartnerAgreementRegister({
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <FileCheck2 aria-hidden="true" />
-                    Agreement approval register
+                    {copy.agreement_register}
                 </CardTitle>
                 <CardDescription>
-                    Document-backed MoUs and cooperation instruments move from
-                    draft submission to independent approval with immutable
-                    workflow history.
+                    {copy.agreement_register_description}
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
                 {agreements.length === 0 && (
                     <WorkspaceEmptyState
-                        title="No agreements registered"
-                        description="Register an agreement to begin its document and approval lifecycle."
+                        title={copy.no_agreements}
+                        description={copy.no_agreements_description}
                         className="min-h-48"
                     />
                 )}
@@ -141,10 +144,11 @@ export default function PartnerAgreementRegister({
                                     {agreement.title}
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    {agreement.partner} · {agreement.type} ·{' '}
+                                    {agreement.partner} {copy.separator}{' '}
+                                    {agreement.type} {copy.separator}{' '}
                                     {agreement.startsOn}
                                     {agreement.endsOn
-                                        ? ` to ${agreement.endsOn}`
+                                        ? ` ${copy.to} ${agreement.endsOn}`
                                         : ''}
                                 </p>
                             </div>
@@ -176,13 +180,14 @@ export default function PartnerAgreementRegister({
                         </div>
                         <div className="grid gap-2">
                             <p className="text-sm font-medium">
-                                Repository records ({agreement.documents.length}
-                                )
+                                {copy.repository_records}{' '}
+                                {copy.open_parenthesis}
+                                {agreement.documents.length}
+                                {copy.close_parenthesis}
                             </p>
                             {agreement.documents.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
-                                    No scanned or born-digital agreement record
-                                    has been uploaded.
+                                    {copy.no_repository_records}
                                 </p>
                             ) : (
                                 agreement.documents.map((document) => (
@@ -195,9 +200,12 @@ export default function PartnerAgreementRegister({
                                                 {document.title}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {document.originalName} ·{' '}
-                                                {document.sourceType} · scan{' '}
-                                                {document.scanStatus} · OCR{' '}
+                                                {document.originalName}{' '}
+                                                {copy.separator}{' '}
+                                                {document.sourceType}{' '}
+                                                {copy.separator} {copy.scan}{' '}
+                                                {document.scanStatus}{' '}
+                                                {copy.separator} {copy.ocr}{' '}
                                                 {document.ocrStatus}
                                             </p>
                                         </div>
@@ -215,7 +223,7 @@ export default function PartnerAgreementRegister({
                                                         }
                                                     >
                                                         <Eye aria-hidden="true" />
-                                                        Preview
+                                                        {copy.preview}
                                                     </Button>
                                                 )}
                                                 <Button
@@ -230,7 +238,7 @@ export default function PartnerAgreementRegister({
                                                         })}
                                                     >
                                                         <Download aria-hidden="true" />
-                                                        Download
+                                                        {copy.download}
                                                     </a>
                                                 </Button>
                                             </div>
@@ -242,7 +250,7 @@ export default function PartnerAgreementRegister({
                         {agreement.changeRequests.length > 0 && (
                             <div className="grid gap-2 border-t pt-4">
                                 <p className="text-sm font-medium">
-                                    Post-approval change history
+                                    {copy.change_history}
                                 </p>
                                 {agreement.changeRequests.map((change) => (
                                     <div
@@ -252,7 +260,8 @@ export default function PartnerAgreementRegister({
                                         <div className="flex flex-wrap items-center justify-between gap-2">
                                             <div className="flex gap-2">
                                                 <Badge variant="outline">
-                                                    v{change.version}
+                                                    {copy.version_prefix}
+                                                    {change.version}
                                                 </Badge>
                                                 <Badge variant="secondary">
                                                     {change.type}
@@ -263,7 +272,8 @@ export default function PartnerAgreementRegister({
                                                 </Badge>
                                             </div>
                                             <span className="text-xs text-muted-foreground">
-                                                Effective {change.effectiveOn}
+                                                {copy.effective}{' '}
+                                                {change.effectiveOn}
                                             </span>
                                         </div>
                                         <p className="text-sm">
@@ -310,7 +320,8 @@ export default function PartnerAgreementRegister({
                                         </div>
                                         {change.decision && (
                                             <p className="text-xs text-muted-foreground">
-                                                {change.decision.decider}:{' '}
+                                                {change.decision.decider}
+                                                {copy.label_separator}{' '}
                                                 {change.decision.note}
                                             </p>
                                         )}
@@ -331,7 +342,7 @@ export default function PartnerAgreementRegister({
                             {previewDocument?.title ?? 'Agreement record'}
                         </SheetTitle>
                         <SheetDescription>
-                            Authorized preview of the private repository copy.
+                            {copy.authorized_preview}
                         </SheetDescription>
                     </SheetHeader>
                     {previewDocument && (
@@ -352,6 +363,8 @@ function RequestAgreementChange({
 }: {
     agreement: PartnerAgreement;
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Request agreement change"
@@ -386,7 +399,7 @@ function RequestAgreementChange({
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`change-title-${agreement.id}`}>
-                                Revised title (amendments)
+                                {copy.revised_title}
                             </Label>
                             <Input
                                 id={`change-title-${agreement.id}`}
@@ -396,7 +409,7 @@ function RequestAgreementChange({
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor={`change-summary-${agreement.id}`}>
-                                Revised summary (amendments)
+                                {copy.revised_summary}
                             </Label>
                             <Textarea
                                 id={`change-summary-${agreement.id}`}
@@ -410,7 +423,7 @@ function RequestAgreementChange({
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`change-value-${agreement.id}`}>
-                                Revised committed value
+                                {copy.revised_value}
                             </Label>
                             <Input
                                 id={`change-value-${agreement.id}`}
@@ -420,7 +433,7 @@ function RequestAgreementChange({
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor={`change-reason-${agreement.id}`}>
-                                Reason
+                                {copy.reason}
                             </Label>
                             <Textarea
                                 id={`change-reason-${agreement.id}`}
@@ -430,7 +443,7 @@ function RequestAgreementChange({
                             />
                         </div>
                         <Button type="submit" disabled={processing}>
-                            Submit governed request
+                            {copy.submit_governed_request}
                         </Button>
                     </>
                 )}
@@ -444,6 +457,8 @@ function UploadAgreementChangeEvidence({
 }: {
     change: AgreementChange;
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Upload change evidence"
@@ -458,11 +473,11 @@ function UploadAgreementChangeEvidence({
                 resetOnSuccess
             >
                 <Label>
-                    Record title
+                    {copy.record_title}
                     <Input name="title" required />
                 </Label>
                 <Label>
-                    Category
+                    {copy.category}
                     <Input
                         name="category"
                         defaultValue="Agreement change"
@@ -471,12 +486,12 @@ function UploadAgreementChangeEvidence({
                 </Label>
                 <input type="hidden" name="source_type" value="digital" />
                 <Label>
-                    Document
+                    {copy.document}
                     <Input name="document" type="file" required />
                 </Label>
                 <Button type="submit">
                     <Upload />
-                    Upload securely
+                    {copy.upload_securely}
                 </Button>
             </Form>
         </FormSheet>
@@ -484,6 +499,8 @@ function UploadAgreementChangeEvidence({
 }
 
 function DecideAgreementChange({ change }: { change: AgreementChange }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Decide agreement change"
@@ -504,10 +521,10 @@ function DecideAgreementChange({ change }: { change: AgreementChange }) {
                     ]}
                 />
                 <Label>
-                    Decision note
+                    {copy.decision_note}
                     <Textarea name="decision_note" minLength={20} required />
                 </Label>
-                <Button type="submit">Retain decision</Button>
+                <Button type="submit">{copy.retain_decision}</Button>
             </Form>
         </FormSheet>
     );
@@ -518,6 +535,8 @@ function UploadAgreementDocument({
 }: {
     agreement: PartnerAgreement;
 }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Upload agreement record"
@@ -534,7 +553,7 @@ function UploadAgreementDocument({
                     <>
                         <div className="grid gap-2">
                             <Label htmlFor={`agreement-title-${agreement.id}`}>
-                                Record title
+                                {copy.record_title}
                             </Label>
                             <Input
                                 id={`agreement-title-${agreement.id}`}
@@ -560,7 +579,7 @@ function UploadAgreementDocument({
                             <Label
                                 htmlFor={`agreement-category-${agreement.id}`}
                             >
-                                Category
+                                {copy.category}
                             </Label>
                             <Input
                                 id={`agreement-category-${agreement.id}`}
@@ -582,7 +601,7 @@ function UploadAgreementDocument({
                         />
                         <div className="grid gap-2">
                             <Label htmlFor={`agreement-file-${agreement.id}`}>
-                                Agreement file
+                                {copy.agreement_file}
                             </Label>
                             <Input
                                 id={`agreement-file-${agreement.id}`}
@@ -608,11 +627,13 @@ function UploadAgreementDocument({
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                Uploading: {progress.percentage}%
+                                {copy.uploading}
+                                {copy.label_separator} {progress.percentage}
+                                {copy.percent}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            Upload securely
+                            {copy.upload_securely}
                         </Button>
                     </>
                 )}
@@ -622,6 +643,8 @@ function UploadAgreementDocument({
 }
 
 function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
+    const copy = usePartnerCopy();
+
     return (
         <FormSheet
             title="Review agreement"
@@ -648,7 +671,7 @@ function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
                             <Label
                                 htmlFor={`agreement-comment-${agreement.id}`}
                             >
-                                Decision rationale
+                                {copy.decision_rationale}
                             </Label>
                             <Textarea
                                 id={`agreement-comment-${agreement.id}`}
@@ -670,7 +693,7 @@ function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
                             )}
                         </div>
                         <Button type="submit" disabled={processing}>
-                            Record decision
+                            {copy.record_decision}
                         </Button>
                     </>
                 )}
@@ -680,6 +703,7 @@ function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
 }
 
 function SubmitAgreement({ agreement }: { agreement: PartnerAgreement }) {
+    const copy = usePartnerCopy();
     const hasDocument = agreement.documents.length > 0;
 
     return (
@@ -704,7 +728,7 @@ function SubmitAgreement({ agreement }: { agreement: PartnerAgreement }) {
                             type="submit"
                             disabled={processing || !hasDocument}
                         >
-                            Confirm submission
+                            {copy.confirm_submission}
                         </Button>
                     </>
                 )}
