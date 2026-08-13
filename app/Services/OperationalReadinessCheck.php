@@ -44,6 +44,22 @@ class OperationalReadinessCheck
 
                 return "Queue persistence is available; {$failed} failed jobs recorded.";
             }),
+            'search_indexes' => $this->timed(function (): string {
+                $requiredIndexes = [
+                    'devolution_project_county_county_project_index',
+                    'devolution_projects_title_trgm_index',
+                    'document_extractions_text_search_idx',
+                ];
+                $availableIndexes = DB::table('pg_indexes')
+                    ->where('schemaname', 'public')
+                    ->whereIn('indexname', $requiredIndexes)
+                    ->pluck('indexname')
+                    ->all();
+                $missingIndexes = array_values(array_diff($requiredIndexes, $availableIndexes));
+                abort_if($missingIndexes !== [], 503, 'Required discovery indexes are unavailable: '.implode(', ', $missingIndexes));
+
+                return count($requiredIndexes).' required discovery indexes are available.';
+            }),
             'document_malware_scanner' => $this->timed(fn (): string => $this->documentSecurityScanner->readinessDetail()),
         ];
 

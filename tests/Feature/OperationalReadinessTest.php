@@ -13,6 +13,7 @@ use App\Models\ReleaseRecord;
 use App\Models\ServiceLevelMeasurement;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
+use App\Services\OperationalReadinessCheck;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -29,8 +30,41 @@ class OperationalReadinessTest extends TestCase
 
     public function test_public_readiness_probe_checks_dependencies_without_disclosing_details(): void
     {
-        $this->getJson(route('health.ready'))->assertOk()->assertJsonPath('status', 'ready')->assertJsonCount(5, 'checks')->assertJsonFragment(['name' => 'document_malware_scanner', 'status' => 'pass'])->assertJsonStructure(['status', 'checkedAt', 'checks' => [['name', 'status', 'latencyMs']]]);
+        $this->getJson(route('health.ready'))->assertOk()->assertJsonPath('status', 'ready')->assertJsonCount(6, 'checks')->assertJsonFragment(['name' => 'search_indexes', 'status' => 'pass'])->assertJsonFragment(['name' => 'document_malware_scanner', 'status' => 'pass'])->assertJsonStructure(['status', 'checkedAt', 'checks' => [['name', 'status', 'latencyMs']]]);
         $this->assertSame([], Storage::disk('local')->allFiles('operations/readiness'));
+    }
+
+    public function test_readiness_detects_cache_outage_and_recovers_after_the_store_is_restored(): void
+    {
+        $cacheManager = app('cache');
+        $originalDriver = $cacheManager->getDefaultDriver();
+        config()->set('cache.stores.failure-injection', ['driver' => 'database', 'connection' => 'missing']);
+        $cacheManager->setDefaultDriver('failure-injection');
+
+        $failed = app(OperationalReadinessCheck::class)->run();
+        $this->assertFalse($failed['ready']);
+        $this->assertSame('fail', $failed['checks']['cache']['status']);
+
+        $cacheManager->forgetDriver('failure-injection');
+        $cacheManager->setDefaultDriver($originalDriver);
+        $recovered = app(OperationalReadinessCheck::class)->run();
+        $this->assertTrue($recovered['ready']);
+        $this->assertSame('pass', $recovered['checks']['cache']['status']);
+    }
+
+    public function test_readiness_detects_missing_search_index_and_recovers_after_recreation(): void
+    {
+        DB::statement('DROP INDEX public.document_extractions_text_search_idx');
+
+        $failed = app(OperationalReadinessCheck::class)->run();
+        $this->assertFalse($failed['ready']);
+        $this->assertSame('fail', $failed['checks']['search_indexes']['status']);
+        $this->assertStringContainsString('document_extractions_text_search_idx', $failed['checks']['search_indexes']['detail']);
+
+        DB::statement("CREATE INDEX document_extractions_text_search_idx ON public.document_extractions USING gin (to_tsvector('simple'::regconfig, COALESCE(extracted_text, ''::text)))");
+        $recovered = app(OperationalReadinessCheck::class)->run();
+        $this->assertTrue($recovered['ready']);
+        $this->assertSame('pass', $recovered['checks']['search_indexes']['status']);
     }
 
     public function test_production_readiness_fails_closed_on_the_development_signature_gate(): void
@@ -75,7 +109,7 @@ class OperationalReadinessTest extends TestCase
         $viewer = User::factory()->topManagement()->create();
         $performanceRun = PerformanceTestRun::factory()->create();
         $this->assertSame(0, Artisan::call('operations:measure'));
-        $this->assertSame(9, ServiceLevelMeasurement::query()->count());
+        $this->assertSame(10, ServiceLevelMeasurement::query()->count());
         $alert = OperationalAlert::query()->sole();
         $this->assertSame('database', $alert->service);
         $this->assertSame('backup_age', $alert->metric);
@@ -86,7 +120,7 @@ class OperationalReadinessTest extends TestCase
         $this->assertDatabaseHas('operational_alert_events', ['operational_alert_id' => $alert->id, 'event_type' => 'opened']);
         Notification::assertSentToTimes($operator, ProgrammeAlert::class, 1);
 
-        $this->actingAs($viewer)->get(route('operations.index'))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 9)->where('operationalAlerts.total', 1)->where('operationalAlerts.data.0.id', $alert->id)->where('operationalAlerts.data.0.status', 'open')->where('operationalAlerts.data.0.eventCount', 1)->has('operationalAlerts.data.0.events', 1)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
+        $this->actingAs($viewer)->get(route('operations.index'))->assertOk()->assertInertia(fn ($page) => $page->where('readiness.ready', true)->where('capabilities.manage', false)->has('measurements', 10)->where('operationalAlerts.total', 1)->where('operationalAlerts.data.0.id', $alert->id)->where('operationalAlerts.data.0.status', 'open')->where('operationalAlerts.data.0.eventCount', 1)->has('operationalAlerts.data.0.events', 1)->where('performanceRuns.total', 1)->where('performanceRuns.data.0.id', $performanceRun->id)->where('performanceRuns.data.0.p95LatencyMs', '450.000')->where('performanceRuns.data.0.evidenceChecksum', $performanceRun->evidence_checksum));
         $acknowledgement = ['note' => 'Database backup freshness breach assigned to the operations lead for immediate remediation.'];
         $this->actingAs($viewer)->patch(route('operations.alerts.acknowledge', [$alert]), $acknowledgement)->assertForbidden();
         $this->actingAs($operator)->patch(route('operations.alerts.acknowledge', [$alert]), $acknowledgement)->assertRedirect();
