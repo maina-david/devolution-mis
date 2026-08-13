@@ -2,8 +2,10 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 
+/* global process */
+
 const limits = {
-    frontendLiterals: 346,
+    frontendLiterals: 329,
     backendMessages: 654,
 };
 

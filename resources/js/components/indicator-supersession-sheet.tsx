@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { GitBranch } from 'lucide-react';
 import DatePickerField from '@/components/date-picker-field';
 import type { IndicatorDefinitionItem } from '@/components/indicator-definition-register';
@@ -25,16 +25,42 @@ export default function IndicatorSupersessionSheet({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const copy = usePage().props.localization.indicatorDefinitions;
+    const optionLabels = {
+        input: copy.input,
+        activity: copy.activity,
+        output: copy.output,
+        outcome: copy.outcome,
+        impact: copy.impact,
+        number: copy.number,
+        percentage: copy.percentage,
+        currency: copy.currency,
+        count: copy.count,
+        text: copy.text,
+        increase: copy.increase,
+        decrease: copy.decrease,
+        maintain: copy.maintain,
+        monthly: copy.monthly,
+        quarterly: copy.quarterly,
+        semiannual: copy.semiannual,
+        annual: copy.annual,
+        ad_hoc: copy.ad_hoc,
+    };
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="overflow-y-auto sm:max-w-2xl">
                 <SheetHeader>
                     <SheetTitle>
-                        Supersede {indicator?.code} v{indicator?.version}
+                        {copy.supersede_title
+                            .replace(':code', indicator?.code ?? '')
+                            .replace(
+                                ':version',
+                                String(indicator?.version ?? ''),
+                            )}
                     </SheetTitle>
                     <SheetDescription>
-                        Create the next draft version. The released definition
-                        and its historical observations remain immutable.
+                        {copy.supersede_description}
                     </SheetDescription>
                 </SheetHeader>
                 {indicator && (
@@ -46,7 +72,7 @@ export default function IndicatorSupersessionSheet({
                         {({ processing, errors }) => (
                             <>
                                 <FormField
-                                    label="Indicator name"
+                                    label={copy.indicator_name}
                                     htmlFor="supersession-name"
                                     error={errors.name}
                                 >
@@ -59,7 +85,7 @@ export default function IndicatorSupersessionSheet({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Results level"
+                                    label={copy.results_level}
                                     htmlFor="supersession-results-level"
                                     error={errors.results_level}
                                 >
@@ -74,10 +100,11 @@ export default function IndicatorSupersessionSheet({
                                             'outcome',
                                             'impact',
                                         ]}
+                                        labels={optionLabels}
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Unit of measure"
+                                    label={copy.unit_of_measure}
                                     htmlFor="supersession-unit"
                                     error={errors.unit_of_measure}
                                 >
@@ -92,7 +119,7 @@ export default function IndicatorSupersessionSheet({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Value type"
+                                    label={copy.value_type}
                                     htmlFor="supersession-value-type"
                                     error={errors.value_type}
                                 >
@@ -107,10 +134,11 @@ export default function IndicatorSupersessionSheet({
                                             'count',
                                             'text',
                                         ]}
+                                        labels={optionLabels}
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Direction"
+                                    label={copy.direction}
                                     htmlFor="supersession-direction"
                                     error={errors.direction}
                                 >
@@ -123,10 +151,11 @@ export default function IndicatorSupersessionSheet({
                                             'decrease',
                                             'maintain',
                                         ]}
+                                        labels={optionLabels}
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Frequency"
+                                    label={copy.frequency}
                                     htmlFor="supersession-frequency"
                                     error={errors.frequency}
                                 >
@@ -141,15 +170,16 @@ export default function IndicatorSupersessionSheet({
                                             'annual',
                                             'ad_hoc',
                                         ]}
+                                        labels={optionLabels}
                                     />
                                 </FormField>
                                 <DatePickerField
                                     name="effective_from"
-                                    label="Effective from"
+                                    label={copy.effective_from}
                                     error={errors.effective_from}
                                 />
                                 <FormField
-                                    label="Description"
+                                    label={copy.definition_description}
                                     htmlFor="supersession-description"
                                     error={errors.description}
                                 >
@@ -164,7 +194,7 @@ export default function IndicatorSupersessionSheet({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Data source"
+                                    label={copy.data_source}
                                     htmlFor="supersession-data-source"
                                     error={errors.data_source}
                                 >
@@ -179,7 +209,7 @@ export default function IndicatorSupersessionSheet({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Verification method"
+                                    label={copy.verification_method}
                                     htmlFor="supersession-verification"
                                     error={errors.verification_method}
                                 >
@@ -196,7 +226,7 @@ export default function IndicatorSupersessionSheet({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Change summary"
+                                    label={copy.change_summary}
                                     htmlFor="supersession-change-summary"
                                     error={errors.change_summary}
                                 >
@@ -207,12 +237,12 @@ export default function IndicatorSupersessionSheet({
                                         aria-invalid={Boolean(
                                             errors.change_summary,
                                         )}
-                                        placeholder="Explain why a new version is required and what changed."
+                                        placeholder={copy.change_summary_help}
                                     />
                                 </FormField>
                                 <Button type="submit" disabled={processing}>
                                     <GitBranch data-icon="inline-start" />
-                                    Create successor draft
+                                    {copy.create_successor_draft}
                                 </Button>
                             </>
                         )}

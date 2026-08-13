@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { CheckCircle2, GitBranch, MoreHorizontal } from 'lucide-react';
 import { useState } from 'react';
 import IndicatorSupersessionSheet from '@/components/indicator-supersession-sheet';
@@ -19,6 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { approve } from '@/routes/monitoring-evaluation/indicators';
 
 export type IndicatorDefinitionItem = {
@@ -56,29 +57,31 @@ export default function IndicatorDefinitionRegister({
     definitions: IndicatorDefinitionItem[];
     currentUserId: string;
 }) {
+    const copy = usePage().props.localization.indicatorDefinitions;
     const [superseding, setSuperseding] =
         useState<IndicatorDefinitionItem | null>(null);
 
     return (
         <section className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
             <div className="border-b px-5 py-4">
-                <h2 className="font-bold">Indicator definition register</h2>
+                <h2 className="font-bold">{copy.title}</h2>
                 <p className="text-sm text-muted-foreground">
-                    Drafts require approval by an administrator other than their
-                    author.
+                    {copy.description}
                 </p>
             </div>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Code</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Level</TableHead>
-                        <TableHead>Sector</TableHead>
-                        <TableHead>Version</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Catalogue</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                        <TableHead>{copy.code}</TableHead>
+                        <TableHead>{copy.name}</TableHead>
+                        <TableHead>{copy.level}</TableHead>
+                        <TableHead>{copy.sector}</TableHead>
+                        <TableHead>{copy.version}</TableHead>
+                        <TableHead>{copy.status}</TableHead>
+                        <TableHead>{copy.catalogue}</TableHead>
+                        <TableHead className="text-right">
+                            {copy.action}
+                        </TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -88,21 +91,26 @@ export default function IndicatorDefinitionRegister({
                                 {item.code}
                             </TableCell>
                             <TableCell>{item.name}</TableCell>
-                            <TableCell>{item.resultsLevel}</TableCell>
+                            <TableCell>
+                                {copy[item.resultsLevel] ?? item.resultsLevel}
+                            </TableCell>
                             <TableCell>{item.sector ?? '—'}</TableCell>
-                            <TableCell>v{item.version}</TableCell>
+                            <TableCell>
+                                {copy.version_abbreviation}
+                                {item.version}
+                            </TableCell>
                             <TableCell>
                                 <Badge variant="outline">
                                     {item.status === 'approved' &&
                                     !item.isCurrentApproved
-                                        ? 'superseded'
-                                        : item.status}
+                                        ? copy.superseded
+                                        : (copy[item.status] ?? item.status)}
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                                 {item.referenceData
-                                    ? `v${item.referenceData.version} · ${item.referenceData.checksum.slice(0, 10)}…`
-                                    : 'Legacy unpinned'}
+                                    ? `${copy.version_abbreviation}${item.referenceData.version} · ${item.referenceData.checksum.slice(0, 10)}…`
+                                    : copy.legacy_unpinned}
                             </TableCell>
                             <TableCell className="text-right">
                                 {(item.status === 'draft' &&
@@ -113,7 +121,10 @@ export default function IndicatorDefinitionRegister({
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
-                                                aria-label={`Open actions for ${item.code}`}
+                                                aria-label={copy.open_actions.replace(
+                                                    ':code',
+                                                    item.code,
+                                                )}
                                             >
                                                 <MoreHorizontal aria-hidden="true" />
                                             </Button>
@@ -148,7 +159,9 @@ export default function IndicatorDefinitionRegister({
                                                                         className="flex w-full items-center gap-2"
                                                                     >
                                                                         <CheckCircle2 aria-hidden="true" />{' '}
-                                                                        Approve
+                                                                        {
+                                                                            copy.approve
+                                                                        }
                                                                     </button>
                                                                 )}
                                                             </Form>
@@ -161,7 +174,9 @@ export default function IndicatorDefinitionRegister({
                                                         }
                                                     >
                                                         <GitBranch aria-hidden="true" />{' '}
-                                                        Create successor version
+                                                        {
+                                                            copy.create_successor_version
+                                                        }
                                                     </DropdownMenuItem>
                                                 )}
                                             </DropdownMenuGroup>
@@ -170,15 +185,25 @@ export default function IndicatorDefinitionRegister({
                                 ) : (
                                     <span className="text-xs text-muted-foreground">
                                         {item.status === 'draft'
-                                            ? 'Independent approval required'
+                                            ? copy.independent_approval_required
                                             : item.hasSuccessor
-                                              ? 'Successor draft pending'
-                                              : 'Released'}
+                                              ? copy.successor_draft_pending
+                                              : copy.released}
                                     </span>
                                 )}
                             </TableCell>
                         </TableRow>
                     ))}
+                    {definitions.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={8} className="p-0">
+                                <WorkspaceEmptyState
+                                    title={copy.empty_title}
+                                    description={copy.empty_description}
+                                />
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
             <IndicatorSupersessionSheet

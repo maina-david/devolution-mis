@@ -9,6 +9,7 @@ export default function StaticSearchableSelect({
     onValueChange,
     label = '',
     error,
+    labels,
 }: {
     id: string;
     name: string;
@@ -18,6 +19,7 @@ export default function StaticSearchableSelect({
     onValueChange?: (value: string) => void;
     label?: string;
     error?: string;
+    labels?: Record<string, string>;
 }) {
     return (
         <SearchableSelect
@@ -30,7 +32,7 @@ export default function StaticSearchableSelect({
             onValueChange={onValueChange}
             options={values.map((value) => ({
                 id: value,
-                name: value.replaceAll('_', ' '),
+                name: labels?.[value] ?? value.replaceAll('_', ' '),
             }))}
         />
     );
