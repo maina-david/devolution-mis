@@ -109,7 +109,7 @@ class IgrResolutionController extends Controller
     {
         $user = $this->user($request);
         $forum = IgrForum::create([...$request->validated(), 'created_by' => $user->id]);
-        $auditLogger->record($user, $forum, 'igr.forum.created', "IGR forum {$forum->code} created.");
+        $auditLogger->record($user, $forum, 'igr.forum.created', __('igr.audit.forum_created', ['code' => $forum->code]));
 
         return back()->with('success', __('igr.outcomes.forum_created'));
     }
@@ -117,7 +117,7 @@ class IgrResolutionController extends Controller
     public function storeResolution(StoreIgrResolutionRequest $request, CreateIgrResolution $createResolution): RedirectResponse
     {
         $resolution = $createResolution->handle($this->user($request), $request->validated());
-        $resolution->assignments()->with('user')->get()->pluck('user')->filter()->each(fn (User $user) => $user->notifyNow(new ProgrammeAlert('New IGR resolution assignment', "You are responsible for {$resolution->resolution_number}: {$resolution->title}.", 'igr-resolutions')));
+        $resolution->assignments()->with('user')->get()->pluck('user')->filter()->each(fn (User $user) => $user->notifyNow(ProgrammeAlert::translated('igr.notifications.assignment_title', 'igr.notifications.assignment_message', 'igr-resolutions', messageParameters: ['number' => $resolution->resolution_number, 'title' => $resolution->title])));
 
         return back()->with('success', __('igr.outcomes.resolution_registered'));
     }
@@ -166,19 +166,19 @@ class IgrResolutionController extends Controller
         $user = $this->user($request);
         $this->authorizeResolution($user, $resolution, $countyScope);
         $instance = $resolution->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'Resolution workflow is unavailable.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('igr.errors.workflow_unavailable'));
         $name = $request->validated('transition');
         if (in_array($name, ['approve_closure', 'reject_closure'], true)) {
             Gate::authorize(ProgrammePermission::CloseIgrResolutions->value);
         }
         if ($name === 'submit_closure') {
-            abort_if($resolution->dependencies()->where('dependency_type', 'blocks')->whereHas('prerequisiteResolution', fn (Builder $query) => $query->where('status', '!=', 'closed'))->exists(), 409, 'All blocking prerequisite resolutions must be closed before closure review.');
-            abort_if($resolution->gaps()->where('status', '!=', 'accepted')->exists(), 409, 'All implementation gaps require independent acceptance before closure review.');
+            abort_if($resolution->dependencies()->where('dependency_type', 'blocks')->whereHas('prerequisiteResolution', fn (Builder $query) => $query->where('status', '!=', 'closed'))->exists(), 409, __('igr.errors.blocking_prerequisites_open'));
+            abort_if($resolution->gaps()->where('status', '!=', 'accepted')->exists(), 409, __('igr.errors.gaps_not_accepted'));
         }
         $hasCleanClosureEvidence = $resolution->documentLinks()->where('purpose', 'igr-implementation-evidence')->whereHas('document', fn (Builder $query) => $query->where('scan_status', 'clean')->where('record_status', 'active'))->exists();
         $transitioned = $transitionWorkflow->handle($instance, $name, $user, ['progress_percentage' => $resolution->progress_percentage, 'closure_evidence_present' => $hasCleanClosureEvidence], $request->validated('comment'));
         $resolution->update(['status' => $transitioned->current_state, 'closed_by' => $name === 'approve_closure' ? $user->id : $resolution->closed_by, 'closed_at' => $name === 'approve_closure' ? now() : $resolution->closed_at]);
-        $auditLogger->record($user, $resolution, 'igr.resolution.transitioned', "Resolution {$resolution->resolution_number} transitioned to {$transitioned->current_state}.");
+        $auditLogger->record($user, $resolution, 'igr.resolution.transitioned', __('igr.audit.resolution_transitioned', ['number' => $resolution->resolution_number, 'state' => $transitioned->current_state]));
 
         return back()->with('success', __('igr.outcomes.resolution_updated'));
     }

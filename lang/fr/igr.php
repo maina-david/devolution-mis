@@ -21,4 +21,10 @@ return ['ui' => [
     'owner_label' => 'Responsable :', 'impact_label' => 'Impact :', 'mitigation_label' => 'Atténuation :', 'resolution_label' => 'Résolution :',
 ], 'outcomes' => [
     'meeting_recorded' => 'La réunion formelle IGR a été enregistrée.', 'gap_category_created' => 'La catégorie d’écart IGR a été créée.', 'forum_created' => 'Le forum IGR a été créé.', 'resolution_registered' => 'La résolution a été enregistrée et les responsables notifiés.', 'implementation_updated' => 'La mise à jour d’exécution a été enregistrée.', 'dependency_recorded' => 'La dépendance de la résolution a été enregistrée.', 'gap_recorded' => 'L’écart d’exécution a été enregistré et attribué.', 'gap_updated' => 'Le cycle de l’écart d’exécution a été mis à jour.', 'resolution_updated' => 'Le cycle de la résolution a été mis à jour.',
+], 'errors' => [
+    'workflow_unavailable' => 'Le flux de travail de la résolution est indisponible.', 'blocking_prerequisites_open' => 'Toutes les résolutions préalables bloquantes doivent être clôturées avant l’examen de clôture.', 'gaps_not_accepted' => 'Toutes les lacunes de mise en œuvre doivent être acceptées indépendamment avant l’examen de clôture.',
+], 'audit' => [
+    'forum_created' => 'Forum IGR :code créé.', 'resolution_transitioned' => 'Résolution :number passée à l’état :state.',
+], 'notifications' => [
+    'assignment_title' => 'Nouvelle affectation de résolution IGR', 'assignment_message' => 'Vous êtes responsable de :number : :title.',
 ]];

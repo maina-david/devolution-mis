@@ -21,6 +21,8 @@ use App\Support\CanonicalJson;
 use Database\Seeders\IgrWorkflowSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -41,12 +43,12 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->seed(IgrWorkflowSeeder::class);
         $forum = IgrForum::factory()->create(['created_by' => $administrator->id]);
 
-        $this->actingAs($administrator)->post(route('igr-resolutions.store'), [
+        $this->withSession(['locale' => 'fr'])->actingAs($administrator)->post(route('igr-resolutions.store'), [
             'igr_forum_id' => $forum->id, 'resolution_number' => 'IGR/2026/001', 'title' => 'Harmonize conditional grant reporting',
             'resolution_text' => 'Adopt and operate a single reconciliation calendar across national and county government institutions.',
             'resolved_on' => today()->subWeek()->toDateString(), 'due_on' => today()->addMonth()->toDateString(), 'priority' => 'high',
             'assignments' => [['user_id' => $responsible->id, 'county_id' => $county->id, 'responsibility_role' => 'lead', 'is_lead' => true]],
-        ])->assertRedirect();
+        ])->assertRedirect()->assertSessionHas('success', 'La résolution a été enregistrée et les responsables notifiés.');
 
         $resolution = IgrResolution::query()->sole();
         $this->assertTrue(Str::isUuid($resolution->id));
@@ -151,9 +153,11 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->assertCount(2, IgrResolutionDependency::all());
 
         $this->actingAs($administrator)->get(route('igr-resolutions.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('resolutions', fn ($resolutions) => collect($resolutions)->contains(fn (array $resolution): bool => $resolution['id'] === $first->id && $resolution['dependencies'][0]['resolutionId'] === $second->id)));
+            ->where('resolutions', fn (Collection $resolutions): bool => $resolutions->contains(fn (array $resolution): bool => $resolution['id'] === $first->id && $resolution['dependencies'][0]['resolutionId'] === $second->id)));
         $export = $this->actingAs($administrator)->get(route('workspace.export', ['igr-resolutions', 'json']))->assertOk()->streamedContent();
         $decodedExport = json_decode($export, true, flags: JSON_THROW_ON_ERROR);
+        $this->assertIsArray($decodedExport);
+        $this->assertIsArray($decodedExport['rows']);
         $this->assertTrue(collect($decodedExport['rows'])->contains(fn (array $row): bool => $row[7] === 'IGR/DEP/B (open)'));
     }
 
@@ -278,7 +282,7 @@ class IgrResolutionWorkflowTest extends TestCase
                 ->where('gapAnalytics.summary.total', 2)
                 ->where('gapWorkspace.pagination.total', 2)
                 ->where('resolutions.0.gap', fn (?string $headline): bool => $headline !== $secondGap->title)
-                ->where('resolutions.0.gaps', fn ($gaps): bool => collect($gaps)->pluck('id')->sort()->values()->all() === collect([$firstGap->id, $nationalGap->id])->sort()->values()->all()));
+                ->where('resolutions.0.gaps', fn (Collection $gaps): bool => $gaps->pluck('id')->sort()->values()->all() === collect([$firstGap->id, $nationalGap->id])->sort()->values()->all()));
         $this->actingAs($firstCountyOfficer)
             ->get(route('igr-resolutions.index', ['county_id' => $secondCounty->id]))
             ->assertOk()
@@ -306,7 +310,7 @@ class IgrResolutionWorkflowTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('gapAnalytics.summary.total', 2)
                 ->where('gapWorkspace.pagination.total', 2)
-                ->where('resolutions.0.gaps', fn ($gaps): bool => collect($gaps)->pluck('id')->sort()->values()->all() === collect([$secondGap->id, $nationalGap->id])->sort()->values()->all()));
+                ->where('resolutions.0.gaps', fn (Collection $gaps): bool => $gaps->pluck('id')->sort()->values()->all() === collect([$secondGap->id, $nationalGap->id])->sort()->values()->all()));
         $this->actingAs($administrator)
             ->get(route('igr-resolutions.index'))
             ->assertOk()
@@ -359,8 +363,8 @@ class IgrResolutionWorkflowTest extends TestCase
             Storage::disk('local')->assertExists($link->document->path);
         });
         $this->actingAs($responsible)->get(route('igr-resolutions.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('resolutions', fn ($resolutions) => collect($resolutions)->contains(fn (array $item): bool => $item['id'] === $resolution->id && count($item['documents']) === 2))
-            ->where('workspace.rows', fn ($rows) => collect($rows)->contains(fn (array $row): bool => $row['id'] === $resolution->id && count($row['documents']) === 2)));
+            ->where('resolutions', fn (Collection $resolutions): bool => $resolutions->contains(fn (array $item): bool => $item['id'] === $resolution->id && count($item['documents']) === 2))
+            ->where('workspace.rows', fn (Collection $rows): bool => $rows->contains(fn (array $row): bool => $row['id'] === $resolution->id && count($row['documents']) === 2)));
         $this->actingAs($responsible)->get(route('evidence.preview', [$links->first()->document]))->assertOk();
         $outsideUser = User::factory()->countyAdmin(County::factory()->create())->create();
         $this->actingAs($outsideUser)->get(route('evidence.preview', [$links->first()->document]))->assertForbidden();
@@ -436,10 +440,10 @@ class IgrResolutionWorkflowTest extends TestCase
         IgrResolutionAssignment::factory()->for($resolution, 'resolution')->create(['user_id' => $responsible->id]);
         Notification::fake();
 
-        $this->artisan('igr:send-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('igr:send-reminders'));
         Notification::assertSentToTimes($responsible, ProgrammeAlert::class, 1);
         $this->assertNotNull($resolution->refresh()->reminder_sent_at);
-        $this->artisan('igr:send-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('igr:send-reminders'));
         Notification::assertSentToTimes($responsible, ProgrammeAlert::class, 1);
     }
 
