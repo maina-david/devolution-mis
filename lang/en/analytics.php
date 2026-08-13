@@ -3,6 +3,20 @@
 return [
     'filter_saved' => 'Filter view :name saved.',
     'filter_deleted' => 'Filter view removed.',
+    'dashboard_created' => 'Dashboard :code created as a governed draft.',
+    'widget_added' => 'Governed analytics widget added.',
+    'dashboard_published' => 'Dashboard independently published with a configuration checksum.',
+    'schedule_created' => 'Report schedule :code created pending independent activation.',
+    'schedule_activated' => 'Scheduled report independently activated.',
+    'report_queued' => 'A private report generation job has been queued.',
+    'audit' => [
+        'filter_deleted' => 'Analytics filter view :name removed.',
+    ],
+    'errors' => [
+        'active_schedule_required' => 'Only active schedules can be run.',
+        'artifact_not_ready' => 'The report artifact is not ready.',
+        'artifact_integrity_failed' => 'The report artifact failed its integrity check.',
+    ],
     'dashboard_filter' => 'Dashboard drill-down',
     'widget_filter' => 'Widget drill-down',
     'visualization' => 'Visualization',

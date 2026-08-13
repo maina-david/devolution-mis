@@ -3,6 +3,20 @@
 return [
     'filter_saved' => 'Mwonekano wa kichujio :name umehifadhiwa.',
     'filter_deleted' => 'Mwonekano wa kichujio umeondolewa.',
+    'dashboard_created' => 'Dashibodi :code imeundwa kama rasimu inayodhibitiwa.',
+    'widget_added' => 'Wijeti ya uchanganuzi inayodhibitiwa imeongezwa.',
+    'dashboard_published' => 'Dashibodi imechapishwa kwa idhini huru pamoja na cheksamu ya usanidi.',
+    'schedule_created' => 'Ratiba ya ripoti :code imeundwa ikisubiri uanzishaji huru.',
+    'schedule_activated' => 'Ripoti iliyoratibiwa imeanzishwa kwa idhini huru.',
+    'report_queued' => 'Kazi ya kutengeneza ripoti binafsi imewekwa kwenye foleni.',
+    'audit' => [
+        'filter_deleted' => 'Mwonekano wa kichujio cha uchanganuzi :name umeondolewa.',
+    ],
+    'errors' => [
+        'active_schedule_required' => 'Ratiba hai pekee ndizo zinaweza kuendeshwa.',
+        'artifact_not_ready' => 'Faili ya ripoti bado haijawa tayari.',
+        'artifact_integrity_failed' => 'Faili ya ripoti imeshindwa ukaguzi wa uadilifu.',
+    ],
     'dashboard_filter' => 'Uchambuzi wa dashibodi',
     'widget_filter' => 'Uchambuzi wa wijeti',
     'visualization' => 'Mwonekano wa data',

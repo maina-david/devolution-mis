@@ -162,7 +162,7 @@ class AnalyticsReportingController extends Controller
     public function destroyFilterView(DeleteAnalyticsFilterViewRequest $request, AnalyticsFilterView $filterView): RedirectResponse
     {
         $actor = $this->user($request);
-        $this->auditLogger->record($actor, $filterView, 'analytics.filter_view.deleted', "Analytics filter view {$filterView->name} removed.", metadata: ['filter_keys' => array_keys($filterView->filters)]);
+        $this->auditLogger->record($actor, $filterView, 'analytics.filter_view.deleted', __('analytics.audit.filter_deleted', ['name' => $filterView->name]), metadata: ['filter_keys' => array_keys($filterView->filters)]);
         $filterView->delete();
 
         return back()->with('success', __('analytics.filter_deleted'));
@@ -172,41 +172,41 @@ class AnalyticsReportingController extends Controller
     {
         $dashboard = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Dashboard {$dashboard->code} created as a governed draft.");
+        return back()->with('success', __('analytics.dashboard_created', ['code' => $dashboard->code]));
     }
 
     public function storeWidget(StoreAnalyticsWidgetRequest $request, AnalyticsDashboard $dashboard, AddAnalyticsWidget $action): RedirectResponse
     {
         $action->handle($dashboard, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Governed analytics widget added.');
+        return back()->with('success', __('analytics.widget_added'));
     }
 
     public function publish(PublishAnalyticsDashboardRequest $request, AnalyticsDashboard $dashboard, PublishAnalyticsDashboard $action): RedirectResponse
     {
         $action->handle($dashboard, $this->user($request));
 
-        return back()->with('success', 'Dashboard independently published with a configuration checksum.');
+        return back()->with('success', __('analytics.dashboard_published'));
     }
 
     public function storeSchedule(StoreReportScheduleRequest $request, CreateReportSchedule $action): RedirectResponse
     {
         $schedule = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Report schedule {$schedule->code} created pending independent activation.");
+        return back()->with('success', __('analytics.schedule_created', ['code' => $schedule->code]));
     }
 
     public function activate(ActivateReportScheduleRequest $request, ReportSchedule $schedule, ActivateReportSchedule $action): RedirectResponse
     {
         $action->handle($schedule, $this->user($request));
 
-        return back()->with('success', 'Scheduled report independently activated.');
+        return back()->with('success', __('analytics.schedule_activated'));
     }
 
     public function runNow(Request $request, ReportSchedule $schedule): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageAnalytics->value);
-        abort_unless($schedule->status === 'active', 409, 'Only active schedules can be run.');
+        abort_unless($schedule->status === 'active', 409, __('analytics.errors.active_schedule_required'));
         $user = $this->user($request);
         if ($schedule->county !== null) {
             abort_unless($user->canAccessCounty($schedule->county), 403);
@@ -214,7 +214,7 @@ class AnalyticsReportingController extends Controller
         $run = $schedule->runs()->create(['triggered_by' => $user->id, 'status' => 'queued', 'filter_snapshot' => $schedule->filters, 'period_from' => $schedule->filters['from'] ?? null, 'period_to' => $schedule->filters['to'] ?? null]);
         GenerateScheduledReport::dispatch($run);
 
-        return back()->with('success', 'A private report generation job has been queued.');
+        return back()->with('success', __('analytics.report_queued'));
     }
 
     public function download(Request $request, ReportRun $run): StreamedResponse
@@ -222,14 +222,14 @@ class AnalyticsReportingController extends Controller
         Gate::authorize(ProgrammePermission::ViewAnalytics->value);
         $run->load('schedule.county');
         $user = $this->user($request);
-        abort_unless($run->status === 'completed' && $run->disk && $run->path && $run->sha256, 409, 'The report artifact is not ready.');
+        abort_unless($run->status === 'completed' && $run->disk && $run->path && $run->sha256, 409, __('analytics.errors.artifact_not_ready'));
         if ($run->schedule->county !== null) {
             abort_unless($user->canAccessCounty($run->schedule->county), 403);
         } else {
             abort_unless($user->programmeRole()->hasNationalScope(), 403);
         }
         $contents = Storage::disk($run->disk)->get($run->path);
-        abort_unless(hash_equals($run->sha256, hash('sha256', $contents)), 409, 'The report artifact failed its integrity check.');
+        abort_unless(hash_equals($run->sha256, hash('sha256', $contents)), 409, __('analytics.errors.artifact_integrity_failed'));
 
         return Storage::disk($run->disk)->download($run->path, str($run->schedule->code)->slug().'-'.$run->id.'.'.$run->schedule->format, ['Content-Type' => $run->mime_type]);
     }

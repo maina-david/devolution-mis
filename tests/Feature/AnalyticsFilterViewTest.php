@@ -67,6 +67,25 @@ class AnalyticsFilterViewTest extends TestCase
         $this->assertSoftDeleted($view);
     }
 
+    public function test_filter_view_outcomes_and_audit_evidence_follow_the_active_locale(): void
+    {
+        $owner = User::factory()->devolutionAdmin()->create();
+        $view = AnalyticsFilterView::factory()->for($owner)->create(['name' => 'Mtazamo wa kaunti']);
+
+        $this->actingAs($owner)
+            ->withSession(['locale' => 'sw'])
+            ->delete(route('analytics.filter-views.destroy', $view))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Mwonekano wa kichujio umeondolewa.');
+
+        $this->assertDatabaseHas('audit_events', [
+            'actor_id' => $owner->id,
+            'subject_id' => $view->id,
+            'action' => 'analytics.filter_view.deleted',
+            'description' => 'Mwonekano wa kichujio cha uchanganuzi Mtazamo wa kaunti umeondolewa.',
+        ]);
+    }
+
     public function test_filter_view_rejects_unknown_keys_and_invalid_ranges(): void
     {
         $user = User::factory()->devolutionAdmin()->create();

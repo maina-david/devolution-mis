@@ -84,6 +84,55 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $this->assertTrue($schedule->refresh()->next_run_at->isFuture(), 'The due runner should advance the recurrence into the future.');
     }
 
+    public function test_analytics_mutation_and_fail_closed_outcomes_follow_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $author = User::factory()->devolutionAdmin()->create();
+        $approver = User::factory()->platformAdmin()->create();
+        $recipient = User::factory()->countyAdmin($county)->create();
+        $this->publishedReferenceRelease([$county], $approver);
+
+        $this->actingAs($author)
+            ->withSession(['locale' => 'sw'])
+            ->post(route('analytics.dashboards.store'), $this->dashboardPayload($county->id))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Dashibodi ANL-COUNTY-READINESS imeundwa kama rasimu inayodhibitiwa.');
+
+        $dashboard = AnalyticsDashboard::query()->sole();
+        $this->actingAs($approver)
+            ->withSession(['locale' => 'fr'])
+            ->patch(route('analytics.dashboards.publish', [$dashboard]))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Le tableau de bord a été publié indépendamment avec une somme de contrôle de configuration.');
+
+        $schedule = ReportSchedule::factory()->create([
+            'created_by' => $author->id,
+            'county_id' => $county->id,
+            'reference_data_release_id' => $dashboard->reference_data_release_id,
+            'filters' => ['dashboard_id' => $dashboard->id],
+            'recipient_user_ids' => [$recipient->id],
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($author)
+            ->withSession(['locale' => 'sw'])
+            ->post(route('analytics.schedules.run', [$schedule]))
+            ->assertStatus(409)
+            ->assertSeeText('Ratiba hai pekee ndizo zinaweza kuendeshwa.');
+
+        $run = ReportRun::factory()->create([
+            'report_schedule_id' => $schedule->id,
+            'filter_snapshot' => $schedule->filters,
+            'status' => 'queued',
+        ]);
+
+        $this->actingAs($recipient)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('analytics.runs.download', [$run]))
+            ->assertStatus(409)
+            ->assertSeeText('L’artefact du rapport n’est pas prêt.');
+    }
+
     public function test_governed_dashboards_compose_scoped_me_target_and_follow_up_metrics(): void
     {
         $county = County::factory()->create(['name' => 'Baringo', 'code' => 30]);
