@@ -145,7 +145,7 @@ function NavMainRow({
                         asChild
                         isActive={active}
                         tooltip={{ children: item.title }}
-                        className="min-h-10 rounded-md px-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground"
+                        className="h-auto min-h-10 rounded-md py-2 pr-10 pl-3 font-medium text-sidebar-foreground hover:bg-sidebar-foreground/10 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground [&>span:last-child]:line-clamp-2 [&>span:last-child]:whitespace-normal"
                     >
                         <Link
                             ref={triggerRef}
@@ -209,7 +209,7 @@ function NavMainRow({
                 </DropdownMenuContent>
             </DropdownMenu>
             {!!item.badge && (
-                <SidebarMenuBadge className="right-2 bg-sidebar-foreground/12 text-sidebar-foreground">
+                <SidebarMenuBadge className="top-1/2 right-2 -translate-y-1/2 bg-sidebar-foreground/12 text-sidebar-foreground">
                     {item.badge}
                 </SidebarMenuBadge>
             )}

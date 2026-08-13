@@ -53,6 +53,10 @@ class AuthenticatedNavigationContractTest extends TestCase
 
         $this->assertStringContainsString('<SidebarMenuBadge', $navMain);
         $this->assertStringContainsString('bg-sidebar-foreground/10', $navMain);
+        $this->assertStringContainsString('pr-10', $navMain);
+        $this->assertStringContainsString('[&>span:last-child]:line-clamp-2', $navMain);
+        $this->assertStringContainsString('top-1/2 right-2 -translate-y-1/2', $navMain);
+        $this->assertStringContainsString('const SIDEBAR_WIDTH = "18rem"', $this->source('resources/js/components/ui/sidebar.tsx'));
         $this->assertStringContainsString('side="right"', $navMain);
         $this->assertStringContainsString('item.subItems?.map', $navMain);
         $this->assertStringContainsString('onPointerEnter={openOnHover}', $navMain);
