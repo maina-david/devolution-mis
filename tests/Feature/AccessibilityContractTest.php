@@ -149,6 +149,13 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-invalid={Boolean(errors.code)}', $certificate);
         $this->assertStringContainsString("'verification-code-error'", $certificate);
         $this->assertStringContainsString('aria-hidden="true"', $certificate);
+
+        $accountDeletion = $this->source('resources/js/components/delete-user.tsx');
+        $this->assertStringContainsString('onOpenAutoFocus={(event)', $accountDeletion);
+        $this->assertStringContainsString('aria-invalid={Boolean(', $accountDeletion);
+        $this->assertStringContainsString("'delete-password-error'", $accountDeletion);
+        $this->assertStringContainsString('aria-busy={processing}', $accountDeletion);
+        $this->assertStringContainsString('copy.confirm_account_deletion', $accountDeletion);
     }
 
     private function source(string $path): string

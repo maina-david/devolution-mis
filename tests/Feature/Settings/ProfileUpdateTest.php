@@ -29,6 +29,20 @@ class ProfileUpdateTest extends TestCase
             ->missing('profile.teams'));
     }
 
+    public function test_profile_page_shares_localized_account_lifecycle_copy(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('profile.edit'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.current', 'fr')
+                ->where('localization.settingsProfile.delete_account', 'Supprimer le compte')
+                ->where('localization.settingsProfile.current_password', 'Mot de passe actuel'));
+    }
+
     public function test_profile_information_can_be_updated()
     {
         $user = User::factory()->create();

@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import PasswordInput from '@/components/password-input';
@@ -30,22 +30,21 @@ import {
 
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
+    const copy = usePage().props.localization.settingsProfile;
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Account lifecycle</CardTitle>
+                <CardTitle>{copy.account_lifecycle}</CardTitle>
                 <CardDescription>
-                    Permanently end access and remove your personal profile
-                    photo.
+                    {copy.account_lifecycle_description}
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Alert variant="destructive">
-                    <AlertTitle>Delete account</AlertTitle>
+                    <AlertTitle>{copy.delete_account}</AlertTitle>
                     <AlertDescription>
-                        This signs you out and removes access. This action
-                        cannot be undone without an authorized administrator.
+                        {copy.delete_account_warning}
                     </AlertDescription>
                 </Alert>
 
@@ -56,16 +55,22 @@ export default function DeleteUser() {
                             className="mt-4"
                             data-test="delete-user-button"
                         >
-                            Delete account
+                            {copy.delete_account}
                         </Button>
                     </SheetTrigger>
-                    <SheetContent className="sm:max-w-lg">
+                    <SheetContent
+                        className="sm:max-w-lg"
+                        onOpenAutoFocus={(event) => {
+                            event.preventDefault();
+                            passwordInput.current?.focus();
+                        }}
+                    >
                         <SheetHeader>
-                            <SheetTitle>Confirm account deletion</SheetTitle>
+                            <SheetTitle>
+                                {copy.confirm_account_deletion}
+                            </SheetTitle>
                             <SheetDescription>
-                                Once your account is deleted, all of its
-                                resources and access will be unavailable. Enter
-                                your password to confirm.
+                                {copy.confirm_account_deletion_description}
                             </SheetDescription>
                         </SheetHeader>
 
@@ -87,13 +92,15 @@ export default function DeleteUser() {
                                             )}
                                         >
                                             <FieldLabel htmlFor="delete-password">
-                                                Current password
+                                                {copy.current_password}
                                             </FieldLabel>
                                             <PasswordInput
                                                 id="delete-password"
                                                 name="password"
                                                 ref={passwordInput}
-                                                placeholder="Current password"
+                                                placeholder={
+                                                    copy.current_password
+                                                }
                                                 autoComplete="current-password"
                                                 aria-invalid={Boolean(
                                                     errors.password,
@@ -119,7 +126,7 @@ export default function DeleteUser() {
                                                     resetAndClearErrors()
                                                 }
                                             >
-                                                Cancel
+                                                {copy.cancel}
                                             </Button>
                                         </SheetClose>
 
@@ -130,7 +137,9 @@ export default function DeleteUser() {
                                             aria-busy={processing}
                                             data-test="confirm-delete-user-button"
                                         >
-                                            Delete account
+                                            {processing
+                                                ? copy.deleting_account
+                                                : copy.delete_account}
                                         </Button>
                                     </SheetFooter>
                                 </>
