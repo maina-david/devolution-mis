@@ -6,6 +6,7 @@ use App\Models\Assessment;
 use App\Models\County;
 use App\Models\DevolutionProject;
 use App\Models\ReferenceDataRelease;
+use App\Models\ReferenceLineageDisposition;
 use App\Models\Sector;
 use App\Models\User;
 use App\Services\LegacyReferenceInventory;
@@ -35,5 +36,32 @@ class LegacyReferenceInventoryTest extends TestCase
         $this->assertSame(2, $report['records'][0]['count']);
         $this->assertSame(3, Assessment::query()->count());
         $this->assertSame(2, Assessment::query()->whereNull('reference_data_release_id')->count());
+    }
+
+    public function test_applied_retain_and_deprecate_decisions_leave_the_unresolved_inventory_while_rejected_records_return_to_it(): void
+    {
+        $county = County::factory()->create();
+        $unassigned = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+        $pending = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+        $retained = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+        $deprecated = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+        $rejected = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+
+        ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $pending->id, 'status' => 'approved']);
+        ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $retained->id, 'decision' => 'retain_legacy', 'status' => 'applied']);
+        ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $deprecated->id, 'decision' => 'deprecate', 'status' => 'applied']);
+        ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $rejected->id, 'status' => 'rejected']);
+
+        $inventory = app(LegacyReferenceInventory::class);
+        $report = $inventory->report();
+        $assessments = collect($report['records'])->firstWhere('key', 'assessment');
+
+        $this->assertIsArray($assessments);
+        $this->assertSame(3, $report['total']);
+        $this->assertSame(3, $assessments['count']);
+        $this->assertSame(2, $assessments['available']);
+        $this->assertSame(1, $assessments['pending']);
+        $this->assertSame(2, $assessments['applied']);
+        $this->assertEqualsCanonicalizing([$unassigned->id, $rejected->id], collect($inventory->candidates('assessment'))->pluck('id')->all());
     }
 }

@@ -111,25 +111,39 @@ class LegacyReferenceInventory
         return array_values($candidates);
     }
 
-    /** @return array{total: int, recordTypes: int, records: list<array{key: string, type: string, model: class-string<Model>, count: int, pending: int, applied: int, oldestAt: string|null, latestAt: string|null}>} */
+    /** @return array{total: int, recordTypes: int, records: list<array{key: string, type: string, model: class-string<Model>, count: int, available: int, pending: int, applied: int, oldestAt: string|null, latestAt: string|null}>} */
     public function report(): array
     {
         $records = [];
         foreach ($this->types() as $key => $definition) {
-            $query = $definition['model']::query()->whereNull($definition['releaseColumn']);
-            $count = $query->count();
-            if ($count === 0) {
+            $unpinnedQuery = $definition['model']::query()->whereNull($definition['releaseColumn']);
+            $appliedRecordIds = ReferenceLineageDisposition::query()
+                ->select('record_id')
+                ->where('record_type', $key)
+                ->where('status', 'applied');
+            $unresolvedQuery = (clone $unpinnedQuery)->whereNotIn('id', $appliedRecordIds);
+            $count = $unresolvedQuery->count();
+            $pending = ReferenceLineageDisposition::query()
+                ->where('record_type', $key)
+                ->whereIn('status', ['proposed', 'approved'])
+                ->count();
+            $applied = ReferenceLineageDisposition::query()
+                ->where('record_type', $key)
+                ->where('status', 'applied')
+                ->count();
+            if ($count === 0 && $applied === 0) {
                 continue;
             }
-            $oldestAt = (clone $query)->min('created_at');
-            $latestAt = (clone $query)->max('created_at');
+            $oldestAt = (clone $unresolvedQuery)->min('created_at');
+            $latestAt = (clone $unresolvedQuery)->max('created_at');
             $records[] = [
                 'key' => $key,
                 'type' => $definition['label'],
                 'model' => $definition['model'],
                 'count' => $count,
-                'pending' => ReferenceLineageDisposition::query()->where('record_type', $key)->whereIn('status', ['proposed', 'approved'])->count(),
-                'applied' => ReferenceLineageDisposition::query()->where('record_type', $key)->where('status', 'applied')->count(),
+                'available' => max(0, $count - $pending),
+                'pending' => $pending,
+                'applied' => $applied,
                 'oldestAt' => is_string($oldestAt) ? Carbon::parse($oldestAt)->toIso8601String() : null,
                 'latestAt' => is_string($latestAt) ? Carbon::parse($latestAt)->toIso8601String() : null,
             ];

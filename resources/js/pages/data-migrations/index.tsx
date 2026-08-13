@@ -187,6 +187,7 @@ type Props = {
             type: string;
             model: string;
             count: number;
+            available: number;
             pending: number;
             applied: number;
             oldestAt: string | null;
@@ -335,7 +336,7 @@ export default function HistoricalDataMigrations({
                                 </CardDescription>
                             </div>
                             {capabilities.stage &&
-                                legacyInventory.total > 0 && (
+                                legacyCandidates.length > 0 && (
                                     <LineageDispositionForm
                                         recordType={legacyType}
                                         candidates={legacyCandidates}
