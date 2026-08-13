@@ -65,14 +65,14 @@ class ExchequerTrackingController extends Controller
     {
         $item = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Exchequer request {$item->request_reference} created.");
+        return back()->with('success', __('exchequer.request_created', ['reference' => $item->request_reference]));
     }
 
     public function recordEvent(RecordExchequerEventRequest $request, ExchequerRequest $exchequerRequest, RecordExchequerEvent $action): RedirectResponse
     {
         $action->handle($exchequerRequest, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Exchequer lifecycle event recorded.');
+        return back()->with('success', __('exchequer.lifecycle_event_recorded'));
     }
 
     /** @return array<string, mixed> */

@@ -28,18 +28,18 @@ class RecordExchequerEvent
         return DB::transaction(function () use ($request, $actor, $attributes): ExchequerEvent {
             $request = ExchequerRequest::query()->with('county')->lockForUpdate()->findOrFail($request->id);
             abort_unless($actor->canAccessCounty($request->county), 403);
-            abort_if($request->created_by === $actor->id, 403, 'The request creator cannot attest external exchequer events.');
+            abort_if($request->created_by === $actor->id, 403, __('exchequer.creator_cannot_attest'));
             $eventType = (string) $attributes['event_type'];
             $source = (string) $attributes['source_system'];
             if (! in_array($eventType, self::ALLOWED[$request->current_stage] ?? [], true)) {
-                throw ValidationException::withMessages(['event_type' => 'This event does not follow the current exchequer stage.']);
+                throw ValidationException::withMessages(['event_type' => __('exchequer.invalid_stage_transition')]);
             }
             if (! in_array($source, self::EVENTS[$eventType]['sources'], true)) {
-                throw ValidationException::withMessages(['source_system' => 'The source system cannot attest this event type.']);
+                throw ValidationException::withMessages(['source_system' => __('exchequer.invalid_attesting_source')]);
             }
             $occurredAt = Carbon::parse($attributes['occurred_at']);
             if ($request->last_event_at && $occurredAt->isBefore($request->last_event_at)) {
-                throw ValidationException::withMessages(['occurred_at' => 'The event cannot precede the recorded lifecycle timeline.']);
+                throw ValidationException::withMessages(['occurred_at' => __('exchequer.event_precedes_timeline')]);
             }
             $exchange = $this->exchange($request, $source, $attributes['integration_exchange_id'] ?? null);
             $origin = $request->created_at;
@@ -54,7 +54,7 @@ class RecordExchequerEvent
                 $disbursed = min((float) $grant->allocated_amount, (float) $grant->disbursed_amount + (float) $request->amount);
                 $grant->update(['disbursed_amount' => $disbursed, 'status' => $disbursed >= (float) $grant->allocated_amount ? 'disbursed' : 'processing']);
             }
-            $this->auditLogger->record($actor, $event, 'exchequer.event.recorded', "{$source} event {$eventType} recorded for {$request->request_reference}.", $request->county_id, ['request_id' => $request->id, 'checksum' => $event->evidence_checksum, 'elapsed_total_minutes' => $event->elapsed_total_minutes]);
+            $this->auditLogger->record($actor, $event, 'exchequer.event.recorded', __('exchequer.event_recorded_audit', ['source' => $source, 'event' => $eventType, 'reference' => $request->request_reference]), $request->county_id, ['request_id' => $request->id, 'checksum' => $event->evidence_checksum, 'elapsed_total_minutes' => $event->elapsed_total_minutes]);
 
             return $event;
         });
@@ -67,11 +67,11 @@ class RecordExchequerEvent
         }
         $exchange = IntegrationExchange::query()->with('contract.system')->findOrFail($exchangeId);
         if ($exchange->county_id !== null && $exchange->county_id !== $request->county_id) {
-            throw ValidationException::withMessages(['integration_exchange_id' => 'The exchange belongs to another county.']);
+            throw ValidationException::withMessages(['integration_exchange_id' => __('exchequer.exchange_wrong_county')]);
         }
         $expectedPrefix = $source === 'TREASURY' ? 'IFMIS' : $source;
         if (! str_starts_with($exchange->contract->system->code, $expectedPrefix)) {
-            throw ValidationException::withMessages(['integration_exchange_id' => 'The exchange source does not match the attesting system.']);
+            throw ValidationException::withMessages(['integration_exchange_id' => __('exchequer.exchange_source_mismatch')]);
         }
 
         return $exchange;

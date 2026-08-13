@@ -47,4 +47,13 @@ return [
     'ocob_authorized' => 'OCoB imeidhinisha', 'treasury_issued_cbk' => 'Hazina imetoa kwa CBK',
     'cbk_credited' => 'CBK imeweka fedha', 'idmis' => 'IDMIS', 'treasury' => 'Hazina ya Taifa',
     'ocob' => 'OCoB', 'cbk' => 'CBK',
+    'creator_cannot_attest' => 'Aliyeunda ombi hawezi kuthibitisha matukio ya nje ya hazina.',
+    'invalid_stage_transition' => 'Tukio hili halifuati hatua ya sasa ya hazina.',
+    'invalid_attesting_source' => 'Mfumo chanzo hauwezi kuthibitisha aina hii ya tukio.',
+    'event_precedes_timeline' => 'Tukio haliwezi kutangulia ratiba ya mzunguko iliyorekodiwa.',
+    'exchange_wrong_county' => 'Mabadilishano ni ya kaunti nyingine.',
+    'exchange_source_mismatch' => 'Chanzo cha mabadilishano hakilingani na mfumo unaothibitisha.',
+    'event_recorded_audit' => 'Tukio la :source :event limerekodiwa kwa :reference.',
+    'request_created' => 'Ombi la hazina :reference limeundwa.',
+    'lifecycle_event_recorded' => 'Tukio la mzunguko wa hazina limerekodiwa.',
 ];

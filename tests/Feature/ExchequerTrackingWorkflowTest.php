@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\CountyGrant;
 use App\Models\ExchequerEvent;
@@ -120,6 +121,40 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $this->publishedReferenceRelease([$otherCounty], $creator);
         $this->actingAs($creator)->post(route('exchequer.store'), $this->requestPayload($grant))->assertSessionHasErrors('county_id');
         $this->assertDatabaseCount('exchequer_requests', 0);
+    }
+
+    public function test_exchequer_event_outcomes_and_rejections_follow_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $grant = CountyGrant::factory()->create(['county_id' => $county->id]);
+        $creator = User::factory()->devolutionAdmin()->create();
+        $integrator = User::factory()->platformAdmin()->create();
+        $this->publishedReferenceRelease([$county], $creator);
+
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($creator)
+            ->post(route('exchequer.store'), $this->requestPayload($grant))
+            ->assertRedirect()
+            ->assertSessionHas('success', fn (string $message): bool => str_starts_with($message, 'Demande de décaissement '));
+
+        $request = ExchequerRequest::query()->sole();
+
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($integrator)
+            ->post(route('exchequer.events.store', [$request]), $this->eventPayload('ocob_authorized', 'OCOB', 'OCOB-SKIP-FR'))
+            ->assertSessionHasErrors(['event_type' => 'Cet événement ne correspond pas à l’étape actuelle du décaissement.']);
+
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($integrator)
+            ->post(route('exchequer.events.store', [$request]), $this->eventPayload('submitted_to_treasury', 'IDMIS', 'IDMIS-SUBMIT-FR'))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Événement du cycle de décaissement enregistré.');
+
+        $event = $request->events()->sole();
+        $this->assertSame(
+            'Événement submitted_to_treasury de IDMIS enregistré pour '.$request->request_reference.'.',
+            AuditEvent::query()->where('subject_type', $event->getMorphClass())->where('subject_id', $event->id)->sole()->description,
+        );
     }
 
     private function record(User $actor, ExchequerRequest $request, string $event, string $source, string $reference): void

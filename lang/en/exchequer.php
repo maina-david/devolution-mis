@@ -47,4 +47,13 @@ return [
     'ocob_authorized' => 'OCoB authorized', 'treasury_issued_cbk' => 'Treasury issued to CBK',
     'cbk_credited' => 'CBK credited', 'idmis' => 'IDMIS', 'treasury' => 'National Treasury',
     'ocob' => 'OCoB', 'cbk' => 'CBK',
+    'creator_cannot_attest' => 'The request creator cannot attest external exchequer events.',
+    'invalid_stage_transition' => 'This event does not follow the current exchequer stage.',
+    'invalid_attesting_source' => 'The source system cannot attest this event type.',
+    'event_precedes_timeline' => 'The event cannot precede the recorded lifecycle timeline.',
+    'exchange_wrong_county' => 'The exchange belongs to another county.',
+    'exchange_source_mismatch' => 'The exchange source does not match the attesting system.',
+    'event_recorded_audit' => ':source event :event recorded for :reference.',
+    'request_created' => 'Exchequer request :reference created.',
+    'lifecycle_event_recorded' => 'Exchequer lifecycle event recorded.',
 ];

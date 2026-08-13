@@ -47,4 +47,13 @@ return [
     'ocob_authorized' => 'OCoB autorisé', 'treasury_issued_cbk' => 'Trésor émis à la CBK',
     'cbk_credited' => 'CBK crédité', 'idmis' => 'IDMIS', 'treasury' => 'Trésor national',
     'ocob' => 'OCoB', 'cbk' => 'CBK',
+    'creator_cannot_attest' => 'Le créateur de la demande ne peut pas attester les événements externes de décaissement.',
+    'invalid_stage_transition' => 'Cet événement ne correspond pas à l’étape actuelle du décaissement.',
+    'invalid_attesting_source' => 'Le système source ne peut pas attester ce type d’événement.',
+    'event_precedes_timeline' => 'L’événement ne peut pas précéder la chronologie enregistrée du cycle de vie.',
+    'exchange_wrong_county' => 'L’échange appartient à un autre comté.',
+    'exchange_source_mismatch' => 'La source de l’échange ne correspond pas au système attestant.',
+    'event_recorded_audit' => 'Événement :event de :source enregistré pour :reference.',
+    'request_created' => 'Demande de décaissement :reference créée.',
+    'lifecycle_event_recorded' => 'Événement du cycle de décaissement enregistré.',
 ];
