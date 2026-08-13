@@ -62,12 +62,12 @@ class StageReferenceDataImport
         $realPath = $file->getRealPath();
 
         if ($realPath === false || ($checksum = hash_file('sha256', $realPath)) === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source checksum could not be calculated.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.upload_checksum_failed')]);
         }
 
         $storedPath = $file->storeAs('data-migrations', Str::uuid().'.'.$this->tabularImportReader->extension($file), 'local');
         if (! is_string($storedPath)) {
-            throw ValidationException::withMessages(['file' => 'The source file could not be stored privately.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.private_store_failed')]);
         }
 
         try {
@@ -122,7 +122,7 @@ class StageReferenceDataImport
     {
         $realPath = $file->getRealPath();
         if ($realPath === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.source_unavailable')]);
         }
 
         $sourceRows = $this->tabularImportReader->read($file);
@@ -133,7 +133,7 @@ class StageReferenceDataImport
             : [];
 
         if ($normalized !== $expected) {
-            throw ValidationException::withMessages(['file' => 'Use the required columns in this exact order: '.implode(', ', $expected).'.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.required_columns', ['columns' => implode(', ', $expected)])]);
         }
 
         $existingCodes = match ($datasetType) {
@@ -145,7 +145,7 @@ class StageReferenceDataImport
             'wards' => Ward::query()->withTrashed()->pluck('code')->map(fn (string $code): string => Str::upper($code))->all(),
             'programme_county_coverages' => [],
             'users' => User::query()->withTrashed()->pluck('email')->map(fn (string $email): string => Str::lower($email))->all(),
-            default => throw ValidationException::withMessages(['dataset_type' => 'The selected bulk-import dataset is not supported.']),
+            default => throw ValidationException::withMessages(['dataset_type' => __('migration.import.unsupported_dataset')]),
         };
         $coverageContext = $datasetType === 'programme_county_coverages' ? $this->programmeCoverageContext() : null;
         $rows = [];
@@ -153,7 +153,7 @@ class StageReferenceDataImport
         foreach ($sourceRows as $sourceRow) {
             $values = $sourceRow['values'];
             if (count($rows) >= 5000) {
-                throw ValidationException::withMessages(['file' => 'A bulk-import batch may contain at most 5,000 data rows.']);
+                throw ValidationException::withMessages(['file' => __('migration.import.bulk_row_limit')]);
             }
 
             $values = array_pad(array_slice($values, 0, count($expected)), count($expected), null);
@@ -201,7 +201,7 @@ class StageReferenceDataImport
         }
 
         if ($rows === []) {
-            throw ValidationException::withMessages(['file' => 'The source file contains no data rows.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.no_rows')]);
         }
 
         $identities = collect($rows)->map(fn (array $row): string => $datasetType === 'programme_county_coverages'

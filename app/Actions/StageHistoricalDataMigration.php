@@ -40,17 +40,17 @@ class StageHistoricalDataMigration
             : $this->reconcileAppliedHistory($this->parse($file, $from, $to), $datasetType);
         $realPath = $file->getRealPath();
         if ($realPath === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.source_unavailable')]);
         }
 
         $checksum = hash_file('sha256', $realPath);
         if ($checksum === false) {
-            throw ValidationException::withMessages(['file' => 'The source file checksum could not be calculated.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.checksum_failed')]);
         }
 
         $storedPath = $file->storeAs('data-migrations', Str::uuid().'.'.$this->tabularImportReader->extension($file), 'local');
         if (! is_string($storedPath)) {
-            throw ValidationException::withMessages(['file' => 'The source file could not be stored privately.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.private_store_failed')]);
         }
 
         try {
@@ -98,17 +98,17 @@ class StageHistoricalDataMigration
     {
         $realPath = $file->getRealPath();
         if ($realPath === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.source_unavailable')]);
         }
 
         $sourceRows = $this->tabularImportReader->read($file);
         $header = array_shift($sourceRows)['values'] ?? null;
         if (! is_array($header)) {
-            throw ValidationException::withMessages(['file' => 'The source header could not be read.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.header_unreadable')]);
         }
         $normalizedHeader = array_map(fn (mixed $value): string => str((string) $value)->trim()->lower()->replace([' ', '-'], '_')->ltrim("\xEF\xBB\xBF")->toString(), $header);
         if ($normalizedHeader !== self::REQUIRED_HEADERS) {
-            throw ValidationException::withMessages(['file' => 'Use the required columns in this exact order: '.implode(', ', self::REQUIRED_HEADERS).'.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.required_columns', ['columns' => implode(', ', self::REQUIRED_HEADERS)])]);
         }
 
         $counties = County::query()->get(['id', 'code'])->keyBy(fn (County $county): string => str_pad((string) $county->code, 3, '0', STR_PAD_LEFT));
@@ -116,7 +116,7 @@ class StageHistoricalDataMigration
         foreach ($sourceRows as $sourceRow) {
             $values = $sourceRow['values'];
             if (count($rows) >= 5000) {
-                throw ValidationException::withMessages(['file' => 'A migration batch may contain at most 5,000 data rows.']);
+                throw ValidationException::withMessages(['file' => __('migration.import.migration_row_limit')]);
             }
             $values = array_pad(array_slice($values, 0, count(self::REQUIRED_HEADERS)), count(self::REQUIRED_HEADERS), null);
             $combinedPayload = array_combine(self::REQUIRED_HEADERS, array_map(fn (mixed $value): string => trim((string) $value), $values));
@@ -165,7 +165,7 @@ class StageHistoricalDataMigration
         }
 
         if ($rows === []) {
-            throw ValidationException::withMessages(['file' => 'The source file contains no data rows.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.no_rows')]);
         }
 
         $seen = [];
@@ -192,24 +192,24 @@ class StageHistoricalDataMigration
     {
         $realPath = $file->getRealPath();
         if ($realPath === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.source_unavailable')]);
         }
 
         $sourceRows = $this->tabularImportReader->read($file);
         $header = array_shift($sourceRows)['values'] ?? null;
         if (! is_array($header)) {
-            throw ValidationException::withMessages(['file' => 'The source header could not be read.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.header_unreadable')]);
         }
         $normalizedHeader = array_map(fn (mixed $value): string => str((string) $value)->trim()->lower()->replace([' ', '-'], '_')->ltrim("\xEF\xBB\xBF")->toString(), $header);
         if ($normalizedHeader !== self::LEGACY_ACPA_HEADERS) {
-            throw ValidationException::withMessages(['file' => 'Use the required legacy ACPA columns in this exact order: '.implode(', ', self::LEGACY_ACPA_HEADERS).'.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.legacy_acpa_columns', ['columns' => implode(', ', self::LEGACY_ACPA_HEADERS)])]);
         }
 
         $counties = County::query()->get(['id', 'code'])->keyBy(fn (County $county): string => str_pad((string) $county->code, 3, '0', STR_PAD_LEFT));
         $rows = [];
         foreach ($sourceRows as $sourceRow) {
             if (count($rows) >= 5000) {
-                throw ValidationException::withMessages(['file' => 'A migration batch may contain at most 5,000 data rows.']);
+                throw ValidationException::withMessages(['file' => __('migration.import.migration_row_limit')]);
             }
             $values = array_pad(array_slice($sourceRow['values'], 0, count(self::LEGACY_ACPA_HEADERS)), count(self::LEGACY_ACPA_HEADERS), null);
             $combined = array_combine(self::LEGACY_ACPA_HEADERS, array_map(fn (mixed $value): string => trim((string) $value), $values));
@@ -283,7 +283,7 @@ class StageHistoricalDataMigration
         }
 
         if ($rows === []) {
-            throw ValidationException::withMessages(['file' => 'The source file contains no data rows.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.no_rows')]);
         }
 
         $parentsInBatch = collect($rows)->filter(fn (array $row): bool => $row['source_payload']['record_type'] === 'assessment' && is_string($row['county_id']))->map(fn (array $row): string => $row['county_id'].'|'.Str::upper($row['source_payload']['assessment_reference']))->all();

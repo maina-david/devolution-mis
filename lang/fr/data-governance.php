@@ -31,4 +31,7 @@ return [
     'retention_only_submitted' => 'Seul un calendrier de conservation soumis peut être examiné.',
     'retention_submitter_cannot_review' => 'L’auteur de la soumission ne peut ni approuver ni rejeter son propre calendrier.',
     'retention_changed_after_submission' => 'Le calendrier de conservation a été modifié après sa soumission et ne peut pas être examiné.',
+    'outcomes' => [
+        'asset_registered' => 'L’actif de données a été enregistré.', 'activity_submitted' => 'L’activité de traitement a été soumise à une revue indépendante.', 'activity_reviewed' => 'La revue de l’activité de traitement a été enregistrée.', 'request_recorded' => 'La demande de confidentialité a été enregistrée avec une échéance contrôlée.', 'request_advanced' => 'Le flux de la demande de confidentialité a progressé.', 'incident_recorded' => 'L’incident de confidentialité a été enregistré avec des délais de notification contrôlés.', 'incident_advanced' => 'Le flux de l’incident de confidentialité a progressé.',
+    ],
 ];

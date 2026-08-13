@@ -61,6 +61,19 @@ class KnowledgeManagementWorkflowTest extends TestCase
             ->where('items.data.0.referenceData.checksum', $release->checksum));
     }
 
+    public function test_knowledge_mutation_outcomes_follow_the_selected_locale(): void
+    {
+        $author = User::factory()->devolutionAdmin()->create();
+        $this->seed(KnowledgeWorkflowSeeder::class);
+        $this->publishedReferenceRelease([], [], $author);
+
+        $this->actingAs($author)
+            ->withSession(['locale' => 'sw'])
+            ->post(route('knowledge.items.store'), $this->itemPayload())
+            ->assertRedirect()
+            ->assertSessionHas('success', fn (string $message): bool => str_starts_with($message, 'Kipengele cha maarifa '));
+    }
+
     public function test_community_of_practice_discussions_and_posts_are_traceable(): void
     {
         $author = User::factory()->devolutionAdmin()->create();

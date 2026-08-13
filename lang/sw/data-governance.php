@@ -31,4 +31,7 @@ return [
     'retention_only_submitted' => 'Ni ratiba ya uhifadhi iliyowasilishwa pekee inayoweza kupitiwa.',
     'retention_submitter_cannot_review' => 'Mwasilishaji wa ratiba hawezi kuidhinisha au kukataa ratiba yake mwenyewe.',
     'retention_changed_after_submission' => 'Ratiba ya uhifadhi ilibadilishwa baada ya kuwasilishwa na haiwezi kupitiwa.',
+    'outcomes' => [
+        'asset_registered' => 'Rasilimali ya data imesajiliwa.', 'activity_submitted' => 'Shughuli ya uchakataji imewasilishwa kwa tathmini huru.', 'activity_reviewed' => 'Tathmini ya shughuli ya uchakataji imerekodiwa.', 'request_recorded' => 'Ombi la faragha limerekodiwa na tarehe ya kukamilisha iliyodhibitiwa.', 'request_advanced' => 'Mtiririko wa ombi la faragha umeendelezwa.', 'incident_recorded' => 'Tukio la faragha limerekodiwa na muda wa arifa uliodhibitiwa.', 'incident_advanced' => 'Mtiririko wa tukio la faragha umeendelezwa.',
+    ],
 ];

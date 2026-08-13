@@ -131,14 +131,14 @@ class SecurityGovernanceController extends Controller
     {
         $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', 'Security incident or exercise entered into the governed response process.');
+        return back()->with('success', __('security.outcomes.incident_created'));
     }
 
     public function transitionIncident(TransitionSecurityIncidentRequest $request, SecurityIncident $securityIncident, TransitionSecurityIncident $action): RedirectResponse
     {
         $action->handle($securityIncident, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Security incident transition and immutable evidence recorded.');
+        return back()->with('success', __('security.outcomes.incident_transitioned'));
     }
 
     public function downloadSupplyChainArtifact(Request $request, SupplyChainScan $supplyChainScan): StreamedResponse
@@ -167,14 +167,14 @@ class SecurityGovernanceController extends Controller
         $threat = SecurityThreat::create([...$attributes, 'submitted_by' => $user->id, 'entry_points' => $this->csv($attributes['entry_points']), 'existing_controls' => $this->csv($attributes['existing_controls']), 'evidence_references' => $this->csv($attributes['evidence_references'] ?? null), 'inherent_risk_score' => (int) $attributes['likelihood'] * (int) $attributes['impact'], 'status' => 'submitted', 'submitted_at' => now()]);
         $this->auditLogger->record($user, $threat, 'security.threat.submitted', "Threat {$threat->reference} submitted for independent review.");
 
-        return back()->with('success', 'Threat submitted for independent review.');
+        return back()->with('success', __('security.outcomes.threat_submitted'));
     }
 
     public function reviewThreat(ReviewSecurityThreatRequest $request, SecurityThreat $securityThreat, ReviewSecurityThreat $action): RedirectResponse
     {
         $action->handle($securityThreat, $this->user($request), ['decision' => (string) $request->validated('decision'), 'treatment_status' => (string) $request->validated('treatment_status'), 'residual_likelihood' => (int) $request->validated('residual_likelihood'), 'residual_impact' => (int) $request->validated('residual_impact'), 'risk_acceptance_reference' => $request->validated('risk_acceptance_reference'), 'review_note' => (string) $request->validated('review_note'), 'evidence_references' => $request->validated('evidence_references')]);
 
-        return back()->with('success', 'Independent threat review recorded.');
+        return back()->with('success', __('security.outcomes.threat_reviewed'));
     }
 
     public function launchAccessReview(LaunchAccessReviewRequest $request, LaunchAccessReviewCampaign $action): RedirectResponse
@@ -182,49 +182,49 @@ class SecurityGovernanceController extends Controller
         $attributes = $request->validated();
         $action->handle($this->user($request), ['reviewer_id' => (string) $attributes['reviewer_id'], 'reference' => (string) $attributes['reference'], 'name' => (string) $attributes['name'], 'scope' => (string) $attributes['scope'], 'role_scope' => array_values($attributes['role_scope']), 'period_from' => (string) $attributes['period_from'], 'period_to' => (string) $attributes['period_to'], 'due_at' => (string) $attributes['due_at']]);
 
-        return back()->with('success', 'Access certification campaign launched.');
+        return back()->with('success', __('security.outcomes.campaign_launched'));
     }
 
     public function decideAccess(DecideAccessReviewItemRequest $request, AccessReviewItem $accessReviewItem, DecideAccessReviewItem $action): RedirectResponse
     {
         $action->handle($accessReviewItem, $this->user($request), ['decision' => (string) $request->validated('decision'), 'rationale' => (string) $request->validated('rationale'), 'remediation_action' => $request->validated('remediation_action'), 'remediation_due_at' => $request->validated('remediation_due_at')]);
 
-        return back()->with('success', 'Access certification decision recorded.');
+        return back()->with('success', __('security.outcomes.certification_recorded'));
     }
 
     public function reinstateAccess(ReinstateUserAccessRequest $request, AccessReviewItem $accessReviewItem, ReinstateUserAccess $action): RedirectResponse
     {
         $action->handle($accessReviewItem, $this->user($request), ['rationale' => (string) $request->validated('rationale'), 'approval_reference' => (string) $request->validated('approval_reference')]);
 
-        return back()->with('success', 'Access independently reinstated; the user must authenticate again.');
+        return back()->with('success', __('security.outcomes.access_reinstated'));
     }
 
     public function storeDelegation(StoreAccessDelegationRequest $request, CreateAccessDelegation $action): RedirectResponse
     {
         $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', 'Temporary access submitted for independent approval.');
+        return back()->with('success', __('security.outcomes.temporary_access_submitted'));
     }
 
     public function decideDelegation(DecideAccessDelegationRequest $request, AccessDelegation $accessDelegation, DecideAccessDelegation $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), ['decision' => (string) $request->validated('decision'), 'decision_rationale' => (string) $request->validated('decision_rationale')]);
 
-        return back()->with('success', 'Temporary-access decision recorded.');
+        return back()->with('success', __('security.outcomes.temporary_access_decided'));
     }
 
     public function revokeDelegation(RevokeAccessDelegationRequest $request, AccessDelegation $accessDelegation, RevokeAccessDelegation $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), (string) $request->validated('revocation_reason'));
 
-        return back()->with('success', 'Temporary access revoked immediately.');
+        return back()->with('success', __('security.outcomes.temporary_access_revoked'));
     }
 
     public function reviewEmergencyAccess(ReviewEmergencyAccessRequest $request, AccessDelegation $accessDelegation, ReviewEmergencyAccess $action): RedirectResponse
     {
         $action->handle($accessDelegation, $this->user($request), ['post_use_outcome' => (string) $request->validated('post_use_outcome'), 'post_use_findings' => (string) $request->validated('post_use_findings')]);
 
-        return back()->with('success', 'Emergency-access post-use review recorded.');
+        return back()->with('success', __('security.outcomes.emergency_review_recorded'));
     }
 
     /** @return list<string> */

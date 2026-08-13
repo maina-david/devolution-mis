@@ -1,0 +1,5 @@
+<?php
+
+return ['outcomes' => [
+    'incident_created' => 'L’incident ou l’exercice de sécurité a rejoint le processus de réponse gouverné.', 'incident_transitioned' => 'La transition de l’incident et les preuves immuables ont été enregistrées.', 'threat_submitted' => 'La menace a été soumise à une revue indépendante.', 'threat_reviewed' => 'La revue indépendante de la menace a été enregistrée.', 'campaign_launched' => 'La campagne de certification des accès a été lancée.', 'certification_recorded' => 'La décision de certification des accès a été enregistrée.', 'access_reinstated' => 'L’accès a été rétabli indépendamment ; l’utilisateur doit se réauthentifier.', 'temporary_access_submitted' => 'L’accès temporaire a été soumis à une approbation indépendante.', 'temporary_access_decided' => 'La décision d’accès temporaire a été enregistrée.', 'temporary_access_revoked' => 'L’accès temporaire a été révoqué immédiatement.', 'emergency_review_recorded' => 'La revue après utilisation de l’accès d’urgence a été enregistrée.',
+]];

@@ -31,4 +31,7 @@ return [
     'retention_only_submitted' => 'Only a submitted retention schedule can be reviewed.',
     'retention_submitter_cannot_review' => 'The schedule submitter cannot approve or reject their own retention schedule.',
     'retention_changed_after_submission' => 'The retention schedule changed after submission and cannot be reviewed.',
+    'outcomes' => [
+        'asset_registered' => 'Data asset registered.', 'activity_submitted' => 'Processing activity submitted for independent review.', 'activity_reviewed' => 'Processing activity review recorded.', 'request_recorded' => 'Privacy request recorded with a controlled due date.', 'request_advanced' => 'Privacy request workflow advanced.', 'incident_recorded' => 'Privacy incident recorded with controlled notification deadlines.', 'incident_advanced' => 'Privacy incident workflow advanced.',
+    ],
 ];

@@ -116,14 +116,14 @@ class LearningController extends Controller
     {
         $course = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Course {$course->code} created.");
+        return back()->with('success', __('learning.outcomes.course_created', ['code' => $course->code]));
     }
 
     public function storeCohort(StoreLearningCohortRequest $request, CreateLearningCohort $action): RedirectResponse
     {
         $cohort = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Learning cohort {$cohort->code} created.");
+        return back()->with('success', __('learning.outcomes.cohort_created', ['code' => $cohort->code]));
     }
 
     public function addCohortMember(StoreLearningCohortMembershipRequest $request, LearningCohort $cohort, AddLearningCohortMember $action): RedirectResponse
@@ -132,7 +132,7 @@ class LearningController extends Controller
         abort_unless(is_string($enrollmentId), 422);
         $action->handle($cohort, LearningEnrollment::query()->findOrFail($enrollmentId), $this->user($request));
 
-        return back()->with('success', 'Learner added to the cohort roster.');
+        return back()->with('success', __('learning.outcomes.learner_added'));
     }
 
     public function transitionCohort(TransitionLearningCohortRequest $request, LearningCohort $cohort, TransitionLearningCohort $action): RedirectResponse
@@ -141,14 +141,14 @@ class LearningController extends Controller
         $attributes = $request->validated();
         $action->handle($cohort, $this->user($request), $attributes);
 
-        return back()->with('success', 'Learning cohort lifecycle updated.');
+        return back()->with('success', __('learning.outcomes.cohort_updated'));
     }
 
     public function transition(TransitionLearningCourseRequest $request, LearningCourse $course, TransitionLearningCourse $action): RedirectResponse
     {
         $action->handle($course, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Course publication lifecycle updated.');
+        return back()->with('success', __('learning.outcomes.course_updated'));
     }
 
     public function storeAsset(StoreLearningAssetRequest $request, LearningCourse $course, LearningLesson $lesson, StoreLinkedDocument $storeDocument, AuditLogger $auditLogger): RedirectResponse
@@ -178,7 +178,7 @@ class LearningController extends Controller
         $lesson->update(['content_url' => null, 'mime_type' => $document->mime_type, 'content_checksum' => $document->content_checksum, 'is_downloadable' => $request->boolean('is_downloadable'), 'metadata' => $metadata]);
         $auditLogger->record($user, $lesson, 'learning.lesson_asset_registered', "Governed asset registered for lesson {$lesson->title}.", $course->county_id, ['document_id' => $document->id, 'content_checksum' => $document->content_checksum, 'licence' => $metadata['licence']]);
 
-        return back()->with('success', 'Learning asset uploaded securely.');
+        return back()->with('success', __('learning.outcomes.asset_uploaded'));
     }
 
     public function enroll(StoreLearningEnrollmentRequest $request, EnrollLearner $action): RedirectResponse
@@ -188,14 +188,14 @@ class LearningController extends Controller
         $course = LearningCourse::query()->findOrFail($courseId);
         $action->handle($course, $this->user($request));
 
-        return back()->with('success', 'Course enrolment confirmed.');
+        return back()->with('success', __('learning.outcomes.enrolment_confirmed'));
     }
 
     public function generateOfflinePackage(GenerateLearningOfflinePackageRequest $request, LearningCourse $course, GenerateLearningOfflinePackage $action): RedirectResponse
     {
         $package = $action->handle($course, $this->user($request));
 
-        return back()->with('success', "Offline package v{$package->package_version} generated with verified course content.");
+        return back()->with('success', __('learning.outcomes.offline_package_generated', ['version' => $package->package_version]));
     }
 
     public function downloadOfflinePackage(Request $request, LearningOfflinePackage $offlinePackage, DocumentIntegrityVerifier $integrityVerifier, AuditLogger $auditLogger): StreamedResponse
@@ -233,14 +233,14 @@ class LearningController extends Controller
     {
         $action->handle($enrollment, $lesson, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Lesson completion recorded.');
+        return back()->with('success', __('learning.outcomes.lesson_completed'));
     }
 
     public function assess(SubmitLearningAssessmentRequest $request, LearningEnrollment $enrollment, GradeLearningAssessment $action): RedirectResponse
     {
         $action->handle($enrollment, $this->user($request), $request->validated('answers'));
 
-        return back()->with('success', 'Assessment graded and progress updated.');
+        return back()->with('success', __('learning.outcomes.assessment_graded'));
     }
 
     public function storeClassroom(StoreVirtualClassroomRequest $request): RedirectResponse
@@ -248,7 +248,7 @@ class LearningController extends Controller
         $user = $this->user($request);
         $classroom = VirtualClassroom::create([...$request->validated(), 'created_by' => $user->id]);
 
-        return back()->with('success', "Virtual classroom {$classroom->title} scheduled.");
+        return back()->with('success', __('learning.outcomes.classroom_scheduled', ['title' => $classroom->title]));
     }
 
     public function showClassroom(WorkspaceIndexRequest $request, VirtualClassroom $classroom, ProgrammeWorkspaceData $workspaceData): InertiaResponse
@@ -264,7 +264,7 @@ class LearningController extends Controller
     {
         $attendance = $action->handle($classroom, $this->user($request), $request->validated());
 
-        return back()->with('success', "{$attendance->attendance_status} attendance recorded.");
+        return back()->with('success', __('learning.outcomes.attendance_recorded', ['status' => $attendance->attendance_status]));
     }
 
     public function certificate(Request $request, LearningCertificate $certificate): Response

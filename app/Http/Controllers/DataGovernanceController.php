@@ -69,7 +69,7 @@ class DataGovernanceController extends Controller
         $asset = DataAsset::create([...$attributes, 'personal_data_categories' => $this->csv($attributes['personal_data_categories'] ?? null), 'data_subject_categories' => $this->csv($attributes['data_subject_categories'] ?? null), 'storage_locations' => $this->csv($attributes['storage_locations']), 'residency_country' => mb_strtoupper($attributes['residency_country']), 'status' => 'active', 'reviewed_at' => now()]);
         $this->auditLogger->record($this->user($request), $asset, 'privacy.data-asset.registered', "Data asset {$asset->code} registered.");
 
-        return back()->with('success', 'Data asset registered.');
+        return back()->with('success', __('data-governance.outcomes.asset_registered'));
     }
 
     public function storeRetentionSchedule(StoreRetentionScheduleRequest $request, SubmitRetentionSchedule $action): RedirectResponse
@@ -93,14 +93,14 @@ class DataGovernanceController extends Controller
         $activity = ProcessingActivity::create([...$attributes, 'processor_names' => $this->csv($attributes['processor_names'] ?? null), 'recipient_categories' => $this->csv($attributes['recipient_categories'] ?? null), 'processing_operations' => $this->csv($attributes['processing_operations']), 'transfer_countries' => $this->csv($attributes['transfer_countries'] ?? null), 'submitted_by' => $user->id, 'status' => 'submitted', 'submitted_at' => now()]);
         $this->auditLogger->record($user, $activity, 'privacy.processing-activity.submitted', "Processing activity {$activity->reference} submitted for independent review.");
 
-        return back()->with('success', 'Processing activity submitted for independent review.');
+        return back()->with('success', __('data-governance.outcomes.activity_submitted'));
     }
 
     public function reviewProcessingActivity(ReviewProcessingActivityRequest $request, ProcessingActivity $processingActivity, ReviewProcessingActivity $action): RedirectResponse
     {
         $action->handle($processingActivity, $this->user($request), ['decision' => (string) $request->validated('decision'), 'review_note' => (string) $request->validated('review_note')]);
 
-        return back()->with('success', 'Processing activity review recorded.');
+        return back()->with('success', __('data-governance.outcomes.activity_reviewed'));
     }
 
     public function storeDataSubjectRequest(StoreDataSubjectRequestRequest $request, ReceiveDataSubjectRequest $action): RedirectResponse
@@ -109,14 +109,14 @@ class DataGovernanceController extends Controller
         $receivedAt = $request->date('received_at');
         $action->handle($request->safe()->except('received_at'), $receivedAt, $user, ['intake_channel' => 'internal']);
 
-        return back()->with('success', 'Privacy request recorded with a controlled due date.');
+        return back()->with('success', __('data-governance.outcomes.request_recorded'));
     }
 
     public function advanceDataSubjectRequest(AdvanceDataSubjectRequestRequest $request, DataSubjectRequest $dataSubjectRequest, AdvanceDataSubjectRequest $action): RedirectResponse
     {
         $action->handle($dataSubjectRequest, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Privacy request workflow advanced.');
+        return back()->with('success', __('data-governance.outcomes.request_advanced'));
     }
 
     public function storePrivacyIncident(StorePrivacyIncidentRequest $request): RedirectResponse
@@ -127,14 +127,14 @@ class DataGovernanceController extends Controller
         $incident = PrivacyIncident::create([...$attributes, 'reported_by' => $user->id, 'reference' => 'PBI-'.now()->format('Y').'-'.mb_strtoupper(Str::random(8)), 'personal_data_categories' => $this->csv((string) $attributes['personal_data_categories']), 'discovered_at' => $discoveredAt, 'controller_notification_due_at' => $attributes['controller_role'] === 'processor' ? $discoveredAt->copy()->addHours((int) config('privacy.controller_notification_hours')) : null, 'regulator_notification_due_at' => $discoveredAt->copy()->addHours((int) config('privacy.regulator_notification_hours'))]);
         $this->auditLogger->record($user, $incident, 'privacy.incident.reported', "Privacy incident {$incident->reference} reported.", metadata: ['controller_role' => $incident->controller_role, 'regulator_due_at' => $incident->regulator_notification_due_at->toIso8601String()]);
 
-        return back()->with('success', 'Privacy incident recorded with controlled notification deadlines.');
+        return back()->with('success', __('data-governance.outcomes.incident_recorded'));
     }
 
     public function advancePrivacyIncident(AdvancePrivacyIncidentRequest $request, PrivacyIncident $privacyIncident, AdvancePrivacyIncident $action): RedirectResponse
     {
         $action->handle($privacyIncident, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Privacy incident workflow advanced.');
+        return back()->with('success', __('data-governance.outcomes.incident_advanced'));
     }
 
     /** @return list<string> */

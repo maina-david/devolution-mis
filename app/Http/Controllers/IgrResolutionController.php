@@ -95,14 +95,14 @@ class IgrResolutionController extends Controller
     {
         $createMeeting->handle($this->user($request), $request->validated());
 
-        return back()->with('success', 'Formal IGR meeting recorded.');
+        return back()->with('success', __('igr.outcomes.meeting_recorded'));
     }
 
     public function storeGapCategory(StoreIgrGapCategoryRequest $request, CreateIgrGapCategory $createCategory): RedirectResponse
     {
         $createCategory->handle($this->user($request), $request->validated());
 
-        return back()->with('success', 'IGR gap category created.');
+        return back()->with('success', __('igr.outcomes.gap_category_created'));
     }
 
     public function storeForum(StoreIgrForumRequest $request, AuditLogger $auditLogger): RedirectResponse
@@ -111,7 +111,7 @@ class IgrResolutionController extends Controller
         $forum = IgrForum::create([...$request->validated(), 'created_by' => $user->id]);
         $auditLogger->record($user, $forum, 'igr.forum.created', "IGR forum {$forum->code} created.");
 
-        return back()->with('success', 'IGR forum created.');
+        return back()->with('success', __('igr.outcomes.forum_created'));
     }
 
     public function storeResolution(StoreIgrResolutionRequest $request, CreateIgrResolution $createResolution): RedirectResponse
@@ -119,7 +119,7 @@ class IgrResolutionController extends Controller
         $resolution = $createResolution->handle($this->user($request), $request->validated());
         $resolution->assignments()->with('user')->get()->pluck('user')->filter()->each(fn (User $user) => $user->notifyNow(new ProgrammeAlert('New IGR resolution assignment', "You are responsible for {$resolution->resolution_number}: {$resolution->title}.", 'igr-resolutions')));
 
-        return back()->with('success', 'Resolution registered and responsible parties notified.');
+        return back()->with('success', __('igr.outcomes.resolution_registered'));
     }
 
     public function storeUpdate(StoreIgrResolutionUpdateRequest $request, IgrResolution $resolution, RecordIgrResolutionUpdate $recordUpdate, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -127,7 +127,7 @@ class IgrResolutionController extends Controller
         $this->authorizeResolution($this->user($request), $resolution, $countyScope);
         $recordUpdate->handle($resolution, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Implementation update recorded.');
+        return back()->with('success', __('igr.outcomes.implementation_updated'));
     }
 
     public function storeDependency(StoreIgrResolutionDependencyRequest $request, IgrResolution $resolution, CreateIgrResolutionDependency $createDependency, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -138,7 +138,7 @@ class IgrResolutionController extends Controller
         $this->authorizeResolution($user, $prerequisite, $countyScope);
         $createDependency->handle($resolution, $prerequisite, $user, $request->validated());
 
-        return back()->with('success', 'Resolution dependency recorded.');
+        return back()->with('success', __('igr.outcomes.dependency_recorded'));
     }
 
     public function storeGap(StoreIgrResolutionGapRequest $request, IgrResolution $resolution, CreateIgrResolutionGap $createGap, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -147,7 +147,7 @@ class IgrResolutionController extends Controller
         $this->authorizeResolution($user, $resolution, $countyScope);
         $createGap->handle($resolution, $user, $request->validated());
 
-        return back()->with('success', 'Implementation gap recorded and assigned.');
+        return back()->with('success', __('igr.outcomes.gap_recorded'));
     }
 
     public function transitionGap(TransitionIgrResolutionGapRequest $request, IgrResolution $resolution, IgrResolutionGap $gap, TransitionIgrResolutionGap $transitionGap, ProgrammeCountyScope $countyScope, IgrGapScope $gapScope): RedirectResponse
@@ -158,7 +158,7 @@ class IgrResolutionController extends Controller
         abort_unless($gapScope->visibleTo($user)->whereKey($gap)->exists(), 403);
         $transitionGap->handle($gap, $user, $request->validated('transition'), $request->validated('rationale'));
 
-        return back()->with('success', 'Implementation gap lifecycle updated.');
+        return back()->with('success', __('igr.outcomes.gap_updated'));
     }
 
     public function transition(TransitionIgrResolutionRequest $request, IgrResolution $resolution, TransitionWorkflow $transitionWorkflow, AuditLogger $auditLogger, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -180,7 +180,7 @@ class IgrResolutionController extends Controller
         $resolution->update(['status' => $transitioned->current_state, 'closed_by' => $name === 'approve_closure' ? $user->id : $resolution->closed_by, 'closed_at' => $name === 'approve_closure' ? now() : $resolution->closed_at]);
         $auditLogger->record($user, $resolution, 'igr.resolution.transitioned', "Resolution {$resolution->resolution_number} transitioned to {$transitioned->current_state}.");
 
-        return back()->with('success', 'Resolution lifecycle updated.');
+        return back()->with('success', __('igr.outcomes.resolution_updated'));
     }
 
     /** @return Builder<IgrResolution> */

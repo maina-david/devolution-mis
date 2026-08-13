@@ -4,7 +4,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 1917,
-    backendMessages: 265,
+    backendMessages: 275,
 };
 
 let eslintOutput = '';
@@ -37,10 +37,11 @@ const frontendMessages = eslintResults.flatMap((result) =>
         })),
 );
 const backendPatterns = [
-    /abort\([^,]+,\s*['"]/gu,
-    /withErrors\(\[/gu,
-    /ValidationException::withMessages/gu,
-    /->with\(['"][^'"]+['"],\s*['"]/gu,
+    /ValidationException::withMessages\(\s*\[\s*['"][^'"]+['"]\s*=>\s*f?['"]/gu,
+    /->withErrors\(\s*\[\s*['"][^'"]+['"]\s*=>\s*f?['"]/gu,
+    /->with\(\s*['"](?:success|error|status|warning)['"]\s*,\s*f?['"]/gu,
+    /['"]message['"]\s*=>\s*f?['"]/gu,
+    /throw new (?:RuntimeException|LogicException|DomainException|InvalidArgumentException)\(\s*f?['"]/gu,
 ];
 const backendMessages = globSync('app/**/*.php').flatMap((file) => {
     const source = readFileSync(file, 'utf8');

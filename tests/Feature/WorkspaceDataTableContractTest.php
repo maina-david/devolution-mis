@@ -12,10 +12,10 @@ class WorkspaceDataTableContractTest extends TestCase
 
         $this->assertStringContainsString("id: 'row-number'", $source);
         $this->assertStringContainsString('(pagination.currentPage - 1) * pagination.perPage', $source);
-        $this->assertStringContainsString('Rows per page', $source);
+        $this->assertStringContainsString('copy.rows_per_page', $source);
         $this->assertStringContainsString("url.searchParams.set(pagination.perPageName ?? 'per_page', value)", $source);
         $this->assertStringContainsString("url.searchParams.set(pagination.pageName ?? 'page', '1')", $source);
-        $this->assertStringContainsString('Showing {firstRecord.toLocaleString()}', $source);
+        $this->assertStringContainsString('interpolate(copy.records_range', $source);
     }
 
     public function test_shared_filter_bar_aligns_controls_and_preserves_page_size(): void
@@ -50,9 +50,8 @@ class WorkspaceDataTableContractTest extends TestCase
         $this->assertStringContainsString('<TableEmptyState />', $source);
         $this->assertStringContainsString("from '@/components/ui/empty'", $emptyState);
         $this->assertStringContainsString('<Empty className="border-0 py-10" role="status">', $emptyState);
-        $this->assertStringContainsString('<EmptyTitle>{title}</EmptyTitle>', $emptyState);
-        $this->assertStringContainsString("title = 'No records found'", $emptyState);
-        $this->assertStringContainsString("description = 'No records match the current filters.'", $emptyState);
+        $this->assertStringContainsString('<EmptyTitle>{title ?? copy.no_records_found}</EmptyTitle>', $emptyState);
+        $this->assertStringContainsString('description ?? copy.no_records_match_filters', $emptyState);
     }
 
     public function test_custom_management_tables_use_the_shared_shadcn_empty_state(): void
@@ -72,7 +71,7 @@ class WorkspaceDataTableContractTest extends TestCase
 
         $this->assertStringContainsString('settingsNavigationGroup', $navigation);
         foreach (['Profile', 'Security', 'Appearance'] as $tab) {
-            $this->assertStringContainsString("title: '{$tab}'", $navigation);
+            $this->assertStringContainsString("translatedNavigationTitle('{$tab}', translations)", $navigation);
         }
         $this->assertStringNotContainsString("title: 'Teams'", $navigation);
         $this->assertStringNotContainsString('<aside', $layout);

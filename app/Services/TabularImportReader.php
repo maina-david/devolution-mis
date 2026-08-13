@@ -21,7 +21,7 @@ class TabularImportReader
         return match ($this->extension($file)) {
             'csv' => $this->readCsv($file),
             'xlsx' => $this->readXlsx($file),
-            default => throw ValidationException::withMessages(['file' => 'Upload a CSV or XLSX source file.']),
+            default => throw ValidationException::withMessages(['file' => __('migration.import.csv_or_xlsx')]),
         };
     }
 
@@ -30,7 +30,7 @@ class TabularImportReader
         $extension = strtolower($file->getClientOriginalExtension());
 
         if (! in_array($extension, ['csv', 'xlsx'], true)) {
-            throw ValidationException::withMessages(['file' => 'Upload a CSV or XLSX source file.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.csv_or_xlsx')]);
         }
 
         return $extension;
@@ -76,7 +76,7 @@ class TabularImportReader
                 $sheetCount++;
                 if ($sheetCount > 1) {
                     throw ValidationException::withMessages([
-                        'file' => 'The XLSX source must contain exactly one worksheet.',
+                        'file' => __('migration.import.one_worksheet'),
                     ]);
                 }
 
@@ -90,7 +90,7 @@ class TabularImportReader
                     foreach ($row->cells as $cell) {
                         if ($cell instanceof FormulaCell) {
                             throw ValidationException::withMessages([
-                                'file' => "Spreadsheet formulas are not allowed (row {$rowNumber}). Replace formulas with their approved values.",
+                                'file' => __('migration.import.formula_forbidden', ['row' => $rowNumber]),
                             ]);
                         }
                     }
@@ -108,14 +108,14 @@ class TabularImportReader
             throw $exception;
         } catch (Throwable) {
             throw ValidationException::withMessages([
-                'file' => 'The XLSX source could not be read. Use an unencrypted workbook generated from the controlled template.',
+                'file' => __('migration.import.xlsx_unreadable'),
             ]);
         } finally {
             $reader->close();
         }
 
         if ($sheetCount !== 1) {
-            throw ValidationException::withMessages(['file' => 'The XLSX source must contain exactly one worksheet.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.one_worksheet')]);
         }
 
         return $rows;
@@ -125,32 +125,32 @@ class TabularImportReader
     {
         $archive = new ZipArchive;
         if ($archive->open($this->path($file)) !== true) {
-            throw ValidationException::withMessages(['file' => 'The XLSX source is not a valid workbook archive.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.invalid_archive')]);
         }
 
         try {
             if ($archive->numFiles > 500) {
-                throw ValidationException::withMessages(['file' => 'The XLSX source contains too many archive entries.']);
+                throw ValidationException::withMessages(['file' => __('migration.import.too_many_entries')]);
             }
 
             $uncompressedBytes = 0;
             for ($index = 0; $index < $archive->numFiles; $index++) {
                 $entry = $archive->statIndex($index);
                 if (! is_array($entry)) {
-                    throw ValidationException::withMessages(['file' => 'The XLSX source archive could not be inspected.']);
+                    throw ValidationException::withMessages(['file' => __('migration.import.archive_uninspectable')]);
                 }
 
                 $entryName = strtolower($entry['name']);
                 if (str_starts_with($entryName, 'xl/externallinks/') || str_ends_with($entryName, 'vbaproject.bin')) {
                     throw ValidationException::withMessages([
-                        'file' => 'External workbook links and executable spreadsheet content are not allowed.',
+                        'file' => __('migration.import.external_content'),
                     ]);
                 }
 
                 $uncompressedBytes += $entry['size'];
                 if ($uncompressedBytes > 50 * 1024 * 1024) {
                     throw ValidationException::withMessages([
-                        'file' => 'The XLSX source expands beyond the 50 MB processing limit.',
+                        'file' => __('migration.import.expanded_limit'),
                     ]);
                 }
             }
@@ -178,7 +178,7 @@ class TabularImportReader
         }
 
         throw ValidationException::withMessages([
-            'file' => "The XLSX source contains an unsupported value at row {$rowNumber}.",
+            'file' => __('migration.import.unsupported_value', ['row' => $rowNumber]),
         ]);
     }
 
@@ -187,7 +187,7 @@ class TabularImportReader
         $path = $file->getRealPath();
 
         if ($path === false) {
-            throw ValidationException::withMessages(['file' => 'The uploaded source file is no longer available.']);
+            throw ValidationException::withMessages(['file' => __('migration.import.source_unavailable')]);
         }
 
         return $path;

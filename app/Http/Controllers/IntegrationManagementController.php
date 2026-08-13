@@ -72,14 +72,14 @@ class IntegrationManagementController extends Controller
         $user = $this->user($request);
         $system = $createIntegrationSystem->handle($user, $request->validated());
 
-        return back()->with('success', "Integration system {$system->code} registered.");
+        return back()->with('success', __('integrations.outcomes.system_registered', ['code' => $system->code]));
     }
 
     public function activate(ActivateIntegrationSystemRequest $request, IntegrationSystem $system, ActivateIntegrationSystem $action): RedirectResponse
     {
         $action->handle($system, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Production integration activation recorded.');
+        return back()->with('success', __('integrations.outcomes.activation_recorded'));
     }
 
     public function storeContract(StoreIntegrationContractRequest $request): RedirectResponse
@@ -91,21 +91,21 @@ class IntegrationManagementController extends Controller
         $contract = IntegrationContract::create([...$attributes, 'submitted_by' => $user->id, 'version' => $version, 'status' => 'review', 'content_checksum' => hash('sha256', json_encode($checksumSource, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))]);
         $this->auditLogger->record($user, $contract, 'integration.contract.submitted', "Interface contract {$contract->name} v{$version} submitted for independent review.");
 
-        return back()->with('success', "Interface contract v{$version} submitted for review.");
+        return back()->with('success', __('integrations.outcomes.contract_submitted', ['version' => $version]));
     }
 
     public function publish(PublishIntegrationContractRequest $request, IntegrationContract $contract, PublishIntegrationContract $action): RedirectResponse
     {
         $action->handle($contract, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Interface contract independently published.');
+        return back()->with('success', __('integrations.outcomes.contract_published'));
     }
 
     public function dispatch(DispatchIntegrationExchangeRequest $request, IntegrationContract $contract, DispatchIntegrationExchange $action): RedirectResponse
     {
         $exchange = $action->handle($contract, $this->user($request), $request->validated());
 
-        return back()->with('success', "Exchange {$exchange->correlation_id} recorded as {$exchange->status}.");
+        return back()->with('success', __('integrations.outcomes.exchange_recorded', ['correlation' => $exchange->correlation_id, 'status' => $exchange->status]));
     }
 
     public function retry(RetryIntegrationExchangeRequest $request, IntegrationExchange $exchange, AttemptIntegrationExchangeDelivery $action): RedirectResponse
@@ -114,7 +114,7 @@ class IntegrationManagementController extends Controller
         abort_unless($exchange->county_id === null || $user->programmeRole()->hasNationalScope() || $this->countyScope->query($user)->whereKey($exchange->county_id)->exists(), 403);
         $exchange = $action->handle($exchange, $user, 'manual_retry');
 
-        return back()->with('success', "Exchange {$exchange->correlation_id} retry completed as {$exchange->status}.");
+        return back()->with('success', __('integrations.outcomes.exchange_retried', ['correlation' => $exchange->correlation_id, 'status' => $exchange->status]));
     }
 
     public function resolve(ResolveReconciliationExceptionRequest $request, ReconciliationException $exception, ResolveReconciliationException $action): RedirectResponse
@@ -123,7 +123,7 @@ class IntegrationManagementController extends Controller
         abort_unless($exception->county_id === null || $user->programmeRole()->hasNationalScope() || $this->countyScope->query($user)->whereKey($exception->county_id)->exists(), 403);
         $action->handle($exception, $user, $request->validated('resolution'));
 
-        return back()->with('success', 'Reconciliation exception resolved with an auditable decision.');
+        return back()->with('success', __('integrations.outcomes.reconciliation_resolved'));
     }
 
     /** @return array<string, mixed> */
