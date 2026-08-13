@@ -159,6 +159,7 @@ class HandleInertiaRequests extends Middleware
                 'evaluationDocuments' => __('evaluation-documents'),
                 'help' => __('help'),
                 'accessControl' => __('access-control'),
+                'auditAssurance' => __('audit-assurance'),
                 'settingsProfile' => __('settings-profile'),
                 'settingsSecurity' => __('settings-security'),
                 'monitoringResults' => __('monitoring-results'),

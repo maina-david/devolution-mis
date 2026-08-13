@@ -40,6 +40,7 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.common.rows_per_page', 'Safu kwa kila ukurasa')
                 ->where('localization.globalSearch.button', 'Tafuta IDMIS')
                 ->where('localization.globalSearch.searching', 'Inatafuta rekodi zilizoidhinishwa…')
+                ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -169,6 +170,19 @@ class LocalePreferenceTest extends TestCase
 
         App::setLocale('fr');
         $this->assertSame('Une référence de programme ou de comté a changé après l’examen. Préparez à nouveau la source.', __('migration.apply.programme_county_changed'));
+    }
+
+    public function test_audit_assurance_controls_localize_every_evidence_label_and_preserve_accessible_actions(): void
+    {
+        $source = file_get_contents(resource_path('js/components/audit-assurance-controls.tsx'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString('const copy = usePage().props.localization.auditAssurance;', $source);
+        $this->assertStringContainsString('aria-label={copy.open_actions}', $source);
+        $this->assertStringContainsString('label={copy.chain_root}', $source);
+        $this->assertStringContainsString('value={meta?.findingCodes || copy.none}', $source);
+        $this->assertStringNotContainsString('Fail-closed verification', $source);
+        $this->assertStringNotContainsString('Audit assurance evidence', $source);
     }
 
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void

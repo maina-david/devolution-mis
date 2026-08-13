@@ -133,6 +133,7 @@ declare module '@inertiajs/core' {
                 evaluationDocuments: Record<string, string>;
                 help: Record<string, string>;
                 accessControl: Record<string, string>;
+                auditAssurance: Record<string, string>;
                 settingsProfile: Record<string, string>;
                 settingsSecurity: Record<string, string>;
                 monitoringResults: Record<string, string>;

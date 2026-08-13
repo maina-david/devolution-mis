@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import {
     Download,
     Ellipsis,
@@ -28,11 +28,13 @@ import {
 import { download, store } from '@/routes/audit-assurance';
 
 export function AuditAssuranceRunControl() {
+    const copy = usePage().props.localization.auditAssurance;
+
     return (
         <FormSheet
-            title="Run audit integrity assurance"
-            description="Verify the complete predecessor chain and every reproducible v2 event hash, then retain a private checksum-bound anchor artifact."
-            triggerLabel="Run assurance"
+            title={copy.run_title}
+            description={copy.run_description}
+            triggerLabel={copy.run_assurance}
             icon={Play}
         >
             <Form {...store.form()} className="flex flex-col gap-4">
@@ -40,12 +42,9 @@ export function AuditAssuranceRunControl() {
                     <>
                         <Alert>
                             <ShieldCheck aria-hidden="true" />
-                            <AlertTitle>Fail-closed verification</AlertTitle>
+                            <AlertTitle>{copy.fail_closed}</AlertTitle>
                             <AlertDescription>
-                                Any predecessor or event-hash mismatch produces
-                                a failed run. Legacy hashes and missing
-                                dedicated signing keys are reported as warnings
-                                rather than silently treated as verified.
+                                {copy.fail_closed_description}
                             </AlertDescription>
                         </Alert>
                         {errors.assurance && (
@@ -57,10 +56,8 @@ export function AuditAssuranceRunControl() {
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>
-                            <Play data-icon="inline-start" />
-                            {processing
-                                ? 'Verifying…'
-                                : 'Verify and retain evidence'}
+                            <Play data-icon="inline-start" aria-hidden="true" />
+                            {processing ? copy.verifying : copy.verify_retain}
                         </Button>
                     </>
                 )}
@@ -80,6 +77,7 @@ export function AuditAssuranceRowAction({
 }) {
     const artifactAvailable = meta?.artifactAvailable === 'true';
     const [evidenceOpen, setEvidenceOpen] = useState(false);
+    const copy = usePage().props.localization.auditAssurance;
 
     return (
         <>
@@ -88,7 +86,7 @@ export function AuditAssuranceRowAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label="Open assurance actions"
+                        aria-label={copy.open_actions}
                     >
                         <Ellipsis aria-hidden="true" />
                     </Button>
@@ -98,8 +96,11 @@ export function AuditAssuranceRowAction({
                         <DropdownMenuItem
                             onSelect={() => setEvidenceOpen(true)}
                         >
-                            <FileCheck2 data-icon="inline-start" />
-                            View evidence
+                            <FileCheck2
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                            />
+                            {copy.view_evidence}
                         </DropdownMenuItem>
                         {artifactAvailable && (
                             <DropdownMenuItem asChild>
@@ -108,8 +109,11 @@ export function AuditAssuranceRowAction({
                                         auditAssuranceRun: runId,
                                     })}
                                 >
-                                    <Download data-icon="inline-start" />
-                                    Download artifact
+                                    <Download
+                                        data-icon="inline-start"
+                                        aria-hidden="true"
+                                    />
+                                    {copy.download_artifact}
                                 </a>
                             </DropdownMenuItem>
                         )}
@@ -119,55 +123,62 @@ export function AuditAssuranceRowAction({
             <Sheet open={evidenceOpen} onOpenChange={setEvidenceOpen}>
                 <SheetContent className="overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Audit assurance evidence</SheetTitle>
+                        <SheetTitle>{copy.evidence_title}</SheetTitle>
                         <SheetDescription>
-                            Verification boundary, findings and cryptographic
-                            evidence for this immutable run.
+                            {copy.evidence_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-4 px-4 pb-8">
-                        <Badge variant="outline">{status ?? 'unknown'}</Badge>
-                        <Evidence label="Events" value={meta?.eventCount} />
+                        <Badge variant="outline">
+                            {status ?? copy.unknown}
+                        </Badge>
                         <Evidence
-                            label="Reproducible hashes verified"
+                            label={copy.events}
+                            value={meta?.eventCount}
+                        />
+                        <Evidence
+                            label={copy.verified_hashes}
                             value={meta?.verifiedEventCount}
                         />
                         <Evidence
-                            label="Legacy hashes"
+                            label={copy.legacy_hashes}
                             value={meta?.legacyEventCount}
                         />
                         <Evidence
-                            label="Mismatches"
+                            label={copy.mismatches}
                             value={meta?.mismatchCount}
                         />
                         <Evidence
-                            label="First event"
+                            label={copy.first_event}
                             value={meta?.firstEventId}
                         />
                         <Evidence
-                            label="Covered through"
+                            label={copy.covered_through}
                             value={meta?.lastEventId}
                         />
                         <Evidence
-                            label="Chain root SHA-256"
+                            label={copy.chain_root}
                             value={meta?.chainRootChecksum}
                         />
                         <Evidence
-                            label="Artifact SHA-256"
+                            label={copy.artifact_checksum}
                             value={meta?.artifactChecksum}
                         />
-                        <Evidence label="Signature" value={meta?.signature} />
                         <Evidence
-                            label="Signing key reference"
+                            label={copy.signature}
+                            value={meta?.signature}
+                        />
+                        <Evidence
+                            label={copy.signing_key}
                             value={meta?.signingKeyReference}
                         />
                         <Evidence
-                            label="Evidence SHA-256"
+                            label={copy.evidence_checksum}
                             value={meta?.evidenceChecksum}
                         />
                         <Evidence
-                            label="Findings"
-                            value={meta?.findingCodes || 'None'}
+                            label={copy.findings}
+                            value={meta?.findingCodes || copy.none}
                         />
                     </div>
                 </SheetContent>
