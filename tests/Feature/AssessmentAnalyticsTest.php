@@ -52,6 +52,11 @@ class AssessmentAnalyticsTest extends TestCase
             ->has('report.options.counties', 3)
             ->has('report.rankings.rows', 3));
 
+        $this->actingAs($nationalAdmin)->withSession(['locale' => 'sw'])
+            ->get(route('assessments.analytics.index'))
+            ->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('localization.assessmentAnalytics.cycle_trend_chart_label', 'Mwenendo wa alama za tathmini zilizochapishwa kwa mzunguko'));
+
         $this->actingAs($countyAdmin)->get(route('assessments.analytics.index', ['county_id' => $countyB->id]))->assertForbidden();
     }
 

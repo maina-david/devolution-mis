@@ -42,4 +42,5 @@ return [
     'assessment_cycle' => 'Mzunguko wa tathmini',
     'apply_filters' => 'Tekeleza vichujio',
     'clear' => 'Futa',
+    'minimum' => 'Kiwango cha chini', 'maximum' => 'Kiwango cha juu', 'cycle_trend_chart_label' => 'Mwenendo wa alama za tathmini zilizochapishwa kwa mzunguko', 'cycle_name' => ':name (:code)', 'average_publications' => 'Wastani wa :average kutoka :count :publication', 'range_value' => 'Masafa :minimum hadi :maximum', 'cycle_score_value' => ':cycle: :score',
 ];

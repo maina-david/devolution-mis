@@ -209,6 +209,12 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-invalid={Boolean(errors.score)}', $assessmentActions);
         $this->assertStringContainsString('<InputError', $assessmentActions);
         $this->assertStringContainsString('aria-busy={processing}', $assessmentActions);
+
+        $assessmentAnalytics = $this->source('resources/js/pages/assessments/analytics.tsx');
+        $this->assertStringContainsString('accessibilityLayer', $assessmentAnalytics);
+        $this->assertStringContainsString('aria-label={copy.cycle_trend_chart_label}', $assessmentAnalytics);
+        $this->assertStringContainsString("style: 'percent'", $assessmentAnalytics);
+        $this->assertStringContainsString('preserveDrilldownFilters(', $assessmentAnalytics);
     }
 
     private function source(string $path): string

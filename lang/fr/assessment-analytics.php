@@ -42,4 +42,5 @@ return [
     'assessment_cycle' => 'Cycle d’évaluation',
     'apply_filters' => 'Appliquer les filtres',
     'clear' => 'Effacer',
+    'minimum' => 'Minimum', 'maximum' => 'Maximum', 'cycle_trend_chart_label' => 'Tendance des scores d’évaluation publiés par cycle', 'cycle_name' => ':name (:code)', 'average_publications' => 'Moyenne de :average sur :count :publication', 'range_value' => 'Plage de :minimum à :maximum', 'cycle_score_value' => ':cycle : :score',
 ];

@@ -1,5 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Download, FileBarChart, TrendingUp } from 'lucide-react';
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
 import AssessmentAnalyticsFilters from '@/components/assessment-analytics-filters';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
@@ -11,6 +12,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
+} from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -107,6 +116,17 @@ export default function AssessmentAnalytics({
     const page = usePage();
     const { localization } = page.props;
     const copy = localization.assessmentAnalytics;
+    const locale = localization.current;
+    const formatPercent = (value: number) =>
+        new Intl.NumberFormat(locale, {
+            style: 'percent',
+            maximumFractionDigits: 2,
+        }).format(value / 100);
+    const chartConfig = {
+        average: { label: copy.average, color: 'var(--primary)' },
+        minimum: { label: copy.minimum, color: 'var(--chart-2)' },
+        maximum: { label: copy.maximum, color: 'var(--chart-3)' },
+    } satisfies ChartConfig;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -115,16 +135,20 @@ export default function AssessmentAnalytics({
     };
     const functionRows: WorkspaceRow[] = report.functions.rows.map((item) => ({
         id: `${item.cycleId}-${item.code}`,
-        cells: [item.cycle, `${item.code} - ${item.name}`, `${item.average}%`],
+        cells: [
+            item.cycle,
+            `${item.code} - ${item.name}`,
+            formatPercent(item.average),
+        ],
     }));
     const rankingRows: WorkspaceRow[] = report.rankings.rows.map((item) => ({
         id: item.assessmentId,
         cells: [
             item.rank,
             item.countyIdentity,
-            `${item.score}%`,
+            formatPercent(Number(item.score)),
             copy[item.performanceBand] ?? item.performanceBand,
-            `${item.percentile}%`,
+            formatPercent(item.percentile),
         ],
         status: item.performanceBand,
     }));
@@ -177,7 +201,7 @@ export default function AssessmentAnalytics({
                         value={
                             report.summary.averageScore === null
                                 ? copy.not_available
-                                : `${report.summary.averageScore}%`
+                                : formatPercent(report.summary.averageScore)
                         }
                     />
                 </div>
@@ -203,18 +227,83 @@ export default function AssessmentAnalytics({
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4">
+                                <ChartContainer
+                                    config={chartConfig}
+                                    className="h-72 w-full"
+                                    aria-label={copy.cycle_trend_chart_label}
+                                >
+                                    <LineChart
+                                        data={report.cycles}
+                                        accessibilityLayer
+                                        margin={{ left: 8, right: 8 }}
+                                    >
+                                        <CartesianGrid vertical={false} />
+                                        <XAxis
+                                            dataKey="code"
+                                            tickLine={false}
+                                            axisLine={false}
+                                        />
+                                        <YAxis
+                                            domain={[0, 100]}
+                                            tickFormatter={(value: number) =>
+                                                formatPercent(value)
+                                            }
+                                            tickLine={false}
+                                            axisLine={false}
+                                            width={54}
+                                        />
+                                        <ChartTooltip
+                                            content={<ChartTooltipContent />}
+                                        />
+                                        <ChartLegend
+                                            content={<ChartLegendContent />}
+                                        />
+                                        <Line
+                                            dataKey="minimum"
+                                            type="monotone"
+                                            stroke="var(--color-minimum)"
+                                            strokeWidth={2}
+                                        />
+                                        <Line
+                                            dataKey="average"
+                                            type="monotone"
+                                            stroke="var(--color-average)"
+                                            strokeWidth={3}
+                                        />
+                                        <Line
+                                            dataKey="maximum"
+                                            type="monotone"
+                                            stroke="var(--color-maximum)"
+                                            strokeWidth={2}
+                                        />
+                                    </LineChart>
+                                </ChartContainer>
                                 {report.cycles.map((cycle) => (
                                     <div key={cycle.id} className="grid gap-2">
                                         <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                                             <span className="font-medium">
-                                                {cycle.name} ({cycle.code})
+                                                {interpolate(copy.cycle_name, {
+                                                    name: cycle.name,
+                                                    code: cycle.code,
+                                                })}
                                             </span>
                                             <span className="text-muted-foreground">
-                                                {copy.average} {cycle.average}%{' '}
-                                                {copy.from} {cycle.publications}{' '}
-                                                {cycle.publications === 1
-                                                    ? copy.publication
-                                                    : copy.publications}
+                                                {interpolate(
+                                                    copy.average_publications,
+                                                    {
+                                                        average: formatPercent(
+                                                            cycle.average,
+                                                        ),
+                                                        count: cycle.publications.toLocaleString(
+                                                            locale,
+                                                        ),
+                                                        publication:
+                                                            cycle.publications ===
+                                                            1
+                                                                ? copy.publication
+                                                                : copy.publications,
+                                                    },
+                                                )}
                                             </span>
                                         </div>
                                         <div
@@ -238,8 +327,14 @@ export default function AssessmentAnalytics({
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            {copy.range} {cycle.minimum}%{' '}
-                                            {copy.to} {cycle.maximum}%
+                                            {interpolate(copy.range_value, {
+                                                minimum: formatPercent(
+                                                    cycle.minimum,
+                                                ),
+                                                maximum: formatPercent(
+                                                    cycle.maximum,
+                                                ),
+                                            })}
                                         </p>
                                     </div>
                                 ))}
@@ -282,8 +377,15 @@ export default function AssessmentAnalytics({
                                                                 page.url,
                                                             )}
                                                         >
-                                                            {result.cycle}:{' '}
-                                                            {result.score}%
+                                                            {interpolate(
+                                                                copy.cycle_score_value,
+                                                                {
+                                                                    cycle: result.cycle,
+                                                                    score: formatPercent(
+                                                                        result.score,
+                                                                    ),
+                                                                },
+                                                            )}
                                                         </Link>
                                                     </Button>
                                                 ))}
