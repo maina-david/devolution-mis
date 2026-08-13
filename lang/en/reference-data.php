@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'administrative_hierarchy' => 'Administrative hierarchy',
+    'administrative_hierarchy_description' => 'Governed county, constituency/sub-county and ward lineage from the complete 47-county register.',
+    'bulk_upload_sub_counties' => 'Bulk upload sub-counties',
+    'bulk_upload_wards' => 'Bulk upload wards',
+    'counties_covered' => 'Counties covered',
+    'complete_county_coverage' => '47 / 47',
+    'parent_units' => 'Constituency and sub-county units',
+    'county_assembly_wards' => 'County assembly wards',
+    'code' => 'Code',
+    'unit' => 'Unit',
+    'county' => 'County',
+    'classification' => 'Classification',
+    'wards' => 'Wards',
+    'effective_from' => 'Effective from',
+    'source' => 'Source',
+    'checksum' => 'Checksum',
+    'iebc_code' => 'IEBC code',
+    'ward' => 'Ward',
+    'parent_unit' => 'Parent unit',
+    'registered_voters_2022' => 'Registered voters (2022)',
+    'not_available' => '—',
+    'value_constituency' => 'Constituency',
+    'value_county_sub_county' => 'County sub-county',
+    'value_national_sub_county' => 'National sub-county',
+];

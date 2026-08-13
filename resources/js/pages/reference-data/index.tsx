@@ -1,5 +1,5 @@
 import type { Method } from '@inertiajs/core';
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Building2,
     Archive,
@@ -137,6 +137,28 @@ type Props = {
         budgetAmount: string | null;
         currency: string;
     }>;
+    subCounties: Pagination<{
+        id: string;
+        code: string;
+        name: string;
+        classification: string;
+        county: CountyIdentityValue;
+        wardCount: number;
+        effectiveFrom: string;
+        sourceAuthority: string;
+        checksum: string;
+    }>;
+    wards: Pagination<{
+        id: string;
+        code: string;
+        name: string;
+        subCounty: { id: string; code: string; name: string };
+        county: CountyIdentityValue;
+        registeredVoters2022: number | null;
+        effectiveFrom: string;
+        sourceAuthority: string;
+        checksum: string;
+    }>;
     programmeCoverages: {
         title: string;
         description: string;
@@ -239,6 +261,8 @@ export default function ReferenceDataIndex({
     options,
     releases,
     capabilities,
+    subCounties,
+    wards,
 }: Props) {
     return (
         <>
@@ -569,6 +593,12 @@ export default function ReferenceDataIndex({
                     canManage={capabilities.manage}
                 />
 
+                <AdministrativeHierarchyRegister
+                    subCounties={subCounties}
+                    wards={wards}
+                    canManage={capabilities.manage}
+                />
+
                 <ReleaseRegister
                     releases={releases}
                     capabilities={capabilities}
@@ -630,6 +660,148 @@ export default function ReferenceDataIndex({
                 />
             </div>
         </>
+    );
+}
+
+function AdministrativeHierarchyRegister({
+    subCounties,
+    wards,
+    canManage,
+}: {
+    subCounties: Props['subCounties'];
+    wards: Props['wards'];
+    canManage: boolean;
+}) {
+    const { localization } = usePage().props;
+    const copy = localization.referenceData;
+
+    return (
+        <section
+            className="grid gap-6"
+            aria-labelledby="administrative-hierarchy-title"
+        >
+            <Card>
+                <CardHeader className="flex-row items-start justify-between gap-4">
+                    <div>
+                        <CardTitle
+                            id="administrative-hierarchy-title"
+                            className="flex items-center gap-2"
+                        >
+                            <MapPinned aria-hidden="true" />{' '}
+                            {copy.administrative_hierarchy}
+                        </CardTitle>
+                        <CardDescription>
+                            {copy.administrative_hierarchy_description}
+                        </CardDescription>
+                    </div>
+                    {canManage && (
+                        <div className="flex flex-wrap gap-2">
+                            {['sub_counties', 'wards'].map((datasetType) => (
+                                <Button
+                                    key={datasetType}
+                                    asChild
+                                    variant="outline"
+                                >
+                                    <Link
+                                        href={dataImportsIndex.url({
+                                            query: { type: datasetType },
+                                        })}
+                                    >
+                                        <FileUp data-icon="inline-start" />
+                                        {datasetType === 'wards'
+                                            ? copy.bulk_upload_wards
+                                            : copy.bulk_upload_sub_counties}
+                                    </Link>
+                                </Button>
+                            ))}
+                        </div>
+                    )}
+                </CardHeader>
+                <CardContent className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            {copy.counties_covered}
+                        </p>
+                        <p className="mt-1 text-2xl font-bold">
+                            {copy.complete_county_coverage}
+                        </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            {copy.parent_units}
+                        </p>
+                        <p className="mt-1 text-2xl font-bold">
+                            {subCounties.total.toLocaleString(
+                                localization.current,
+                            )}
+                        </p>
+                    </div>
+                    <div className="rounded-lg border p-4">
+                        <p className="text-sm text-muted-foreground">
+                            {copy.county_assembly_wards}
+                        </p>
+                        <p className="mt-1 text-2xl font-bold">
+                            {wards.total.toLocaleString(localization.current)}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+            <RegistryTable
+                title={copy.parent_units}
+                headers={[
+                    copy.code,
+                    copy.unit,
+                    copy.county,
+                    copy.classification,
+                    copy.wards,
+                    copy.effective_from,
+                    copy.source,
+                    copy.checksum,
+                ]}
+                pagination={subCounties}
+                rows={subCounties.data.map((item) => [
+                    item.code,
+                    item.name,
+                    item.county,
+                    copy[`value_${item.classification}`] ??
+                        item.classification.replaceAll('_', ' '),
+                    item.wardCount.toLocaleString(localization.current),
+                    new Date(
+                        `${item.effectiveFrom}T00:00:00`,
+                    ).toLocaleDateString(localization.current),
+                    item.sourceAuthority,
+                    item.checksum,
+                ])}
+            />
+            <RegistryTable
+                title={copy.county_assembly_wards}
+                headers={[
+                    copy.iebc_code,
+                    copy.ward,
+                    copy.parent_unit,
+                    copy.county,
+                    copy.registered_voters_2022,
+                    copy.effective_from,
+                    copy.source,
+                    copy.checksum,
+                ]}
+                pagination={wards}
+                rows={wards.data.map((item) => [
+                    item.code,
+                    item.name,
+                    `${item.subCounty.code} · ${item.subCounty.name}`,
+                    item.county,
+                    item.registeredVoters2022?.toLocaleString(
+                        localization.current,
+                    ) ?? copy.not_available,
+                    new Date(
+                        `${item.effectiveFrom}T00:00:00`,
+                    ).toLocaleDateString(localization.current),
+                    item.sourceAuthority,
+                    item.checksum,
+                ])}
+            />
+        </section>
     );
 }
 

@@ -26,7 +26,9 @@ use App\Models\Programme;
 use App\Models\ProgrammeCountyCoverage;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
+use App\Models\SubCounty;
 use App\Models\User;
+use App\Models\Ward;
 use App\Services\AuditLogger;
 use App\Services\ProgrammeWorkspaceData;
 use App\Support\WorkspaceFilters;
@@ -58,6 +60,24 @@ class ReferenceDataController extends Controller
         $sectors = Sector::query()->with('parent:id,name,code')->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")->orWhereHas('parent', fn (Builder $parent) => $parent->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%"))))->latest()->paginate(15, pageName: 'sectors_page')->withQueryString();
         $programmes = Programme::query()->with(['leadOrganization:id,name', 'sector:id,name'])->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")))->latest()->paginate(15, pageName: 'programmes_page')->withQueryString();
         $releases = ReferenceDataRelease::query()->with(['submitter:id,name', 'approver:id,name'])->latest('version')->limit(12)->get();
+        $subCounties = SubCounty::query()
+            ->with('county:id,name,code,logo_path,logo_source_authority,logo_verified_at')
+            ->withCount('wards')
+            ->when($workspaceFilters->countyId, fn (Builder $query) => $query->where('county_id', $workspaceFilters->countyId))
+            ->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")))
+            ->orderBy(County::query()->select('code')->whereColumn('counties.id', 'sub_counties.county_id'))
+            ->orderBy('name')
+            ->paginate(15, pageName: 'sub_counties_page')
+            ->withQueryString();
+        $wards = Ward::query()
+            ->with('subCounty.county:id,name,code,logo_path,logo_source_authority,logo_verified_at')
+            ->when($workspaceFilters->countyId, fn (Builder $query) => $query->whereHas('subCounty', fn (Builder $subCounty) => $subCounty->where('county_id', $workspaceFilters->countyId)))
+            ->when($search, fn (Builder $query) => $query->where(fn (Builder $query) => $query->where('name', 'ilike', "%{$search}%")->orWhere('code', 'ilike', "%{$search}%")->orWhereHas('subCounty', fn (Builder $subCounty) => $subCounty->where('name', 'ilike', "%{$search}%"))))
+            ->orderBy(SubCounty::query()->join('counties', 'counties.id', '=', 'sub_counties.county_id')->select('counties.code')->whereColumn('sub_counties.id', 'wards.sub_county_id'))
+            ->orderBy(SubCounty::query()->select('name')->whereColumn('sub_counties.id', 'wards.sub_county_id'))
+            ->orderBy('code')
+            ->paginate(15, pageName: 'wards_page')
+            ->withQueryString();
 
         return Inertia::render('reference-data/index', [
             'filters' => [
@@ -79,6 +99,28 @@ class ReferenceDataController extends Controller
             'organizations' => $organizations->through(fn (Organization $organization): array => ['id' => $organization->id, 'code' => $organization->code, 'name' => $organization->name, 'type' => $organization->type, 'county' => $organization->county?->identityCell(), 'email' => $organization->email, 'status' => $organization->status]),
             'sectors' => $sectors->through(fn (Sector $sector): array => ['id' => $sector->id, 'code' => $sector->code, 'name' => $sector->name, 'parent' => $sector->parent ? ['id' => $sector->parent->id, 'code' => $sector->parent->code, 'name' => $sector->parent->name] : null, 'description' => $sector->description, 'isActive' => $sector->is_active]),
             'programmes' => $programmes->through(fn (Programme $programme): array => ['id' => $programme->id, 'code' => $programme->code, 'name' => $programme->name, 'description' => $programme->description, 'organization' => $programme->leadOrganization?->name, 'sector' => $programme->sector?->name, 'startsOn' => $programme->starts_on?->toDateString(), 'endsOn' => $programme->ends_on?->toDateString(), 'status' => $programme->status, 'budgetAmount' => $programme->budget_amount, 'currency' => $programme->currency]),
+            'subCounties' => $subCounties->through(fn (SubCounty $subCounty): array => [
+                'id' => $subCounty->id,
+                'code' => $subCounty->code,
+                'name' => $subCounty->name,
+                'classification' => $subCounty->classification,
+                'county' => $subCounty->county->identityCell(),
+                'wardCount' => $subCounty->wards_count,
+                'effectiveFrom' => $subCounty->effective_from->toDateString(),
+                'sourceAuthority' => $subCounty->source_authority,
+                'checksum' => $subCounty->source_checksum_sha256,
+            ]),
+            'wards' => $wards->through(fn (Ward $ward): array => [
+                'id' => $ward->id,
+                'code' => $ward->code,
+                'name' => $ward->name,
+                'subCounty' => ['id' => $ward->subCounty->id, 'code' => $ward->subCounty->code, 'name' => $ward->subCounty->name],
+                'county' => $ward->subCounty->county->identityCell(),
+                'registeredVoters2022' => $ward->registered_voters_2022,
+                'effectiveFrom' => $ward->effective_from->toDateString(),
+                'sourceAuthority' => $ward->source_authority,
+                'checksum' => $ward->source_checksum_sha256,
+            ]),
             'programmeCoverages' => $workspaceData->programmeCountyCoverages($user, $workspaceFilters),
             'releases' => $releases->map(fn (ReferenceDataRelease $release): array => [
                 'id' => $release->id, 'version' => $release->version, 'status' => $release->status, 'changeSummary' => $release->change_summary,

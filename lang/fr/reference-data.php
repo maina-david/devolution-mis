@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'administrative_hierarchy' => 'Hiérarchie administrative',
+    'administrative_hierarchy_description' => 'Traçabilité gouvernée des comtés, circonscriptions/sous-comtés et quartiers à partir du registre complet des 47 comtés.',
+    'bulk_upload_sub_counties' => 'Importer les sous-comtés en masse',
+    'bulk_upload_wards' => 'Importer les quartiers en masse',
+    'counties_covered' => 'Comtés couverts',
+    'complete_county_coverage' => '47 / 47',
+    'parent_units' => 'Circonscriptions et sous-comtés',
+    'county_assembly_wards' => 'Quartiers des assemblées de comté',
+    'code' => 'Code',
+    'unit' => 'Unité',
+    'county' => 'Comté',
+    'classification' => 'Classification',
+    'wards' => 'Quartiers',
+    'effective_from' => 'En vigueur depuis',
+    'source' => 'Source',
+    'checksum' => 'Somme de contrôle',
+    'iebc_code' => 'Code IEBC',
+    'ward' => 'Quartier',
+    'parent_unit' => 'Unité parente',
+    'registered_voters_2022' => 'Électeurs inscrits (2022)',
+    'not_available' => '—',
+    'value_constituency' => 'Circonscription',
+    'value_county_sub_county' => 'Sous-comté du comté',
+    'value_national_sub_county' => 'Sous-comté national',
+];

@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'administrative_hierarchy' => 'Mpangilio wa maeneo ya utawala',
+    'administrative_hierarchy_description' => 'Asili inayosimamiwa ya kaunti, eneo bunge/kaunti ndogo na wadi kutoka rejesta kamili ya kaunti 47.',
+    'bulk_upload_sub_counties' => 'Pakia kaunti ndogo kwa wingi',
+    'bulk_upload_wards' => 'Pakia wadi kwa wingi',
+    'counties_covered' => 'Kaunti zilizofunikwa',
+    'complete_county_coverage' => '47 / 47',
+    'parent_units' => 'Maeneo bunge na kaunti ndogo',
+    'county_assembly_wards' => 'Wadi za mabunge ya kaunti',
+    'code' => 'Msimbo',
+    'unit' => 'Eneo',
+    'county' => 'Kaunti',
+    'classification' => 'Uainishaji',
+    'wards' => 'Wadi',
+    'effective_from' => 'Inatumika kuanzia',
+    'source' => 'Chanzo',
+    'checksum' => 'Alama ya uthibitishaji',
+    'iebc_code' => 'Msimbo wa IEBC',
+    'ward' => 'Wadi',
+    'parent_unit' => 'Eneo kuu',
+    'registered_voters_2022' => 'Wapiga kura waliosajiliwa (2022)',
+    'not_available' => '—',
+    'value_constituency' => 'Eneo bunge',
+    'value_county_sub_county' => 'Kaunti ndogo ya kaunti',
+    'value_national_sub_county' => 'Kaunti ndogo ya kitaifa',
+];

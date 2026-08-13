@@ -20,6 +20,7 @@ return new class extends Migration
             $table->char('source_checksum_sha256', 64);
             $table->jsonb('boundary_geojson')->nullable();
             $table->char('boundary_checksum_sha256', 64)->nullable();
+            $table->unsignedInteger('registered_voters_2022')->nullable();
             $table->date('effective_from');
             $table->date('effective_to')->nullable();
             $table->timestamps();

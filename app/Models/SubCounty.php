@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read County $county
  * @property-read Collection<int, Ward> $wards
  */
-#[Fillable(['county_id', 'code', 'name', 'slug', 'source_authority', 'source_reference', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256', 'effective_from', 'effective_to'])]
+#[Fillable(['county_id', 'code', 'name', 'slug', 'classification', 'source_authority', 'source_reference', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256', 'effective_from', 'effective_to'])]
 class SubCounty extends Model
 {
     /** @use HasFactory<SubCountyFactory> */

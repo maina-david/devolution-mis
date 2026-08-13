@@ -26,6 +26,7 @@ class SubCountyFactory extends Factory
             'code' => fake()->unique()->numerify('SC-####'),
             'name' => $name,
             'slug' => Str::slug($name),
+            'classification' => 'constituency',
             'source_authority' => 'Independent Electoral and Boundaries Commission',
             'source_reference' => 'Controlled administrative-unit fixture',
             'source_checksum_sha256' => hash('sha256', $name),

@@ -31,6 +31,7 @@ class WardFactory extends Factory
             'source_checksum_sha256' => hash('sha256', $name),
             'boundary_geojson' => null,
             'boundary_checksum_sha256' => null,
+            'registered_voters_2022' => fake()->numberBetween(3000, 50000),
             'effective_from' => '2022-08-09',
             'effective_to' => null,
         ];

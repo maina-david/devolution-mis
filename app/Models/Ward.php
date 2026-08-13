@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $effective_to
  * @property-read SubCounty $subCounty
  */
-#[Fillable(['sub_county_id', 'code', 'name', 'slug', 'source_authority', 'source_reference', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256', 'effective_from', 'effective_to'])]
+#[Fillable(['sub_county_id', 'code', 'name', 'slug', 'source_authority', 'source_reference', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256', 'registered_voters_2022', 'effective_from', 'effective_to'])]
 class Ward extends Model
 {
     /** @use HasFactory<WardFactory> */
@@ -31,6 +31,6 @@ class Ward extends Model
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['boundary_geojson' => 'array', 'effective_from' => 'immutable_date', 'effective_to' => 'immutable_date'];
+        return ['boundary_geojson' => 'array', 'registered_voters_2022' => 'integer', 'effective_from' => 'immutable_date', 'effective_to' => 'immutable_date'];
     }
 }
