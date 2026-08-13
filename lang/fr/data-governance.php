@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'eyebrow' => 'Gouvernance de la confidentialité et de l’information', 'title' => 'Centre de contrôle de la gouvernance des données', 'description' => 'Inventaire gouverné, finalités de traitement, preuves de base légale, examen AIPD, calendriers de conservation et traitement contrôlé des demandes des personnes concernées.',
+    'inventory_title' => 'Inventaire des données', 'inventory_description' => 'Sources officielles, propriété, classification et lieux de stockage.', 'requests_title' => 'Demandes des personnes concernées', 'requests_description' => 'Workflow avec contrôle d’identité pour l’accès, la rectification, l’effacement, la limitation et l’opposition.',
+    'separator' => '·', 'label_separator' => ':', 'months' => 'mois', 'sensitive_personal_data' => 'Données personnelles sensibles', 'personal_data' => 'Données personnelles', 'activities' => 'activités', 'inventory_record_description' => 'Fiche officielle de l’inventaire des données',
+    'view_governance_record' => 'Voir la fiche de gouvernance', 'independent_review' => 'Examen indépendant', 'processing_review_gate' => 'L’approbation exige un calendrier de conservation approuvé, des garanties de transfert documentées le cas échéant et une AIPD achevée pour les données personnelles sensibles. Le déclarant ne peut pas examiner sa propre fiche.', 'record_review' => 'Consigner l’examen',
+    'view_request' => 'Voir la demande', 'advance_workflow' => 'Faire avancer le workflow', 'due' => 'échéance', 'apply_controlled_transition' => 'Appliquer la transition contrôlée', 'register_data_asset' => 'Enregistrer l’actif de données', 'submit_independent_review' => 'Soumettre à un examen indépendant', 'record_privacy_request' => 'Consigner la demande de confidentialité',
+    'record_incident_deadlines' => 'Consigner l’incident et les échéances', 'view_incident_record' => 'Voir la fiche de l’incident', 'continue_workflow' => 'Poursuivre le workflow contrôlé', 'discovered' => 'découvert', 'record' => 'Consigner',
     'retention_submit_title' => 'Soumettre un calendrier de conservation',
     'retention_submit_description' => 'Consignez le déclencheur, la durée, le sort final, l’autorité juridique et la règle de gel juridique pour approbation indépendante.',
     'retention_trigger' => 'Calendrier de conservation',

@@ -244,6 +244,10 @@ type Props = {
     };
 };
 
+function useDataGovernanceCopy(): Record<string, string> {
+    return usePage().props.localization.dataGovernance;
+}
+
 export default function DataGovernance({
     assets,
     retentionSchedules,
@@ -256,8 +260,7 @@ export default function DataGovernance({
     capabilities,
     targets,
 }: Props) {
-    const { localization } = usePage().props;
-    const governanceCopy = localization.dataGovernance;
+    const governanceCopy = useDataGovernanceCopy();
 
     const activityRows: WorkspaceRow[] = activities.data.map((activity) => ({
         id: activity.id,
@@ -317,16 +320,13 @@ export default function DataGovernance({
                     <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Privacy and information governance
+                                {governanceCopy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Data governance control centre
+                                {governanceCopy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Governed inventory, processing purposes,
-                                lawful-basis evidence, DPIA screening, retention
-                                schedules and controlled data-subject request
-                                handling.
+                                {governanceCopy.description}
                             </p>
                         </div>
                         {capabilities.manage && (
@@ -469,11 +469,10 @@ export default function DataGovernance({
                     <div className="mb-3 flex items-end justify-between">
                         <div>
                             <h2 className="text-lg font-bold">
-                                Data inventory
+                                {governanceCopy.inventory_title}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Authoritative sources, ownership, classification
-                                and storage locations.
+                                {governanceCopy.inventory_description}
                             </p>
                         </div>
                     </div>
@@ -541,10 +540,11 @@ export default function DataGovernance({
                 <section className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
                     <div className="overflow-hidden rounded-xl border bg-card">
                         <div className="border-b px-5 py-4">
-                            <h2 className="font-bold">Data-subject requests</h2>
+                            <h2 className="font-bold">
+                                {governanceCopy.requests_title}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                Identity-controlled access, correction, erasure,
-                                restriction and objection workflow.
+                                {governanceCopy.requests_description}
                             </p>
                         </div>
                         {requestRows.length ? (
@@ -593,13 +593,16 @@ export default function DataGovernance({
                             <Card key={schedule.id}>
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        {schedule.code} · {schedule.recordClass}
+                                        {schedule.code}{' '}
+                                        {governanceCopy.separator}{' '}
+                                        {schedule.recordClass}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent className="grid gap-3 text-sm">
                                     <div className="flex flex-wrap gap-2">
                                         <Badge>
-                                            {schedule.retentionMonths} months
+                                            {schedule.retentionMonths}{' '}
+                                            {governanceCopy.months}
                                         </Badge>
                                         <Badge variant="outline">
                                             {humanize(
@@ -609,17 +612,20 @@ export default function DataGovernance({
                                     </div>
                                     <p className="text-muted-foreground">
                                         {governanceCopy.retention_trigger_label}
-                                        : {schedule.triggerEvent}
+                                        {governanceCopy.label_separator}{' '}
+                                        {schedule.triggerEvent}
                                     </p>
                                     <p className="text-muted-foreground">
-                                        {governanceCopy.retention_hold_label}:{' '}
+                                        {governanceCopy.retention_hold_label}
+                                        {governanceCopy.label_separator}{' '}
                                         {schedule.legalHoldRule}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {schedule.status === 'approved'
                                             ? `${governanceCopy.retention_approved_by} ${schedule.approver ?? '—'}`
                                             : governanceCopy.retention_pending}{' '}
-                                        · {governanceCopy.retention_review_due}{' '}
+                                        {governanceCopy.separator}{' '}
+                                        {governanceCopy.retention_review_due}{' '}
                                         {schedule.nextReviewAt ??
                                             governanceCopy.retention_not_scheduled}
                                     </p>
@@ -629,14 +635,14 @@ export default function DataGovernance({
                                                 {
                                                     governanceCopy.retention_submitter
                                                 }
-                                                :{' '}
+                                                {governanceCopy.label_separator}{' '}
                                                 {schedule.submission.submitter}
                                             </p>
                                             <p className="font-mono break-all">
                                                 {
                                                     governanceCopy.retention_checksum
                                                 }
-                                                :{' '}
+                                                {governanceCopy.label_separator}{' '}
                                                 {
                                                     schedule.submission
                                                         .snapshotChecksum
@@ -647,7 +653,9 @@ export default function DataGovernance({
                                                     {
                                                         governanceCopy.retention_reviewer
                                                     }
-                                                    :{' '}
+                                                    {
+                                                        governanceCopy.label_separator
+                                                    }{' '}
                                                     {
                                                         schedule.submission
                                                             .reviewer
@@ -688,6 +696,7 @@ export default function DataGovernance({
 }
 
 function AssetCard({ asset }: { asset: Asset }) {
+    const copy = useDataGovernanceCopy();
     const [open, setOpen] = useState(false);
 
     return (
@@ -696,7 +705,7 @@ function AssetCard({ asset }: { asset: Asset }) {
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
                         <CardTitle>
-                            {asset.code} · {asset.name}
+                            {asset.code} {copy.separator} {asset.name}
                         </CardTitle>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {asset.module}
@@ -719,15 +728,17 @@ function AssetCard({ asset }: { asset: Asset }) {
                         <Badge>{humanize(asset.classification)}</Badge>
                         {asset.containsSensitivePersonalData && (
                             <Badge variant="destructive">
-                                Sensitive personal data
+                                {copy.sensitive_personal_data}
                             </Badge>
                         )}
                         {asset.containsPersonalData &&
                             !asset.containsSensitivePersonalData && (
-                                <Badge variant="outline">Personal data</Badge>
+                                <Badge variant="outline">
+                                    {copy.personal_data}
+                                </Badge>
                             )}
                         <Badge variant="outline">
-                            {asset.processingActivityCount} activities
+                            {asset.processingActivityCount} {copy.activities}
                         </Badge>
                     </div>
                 </CardContent>
@@ -736,10 +747,10 @@ function AssetCard({ asset }: { asset: Asset }) {
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {asset.code} · {asset.name}
+                            {asset.code} {copy.separator} {asset.name}
                         </SheetTitle>
                         <SheetDescription>
-                            Authoritative data inventory record
+                            {copy.inventory_record_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -784,6 +795,7 @@ function ActivityAction({
     activity: Activity;
     canManage: boolean;
 }) {
+    const copy = useDataGovernanceCopy();
     const [surface, setSurface] = useState<'detail' | 'review' | null>(null);
 
     return (
@@ -801,13 +813,13 @@ function ActivityAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View governance record
+                            <Eye /> {copy.view_governance_record}
                         </DropdownMenuItem>
                         {canManage && activity.status === 'submitted' && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('review')}
                             >
-                                <ShieldCheck /> Independent review
+                                <ShieldCheck /> {copy.independent_review}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -825,7 +837,8 @@ function ActivityAction({
                                 : activity.name}
                         </SheetTitle>
                         <SheetDescription>
-                            {activity.reference} · {activity.asset.code} ·{' '}
+                            {activity.reference} {copy.separator}{' '}
+                            {activity.asset.code} {copy.separator}{' '}
                             {humanize(activity.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -838,11 +851,7 @@ function ActivityAction({
                                 className="grid gap-4"
                             >
                                 <p className="rounded-lg border bg-muted/40 p-3 text-sm">
-                                    Approval requires an approved retention
-                                    schedule, documented transfer safeguards
-                                    where applicable, and a completed DPIA for
-                                    sensitive personal data. The submitter
-                                    cannot review their own record.
+                                    {copy.processing_review_gate}
                                 </p>
                                 <SearchableSelect
                                     id={`activity-decision-${activity.id}`}
@@ -857,7 +866,7 @@ function ActivityAction({
                                     label="Independent review findings"
                                 />
                                 <Button type="submit">
-                                    <ShieldCheck /> Record review
+                                    <ShieldCheck /> {copy.record_review}
                                 </Button>
                             </Form>
                         ) : (
@@ -937,6 +946,7 @@ function RequestAction({
     request: DataRequest;
     canManage: boolean;
 }) {
+    const copy = useDataGovernanceCopy();
     const [surface, setSurface] = useState<'detail' | 'advance' | null>(null);
     const transitions =
         request.status === 'received'
@@ -962,13 +972,13 @@ function RequestAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View request
+                            <Eye /> {copy.view_request}
                         </DropdownMenuItem>
                         {canManage && transitions.length > 0 && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('advance')}
                             >
-                                <ShieldCheck /> Advance workflow
+                                <ShieldCheck /> {copy.advance_workflow}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -986,8 +996,8 @@ function RequestAction({
                                 : request.reference}
                         </SheetTitle>
                         <SheetDescription>
-                            {humanize(request.requestType)} · due{' '}
-                            {formatDate(request.dueAt)}
+                            {humanize(request.requestType)} {copy.separator}{' '}
+                            {copy.due} {formatDate(request.dueAt)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -1048,6 +1058,7 @@ function RequestTransitionForm({
     request: DataRequest;
     transitions: string[];
 }) {
+    const copy = useDataGovernanceCopy();
     const [transition, setTransition] = useState(transitions[0] ?? '');
 
     return (
@@ -1085,13 +1096,15 @@ function RequestTransitionForm({
                 </>
             )}
             <Button type="submit">
-                <ShieldCheck /> Apply controlled transition
+                <ShieldCheck /> {copy.apply_controlled_transition}
             </Button>
         </Form>
     );
 }
 
 function AssetForm({ users }: { users: Option[] }) {
+    const copy = useDataGovernanceCopy();
+
     return (
         <FormSheet
             title="Register data asset"
@@ -1171,7 +1184,7 @@ function AssetForm({ users }: { users: Option[] }) {
                     label="Quality and provenance standard"
                     optional
                 />
-                <Button type="submit">Register data asset</Button>
+                <Button type="submit">{copy.register_data_asset}</Button>
             </Form>
         </FormSheet>
     );
@@ -1275,6 +1288,8 @@ function ActivityForm({
     assets: Asset[];
     schedules: RetentionSchedule[];
 }) {
+    const copy = useDataGovernanceCopy();
+
     return (
         <FormSheet
             title="Submit processing activity"
@@ -1391,13 +1406,15 @@ function ActivityForm({
                     name="security_measures"
                     label="Technical and organizational measures"
                 />
-                <Button type="submit">Submit for independent review</Button>
+                <Button type="submit">{copy.submit_independent_review}</Button>
             </Form>
         </FormSheet>
     );
 }
 
 function DataRequestForm({ users }: { users: Option[] }) {
+    const copy = useDataGovernanceCopy();
+
     return (
         <FormSheet
             title="Record data-subject request"
@@ -1454,7 +1471,7 @@ function DataRequestForm({ users }: { users: Option[] }) {
                     name="scope"
                     label="Requested personal data and service scope"
                 />
-                <Button type="submit">Record privacy request</Button>
+                <Button type="submit">{copy.record_privacy_request}</Button>
             </Form>
         </FormSheet>
     );
@@ -1469,6 +1486,8 @@ function PrivacyIncidentForm({
     assets: Asset[];
     counties: CountyOption[];
 }) {
+    const copy = useDataGovernanceCopy();
+
     return (
         <FormSheet
             title="Report personal data breach"
@@ -1552,7 +1571,7 @@ function PrivacyIncidentForm({
                     label="Controlled incident description"
                 />
                 <Button type="submit">
-                    <ShieldAlert /> Record incident and deadlines
+                    <ShieldAlert /> {copy.record_incident_deadlines}
                 </Button>
             </Form>
         </FormSheet>
@@ -1566,6 +1585,7 @@ function PrivacyIncidentAction({
     incident: PrivacyIncident;
     canManage: boolean;
 }) {
+    const copy = useDataGovernanceCopy();
     const [surface, setSurface] = useState<'detail' | 'workflow' | null>(null);
     const transition =
         incident.status === 'reported'
@@ -1593,13 +1613,13 @@ function PrivacyIncidentAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View incident record
+                            <Eye /> {copy.view_incident_record}
                         </DropdownMenuItem>
                         {canManage && transition && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('workflow')}
                             >
-                                <ShieldCheck /> Continue controlled workflow
+                                <ShieldCheck /> {copy.continue_workflow}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -1617,8 +1637,10 @@ function PrivacyIncidentAction({
                                 : incident.title}
                         </SheetTitle>
                         <SheetDescription>
-                            {incident.reference} · {humanize(incident.status)} ·
-                            discovered {formatDate(incident.discoveredAt)}
+                            {incident.reference} {copy.separator}{' '}
+                            {humanize(incident.status)} {copy.separator}{' '}
+                            {copy.discovered}{' '}
+                            {formatDate(incident.discoveredAt)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -1746,6 +1768,8 @@ function PrivacyIncidentTransitionForm({
     incident: PrivacyIncident;
     transition: string;
 }) {
+    const copy = useDataGovernanceCopy();
+
     return (
         <Form
             action={advancePrivacyIncident({ privacyIncident: incident.id })}
@@ -1832,7 +1856,7 @@ function PrivacyIncidentTransitionForm({
                 </>
             )}
             <Button type="submit">
-                <ShieldCheck /> Record {humanize(transition)}
+                <ShieldCheck /> {copy.record} {humanize(transition)}
             </Button>
         </Form>
     );

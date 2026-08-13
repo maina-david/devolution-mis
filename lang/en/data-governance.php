@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'eyebrow' => 'Privacy and information governance', 'title' => 'Data governance control centre', 'description' => 'Governed inventory, processing purposes, lawful-basis evidence, DPIA screening, retention schedules and controlled data-subject request handling.',
+    'inventory_title' => 'Data inventory', 'inventory_description' => 'Authoritative sources, ownership, classification and storage locations.', 'requests_title' => 'Data-subject requests', 'requests_description' => 'Identity-controlled access, correction, erasure, restriction and objection workflow.',
+    'separator' => '·', 'label_separator' => ':', 'months' => 'months', 'sensitive_personal_data' => 'Sensitive personal data', 'personal_data' => 'Personal data', 'activities' => 'activities', 'inventory_record_description' => 'Authoritative data inventory record',
+    'view_governance_record' => 'View governance record', 'independent_review' => 'Independent review', 'processing_review_gate' => 'Approval requires an approved retention schedule, documented transfer safeguards where applicable, and a completed DPIA for sensitive personal data. The submitter cannot review their own record.', 'record_review' => 'Record review',
+    'view_request' => 'View request', 'advance_workflow' => 'Advance workflow', 'due' => 'due', 'apply_controlled_transition' => 'Apply controlled transition', 'register_data_asset' => 'Register data asset', 'submit_independent_review' => 'Submit for independent review', 'record_privacy_request' => 'Record privacy request',
+    'record_incident_deadlines' => 'Record incident and deadlines', 'view_incident_record' => 'View incident record', 'continue_workflow' => 'Continue controlled workflow', 'discovered' => 'discovered', 'record' => 'Record',
     'retention_submit_title' => 'Submit retention schedule',
     'retention_submit_description' => 'Record the trigger, period, disposition, legal authority and legal-hold rule for independent approval.',
     'retention_trigger' => 'Retention schedule',

@@ -1,6 +1,12 @@
 <?php
 
 return [
+    'eyebrow' => 'Faragha na usimamizi wa taarifa', 'title' => 'Kituo cha udhibiti wa usimamizi wa data', 'description' => 'Orodha inayodhibitiwa, madhumuni ya uchakataji, ushahidi wa msingi wa kisheria, uchunguzi wa DPIA, ratiba za uhifadhi na ushughulikiaji wa maombi ya wahusika wa data.',
+    'inventory_title' => 'Orodha ya data', 'inventory_description' => 'Vyanzo rasmi, umiliki, uainishaji na maeneo ya kuhifadhi.', 'requests_title' => 'Maombi ya wahusika wa data', 'requests_description' => 'Mtiririko wa ufikiaji, usahihishaji, ufutaji, uzuiaji na pingamizi unaothibitisha utambulisho.',
+    'separator' => '·', 'label_separator' => ':', 'months' => 'miezi', 'sensitive_personal_data' => 'Data nyeti ya kibinafsi', 'personal_data' => 'Data ya kibinafsi', 'activities' => 'shughuli', 'inventory_record_description' => 'Rekodi rasmi ya orodha ya data',
+    'view_governance_record' => 'Tazama rekodi ya usimamizi', 'independent_review' => 'Ukaguzi huru', 'processing_review_gate' => 'Uidhinishaji unahitaji ratiba ya uhifadhi iliyoidhinishwa, ulinzi wa uhamishaji ulioandikwa inapohitajika, na DPIA iliyokamilika kwa data nyeti ya kibinafsi. Mwasilishaji hawezi kukagua rekodi yake mwenyewe.', 'record_review' => 'Rekodi ukaguzi',
+    'view_request' => 'Tazama ombi', 'advance_workflow' => 'Endeleza mtiririko', 'due' => 'inatarajiwa', 'apply_controlled_transition' => 'Tekeleza mpito unaodhibitiwa', 'register_data_asset' => 'Sajili rasilimali ya data', 'submit_independent_review' => 'Wasilisha kwa ukaguzi huru', 'record_privacy_request' => 'Rekodi ombi la faragha',
+    'record_incident_deadlines' => 'Rekodi tukio na makataa', 'view_incident_record' => 'Tazama rekodi ya tukio', 'continue_workflow' => 'Endeleza mtiririko unaodhibitiwa', 'discovered' => 'iligunduliwa', 'record' => 'Rekodi',
     'retention_submit_title' => 'Wasilisha ratiba ya uhifadhi',
     'retention_submit_description' => 'Rekodi kichocheo, kipindi, hatua ya mwisho, mamlaka ya kisheria na kanuni ya zuio la kisheria kwa idhini huru.',
     'retention_trigger' => 'Ratiba ya uhifadhi',
