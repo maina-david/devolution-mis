@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import {
     ClipboardCheck,
     Download,
@@ -135,6 +135,7 @@ export default function EvaluationFindingRegister({
     canVerify: boolean;
     currentUserId: string;
 }) {
+    const copy = usePage().props.localization.evaluationFindings;
     const approved = evaluations.filter((item) => item.status === 'approved');
     const [evaluationId, setEvaluationId] = useState(approved[0]?.id ?? '');
 
@@ -147,11 +148,10 @@ export default function EvaluationFindingRegister({
                     </span>
                     <div>
                         <h2 className="font-bold">
-                            Evaluation recommendations
+                            {copy.evaluation_recommendations}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Governed findings, accountable owners, due dates,
-                            evidence responses, and independent closure.
+                            {copy.evaluation_recommendations_description}
                         </p>
                     </div>
                 </div>
@@ -294,12 +294,12 @@ export default function EvaluationFindingRegister({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Finding</TableHead>
-                            <TableHead>Scope</TableHead>
-                            <TableHead>Owner / due</TableHead>
-                            <TableHead>Progress</TableHead>
+                            <TableHead>{copy.finding}</TableHead>
+                            <TableHead>{copy.scope}</TableHead>
+                            <TableHead>{copy.owner_due}</TableHead>
+                            <TableHead>{copy.progress}</TableHead>
                             <TableHead>
-                                <span className="sr-only">Actions</span>
+                                <span className="sr-only">{copy.actions}</span>
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -333,7 +333,7 @@ export default function EvaluationFindingRegister({
                                         />
                                     ) : (
                                         <span className="text-sm">
-                                            National
+                                            {copy.national}
                                         </span>
                                     )}
                                 </TableCell>
@@ -341,15 +341,15 @@ export default function EvaluationFindingRegister({
                                     <div className="flex flex-col gap-1 text-sm">
                                         <span>{item.owner}</span>
                                         <span className="text-xs text-muted-foreground">
-                                            Due {item.dueAt}
+                                            {copy.due} {item.dueAt}
                                         </span>
                                         {item.escalatedAt ? (
                                             <Badge variant="destructive">
-                                                Overdue · escalated
+                                                {copy.overdue_escalated}
                                             </Badge>
                                         ) : item.reminderSentAt ? (
                                             <Badge variant="outline">
-                                                Reminder sent
+                                                {copy.reminder_sent}
                                             </Badge>
                                         ) : null}
                                     </div>
@@ -361,7 +361,8 @@ export default function EvaluationFindingRegister({
                                             aria-label={`${item.reference} progress: ${item.progress}%`}
                                         />
                                         <span className="text-xs text-muted-foreground">
-                                            {item.progress}% verified
+                                            {item.progress}
+                                            {copy.percent_verified}
                                         </span>
                                     </div>
                                 </TableCell>
@@ -403,6 +404,7 @@ function FindingActions({
     canManage: boolean;
     owners: Option[];
 }) {
+    const copy = usePage().props.localization.evaluationFindings;
     const [mode, setMode] = useState<ActionMode>(null);
     const pending = item.updates.find(
         (update) => update.status === 'pending_verification',
@@ -447,13 +449,13 @@ function FindingActions({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setMode('plan')}>
-                            Manage action plan
+                            {copy.manage_action_plan}
                         </DropdownMenuItem>
                         {canRespond && (
                             <DropdownMenuItem
                                 onSelect={() => setMode('upload')}
                             >
-                                Upload evidence
+                                {copy.upload_evidence}
                             </DropdownMenuItem>
                         )}
                         {canRespond &&
@@ -462,14 +464,14 @@ function FindingActions({
                                 <DropdownMenuItem
                                     onSelect={() => setMode('respond')}
                                 >
-                                    Submit response
+                                    {copy.submit_response}
                                 </DropdownMenuItem>
                             )}
                         {canVerify && pending && (
                             <DropdownMenuItem
                                 onSelect={() => setMode('verify')}
                             >
-                                Verify response
+                                {copy.verify_response}
                             </DropdownMenuItem>
                         )}
                         {canVerify &&
@@ -478,7 +480,7 @@ function FindingActions({
                                 <DropdownMenuItem
                                     onSelect={() => setMode('close')}
                                 >
-                                    Close finding
+                                    {copy.close_finding}
                                 </DropdownMenuItem>
                             )}
                     </DropdownMenuGroup>
@@ -532,7 +534,9 @@ function FindingActions({
                                         accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg"
                                     />
                                 </Field>
-                                <Button type="submit">Upload securely</Button>
+                                <Button type="submit">
+                                    {copy.upload_securely}
+                                </Button>
                             </Form>
                         )}
                         {mode === 'plan' && (
@@ -592,7 +596,7 @@ function FindingActions({
                                     />
                                 </Field>
                                 <Button type="submit">
-                                    Submit for verification
+                                    {copy.submit_for_verification}
                                 </Button>
                             </Form>
                         )}
@@ -615,7 +619,9 @@ function FindingActions({
                                         required
                                     />
                                 </Field>
-                                <Button type="submit">Record decision</Button>
+                                <Button type="submit">
+                                    {copy.record_decision}
+                                </Button>
                             </Form>
                         )}
                         {mode === 'close' && (
@@ -635,7 +641,9 @@ function FindingActions({
                                         required
                                     />
                                 </Field>
-                                <Button type="submit">Close finding</Button>
+                                <Button type="submit">
+                                    {copy.close_finding}
+                                </Button>
                             </Form>
                         )}
                     </div>
@@ -660,6 +668,7 @@ function FindingActionPlan({
     canManage: boolean;
     canVerify: boolean;
 }) {
+    const copy = usePage().props.localization.evaluationFindings;
     const [mode, setMode] = useState<PlanMode>(null);
     const [selected, setSelected] =
         useState<EvaluationFindingActionItem | null>(null);
@@ -686,8 +695,11 @@ function FindingActionPlan({
         <div className="flex flex-col gap-5">
             <div className="rounded-lg border bg-muted/30 p-4">
                 <div className="flex items-center justify-between gap-4 text-sm">
-                    <span>Allocated action weight</span>
-                    <strong>{totalWeight}% / 100%</strong>
+                    <span>{copy.allocated_action_weight}</span>
+                    <strong>
+                        {totalWeight}
+                        {copy.percent_of_hundred}
+                    </strong>
                 </div>
                 <Progress
                     value={totalWeight}
@@ -696,9 +708,7 @@ function FindingActionPlan({
                 />
                 {totalWeight !== 100 && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                        Closure remains locked until action weights total
-                        exactly 100% and every action is independently verified
-                        complete.
+                        {copy.closure_weight_rule}
                     </p>
                 )}
             </div>
@@ -712,7 +722,7 @@ function FindingActionPlan({
                         setMode('add');
                     }}
                 >
-                    <Plus aria-hidden="true" /> Add action
+                    <Plus aria-hidden="true" /> {copy.add_action}
                 </Button>
             )}
             {finding.actions.length === 0 ? (
@@ -726,11 +736,13 @@ function FindingActionPlan({
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Action</TableHead>
-                                <TableHead>Owner / deadline</TableHead>
-                                <TableHead>Weight / progress</TableHead>
+                                <TableHead>{copy.action}</TableHead>
+                                <TableHead>{copy.owner_deadline}</TableHead>
+                                <TableHead>{copy.weight_progress}</TableHead>
                                 <TableHead>
-                                    <span className="sr-only">Actions</span>
+                                    <span className="sr-only">
+                                        {copy.actions}
+                                    </span>
                                 </TableHead>
                             </TableRow>
                         </TableHeader>
@@ -763,8 +775,10 @@ function FindingActionPlan({
                                                     {action.title}
                                                 </p>
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    {action.successIndicator} ·
-                                                    Target: {action.target}
+                                                    {action.successIndicator}{' '}
+                                                    {copy.separator}{' '}
+                                                    {copy.target_label}{' '}
+                                                    {action.target}
                                                 </p>
                                             </div>
                                         </TableCell>
@@ -772,20 +786,24 @@ function FindingActionPlan({
                                             <div className="text-sm">
                                                 <p>{action.owner}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Due {action.dueAt}
+                                                    {copy.due} {action.dueAt}
                                                 </p>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="min-w-28 text-sm">
-                                                <p>{action.weight}% weight</p>
+                                                <p>
+                                                    {action.weight}
+                                                    {copy.percent_weight}
+                                                </p>
                                                 <Progress
                                                     value={action.progress}
                                                     className="mt-2"
                                                     aria-label={`${action.code} verified progress: ${action.progress}%`}
                                                 />
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    {action.progress}% verified
+                                                    {action.progress}
+                                                    {copy.percent_verified}
                                                 </p>
                                             </div>
                                         </TableCell>
@@ -813,8 +831,7 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    Upload
-                                                                    evidence
+                                                                    {copy.upload_evidence}
                                                                 </DropdownMenuItem>
                                                             )}
                                                         {isOwner &&
@@ -834,8 +851,7 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    Submit
-                                                                    progress
+                                                                    {copy.submit_progress}
                                                                 </DropdownMenuItem>
                                                             )}
                                                         {canVerify &&
@@ -848,8 +864,7 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    Verify
-                                                                    progress
+                                                                    {copy.verify_progress}
                                                                 </DropdownMenuItem>
                                                             )}
                                                     </DropdownMenuGroup>
@@ -867,7 +882,7 @@ function FindingActionPlan({
                 0 && (
                 <div>
                     <h3 className="mb-2 text-sm font-semibold">
-                        Action evidence
+                        {copy.action_evidence}
                     </h3>
                     <ul className="flex flex-col gap-2">
                         {finding.actions
@@ -883,7 +898,8 @@ function FindingActionPlan({
                                     className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm"
                                 >
                                     <span>
-                                        <strong>{action.code}</strong> ·{' '}
+                                        <strong>{action.code}</strong>{' '}
+                                        {copy.separator}{' '}
                                         {document.title}{' '}
                                         <Badge variant="outline">
                                             {document.sourceType}
@@ -903,7 +919,7 @@ function FindingActionPlan({
                                                 rel="noreferrer"
                                             >
                                                 <Eye aria-hidden="true" />{' '}
-                                                Preview
+                                                {copy.preview}
                                             </a>
                                         </Button>
                                         <Button
@@ -917,7 +933,7 @@ function FindingActionPlan({
                                                 })}
                                             >
                                                 <Download aria-hidden="true" />{' '}
-                                                Download
+                                                {copy.download}
                                             </a>
                                         </Button>
                                     </span>
@@ -935,7 +951,7 @@ function FindingActionPlan({
                     {({ errors, processing }) => (
                         <>
                             <h3 className="font-semibold">
-                                Add weighted action
+                                {copy.add_weighted_action}
                             </h3>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <Field
@@ -1024,7 +1040,7 @@ function FindingActionPlan({
                                 />
                             </Field>
                             <Button type="submit" disabled={processing}>
-                                Add action
+                                {copy.add_action}
                             </Button>
                         </>
                     )}
@@ -1037,7 +1053,7 @@ function FindingActionPlan({
                     resetOnSuccess
                 >
                     <h3 className="font-semibold">
-                        Upload evidence for {selected.code}
+                        {copy.upload_evidence_for} {selected.code}
                     </h3>
                     <Field id="action-evidence-title" label="Record title">
                         <Input
@@ -1065,7 +1081,7 @@ function FindingActionPlan({
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.tif,.tiff"
                         />
                     </Field>
-                    <Button type="submit">Upload securely</Button>
+                    <Button type="submit">{copy.upload_securely}</Button>
                 </Form>
             )}
             {mode === 'progress' && selected && (
@@ -1075,7 +1091,7 @@ function FindingActionPlan({
                     resetOnSuccess
                 >
                     <h3 className="font-semibold">
-                        Submit progress for {selected.code}
+                        {copy.submit_progress_for} {selected.code}
                     </h3>
                     <SearchableSelect
                         id="action-progress-evidence"
@@ -1112,7 +1128,9 @@ function FindingActionPlan({
                             required
                         />
                     </Field>
-                    <Button type="submit">Submit for verification</Button>
+                    <Button type="submit">
+                        {copy.submit_for_verification}
+                    </Button>
                 </Form>
             )}
             {mode === 'verify' && selected && pending && (
@@ -1122,7 +1140,7 @@ function FindingActionPlan({
                     resetOnSuccess
                 >
                     <h3 className="font-semibold">
-                        Verify {selected.code} progress
+                        {copy.verify} {selected.code} {copy.progress_lower}
                     </h3>
                     <StaticSearchableSelect
                         id="action-decision"
@@ -1137,7 +1155,7 @@ function FindingActionPlan({
                             required
                         />
                     </Field>
-                    <Button type="submit">Record decision</Button>
+                    <Button type="submit">{copy.record_decision}</Button>
                 </Form>
             )}
         </div>

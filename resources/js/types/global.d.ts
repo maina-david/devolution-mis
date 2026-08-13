@@ -89,6 +89,7 @@ declare module '@inertiajs/core' {
                     readiness: Record<string, string>;
                     ui: Record<string, string>;
                 };
+                evaluationFindings: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;
                 security: {

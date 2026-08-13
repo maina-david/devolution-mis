@@ -115,6 +115,7 @@ class HandleInertiaRequests extends Middleware
                 'assessmentRecord' => __('assessment-record'),
                 'igr' => __('igr'),
                 'operations' => __('operations'),
+                'evaluationFindings' => __('evaluation-findings'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),
                 'security' => __('security'),
