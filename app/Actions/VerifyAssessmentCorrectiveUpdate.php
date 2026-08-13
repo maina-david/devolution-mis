@@ -16,10 +16,10 @@ class VerifyAssessmentCorrectiveUpdate
     {
         $plan = $update->action->plan;
         abort_unless($actor->canAccessCounty($plan->county), 403);
-        abort_if($update->submitted_by === $actor->id, 409, 'Progress evidence must be independently verified.');
+        abort_if($update->submitted_by === $actor->id, 409, __('assessment-record.corrective.errors.independent_progress_verifier'));
         $update = DB::transaction(function () use ($update, $actor, $decision, $note): AssessmentCorrectiveUpdate {
             $locked = AssessmentCorrectiveUpdate::query()->lockForUpdate()->findOrFail($update->id);
-            abort_unless($locked->status === 'pending_verification', 409, 'This progress update has already been decided.');
+            abort_unless($locked->status === 'pending_verification', 409, __('assessment-record.corrective.errors.update_already_decided'));
             $locked->update(['status' => $decision, 'verified_by' => $actor->id, 'verified_at' => now(), 'decision_note' => $note]);
             if ($decision === 'verified') {
                 $action = AssessmentCorrectiveAction::query()->lockForUpdate()->findOrFail($locked->assessment_corrective_action_id);
@@ -28,7 +28,7 @@ class VerifyAssessmentCorrectiveUpdate
 
             return $locked->refresh();
         });
-        $this->auditLogger->record($actor, $update, "assessment.corrective_progress_{$decision}", "Corrective progress {$decision}.", $plan->county_id, ['decision_note' => $note]);
+        $this->auditLogger->record($actor, $update, "assessment.corrective_progress_{$decision}", __('assessment-record.corrective.audit.progress_decided', ['decision' => __('assessment-record.corrective.decisions.'.$decision)]), $plan->county_id, ['decision_note' => $note]);
 
         return $update;
     }

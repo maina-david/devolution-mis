@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateAssessmentCorrectivePlan;
 use App\Enums\AssessmentStatus;
 use App\Models\Assessment;
 use App\Models\AssessmentCorrectiveAction;
@@ -11,12 +12,14 @@ use App\Models\AssessmentCycle;
 use App\Models\AssessmentDocument;
 use App\Models\AssessmentFinding;
 use App\Models\AssessmentResultPublication;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AssessmentCorrectiveActionWorkflowTest extends TestCase
@@ -28,11 +31,15 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
         [$assessment, $finding, $document, $submitter, $reviewer, $closer, $owner] = $this->scenario();
         $publicationChecksum = $assessment->publication?->checksum;
 
-        $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertRedirect();
+        $this->withSession(['locale' => 'sw'])->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertRedirect();
         $plan = AssessmentCorrectivePlan::query()->sole();
         $correctiveAction = AssessmentCorrectiveAction::query()->sole();
         $this->assertSame(64, strlen($plan->checksum));
         $this->assertSame('submitted', $plan->status);
+        $this->assertSame(
+            __('assessment-record.corrective.audit.plan_submitted', ['reference' => $plan->reference], 'sw'),
+            AuditEvent::query()->where('subject_id', $plan->id)->where('action', 'assessment.corrective_plan_submitted')->sole()->description,
+        );
 
         $reviewPayload = ['decision' => 'activate', 'review_note' => 'The root-cause analysis, owner, indicator, target and timeframe are credible.'];
         $this->actingAs($submitter)->patch(route('assessments.corrective-plans.review', [$assessment, $plan]), $reviewPayload)->assertForbidden();
@@ -74,6 +81,24 @@ class AssessmentCorrectiveActionWorkflowTest extends TestCase
 
         $this->actingAs($submitter)->post(route('assessments.corrective-plans.store', [$assessment]), $this->planPayload($finding, $owner))->assertStatus(409);
         $this->assertDatabaseCount('assessment_corrective_plans', 0);
+    }
+
+    public function test_corrective_plan_conflict_uses_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $submitter = User::factory()->countyAdmin($county)->create();
+        $owner = User::factory()->countyOfficial($county)->create();
+        $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::Approved]);
+        $finding = AssessmentFinding::factory()->create(['assessment_id' => $assessment->id, 'severity' => 'major', 'status' => 'resolved']);
+        app()->setLocale('fr');
+
+        try {
+            app(CreateAssessmentCorrectivePlan::class)->handle($assessment, $submitter, $this->planPayload($finding, $owner));
+            $this->fail('A corrective plan without an immutable published result must fail closed.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('assessment-record.corrective.errors.published_result_required'), $exception->getMessage());
+        }
     }
 
     public function test_progress_rejects_cross_county_unverified_and_non_monotonic_evidence(): void
