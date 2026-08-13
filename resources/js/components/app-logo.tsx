@@ -1,3 +1,4 @@
+import { usePage } from '@inertiajs/react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
@@ -8,6 +9,8 @@ export default function AppLogo({
 }: {
     county?: CountyIdentityValue | null;
 }) {
+    const copy = usePage().props.localization.copy;
+
     return (
         <>
             <div className="flex aspect-square size-10 items-center justify-center rounded-md bg-sidebar-foreground text-sidebar">
@@ -16,7 +19,7 @@ export default function AppLogo({
             <div className="ml-1 grid flex-1 text-left">
                 <span className="flex min-w-0 items-center gap-1.5">
                     <span className="shrink-0 text-base leading-tight font-bold tracking-tight text-sidebar-foreground">
-                        IDMIS
+                        {copy.systemName}
                     </span>
                     {county ? (
                         <Badge
@@ -32,7 +35,7 @@ export default function AppLogo({
                     ) : null}
                 </span>
                 <span className="truncate text-[0.68rem] leading-tight text-sidebar-foreground/75">
-                    State Department for Devolution
+                    {copy.departmentName}
                 </span>
             </div>
         </>

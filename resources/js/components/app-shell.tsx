@@ -9,13 +9,13 @@ type Props = {
 };
 
 export function AppShell({ children, variant = 'sidebar' }: Props) {
-    const isOpen = usePage().props.sidebarOpen;
+    const { localization, sidebarOpen: isOpen } = usePage().props;
     const skipLink = (
         <a
             href="#main-content"
             className="fixed top-3 left-3 z-50 -translate-y-20 rounded-md bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition-transform focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-            Skip to main content
+            {localization.copy.skipToMainContent}
         </a>
     );
 

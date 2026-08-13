@@ -34,7 +34,7 @@ class AccessibilityContractTest extends TestCase
     {
         $appShell = $this->source('resources/js/components/app-shell.tsx');
         $this->assertStringContainsString('href="#main-content"', $appShell);
-        $this->assertStringContainsString('Skip to main content', $appShell);
+        $this->assertStringContainsString('{localization.copy.skipToMainContent}', $appShell);
 
         $appContent = $this->source('resources/js/components/app-content.tsx');
         $this->assertSame(2, substr_count($appContent, 'id="main-content"'));
