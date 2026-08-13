@@ -29,14 +29,21 @@ const baseURL = process.env.IDMIS_BROWSER_BASE_URL ?? 'https://devolution-mis.te
 const outputDirectory = path.join(projectRoot, 'tmp/accessibility-assurance');
 await fs.mkdir(outputDirectory, { recursive: true });
 
-const journeys = [
+const allJourneys = [
     { name: 'public-welcome', path: '/' },
     { name: 'public-login', path: '/login' },
     { name: 'county-dashboard', path: '/dashboard', email: 'county.official@idmis.test' },
     { name: 'assessor-assessments', path: '/assessments', email: 'assessor@idmis.test' },
     { name: 'partner-analytics', path: '/analytics', email: 'partner@idmis.test' },
     { name: 'admin-operations', path: '/operations', email: 'platform.admin@idmis.test' },
+    { name: 'admin-data-migrations', path: '/data-migrations', email: 'platform.admin@idmis.test' },
 ];
+const requestedJourney = process.env.IDMIS_ACCESSIBILITY_JOURNEY;
+const journeys = requestedJourney ? allJourneys.filter((journey) => journey.name === requestedJourney) : allJourneys;
+
+if (journeys.length === 0) {
+    throw new Error(`Unknown accessibility journey: ${requestedJourney}`);
+}
 const findings = [];
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 
@@ -107,8 +114,10 @@ for (const journey of journeys) {
             element.getAttribute('alt') ||
             '';
 
-        if (document.querySelectorAll('main, [role="main"]').length !== 1) {
-            result.push({ rule: 'main-landmark', detail: 'Expected exactly one main landmark.' });
+        const mainLandmarks = [...document.querySelectorAll('main, [role="main"]')];
+
+        if (mainLandmarks.length !== 1) {
+            result.push({ rule: 'main-landmark', detail: mainLandmarks.map((element) => element.outerHTML.slice(0, 180)) });
         }
 
         if (!document.querySelector('h1')) {

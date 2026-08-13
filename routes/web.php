@@ -299,6 +299,9 @@ Route::middleware(['auth', 'verified'])
         Route::get('data-migrations', [HistoricalDataMigrationController::class, 'index'])->name('data-migrations.index');
         Route::post('data-migrations', [HistoricalDataMigrationController::class, 'store'])->name('data-migrations.store');
         Route::post('data-migrations/reference-data', [HistoricalDataMigrationController::class, 'storeReferenceData'])->name('data-migrations.reference-data.store');
+        Route::post('data-migrations/lineage-dispositions', [HistoricalDataMigrationController::class, 'storeLineageDisposition'])->name('data-migrations.lineage-dispositions.store');
+        Route::patch('data-migrations/lineage-dispositions/{referenceLineageDisposition}/review', [HistoricalDataMigrationController::class, 'reviewLineageDisposition'])->name('data-migrations.lineage-dispositions.review');
+        Route::post('data-migrations/lineage-dispositions/{referenceLineageDisposition}/apply', [HistoricalDataMigrationController::class, 'applyLineageDisposition'])->name('data-migrations.lineage-dispositions.apply');
         Route::get('data-migrations/templates/{datasetType}', [HistoricalDataMigrationController::class, 'template'])->name('data-migrations.templates.show');
         Route::patch('data-migrations/{dataMigrationBatch}/review', [HistoricalDataMigrationController::class, 'review'])->name('data-migrations.review');
         Route::post('data-migrations/{dataMigrationBatch}/apply', [HistoricalDataMigrationController::class, 'apply'])->name('data-migrations.apply');

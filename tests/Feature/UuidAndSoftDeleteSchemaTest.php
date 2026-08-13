@@ -52,6 +52,7 @@ use App\Models\PlatformSetting;
 use App\Models\Programme;
 use App\Models\ProjectIndicatorResult;
 use App\Models\QueueRecoveryAttempt;
+use App\Models\ReferenceLineageDisposition;
 use App\Models\ReportRun;
 use App\Models\ReportSchedule;
 use App\Models\Role;
@@ -141,6 +142,7 @@ class UuidAndSoftDeleteSchemaTest extends TestCase
             ServiceDeskRosterMember::class,
             LearningQuestionBank::class,
             LearningQuestionBankItem::class,
+            ReferenceLineageDisposition::class,
         ];
 
         foreach ($models as $modelClass) {

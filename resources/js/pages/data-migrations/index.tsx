@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import {
     CheckCircle2,
     DatabaseBackup,
@@ -8,12 +8,14 @@ import {
     FileUp,
     MoreHorizontal,
     PlayCircle,
+    Scale,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import DatePickerField from '@/components/date-picker-field';
 import DateRangeFilter from '@/components/date-range-filter';
 import FormSheet from '@/components/form-sheet';
+import SearchableSelect from '@/components/searchable-select';
 import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -48,8 +50,13 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
-import { apply, download, review, store } from '@/routes/data-migrations';
+import { apply, download, index, review, store } from '@/routes/data-migrations';
 import { download as downloadExceptions } from '@/routes/data-migrations/exceptions';
+import {
+    apply as applyLineageDisposition,
+    review as reviewLineageDisposition,
+    store as storeLineageDisposition,
+} from '@/routes/data-migrations/lineage-dispositions';
 import { store as storeReferenceData } from '@/routes/data-migrations/reference-data';
 import { show as showTemplate } from '@/routes/data-migrations/templates';
 
@@ -91,17 +98,58 @@ type PageSet<T> = {
     total: number;
 };
 
+type LineageDisposition = {
+    id: string;
+    reference: string;
+    recordType: string;
+    recordId: string;
+    recordSnapshot: Record<string, unknown>;
+    recordChecksum: string;
+    decision: string;
+    release: { id: string; version: number; checksum: string } | null;
+    successorRecordType: string | null;
+    successorRecordId: string | null;
+    businessReason: string;
+    sourceReference: string;
+    status: string;
+    proposedBy: string;
+    reviewedBy: string | null;
+    reviewNotes: string | null;
+    appliedBy: string | null;
+    decisionChecksum: string;
+    createdAt: string;
+    reviewedAt: string | null;
+    appliedAt: string | null;
+};
+
 type Props = {
     batches: PageSet<Batch>;
     filters: Record<string, string | undefined>;
     capabilities: { stage: boolean; review: boolean; apply: boolean };
+    legacyType: string;
+    legacyCandidates: Array<{
+        id: string;
+        label: string;
+        snapshot: Record<string, unknown>;
+    }>;
+    referenceReleases: Array<{
+        id: string;
+        version: number;
+        checksum: string;
+        effectiveFrom: string | null;
+    }>;
+    lineageDispositions: PageSet<LineageDisposition>;
+    lineageTranslations: Record<string, string>;
     legacyInventory: {
         total: number;
         recordTypes: number;
         records: Array<{
+            key: string;
             type: string;
             model: string;
             count: number;
+            pending: number;
+            applied: number;
             oldestAt: string | null;
             latestAt: string | null;
         }>;
@@ -142,11 +190,21 @@ export default function HistoricalDataMigrations({
     filters,
     capabilities,
     legacyInventory,
+    legacyType,
+    legacyCandidates,
+    referenceReleases,
+    lineageDispositions,
+    lineageTranslations: t,
 }: Props) {
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
         'details',
     );
+    const [selectedDisposition, setSelectedDisposition] =
+        useState<LineageDisposition | null>(null);
+    const [dispositionAction, setDispositionAction] = useState<
+        'details' | 'review' | 'apply'
+    >('details');
 
     const rows: WorkspaceRow[] = batches.data.map((batch) => ({
         id: batch.id,
@@ -177,7 +235,7 @@ export default function HistoricalDataMigrations({
     return (
         <>
             <Head title="Bulk data imports" />
-            <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
+            <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
@@ -215,12 +273,22 @@ export default function HistoricalDataMigrations({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Legacy and unpinned inventory</CardTitle>
-                        <CardDescription>
-                            Explicit records without governed reference-release
-                            lineage. Inventory does not silently assign a modern
-                            catalogue to historical records.
-                        </CardDescription>
+                        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                            <div>
+                                <CardTitle>{t.inventory_title}</CardTitle>
+                                <CardDescription>
+                                    {t.inventory_description}
+                                </CardDescription>
+                            </div>
+                            {capabilities.stage && legacyInventory.total > 0 && (
+                                <LineageDispositionForm
+                                    recordType={legacyType}
+                                    candidates={legacyCandidates}
+                                    releases={referenceReleases}
+                                    t={t}
+                                />
+                            )}
+                        </div>
                     </CardHeader>
                     <CardContent>
                         {legacyInventory.total === 0 ? (
@@ -244,6 +312,32 @@ export default function HistoricalDataMigrations({
                                         {legacyInventory.recordTypes}
                                     </dd>
                                 </dl>
+                                <div className="space-y-3">
+                                    <SearchableSelect
+                                        id="legacy-record-type"
+                                        name="legacy_type"
+                                        label={t.record_type}
+                                        value={legacyType}
+                                        options={legacyInventory.records.map(
+                                            (record) => ({
+                                                id: record.key,
+                                                name: `${record.type} (${record.count})`,
+                                            }),
+                                        )}
+                                        onValueChange={(value) =>
+                                            router.get(
+                                                index.url(),
+                                                {
+                                                    ...filters,
+                                                    legacy_type: value,
+                                                },
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                    />
                                 <ul className="divide-y rounded-lg border">
                                     {legacyInventory.records.map((record) => (
                                         <li
@@ -251,11 +345,146 @@ export default function HistoricalDataMigrations({
                                             className="flex items-center justify-between gap-4 p-3 text-sm"
                                         >
                                             <span>{record.type}</span>
-                                            <strong>{record.count}</strong>
+                                            <span className="flex gap-3 text-xs">
+                                                <strong>{record.count} {t.open}</strong>
+                                                <span className="text-muted-foreground">{record.pending} {t.pending}</span>
+                                                <span className="text-muted-foreground">{record.applied} {t.applied}</span>
+                                            </span>
                                         </li>
                                     ))}
                                 </ul>
+                                </div>
                             </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{t.register_title}</CardTitle>
+                        <CardDescription>
+                            {t.register_description}
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {lineageDispositions.total === 0 ? (
+                            <WorkspaceEmptyState
+                                title={t.empty_title}
+                                description={t.empty_description}
+                            />
+                        ) : (
+                            <WorkspaceDataTable
+                                columns={[
+                                    t.reference,
+                                    t.record_type_value,
+                                    t.decision,
+                                    t.catalogue,
+                                    t.status,
+                                    t.proposed_by,
+                                    t.created_at,
+                                ]}
+                                rows={lineageDispositions.data.map(
+                                    (disposition) => ({
+                                        id: disposition.id,
+                                        status: disposition.status,
+                                        cells: [
+                                            disposition.reference,
+                                            humanize(disposition.recordType),
+                                            humanize(disposition.decision),
+                                            disposition.release
+                                                ? `v${disposition.release.version}`
+                                                : t.not_pinned,
+                                            humanize(disposition.status),
+                                            disposition.proposedBy,
+                                            formatDateTime(
+                                                disposition.createdAt,
+                                            ),
+                                        ],
+                                    }),
+                                )}
+                                pagination={{
+                                    currentPage:
+                                        lineageDispositions.current_page,
+                                    lastPage: lineageDispositions.last_page,
+                                    perPage: lineageDispositions.per_page,
+                                    total: lineageDispositions.total,
+                                    pageName: 'disposition_page',
+                                    perPageName: 'disposition_per_page',
+                                }}
+                                renderActionControl={(row) => {
+                                    const disposition =
+                                        lineageDispositions.data.find(
+                                            (item) => item.id === row.id,
+                                        );
+
+                                    if (!disposition) {
+                                        return null;
+                                    }
+
+                                    const openDisposition = (
+                                        nextAction:
+                                            | 'details'
+                                            | 'review'
+                                            | 'apply',
+                                    ) => {
+                                        setSelectedDisposition(disposition);
+                                        setDispositionAction(nextAction);
+                                    };
+
+                                    return (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label={translate(t.actions_for, { reference: disposition.reference })}
+                                                >
+                                                    <MoreHorizontal />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        openDisposition(
+                                                            'details',
+                                                        )
+                                                    }
+                                                >
+                                                    <Eye /> {t.view_details}
+                                                </DropdownMenuItem>
+                                                {capabilities.review &&
+                                                    disposition.status ===
+                                                        'proposed' && (
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                openDisposition(
+                                                                    'review',
+                                                                )
+                                                            }
+                                                        >
+                                                            <CheckCircle2 />
+                                                            {t.review_decision}
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                {capabilities.apply &&
+                                                    disposition.status ===
+                                                        'approved' && (
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                openDisposition(
+                                                                    'apply',
+                                                                )
+                                                            }
+                                                        >
+                                                            <PlayCircle /> Apply
+                                                            {t.apply_disposition}
+                                                        </DropdownMenuItem>
+                                                    )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    );
+                                }}
+                            />
                         )}
                     </CardContent>
                 </Card>
@@ -417,14 +646,340 @@ export default function HistoricalDataMigrations({
                         )}
                     </CardContent>
                 </Card>
-            </main>
+            </div>
 
             <BatchSheet
                 batch={selected}
                 action={action}
                 onOpenChange={(isOpen) => !isOpen && setSelected(null)}
             />
+            <LineageDispositionSheet
+                disposition={selectedDisposition}
+                action={dispositionAction}
+                onOpenChange={(isOpen) =>
+                    !isOpen && setSelectedDisposition(null)
+                }
+                t={t}
+            />
         </>
+    );
+}
+
+function LineageDispositionForm({
+    recordType,
+    candidates,
+    releases,
+    t,
+}: {
+    recordType: string;
+    candidates: Props['legacyCandidates'];
+    releases: Props['referenceReleases'];
+    t: Props['lineageTranslations'];
+}) {
+    const [decision, setDecision] = useState('retain_legacy');
+    const [successorId, setSuccessorId] = useState('');
+
+    if (candidates.length === 0) {
+        return null;
+    }
+
+    return (
+        <FormSheet
+            title={t.proposal_title}
+            description={t.proposal_description}
+            triggerLabel={t.reconcile}
+            icon={Scale}
+            size="lg"
+        >
+            <Form {...storeLineageDisposition.form()} resetOnSuccess>
+                {({ errors, processing }) => (
+                    <div className="flex flex-col gap-5">
+                        <input
+                            type="hidden"
+                            name="record_type"
+                            value={recordType}
+                        />
+                        <SearchableSelect
+                            id="lineage-record"
+                            name="record_id"
+                            label={t.record}
+                            options={candidates.map((candidate) => ({
+                                id: candidate.id,
+                                name: candidate.label,
+                            }))}
+                            error={errors.record_id}
+                        />
+                        <SearchableSelect
+                            id="lineage-decision"
+                            name="decision"
+                            label={t.disposition_decision}
+                            value={decision}
+                            onValueChange={setDecision}
+                            options={[
+                                {
+                                    id: 'retain_legacy',
+                                    name: t.retain_legacy,
+                                },
+                                {
+                                    id: 'pin_release',
+                                    name: t.pin_release,
+                                },
+                                {
+                                    id: 'deprecate',
+                                    name: t.deprecate,
+                                },
+                            ]}
+                            error={errors.decision}
+                        />
+                        {decision === 'pin_release' && (
+                            <SearchableSelect
+                                id="lineage-release"
+                                name="reference_data_release_id"
+                                label={t.published_release}
+                                options={releases.map((release) => ({
+                                    id: release.id,
+                                    name: translate(t.version, {
+                                        version: String(release.version),
+                                    }),
+                                }))}
+                                error={errors.reference_data_release_id}
+                            />
+                        )}
+                        <SearchableSelect
+                            id="lineage-successor"
+                            name="successor_record_id"
+                            label={t.successor}
+                            optional
+                            value={successorId}
+                            onValueChange={setSuccessorId}
+                            options={candidates.map((candidate) => ({
+                                id: candidate.id,
+                                name: candidate.label,
+                            }))}
+                            error={errors.successor_record_id}
+                        />
+                        {successorId !== '' && (
+                            <input
+                                type="hidden"
+                                name="successor_record_type"
+                                value={recordType}
+                            />
+                        )}
+                        <TextField
+                            id="lineage-source-reference"
+                            name="source_reference"
+                            label={t.source_reference}
+                            error={errors.source_reference}
+                        />
+                        <div className="flex flex-col gap-2">
+                            <Label htmlFor="lineage-business-reason">
+                                {t.rationale}
+                            </Label>
+                            <Textarea
+                                id="lineage-business-reason"
+                                name="business_reason"
+                                rows={5}
+                                aria-invalid={Boolean(errors.business_reason)}
+                                required
+                            />
+                            {errors.business_reason && (
+                                <ErrorText>{errors.business_reason}</ErrorText>
+                            )}
+                        </div>
+                        <Button type="submit" disabled={processing}>
+                            <Scale data-icon="inline-start" />
+                            {processing
+                                ? t.recording
+                                : t.submit_review}
+                        </Button>
+                    </div>
+                )}
+            </Form>
+        </FormSheet>
+    );
+}
+
+function LineageDispositionSheet({
+    disposition,
+    action,
+    onOpenChange,
+    t,
+}: {
+    disposition: LineageDisposition | null;
+    action: 'details' | 'review' | 'apply';
+    onOpenChange: (open: boolean) => void;
+    t: Props['lineageTranslations'];
+}) {
+    return (
+        <Sheet open={Boolean(disposition)} onOpenChange={onOpenChange}>
+            <SheetContent className="overflow-y-auto sm:max-w-2xl">
+                <SheetHeader>
+                    <SheetTitle>
+                        {action === 'review'
+                            ? t.review_title
+                            : action === 'apply'
+                              ? t.apply_title
+                              : t.details_title}
+                    </SheetTitle>
+                    <SheetDescription>
+                        {translate(t.checksum_bound, {
+                            reference: disposition?.reference ?? '',
+                        })}
+                    </SheetDescription>
+                </SheetHeader>
+                {disposition && (
+                    <div className="flex flex-col gap-5 px-4 pb-8">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <Detail
+                                label={t.record_type_value}
+                                value={humanize(disposition.recordType)}
+                            />
+                            <Detail
+                                label={t.decision}
+                                value={humanize(disposition.decision)}
+                            />
+                            <Detail
+                                label={t.status}
+                                value={humanize(disposition.status)}
+                            />
+                            <Detail
+                                label={t.catalogue}
+                                value={
+                                    disposition.release
+                                        ? translate(t.version, {
+                                              version: String(
+                                                  disposition.release.version,
+                                              ),
+                                          })
+                                        : t.explicitly_unpinned
+                                }
+                            />
+                            <Detail
+                                label={t.proposed_by}
+                                value={disposition.proposedBy}
+                            />
+                            <Detail
+                                label={t.reviewed_by}
+                                value={disposition.reviewedBy ?? t.pending}
+                            />
+                            <Detail
+                                label={t.applied_by}
+                                value={disposition.appliedBy ?? t.pending}
+                            />
+                            <Detail
+                                label={t.source_reference}
+                                value={disposition.sourceReference}
+                            />
+                        </div>
+                        <Detail
+                            label={t.business_rationale}
+                            value={disposition.businessReason}
+                        />
+                        {disposition.successorRecordId && (
+                            <Detail
+                                label={t.controlled_successor}
+                                value={`${humanize(disposition.successorRecordType ?? '')} · ${disposition.successorRecordId}`}
+                            />
+                        )}
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                {t.source_checksum}
+                            </p>
+                            <p className="mt-1 font-mono text-xs break-all">
+                                {disposition.recordChecksum}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-xs font-medium text-muted-foreground">
+                                {t.decision_checksum}
+                            </p>
+                            <p className="mt-1 font-mono text-xs break-all">
+                                {disposition.decisionChecksum}
+                            </p>
+                        </div>
+                        {action === 'review' && (
+                            <Form
+                                {...reviewLineageDisposition.form(
+                                    disposition.id,
+                                )}
+                            >
+                                {({ errors, processing }) => (
+                                    <div className="flex flex-col gap-4 rounded-lg border p-4">
+                                        <SearchableSelect
+                                            id="lineage-review-decision"
+                                            name="decision"
+                                            label={t.review_decision}
+                                            options={[
+                                                {
+                                                    id: 'approve',
+                                                    name: t.approve,
+                                                },
+                                                {
+                                                    id: 'reject',
+                                                    name: t.reject,
+                                                },
+                                            ]}
+                                            error={errors.decision}
+                                        />
+                                        <div className="flex flex-col gap-2">
+                                            <Label htmlFor="lineage-review-notes">
+                                                {t.independent_notes}
+                                            </Label>
+                                            <Textarea
+                                                id="lineage-review-notes"
+                                                name="notes"
+                                                rows={5}
+                                                aria-invalid={Boolean(
+                                                    errors.notes,
+                                                )}
+                                                required
+                                            />
+                                            {errors.notes && (
+                                                <ErrorText>
+                                                    {errors.notes}
+                                                </ErrorText>
+                                            )}
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {t.record_independent_decision}
+                                        </Button>
+                                    </div>
+                                )}
+                            </Form>
+                        )}
+                        {action === 'apply' && (
+                            <Form
+                                {...applyLineageDisposition.form(
+                                    disposition.id,
+                                )}
+                            >
+                                {({ processing }) => (
+                                    <Alert>
+                                        <PlayCircle />
+                                        <AlertTitle>
+                                            {t.final_application}
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            {t.final_application_description}
+                                        </AlertDescription>
+                                        <Button
+                                            className="mt-4"
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            {t.apply_disposition}
+                                        </Button>
+                                    </Alert>
+                                )}
+                            </Form>
+                        )}
+                    </div>
+                )}
+            </SheetContent>
+        </Sheet>
     );
 }
 
@@ -851,6 +1406,16 @@ function Detail({ label, value }: { label: string; value: string }) {
 
 function humanize(value: string): string {
     return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function translate(
+    template: string,
+    replacements: Record<string, string>,
+): string {
+    return Object.entries(replacements).reduce(
+        (translated, [key, value]) => translated.replace(`:${key}`, value),
+        template,
+    );
 }
 
 function formatDate(value: string): string {

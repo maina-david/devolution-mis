@@ -3,16 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Actions\ApplyHistoricalDataMigration;
+use App\Actions\ApplyReferenceLineageDisposition;
+use App\Actions\CreateReferenceLineageDisposition;
 use App\Actions\ReviewHistoricalDataMigration;
+use App\Actions\ReviewReferenceLineageDisposition;
 use App\Actions\StageHistoricalDataMigration;
 use App\Actions\StageReferenceDataImport;
 use App\Enums\ProgrammePermission;
 use App\Http\Requests\ApplyHistoricalDataMigrationRequest;
+use App\Http\Requests\ApplyReferenceLineageDispositionRequest;
 use App\Http\Requests\HistoricalDataMigrationIndexRequest;
 use App\Http\Requests\ReviewHistoricalDataMigrationRequest;
+use App\Http\Requests\ReviewReferenceLineageDispositionRequest;
 use App\Http\Requests\StoreHistoricalDataMigrationRequest;
 use App\Http\Requests\StoreReferenceDataImportRequest;
+use App\Http\Requests\StoreReferenceLineageDispositionRequest;
 use App\Models\DataMigrationBatch;
+use App\Models\ReferenceDataRelease;
+use App\Models\ReferenceLineageDisposition;
 use App\Models\User;
 use App\Services\LegacyReferenceInventory;
 use Illuminate\Database\Eloquent\Builder;
@@ -35,6 +43,8 @@ class HistoricalDataMigrationController extends Controller
         $this->authorizeView();
         $filters = $request->validated();
         $search = trim((string) ($filters['search'] ?? ''));
+        $inventory = $legacyInventory->report();
+        $legacyType = (string) ($filters['legacy_type'] ?? ($inventory['records'][0]['key'] ?? 'assessment'));
 
         $batches = DataMigrationBatch::query()
             ->with(['submitter:id,name', 'reviewer:id,name', 'applier:id,name'])
@@ -82,8 +92,43 @@ class HistoricalDataMigrationController extends Controller
                 'review' => $request->user()?->can(ProgrammePermission::ApproveReferenceData->value) === true,
                 'apply' => $request->user()?->can(ProgrammePermission::ManageOperations->value) === true,
             ],
-            'legacyInventory' => $legacyInventory->report(),
+            'legacyInventory' => $inventory,
+            'legacyCandidates' => $legacyInventory->candidates($legacyType),
+            'legacyType' => $legacyType,
+            'referenceReleases' => ReferenceDataRelease::query()->where('status', 'published')->where('effective_from', '<=', now())->latest('version')->get(['id', 'version', 'checksum', 'effective_from'])->map(fn (ReferenceDataRelease $release): array => ['id' => $release->id, 'version' => $release->version, 'checksum' => $release->checksum, 'effectiveFrom' => $release->effective_from?->toIso8601String()]),
+            'lineageTranslations' => __('migration.ui'),
+            'lineageDispositions' => ReferenceLineageDisposition::query()->with(['referenceDataRelease:id,version,checksum', 'proposer:id,name', 'reviewer:id,name', 'applier:id,name'])->latest()->paginate($request->integer('disposition_per_page', 10), ['*'], 'disposition_page')->withQueryString()->through(fn (ReferenceLineageDisposition $disposition): array => [
+                'id' => $disposition->id, 'reference' => $disposition->reference, 'recordType' => $disposition->record_type, 'recordId' => $disposition->record_id, 'recordSnapshot' => $disposition->record_snapshot, 'recordChecksum' => $disposition->record_checksum, 'decision' => $disposition->decision, 'release' => $disposition->referenceDataRelease ? ['id' => $disposition->referenceDataRelease->id, 'version' => $disposition->referenceDataRelease->version, 'checksum' => $disposition->referenceDataRelease->checksum] : null, 'successorRecordType' => $disposition->successor_record_type, 'successorRecordId' => $disposition->successor_record_id, 'businessReason' => $disposition->business_reason, 'sourceReference' => $disposition->source_reference, 'status' => $disposition->status, 'proposedBy' => $disposition->proposer->name, 'reviewedBy' => $disposition->reviewer?->name, 'reviewNotes' => $disposition->review_notes, 'appliedBy' => $disposition->applier?->name, 'decisionChecksum' => $disposition->decision_checksum, 'createdAt' => $disposition->created_at->toIso8601String(), 'reviewedAt' => $disposition->reviewed_at?->toIso8601String(), 'appliedAt' => $disposition->applied_at?->toIso8601String(),
+            ]),
         ]);
+    }
+
+    public function storeLineageDisposition(StoreReferenceLineageDispositionRequest $request, CreateReferenceLineageDisposition $create): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $create->handle($user, $request->validated());
+
+        return $this->success(__('migration.lineage_proposed'));
+    }
+
+    public function reviewLineageDisposition(ReviewReferenceLineageDispositionRequest $request, ReferenceLineageDisposition $referenceLineageDisposition, ReviewReferenceLineageDisposition $review): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $attributes = $request->validated();
+        $review->handle($referenceLineageDisposition, $user, $attributes['decision'], $attributes['notes']);
+
+        return $this->success(__('migration.lineage_reviewed'));
+    }
+
+    public function applyLineageDisposition(ApplyReferenceLineageDispositionRequest $request, ReferenceLineageDisposition $referenceLineageDisposition, ApplyReferenceLineageDisposition $apply): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $apply->handle($referenceLineageDisposition, $user);
+
+        return $this->success(__('migration.lineage_applied'));
     }
 
     public function store(StoreHistoricalDataMigrationRequest $request, StageHistoricalDataMigration $stage): RedirectResponse
