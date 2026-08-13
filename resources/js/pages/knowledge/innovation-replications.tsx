@@ -127,6 +127,9 @@ type Props = {
 
 export default function InnovationReplications(props: Props) {
     const page = usePage();
+    const { localization } = page.props;
+    const copy = localization.innovationReplications;
+    const locale = localization.current;
     const rows: WorkspaceRow[] = props.replications.data.map((replication) => ({
         id: replication.id,
         status: replication.status,
@@ -137,13 +140,13 @@ export default function InnovationReplications(props: Props) {
             replication.targetCounty,
             replication.referenceData
                 ? `v${replication.referenceData.version}`
-                : 'Legacy unpinned',
-            replication.referenceData?.checksum ?? 'Legacy unpinned',
+                : copy.legacy_unpinned,
+            replication.referenceData?.checksum ?? copy.legacy_unpinned,
             replication.accountableAdopter,
             replication.successMeasure,
-            replication.actualValue ?? '—',
-            replication.targetCompletionOn,
-            replication.status,
+            replication.actualValue ?? copy.not_available,
+            formatDate(replication.targetCompletionOn, locale),
+            translateValue(copy, replication.status),
         ],
         href: preserveDrilldownFilters(
             showCounty.url({ county: replication.targetCounty.id }),
@@ -160,21 +163,19 @@ export default function InnovationReplications(props: Props) {
 
     return (
         <>
-            <Head title="Innovation replication portfolio" />
+            <Head title={copy.page_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-sm font-medium opacity-80">
-                                Knowledge Management
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Innovation replication
+                                {copy.title}
                             </h1>
                             <p className="mt-3 text-sm opacity-80 sm:text-base">
-                                Govern cross-county adaptation, measurable
-                                pilots, evidence and independent adoption
-                                decisions.
+                                {copy.description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -194,17 +195,17 @@ export default function InnovationReplications(props: Props) {
                     initialFrom={props.filters.from}
                     initialTo={props.filters.to}
                     initialSearch={props.filters.search ?? ''}
-                    searchPlaceholder="Search replications"
+                    searchPlaceholder={copy.search_placeholder}
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'Target county',
+                            label: copy.target_county,
                             value: props.filters.county_id,
                             options: props.options.counties,
                         },
                         {
                             key: 'status',
-                            label: 'Replication status',
+                            label: copy.replication_status,
                             value: props.filters.status,
                             options: [
                                 'planned',
@@ -215,7 +216,7 @@ export default function InnovationReplications(props: Props) {
                                 'abandoned',
                             ].map((value) => ({
                                 id: value,
-                                name: humanize(value),
+                                name: translateValue(copy, value),
                             })),
                         },
                     ]}
@@ -223,52 +224,50 @@ export default function InnovationReplications(props: Props) {
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Summary
-                        label="Replication portfolio"
+                        label={copy.replication_portfolio}
                         value={props.summary.total}
                     />
                     <Summary
-                        label="Active pilots"
+                        label={copy.active_pilots}
                         value={props.summary.piloting}
                     />
                     <Summary
-                        label="Awaiting verification"
+                        label={copy.awaiting_verification}
                         value={props.summary.awaitingVerification}
                     />
                     <Summary
-                        label="Verified adoptions"
+                        label={copy.verified_adoptions}
                         value={props.summary.adopted}
                     />
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Cross-county replication register</CardTitle>
+                        <CardTitle>{copy.register_title}</CardTitle>
                         <CardDescription>
-                            Numbered, sortable and server-paginated records.
-                            Clicking the county opens its filtered county
-                            workspace; row actions remain explicit.
+                            {copy.register_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {rows.length === 0 ? (
                             <WorkspaceEmptyState
-                                title="No matching replications"
-                                description="Adjust the filters or create a replication from an innovation approved for scale-up."
+                                title={copy.empty_title}
+                                description={copy.empty_description}
                             />
                         ) : (
                             <WorkspaceDataTable
                                 columns={[
-                                    'Reference',
-                                    'Source innovation',
-                                    'Source county',
-                                    'Target county',
-                                    'Catalogue',
-                                    'Catalogue checksum',
-                                    'Accountable adopter',
-                                    'Success measure',
-                                    'Actual',
-                                    'Target completion',
-                                    'Status',
+                                    copy.reference,
+                                    copy.source_innovation,
+                                    copy.source_county,
+                                    copy.target_county,
+                                    copy.catalogue,
+                                    copy.catalogue_checksum,
+                                    copy.accountable_adopter,
+                                    copy.success_measure,
+                                    copy.actual,
+                                    copy.target_completion,
+                                    copy.status,
                                 ]}
                                 rows={rows}
                                 pagination={{
@@ -307,11 +306,13 @@ function CreateReplicationSheet({
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
+    const copy = useInnovationReplicationCopy();
+
     return (
         <FormSheet
-            title="Create cross-county replication"
-            description="Choose a scale-ready source innovation, a different target county and an accountable target-county adopter."
-            triggerLabel="Create replication"
+            title={copy.create_title}
+            description={copy.create_description}
+            triggerLabel={copy.create_replication}
             icon={Plus}
             size="xl"
             triggerDisabled={
@@ -319,9 +320,9 @@ function CreateReplicationSheet({
             }
             triggerTitle={
                 !catalogue.available
-                    ? 'Publish an approved reference-data catalogue before creating replications.'
+                    ? copy.catalogue_required
                     : options.innovations.length === 0
-                      ? 'No lineage-bearing innovation is approved for scale-up.'
+                      ? copy.no_scale_ready_innovation
                       : undefined
             }
         >
@@ -331,7 +332,7 @@ function CreateReplicationSheet({
                         <SearchableSelect
                             id="replication-innovation"
                             name="devolution_innovation_id"
-                            label="Scale-ready source innovation"
+                            label={copy.scale_ready_source}
                             options={options.innovations.map((item) => ({
                                 id: item.id,
                                 name: item.label,
@@ -342,52 +343,52 @@ function CreateReplicationSheet({
                             <SearchableSelect
                                 id="replication-target-county"
                                 name="target_county_id"
-                                label="Target county"
+                                label={copy.target_county}
                                 options={options.counties}
                                 error={errors.target_county_id}
                             />
                             <SearchableSelect
                                 id="replication-adopter"
                                 name="accountable_user_id"
-                                label="Accountable adopter"
+                                label={copy.accountable_adopter}
                                 options={options.adopters}
                                 error={errors.accountable_user_id}
                             />
                             <NumberField
                                 name="baseline_value"
-                                label="Baseline value"
+                                label={copy.baseline_value}
                                 error={errors.baseline_value}
                             />
                             <NumberField
                                 name="target_value"
-                                label="Target value"
+                                label={copy.target_value}
                                 error={errors.target_value}
                             />
                             <DatePickerField
                                 name="starts_on"
-                                label="Starts on"
+                                label={copy.starts_on}
                                 required
                                 error={errors.starts_on}
                             />
                             <DatePickerField
                                 name="target_completion_on"
-                                label="Target completion"
+                                label={copy.target_completion}
                                 required
                                 error={errors.target_completion_on}
                             />
                         </div>
                         <TextField
                             name="adaptation_plan"
-                            label="Local adaptation plan"
+                            label={copy.local_adaptation_plan}
                             error={errors.adaptation_plan}
                         />
                         <Field
                             name="success_measure"
-                            label="Success measure"
+                            label={copy.success_measure}
                             error={errors.success_measure}
                         />
                         <Button type="submit" disabled={processing}>
-                            Create governed replication
+                            {copy.create_governed_replication}
                         </Button>
                     </>
                 )}
@@ -403,6 +404,7 @@ function ReplicationActions({
     replication: Replication;
     capabilities: Props['capabilities'];
 }) {
+    const copy = useInnovationReplicationCopy();
     const [surface, setSurface] = useState<
         'view' | 'transition' | 'evidence' | 'verify' | null
     >(null);
@@ -423,7 +425,9 @@ function ReplicationActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${replication.reference}`}
+                        aria-label={interpolate(copy.actions_for, {
+                            reference: replication.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -431,27 +435,27 @@ function ReplicationActions({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('view')}>
-                            <Eye /> View replication
+                            <Eye /> {copy.view_replication}
                         </DropdownMenuItem>
                         {canTransition && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('transition')}
                             >
-                                Update workflow
+                                {copy.update_workflow}
                             </DropdownMenuItem>
                         )}
                         {canEvidence && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('evidence')}
                             >
-                                <FileUp /> Upload evidence
+                                <FileUp /> {copy.upload_evidence}
                             </DropdownMenuItem>
                         )}
                         {canVerify && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('verify')}
                             >
-                                <ShieldCheck /> Verify adoption
+                                <ShieldCheck /> {copy.verify_adoption}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -467,18 +471,18 @@ function ReplicationActions({
                             {surface === 'view'
                                 ? replication.reference
                                 : surface === 'evidence'
-                                  ? 'Upload replication evidence'
+                                  ? copy.upload_replication_evidence
                                   : surface === 'verify'
-                                    ? 'Independent adoption decision'
-                                    : 'Update replication workflow'}
+                                    ? copy.independent_adoption_decision
+                                    : copy.update_replication_workflow}
                         </SheetTitle>
                         <SheetDescription>
                             {replication.innovation.title} ·{' '}
                             {replication.targetCounty.name}
                             {' · '}
                             {replication.referenceData
-                                ? `Catalogue v${replication.referenceData.version}`
-                                : 'Legacy lineage unpinned'}
+                                ? `${copy.catalogue} v${replication.referenceData.version}`
+                                : copy.legacy_lineage_unpinned}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-5 px-4 pb-8">
@@ -506,40 +510,44 @@ function ReplicationActions({
 }
 
 function ReplicationDetail({ replication }: { replication: Replication }) {
+    const copy = useInnovationReplicationCopy();
+
     return (
         <div className="flex flex-col gap-4 text-sm">
             <div>
-                <p className="font-medium">Adaptation plan</p>
+                <p className="font-medium">{copy.adaptation_plan}</p>
                 <p className="text-muted-foreground">
                     {replication.adaptationPlan}
                 </p>
             </div>
             <div>
-                <p className="font-medium">Measure</p>
+                <p className="font-medium">{copy.measure}</p>
                 <p className="text-muted-foreground">
                     {replication.successMeasure}: {replication.baselineValue} →{' '}
-                    {replication.targetValue}; actual{' '}
-                    {replication.actualValue ?? 'pending'}
+                    {replication.targetValue}; {copy.actual_lowercase}{' '}
+                    {replication.actualValue ?? copy.pending}
                 </p>
             </div>
             <div>
-                <p className="font-medium">Outcome</p>
+                <p className="font-medium">{copy.outcome}</p>
                 <p className="text-muted-foreground">
-                    {replication.outcomeSummary ?? 'Not submitted'}
+                    {replication.outcomeSummary ?? copy.not_submitted}
                 </p>
             </div>
             <div>
-                <p className="font-medium">Independent decision</p>
+                <p className="font-medium">{copy.independent_decision}</p>
                 <p className="text-muted-foreground">
-                    {humanize(replication.verificationDecision)}
-                    {replication.verifier ? ` by ${replication.verifier}` : ''}
+                    {translateValue(copy, replication.verificationDecision)}
+                    {replication.verifier
+                        ? ` ${copy.by} ${replication.verifier}`
+                        : ''}
                 </p>
             </div>
             <div className="flex flex-col gap-2">
-                <p className="font-medium">Evidence</p>
+                <p className="font-medium">{copy.evidence}</p>
                 {replication.documents.length === 0 ? (
                     <p className="text-muted-foreground">
-                        No evidence uploaded.
+                        {copy.no_evidence_uploaded}
                     </p>
                 ) : (
                     replication.documents.map((document) => (
@@ -557,7 +565,7 @@ function ReplicationDetail({ replication }: { replication: Replication }) {
                                 rel="noreferrer"
                             >
                                 <Eye /> {document.title} ·{' '}
-                                {humanize(document.scanStatus)}
+                                {translateValue(copy, document.scanStatus)}
                             </a>
                         </Button>
                     ))
@@ -576,6 +584,7 @@ function TransitionForm({
     canManage: boolean;
     canContribute: boolean;
 }) {
+    const copy = useInnovationReplicationCopy();
     const lifecycleTransitions =
         replication.status === 'planned'
             ? canManage
@@ -602,10 +611,10 @@ function TransitionForm({
                     <SearchableSelect
                         id="replication-transition"
                         name="transition"
-                        label="Workflow action"
+                        label={copy.workflow_action}
                         options={transitions.map((value) => ({
                             id: value,
-                            name: humanize(value),
+                            name: translateValue(copy, value),
                         }))}
                         error={errors.transition}
                     />
@@ -613,23 +622,23 @@ function TransitionForm({
                         <>
                             <NumberField
                                 name="actual_value"
-                                label="Measured actual value"
+                                label={copy.measured_actual_value}
                                 error={errors.actual_value}
                             />
                             <TextField
                                 name="outcome_summary"
-                                label="Measured outcome summary"
+                                label={copy.measured_outcome_summary}
                                 error={errors.outcome_summary}
                             />
                         </>
                     )}
                     <TextField
                         name="rationale"
-                        label="Attributed rationale"
+                        label={copy.attributed_rationale}
                         error={errors.rationale}
                     />
                     <Button type="submit" disabled={processing}>
-                        Apply workflow action
+                        {copy.apply_workflow_action}
                     </Button>
                 </>
             )}
@@ -638,6 +647,8 @@ function TransitionForm({
 }
 
 function EvidenceForm({ replication }: { replication: Replication }) {
+    const copy = useInnovationReplicationCopy();
+
     return (
         <Form
             {...storeDocument.form({ replication: replication.id })}
@@ -648,27 +659,29 @@ function EvidenceForm({ replication }: { replication: Replication }) {
                 <>
                     <Field
                         name="title"
-                        label="Evidence title"
+                        label={copy.evidence_title}
                         error={errors.title}
                     />
                     <Field
                         name="category"
-                        label="Record category"
+                        label={copy.record_category}
                         error={errors.category}
-                        defaultValue="Replication evidence"
+                        defaultValue={copy.replication_evidence}
                     />
                     <SearchableSelect
                         id="replication-source-type"
                         name="source_type"
-                        label="Source type"
+                        label={copy.source_type}
                         options={[
-                            { id: 'scanned', name: 'Scanned original' },
-                            { id: 'digital', name: 'Born digital' },
+                            { id: 'scanned', name: copy.scanned_original },
+                            { id: 'digital', name: copy.born_digital },
                         ]}
                         error={errors.source_type}
                     />
                     <div className="grid gap-2">
-                        <Label htmlFor="replication-document">Document</Label>
+                        <Label htmlFor="replication-document">
+                            {copy.document}
+                        </Label>
                         <Input
                             id="replication-document"
                             name="document"
@@ -684,7 +697,7 @@ function EvidenceForm({ replication }: { replication: Replication }) {
                         )}
                     </div>
                     <Button type="submit" disabled={processing}>
-                        Upload secure evidence
+                        {copy.upload_secure_evidence}
                     </Button>
                 </>
             )}
@@ -693,6 +706,8 @@ function EvidenceForm({ replication }: { replication: Replication }) {
 }
 
 function VerificationForm({ replication }: { replication: Replication }) {
+    const copy = useInnovationReplicationCopy();
+
     return (
         <Form
             {...verify.form({ replication: replication.id })}
@@ -703,20 +718,20 @@ function VerificationForm({ replication }: { replication: Replication }) {
                     <SearchableSelect
                         id="replication-decision"
                         name="decision"
-                        label="Independent decision"
+                        label={copy.independent_decision}
                         options={[
-                            { id: 'approve', name: 'Approve adoption' },
-                            { id: 'return', name: 'Return for adaptation' },
+                            { id: 'approve', name: copy.approve_adoption },
+                            { id: 'return', name: copy.return_for_adaptation },
                         ]}
                         error={errors.decision}
                     />
                     <TextField
                         name="rationale"
-                        label="Verification rationale"
+                        label={copy.verification_rationale}
                         error={errors.rationale}
                     />
                     <Button type="submit" disabled={processing}>
-                        Record immutable decision
+                        {copy.record_immutable_decision}
                     </Button>
                 </>
             )}
@@ -799,24 +814,28 @@ function TextField({
 }
 
 function Summary({ label, value }: { label: string; value: number }) {
+    const locale = usePage().props.localization.current;
+
     return (
         <Card>
             <CardHeader>
                 <CardDescription>{label}</CardDescription>
             </CardHeader>
             <CardContent className="text-3xl font-bold">
-                {value.toLocaleString()}
+                {value.toLocaleString(locale)}
             </CardContent>
         </Card>
     );
 }
 
 function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
+    const copy = useInnovationReplicationCopy();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="secondary">
-                    <Download /> Export evidence
+                    <Download /> {copy.export_evidence}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -836,4 +855,28 @@ function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
 
 function humanize(value: string) {
     return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function useInnovationReplicationCopy(): Record<string, string> {
+    return usePage().props.localization.innovationReplications;
+}
+
+function translateValue(copy: Record<string, string>, value: string): string {
+    return copy[value] ?? humanize(value);
+}
+
+function interpolate(
+    template: string,
+    replacements: Record<string, string>,
+): string {
+    return Object.entries(replacements).reduce(
+        (message, [key, value]) => message.replace(`:${key}`, value),
+        template,
+    );
+}
+
+function formatDate(value: string, locale: string): string {
+    return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+        new Date(`${value}T00:00:00`),
+    );
 }

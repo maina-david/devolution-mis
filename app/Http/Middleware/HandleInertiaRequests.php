@@ -124,6 +124,7 @@ class HandleInertiaRequests extends Middleware
                 'dashboard' => __('dashboard'),
                 'migration' => __('migration.ui'),
                 'travelClearance' => __('travel-clearance'),
+                'innovationReplications' => __('innovation-replications'),
                 'assessmentConfiguration' => __('assessment-configuration'),
                 'accessControl' => __('access-control'),
                 'settingsProfile' => __('settings-profile'),
