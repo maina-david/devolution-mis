@@ -105,6 +105,8 @@ export default function AssessmentAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
+    const { localization } = page.props;
+    const copy = localization.assessmentAnalytics;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -121,7 +123,7 @@ export default function AssessmentAnalytics({
             item.rank,
             item.countyIdentity,
             `${item.score}%`,
-            item.performanceBand,
+            copy[item.performanceBand] ?? item.performanceBand,
             `${item.percentile}%`,
         ],
         status: item.performanceBand,
@@ -129,24 +131,22 @@ export default function AssessmentAnalytics({
 
     return (
         <>
-            <Head title="Assessment comparative analytics" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
                     <Link href={assessmentIndex.url()}>
                         <ArrowLeft data-icon="inline-start" />
-                        Assessments
+                        {copy.assessments}
                     </Link>
                 </Button>
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                                Assessment comparative analytics
+                                {copy.title}
                             </h1>
                             <p className="mt-3 text-sm opacity-80 sm:text-base">
-                                Compare immutable published results across
-                                authorized counties, cycles and devolved
-                                functions.
+                                {copy.description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -161,22 +161,22 @@ export default function AssessmentAnalytics({
                 </section>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Summary
-                        label="Published results"
+                        label={copy.published_results}
                         value={report.summary.publications}
                     />
                     <Summary
-                        label="Authorized counties"
+                        label={copy.authorized_counties}
                         value={report.summary.counties}
                     />
                     <Summary
-                        label="Assessment cycles"
+                        label={copy.assessment_cycles}
                         value={report.summary.cycles}
                     />
                     <Summary
-                        label="Average score"
+                        label={copy.average_score}
                         value={
                             report.summary.averageScore === null
-                                ? 'Not available'
+                                ? copy.not_available
                                 : `${report.summary.averageScore}%`
                         }
                     />
@@ -187,11 +187,9 @@ export default function AssessmentAnalytics({
                             <EmptyMedia variant="icon">
                                 <FileBarChart />
                             </EmptyMedia>
-                            <EmptyTitle>No published results match</EmptyTitle>
+                            <EmptyTitle>{copy.empty_title}</EmptyTitle>
                             <EmptyDescription>
-                                Adjust the date, cycle or county filters. Draft
-                                and mutable assessment records are intentionally
-                                excluded.
+                                {copy.empty_description}
                             </EmptyDescription>
                         </EmptyHeader>
                     </Empty>
@@ -199,10 +197,9 @@ export default function AssessmentAnalytics({
                     <>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Cycle trend</CardTitle>
+                                <CardTitle>{copy.cycle_trend}</CardTitle>
                                 <CardDescription>
-                                    Average, minimum and maximum scores from
-                                    immutable county publications.
+                                    {copy.cycle_trend_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-4">
@@ -213,16 +210,25 @@ export default function AssessmentAnalytics({
                                                 {cycle.name} ({cycle.code})
                                             </span>
                                             <span className="text-muted-foreground">
-                                                Average {cycle.average}% from{' '}
-                                                {cycle.publications} publication
+                                                {copy.average}{' '}
+                                                {cycle.average}% {copy.from}{' '}
+                                                {cycle.publications}{' '}
                                                 {cycle.publications === 1
-                                                    ? ''
-                                                    : 's'}
+                                                    ? copy.publication
+                                                    : copy.publications}
                                             </span>
                                         </div>
                                         <div
                                             className="h-3 overflow-hidden rounded-full bg-muted"
-                                            aria-label={`${cycle.code} average score ${cycle.average} percent`}
+                                            aria-label={interpolate(
+                                                copy.cycle_score_label,
+                                                {
+                                                    cycle: cycle.code,
+                                                    score: String(
+                                                        cycle.average,
+                                                    ),
+                                                },
+                                            )}
                                             role="img"
                                         >
                                             <div
@@ -233,7 +239,8 @@ export default function AssessmentAnalytics({
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            Range {cycle.minimum}% to{' '}
+                                            {copy.range} {cycle.minimum}%{' '}
+                                            {copy.to}{' '}
                                             {cycle.maximum}%
                                         </p>
                                     </div>
@@ -243,10 +250,9 @@ export default function AssessmentAnalytics({
                         <div className="grid gap-6 xl:grid-cols-2">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>County history</CardTitle>
+                                    <CardTitle>{copy.county_history}</CardTitle>
                                     <CardDescription>
-                                        Published score progression within the
-                                        viewer's authorized portfolio.
+                                        {copy.county_history_description}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="grid gap-4">
@@ -291,19 +297,18 @@ export default function AssessmentAnalytics({
                             <Card>
                                 <CardHeader>
                                     <CardTitle>
-                                        Function disaggregation
+                                        {copy.function_disaggregation}
                                     </CardTitle>
                                     <CardDescription>
-                                        Average performance by devolved function
-                                        and assessment cycle.
+                                        {copy.function_description}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-0">
                                     <WorkspaceDataTable
                                         columns={[
-                                            'Cycle',
-                                            'Function',
-                                            'Average',
+                                            copy.cycle,
+                                            copy.function,
+                                            copy.average,
                                         ]}
                                         rows={functionRows}
                                         pagination={report.functions.pagination}
@@ -313,20 +318,19 @@ export default function AssessmentAnalytics({
                         </div>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Selected-cycle benchmark</CardTitle>
+                                <CardTitle>{copy.benchmark}</CardTitle>
                                 <CardDescription>
-                                    Ranks and percentiles are recalculated only
-                                    within the viewer's authorized county scope.
+                                    {copy.benchmark_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="p-0">
                                 <WorkspaceDataTable
                                     columns={[
-                                        'Rank',
-                                        'County',
-                                        'Score',
-                                        'Band',
-                                        'Percentile',
+                                        copy.rank,
+                                        copy.county,
+                                        copy.score,
+                                        copy.band,
+                                        copy.percentile,
                                     ]}
                                     rows={rankingRows}
                                     pagination={report.rankings.pagination}
@@ -347,24 +351,30 @@ export default function AssessmentAnalytics({
 }
 
 function Summary({ label, value }: { label: string; value: string | number }) {
+    const locale = usePage().props.localization.current;
+
     return (
         <Card>
             <CardHeader>
                 <CardDescription>{label}</CardDescription>
                 <CardTitle>
-                    {typeof value === 'number' ? value.toLocaleString() : value}
+                    {typeof value === 'number'
+                        ? value.toLocaleString(locale)
+                        : value}
                 </CardTitle>
             </CardHeader>
         </Card>
     );
 }
 function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
+    const copy = usePage().props.localization.assessmentAnalytics;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="secondary">
                     <Download data-icon="inline-start" />
-                    Export
+                    {copy.export}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -380,5 +390,15 @@ function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
                 </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>
+    );
+}
+
+function interpolate(
+    template: string,
+    replacements: Record<string, string>,
+): string {
+    return Object.entries(replacements).reduce(
+        (message, [key, value]) => message.replace(`:${key}`, value),
+        template,
     );
 }

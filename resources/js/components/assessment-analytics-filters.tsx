@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { ListFilter } from 'lucide-react';
 import DatePickerField from '@/components/date-picker-field';
 import FormSheet from '@/components/form-sheet';
@@ -22,11 +22,13 @@ export default function AssessmentAnalyticsFilters({
     cycles: Option[];
     counties: Option[];
 }) {
+    const copy = usePage().props.localization.assessmentAnalytics;
+
     return (
         <FormSheet
-            title="Filter assessment analytics"
-            description="Limit immutable published results by publication date, assessment cycle or an authorized county."
-            triggerLabel="Filter analysis"
+            title={copy.filter_title}
+            description={copy.filter_description}
+            triggerLabel={copy.filter_analysis}
             icon={ListFilter}
         >
             <Form {...index.form()} className="flex flex-col gap-4">
@@ -34,20 +36,20 @@ export default function AssessmentAnalyticsFilters({
                     <>
                         <DatePickerField
                             name="from"
-                            label="Published from"
+                            label={copy.published_from}
                             defaultValue={filters.from ?? ''}
                             error={errors.from}
                         />
                         <DatePickerField
                             name="to"
-                            label="Published to"
+                            label={copy.published_to}
                             defaultValue={filters.to ?? ''}
                             error={errors.to}
                         />
                         <SearchableSelect
                             id="analytics-cycle"
                             name="cycle_id"
-                            label="Assessment cycle"
+                            label={copy.assessment_cycle}
                             options={cycles}
                             defaultValue={filters.cycle_id ?? ''}
                             optional
@@ -56,7 +58,7 @@ export default function AssessmentAnalyticsFilters({
                         <SearchableSelect
                             id="analytics-county"
                             name="county_id"
-                            label="County"
+                            label={copy.county}
                             options={counties}
                             defaultValue={filters.county_id ?? ''}
                             optional
@@ -64,10 +66,10 @@ export default function AssessmentAnalyticsFilters({
                         />
                         <div className="flex flex-wrap gap-2">
                             <Button type="submit" disabled={processing}>
-                                Apply filters
+                                {copy.apply_filters}
                             </Button>
                             <Button type="button" variant="outline" asChild>
-                                <a href={index.url()}>Clear</a>
+                                <a href={index.url()}>{copy.clear}</a>
                             </Button>
                         </div>
                     </>
