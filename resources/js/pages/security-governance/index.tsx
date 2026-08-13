@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -378,6 +378,7 @@ export default function SecurityGovernance({
     filters,
     capabilities,
 }: Props) {
+    const copy = usePage().props.localization.security.workspace;
     const threatRows: WorkspaceRow[] = threats.data.map((threat) => ({
         id: threat.id,
         status: threat.status,
@@ -494,22 +495,19 @@ export default function SecurityGovernance({
 
     return (
         <>
-            <Head title="Security governance" />
+            <Head title={copy.head_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Security authorization evidence
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Threat and access assurance centre
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                STRIDE-aligned risk treatment,
-                                strong-authentication gates, point-in-time
-                                access snapshots, independent certification,
-                                session revocation and controlled reinstatement.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.manage && (
@@ -539,7 +537,7 @@ export default function SecurityGovernance({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Security status',
+                            label: copy.filters.status,
                             options: [
                                 'submitted',
                                 'accepted',
@@ -571,7 +569,7 @@ export default function SecurityGovernance({
                         },
                         {
                             key: 'county_id',
-                            label: 'County scope',
+                            label: copy.filters.county,
                             options: counties.map((county) => ({
                                 id: county.id,
                                 name: county.name,
@@ -583,69 +581,56 @@ export default function SecurityGovernance({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
                     <Metric
                         icon={ShieldAlert}
-                        label="Threat scenarios"
+                        label={copy.metrics.threats}
                         value={threats.total}
-                        detail={`${highThreats} high-risk on this page`}
+                        detail={copy.metrics.high_risk.replace(':count', String(highThreats))}
                     />
                     <Metric
                         icon={Fingerprint}
-                        label="Certification campaigns"
+                        label={copy.metrics.campaigns}
                         value={campaigns.length}
-                        detail={`${campaigns.filter((campaign) => campaign.status === 'open').length} currently open`}
+                        detail={copy.metrics.open.replace(':count', String(campaigns.filter((campaign) => campaign.status === 'open').length))}
                     />
                     <Metric
                         icon={UserCheck}
-                        label="Access decisions"
+                        label={copy.metrics.decisions}
                         value={accessItems.total - pendingAccess}
-                        detail={`${pendingAccess} pending on this page`}
+                        detail={copy.metrics.pending.replace(':count', String(pendingAccess))}
                     />
                     <Metric
                         icon={UserX}
-                        label="Revocations"
+                        label={copy.metrics.revocations}
                         value={campaigns.reduce(
                             (sum, campaign) => sum + campaign.revokedCount,
                             0,
                         )}
-                        detail="Sessions invalidated on revoke"
+                        detail={copy.metrics.revocations_detail}
                     />
                     <Metric
                         icon={PackageCheck}
-                        label="Supply-chain scans"
+                        label={copy.metrics.supply_chain}
                         value={supplyChainScans.total}
-                        detail={`${supplyChainScans.data.filter((scan) => scan.outcome === 'fail').length} failed on this page`}
+                        detail={copy.metrics.failed.replace(':count', String(supplyChainScans.data.filter((scan) => scan.outcome === 'fail').length))}
                     />
                     <Metric
                         icon={RadioTower}
-                        label="Security response"
+                        label={copy.metrics.response}
                         value={securityIncidents.total}
-                        detail={`${securityIncidents.data.filter((incident) => incident.recordType === 'exercise').length} exercises on this page`}
+                        detail={copy.metrics.exercises.replace(':count', String(securityIncidents.data.filter((incident) => incident.recordType === 'exercise').length))}
                     />
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
                         <h2 className="font-bold">
-                            Joiner–mover–leaver reconciliation
+                            {copy.identity.title}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Source-referenced identity changes with
-                            current/proposed access snapshots, independent
-                            approval, effective-time application, controlled
-                            exceptions, session revocation and immutable
-                            terminal evidence.
+                            {copy.identity.description}
                         </p>
                     </div>
                     {identityRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Source',
-                                'Event ID',
-                                'Change',
-                                'Identity',
-                                'Current role',
-                                'Proposed role',
-                                'Effective',
-                                'Status',
-                            ]}
+                            columns={copy.identity.columns}
                             rows={identityRows}
                             pagination={pagination(
                                 identityLifecycle,
@@ -673,8 +658,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No lifecycle requests"
-                            description="Stage a verified joiner, mover or leaver source event, or adjust the current filters."
+                            title={copy.identity.empty_title}
+                            description={copy.identity.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -686,18 +671,7 @@ export default function SecurityGovernance({
                     />
                     {incidentRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Reference',
-                                'Record type',
-                                'Playbook',
-                                'Incident',
-                                'Severity',
-                                'Services',
-                                'Data exposure',
-                                'Lead',
-                                'Detected',
-                                'Status',
-                            ]}
+                            columns={copy.incidents.columns}
                             rows={incidentRows}
                             pagination={pagination(
                                 securityIncidents,
@@ -723,8 +697,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No security incidents or exercises"
-                            description="Record a live incident or explicitly labelled exercise, or adjust the current filters."
+                            title={copy.incidents.empty_title}
+                            description={copy.incidents.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -732,27 +706,15 @@ export default function SecurityGovernance({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
                         <h2 className="font-bold">
-                            Software supply-chain evidence
+                            {copy.supply_chain.title}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Lock-derived CycloneDX inventories, dependency
-                            advisories, source state and checksum-verified
-                            artifacts. Warning and failed scans remain retained.
+                            {copy.supply_chain.description}
                         </p>
                     </div>
                     {supplyChainRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Started',
-                                'Environment',
-                                'Revision',
-                                'Source state',
-                                'Composer',
-                                'JavaScript',
-                                'Composer advisories',
-                                'NPM high / critical',
-                                'Outcome',
-                            ]}
+                            columns={copy.supply_chain.columns}
                             rows={supplyChainRows}
                             pagination={pagination(
                                 supplyChainScans,
@@ -770,8 +732,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No supply-chain evidence"
-                            description="Run the controlled supply-chain assurance command or adjust the current date and status filters."
+                            title={copy.supply_chain.empty_title}
+                            description={copy.supply_chain.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -783,17 +745,7 @@ export default function SecurityGovernance({
                     />
                     {delegationRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Reference',
-                                'Type',
-                                'Beneficiary',
-                                'County scope',
-                                'Catalogue lineage',
-                                'Permissions',
-                                'Starts',
-                                'Expires',
-                                'Status',
-                            ]}
+                            columns={copy.delegations.columns}
                             rows={delegationRows}
                             pagination={pagination(
                                 delegations,
@@ -818,8 +770,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No temporary access grants"
-                            description="No delegated or emergency access records match the current filters."
+                            title={copy.delegations.empty_title}
+                            description={copy.delegations.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -827,25 +779,15 @@ export default function SecurityGovernance({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
                         <h2 className="font-bold">
-                            Threat and treatment register
+                            {copy.threats.title}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Scenarios, inherent risk, controls, independent
-                            review and residual exposure.
+                            {copy.threats.description}
                         </p>
                     </div>
                     {threatRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Reference',
-                                'Threat',
-                                'Category',
-                                'Asset',
-                                'Inherent risk',
-                                'Residual risk',
-                                'Treatment',
-                                'Status',
-                            ]}
+                            columns={copy.threats.columns}
                             rows={threatRows}
                             pagination={pagination(threats, 'threat_page')}
                             renderActionControl={(row) => {
@@ -863,8 +805,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching threats"
-                            description="Register a threat scenario or adjust the filters."
+                            title={copy.threats.empty_title}
+                            description={copy.threats.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -872,11 +814,10 @@ export default function SecurityGovernance({
                 <section>
                     <div className="mb-3">
                         <h2 className="text-lg font-bold">
-                            Access certification campaigns
+                            {copy.campaigns.title}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Immutable campaign evidence closes only after every
-                            identity has a decision.
+                            {copy.campaigns.description}
                         </p>
                     </div>
                     <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -888,8 +829,8 @@ export default function SecurityGovernance({
                         ))}
                         {campaigns.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No access reviews launched"
-                                description="Launch the first role-scoped certification campaign with an independent reviewer."
+                                title={copy.campaigns.empty_title}
+                                description={copy.campaigns.empty_description}
                                 className="min-h-56 lg:col-span-2 xl:col-span-3"
                             />
                         )}
@@ -902,16 +843,7 @@ export default function SecurityGovernance({
                     />
                     {accessRows.length ? (
                         <WorkspaceDataTable
-                            columns={[
-                                'Campaign',
-                                'Identity',
-                                'Role',
-                                'County scope',
-                                'Authentication',
-                                'Permissions',
-                                'Last active',
-                                'Decision',
-                            ]}
+                            columns={copy.access.columns}
                             rows={accessRows}
                             pagination={pagination(accessItems, 'access_page')}
                             bulkExport={{
@@ -933,8 +865,8 @@ export default function SecurityGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No access review items"
-                            description="No certification items match the current filters."
+                            title={copy.access.empty_title}
+                            description={copy.access.empty_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -953,6 +885,7 @@ function IdentityLifecycleForm({
     roles: Option[];
     counties: CountyIdentityValue[];
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [eventType, setEventType] = useState('mover');
 
     return (
@@ -1037,8 +970,7 @@ function IdentityLifecycleForm({
                     label="Business reason and source reconciliation note"
                 />
                 <Button type="submit">
-                    <RefreshCw aria-hidden="true" /> Stage for independent
-                    decision
+                    <RefreshCw aria-hidden="true" /> {copy.ui.stage_decision}
                 </Button>
             </Form>
         </FormSheet>
@@ -1052,6 +984,7 @@ function IdentityLifecycleAction({
     change: IdentityLifecycle;
     mayDecide: boolean;
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1069,7 +1002,7 @@ function IdentityLifecycleAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setOpen(true)}>
-                            <Eye aria-hidden="true" /> Review lifecycle evidence
+                            <Eye aria-hidden="true" /> {copy.ui.review_lifecycle}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -1078,11 +1011,11 @@ function IdentityLifecycleAction({
                 <SheetContent className="overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {humanize(change.eventType)} · {change.user.name}
+                            {humanize(change.eventType)} {copy.ui.separator}{' '}
+                            {change.user.name}
                         </SheetTitle>
                         <SheetDescription>
-                            Source, before/after scope, decision and checksum
-                            evidence.
+                            {copy.ui.lifecycle_evidence_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-5 px-4 pb-8">
@@ -1161,7 +1094,7 @@ function IdentityLifecycleAction({
                         />
                         <div className="rounded-xl border p-4">
                             <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                                Business reason
+                                {copy.ui.business_reason}
                             </p>
                             <p className="mt-2 text-sm whitespace-pre-wrap">
                                 {change.businessReason}
@@ -1185,8 +1118,8 @@ function IdentityLifecycleAction({
                                     label="Decision rationale"
                                 />
                                 <Button type="submit">
-                                    <ShieldCheck aria-hidden="true" /> Record
-                                    independent decision
+                                    <ShieldCheck aria-hidden="true" />{' '}
+                                    {copy.ui.record_independent_decision}
                                 </Button>
                             </Form>
                         )}
@@ -1198,6 +1131,7 @@ function IdentityLifecycleAction({
 }
 
 function SecurityIncidentForm({ users }: { users: Option[] }) {
+    const copy = usePage().props.localization.security.workspace;
     const [recordType, setRecordType] = useState('live');
 
     return (
@@ -1289,7 +1223,7 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                     />
                 )}
                 <Button type="submit">
-                    <RadioTower className="size-4" /> Record{' '}
+                    <RadioTower className="size-4" /> {copy.ui.record}{' '}
                     {humanize(recordType)}
                 </Button>
             </Form>
@@ -1306,6 +1240,7 @@ function SecurityIncidentAction({
     canManage: boolean;
     currentUserId: string | null;
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [surface, setSurface] = useState<
         'details' | 'transition' | 'upload' | null
     >(null);
@@ -1344,20 +1279,23 @@ function SecurityIncidentAction({
                         <DropdownMenuItem
                             onSelect={() => setSurface('details')}
                         >
-                            <Eye className="size-4" /> Review response evidence
+                            <Eye className="size-4" />{' '}
+                            {copy.ui.review_response}
                         </DropdownMenuItem>
                         {canManage && incident.status !== 'closed' && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('upload')}
                             >
-                                <Upload className="size-4" /> Upload evidence
+                                <Upload className="size-4" />{' '}
+                                {copy.ui.upload_evidence}
                             </DropdownMenuItem>
                         )}
                         {canTransition && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('transition')}
                             >
-                                <ShieldCheck className="size-4" /> Record{' '}
+                                <ShieldCheck className="size-4" />{' '}
+                                {copy.ui.record}{' '}
                                 {humanize(transition ?? '')}
                             </DropdownMenuItem>
                         )}
@@ -1372,9 +1310,9 @@ function SecurityIncidentAction({
                     <SheetHeader>
                         <SheetTitle>{incident.title}</SheetTitle>
                         <SheetDescription>
-                            {incident.reference} ·{' '}
-                            {humanize(incident.recordType)} ·{' '}
-                            {humanize(incident.severity)} ·{' '}
+                            {incident.reference} {copy.ui.separator}{' '}
+                            {humanize(incident.recordType)} {copy.ui.separator}{' '}
+                            {humanize(incident.severity)} {copy.ui.separator}{' '}
                             {humanize(incident.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -1397,6 +1335,8 @@ function SecurityIncidentAction({
 }
 
 function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <>
             <dl className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
@@ -1447,7 +1387,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                 />
             </dl>
             <div>
-                <h3 className="font-semibold">Immutable response timeline</h3>
+                <h3 className="font-semibold">{copy.ui.response_timeline}</h3>
                 <div className="mt-3 grid gap-3">
                     {incident.events.map((event) => (
                         <div key={event.id} className="rounded-xl border p-4">
@@ -1461,7 +1401,8 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                             </div>
                             <p className="mt-2 text-sm">{event.narrative}</p>
                             <p className="mt-2 text-xs text-muted-foreground">
-                                {event.actorName} · {event.fromStatus} →{' '}
+                                {event.actorName} {copy.ui.separator}{' '}
+                                {event.fromStatus} {copy.ui.arrow}{' '}
                                 {event.toStatus}
                             </p>
                             <p className="mt-1 font-mono text-[11px] break-all text-muted-foreground">
@@ -1472,7 +1413,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                 </div>
             </div>
             <div>
-                <h3 className="font-semibold">Private incident records</h3>
+                <h3 className="font-semibold">{copy.ui.private_records}</h3>
                 <div className="mt-3 grid gap-3">
                     {incident.documents.length ? (
                         incident.documents.map((document) => (
@@ -1485,8 +1426,9 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                                         {document.title}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {humanize(document.purpose)} ·{' '}
-                                        {document.sourceType} ·{' '}
+                                        {humanize(document.purpose)}{' '}
+                                        {copy.ui.separator} {document.sourceType}{' '}
+                                        {copy.ui.separator}{' '}
                                         {document.scanStatus}
                                     </p>
                                 </div>
@@ -1512,7 +1454,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                                                         document: document.id,
                                                     })}
                                                 >
-                                                    Preview
+                                                    {copy.ui.preview}
                                                 </a>
                                             </Button>
                                         )}
@@ -1522,7 +1464,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                                                 document: document.id,
                                             })}
                                         >
-                                            Download
+                                            {copy.ui.download}
                                         </a>
                                     </Button>
                                 </div>
@@ -1530,7 +1472,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                         ))
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            No incident records uploaded.
+                            {copy.ui.no_incident_records}
                         </p>
                     )}
                 </div>
@@ -1546,6 +1488,8 @@ function SecurityIncidentTransitionForm({
     incident: SecurityIncident;
     transition: string;
 }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <Form
             action={transitionSecurityIncident({
@@ -1597,7 +1541,8 @@ function SecurityIncidentTransitionForm({
                 </>
             )}
             <Button type="submit">
-                <ShieldCheck className="size-4" /> Record {humanize(transition)}
+                <ShieldCheck className="size-4" /> {copy.ui.record}{' '}
+                {humanize(transition)}
             </Button>
         </Form>
     );
@@ -1608,6 +1553,8 @@ function SecurityIncidentDocumentForm({
 }: {
     incident: SecurityIncident;
 }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <Form
             action={storeSecurityIncidentDocument({
@@ -1636,7 +1583,7 @@ function SecurityIncidentDocumentForm({
             />
             <div className="grid gap-2">
                 <Label htmlFor={`incident-document-${incident.id}`}>
-                    Scanned or born-digital record
+                    {copy.ui.scanned_or_digital}
                 </Label>
                 <Input
                     id={`incident-document-${incident.id}`}
@@ -1646,13 +1593,14 @@ function SecurityIncidentDocumentForm({
                 />
             </div>
             <Button type="submit">
-                <Upload className="size-4" /> Upload private evidence
+                <Upload className="size-4" /> {copy.ui.upload_private_evidence}
             </Button>
         </Form>
     );
 }
 
 function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
+    const copy = usePage().props.localization.security.workspace;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1671,7 +1619,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setOpen(true)}>
                             <Eye className="size-4" />
-                            Review evidence
+                            {copy.ui.review_evidence}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -1679,10 +1627,9 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-3xl">
                     <SheetHeader>
-                        <SheetTitle>Supply-chain scan evidence</SheetTitle>
+                        <SheetTitle>{copy.ui.supply_chain_evidence}</SheetTitle>
                         <SheetDescription>
-                            Immutable scan {scan.id} captured from exact
-                            dependency lockfiles and source state.
+                            {copy.ui.immutable_scan.replace(':id', scan.id)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-5 py-6">
@@ -1694,7 +1641,8 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 {scan.sbomFormat} {scan.sbomSpecVersion}
                             </Badge>
                             <span className="text-sm text-muted-foreground">
-                                {formatDate(scan.completedAt)} ·{' '}
+                                {formatDate(scan.completedAt)}{' '}
+                                {copy.ui.separator}{' '}
                                 {scan.initiatedBy}
                             </span>
                         </div>
@@ -1725,7 +1673,9 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                             />
                         </dl>
                         <div>
-                            <h3 className="text-sm font-semibold">Findings</h3>
+                            <h3 className="text-sm font-semibold">
+                                {copy.ui.findings}
+                            </h3>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {scan.findingCodes.length ? (
                                     scan.findingCodes.map((finding) => (
@@ -1735,7 +1685,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                     ))
                                 ) : (
                                     <span className="text-sm text-muted-foreground">
-                                        No findings recorded.
+                                        {copy.ui.no_findings}
                                     </span>
                                 )}
                             </div>
@@ -1766,7 +1716,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                     ])}
                                 >
                                     <Download className="size-4" />
-                                    Download verified CycloneDX SBOM
+                                    {copy.ui.download_sbom}
                                 </a>
                             </Button>
                         )}
@@ -1799,6 +1749,7 @@ function DelegationForm({
     counties: CountyIdentityValue[];
     catalogue: Props['referenceDataCatalogue'];
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [accessType, setAccessType] = useState('delegated');
     const [scopeType, setScopeType] = useState('county_portfolio');
 
@@ -1887,7 +1838,7 @@ function DelegationForm({
                     />
                 )}
                 <Button type="submit">
-                    <KeyRound /> Submit for independent approval
+                    <KeyRound /> {copy.ui.submit_for_approval}
                 </Button>
             </Form>
         </FormSheet>
@@ -1901,6 +1852,7 @@ function DelegationAction({
     delegation: AccessDelegation;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [surface, setSurface] = useState<
         'detail' | 'decide' | 'revoke' | 'review' | null
     >(null);
@@ -1929,27 +1881,27 @@ function DelegationAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View authorization evidence
+                            <Eye /> {copy.ui.view_authorization}
                         </DropdownMenuItem>
                         {mayDecide && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('decide')}
                             >
-                                <ShieldCheck /> Approve or reject
+                                <ShieldCheck /> {copy.ui.approve_or_reject}
                             </DropdownMenuItem>
                         )}
                         {mayRevoke && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('revoke')}
                             >
-                                <UserX /> Revoke immediately
+                                <UserX /> {copy.ui.revoke_immediately}
                             </DropdownMenuItem>
                         )}
                         {mayReview && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('review')}
                             >
-                                <Fingerprint /> Post-use review
+                                <Fingerprint /> {copy.ui.post_use_review}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -1971,8 +1923,9 @@ function DelegationAction({
                                     : delegation.reference}
                         </SheetTitle>
                         <SheetDescription>
-                            {delegation.beneficiary.name} ·{' '}
-                            {humanize(delegation.accessType)} ·{' '}
+                            {delegation.beneficiary.name} {copy.ui.separator}{' '}
+                            {humanize(delegation.accessType)}{' '}
+                            {copy.ui.separator}{' '}
                             {humanize(delegation.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -1995,7 +1948,7 @@ function DelegationAction({
                                     label="Independent evidence-based rationale"
                                 />
                                 <Button type="submit">
-                                    <ShieldCheck /> Record decision
+                                    <ShieldCheck /> {copy.ui.record_decision}
                                 </Button>
                             </Form>
                         ) : surface === 'revoke' ? (
@@ -2010,7 +1963,7 @@ function DelegationAction({
                                     label="Immediate revocation reason"
                                 />
                                 <Button type="submit" variant="destructive">
-                                    <UserX /> Revoke access
+                                    <UserX /> {copy.ui.revoke_access}
                                 </Button>
                             </Form>
                         ) : surface === 'review' ? (
@@ -2035,7 +1988,8 @@ function DelegationAction({
                                     label="Audit findings and follow-up"
                                 />
                                 <Button type="submit">
-                                    <Fingerprint /> Complete independent review
+                                    <Fingerprint />{' '}
+                                    {copy.ui.complete_review}
                                 </Button>
                             </Form>
                         ) : (
@@ -2121,6 +2075,7 @@ function ThreatAction({
     threat: Threat;
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [surface, setSurface] = useState<'detail' | 'review' | null>(null);
 
     return (
@@ -2138,13 +2093,13 @@ function ThreatAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View threat
+                            <Eye /> {copy.ui.view_threat}
                         </DropdownMenuItem>
                         {canManage && threat.status === 'submitted' && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('review')}
                             >
-                                <ShieldCheck /> Independent review
+                                <ShieldCheck /> {copy.ui.independent_review}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -2162,8 +2117,11 @@ function ThreatAction({
                                 : threat.title}
                         </SheetTitle>
                         <SheetDescription>
-                            {threat.reference} · {humanize(threat.category)} ·
-                            inherent risk {threat.inherentRiskScore}/25
+                            {threat.reference} {copy.ui.separator}{' '}
+                            {humanize(threat.category)} {copy.ui.separator}{' '}
+                            {copy.ui.inherent_risk}{' '}
+                            {threat.inherentRiskScore}
+                            {copy.ui.out_of_25}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -2217,14 +2175,15 @@ function ThreatAction({
 }
 
 function ThreatReviewForm({ threat }: { threat: Threat }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <Form
             action={reviewThreat({ securityThreat: threat.id })}
             className="grid gap-4"
         >
             <p className="rounded-lg border bg-muted/40 p-3 text-sm">
-                The author cannot review this record. Risk acceptance requires
-                an accountable external approval reference.
+                {copy.ui.threat_review_notice}
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
                 <SearchableSelect
@@ -2267,13 +2226,14 @@ function ThreatReviewForm({ threat }: { threat: Threat }) {
             </div>
             <TextField name="review_note" label="Independent findings" />
             <Button type="submit">
-                <ShieldCheck /> Record threat review
+                <ShieldCheck /> {copy.ui.record_threat_review}
             </Button>
         </Form>
     );
 }
 
 function CampaignCard({ campaign }: { campaign: Campaign }) {
+    const copy = usePage().props.localization.security.workspace;
     const [open, setOpen] = useState(false);
 
     return (
@@ -2282,10 +2242,13 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
                 <CardHeader className="flex-row items-start justify-between">
                     <div>
                         <CardTitle>
-                            {campaign.reference} · {campaign.name}
+                            {campaign.reference} {copy.ui.separator}{' '}
+                            {campaign.name}
                         </CardTitle>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Reviewer: {campaign.reviewer ?? 'Unassigned'}
+                            {copy.ui.reviewer}
+                            {copy.ui.label_separator}{' '}
+                            {campaign.reviewer ?? 'Unassigned'}
                         </p>
                     </div>
                     <Button
@@ -2301,10 +2264,10 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
                     <div className="flex flex-wrap gap-2">
                         <Badge>{humanize(campaign.status)}</Badge>
                         <Badge variant="outline">
-                            {campaign.itemCount} identities
+                            {campaign.itemCount} {copy.ui.identities}
                         </Badge>
                         <Badge variant="outline">
-                            {campaign.revokedCount} revoked
+                            {campaign.revokedCount} {copy.ui.revoked}
                         </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -2312,7 +2275,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
                     </p>
                     {campaign.checksum && (
                         <p className="truncate font-mono text-xs text-muted-foreground">
-                            SHA-256 {campaign.checksum}
+                            {copy.ui.sha256} {campaign.checksum}
                         </p>
                     )}
                 </CardContent>
@@ -2322,7 +2285,8 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
                     <SheetHeader>
                         <SheetTitle>{campaign.reference}</SheetTitle>
                         <SheetDescription>
-                            {campaign.periodFrom} – {campaign.periodTo}
+                            {campaign.periodFrom} {copy.ui.date_separator}{' '}
+                            {campaign.periodTo}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pb-8">
@@ -2365,6 +2329,7 @@ function AccessAction({
     item: AccessItem;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.security.workspace;
     const [surface, setSurface] = useState<
         'detail' | 'decide' | 'reinstate' | null
     >(null);
@@ -2394,20 +2359,20 @@ function AccessAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setSurface('detail')}>
-                            <Eye /> View access snapshot
+                            <Eye /> {copy.ui.view_access_snapshot}
                         </DropdownMenuItem>
                         {mayDecide && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('decide')}
                             >
-                                <UserCheck /> Record decision
+                                <UserCheck /> {copy.ui.record_decision}
                             </DropdownMenuItem>
                         )}
                         {mayReinstate && (
                             <DropdownMenuItem
                                 onSelect={() => setSurface('reinstate')}
                             >
-                                <KeyRound /> Reinstate access
+                                <KeyRound /> {copy.ui.reinstate_access}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -2427,7 +2392,8 @@ function AccessAction({
                                   : item.user.name}
                         </SheetTitle>
                         <SheetDescription>
-                            {item.campaign.reference} · {humanize(item.role)} ·{' '}
+                            {item.campaign.reference} {copy.ui.separator}{' '}
+                            {humanize(item.role)} {copy.ui.separator}{' '}
                             {humanize(item.decision)}
                         </SheetDescription>
                     </SheetHeader>
@@ -2442,10 +2408,7 @@ function AccessAction({
                                 className="grid gap-4"
                             >
                                 <p className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-                                    Reinstatement requires a different actor
-                                    from the revoker, a formal approval
-                                    reference, and strong authentication for
-                                    privileged roles.
+                                    {copy.ui.reinstatement_notice}
                                 </p>
                                 <Field
                                     name="approval_reference"
@@ -2456,7 +2419,8 @@ function AccessAction({
                                     label="Remediation and reinstatement rationale"
                                 />
                                 <Button type="submit">
-                                    <KeyRound /> Reinstate controlled access
+                                    <KeyRound />{' '}
+                                    {copy.ui.reinstate_controlled_access}
                                 </Button>
                             </Form>
                         ) : (
@@ -2529,6 +2493,7 @@ function AccessAction({
 }
 
 function AccessDecisionForm({ item }: { item: AccessItem }) {
+    const copy = usePage().props.localization.security.workspace;
     const [decision, setDecision] = useState('');
 
     return (
@@ -2537,9 +2502,7 @@ function AccessDecisionForm({ item }: { item: AccessItem }) {
             className="grid gap-4"
         >
             <p className="rounded-lg border bg-muted/40 p-3 text-sm">
-                Retaining privileged access requires current MFA or a passkey.
-                Revocation removes role/county assignments and invalidates every
-                database session.
+                {copy.ui.certification_notice}
             </p>
             <SearchableSelect
                 id={`access-decision-${item.id}`}
@@ -2564,13 +2527,15 @@ function AccessDecisionForm({ item }: { item: AccessItem }) {
                 </>
             )}
             <Button type="submit">
-                <UserCheck /> Record certification decision
+                <UserCheck /> {copy.ui.record_certification}
             </Button>
         </Form>
     );
 }
 
 function ThreatForm({ users }: { users: Option[] }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <FormSheet
             title="Register threat scenario"
@@ -2636,13 +2601,15 @@ function ThreatForm({ users }: { users: Option[] }) {
                     label="Evidence references (comma separated)"
                     optional
                 />
-                <Button type="submit">Submit threat for review</Button>
+                <Button type="submit">{copy.ui.submit_threat}</Button>
             </Form>
         </FormSheet>
     );
 }
 
 function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <FormSheet
             title="Launch access certification"
@@ -2687,7 +2654,7 @@ function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
                     name="scope"
                     label="Scope, criteria and exclusions"
                 />
-                <Button type="submit">Launch certification campaign</Button>
+                <Button type="submit">{copy.ui.launch_campaign}</Button>
             </Form>
         </FormSheet>
     );
@@ -2700,12 +2667,17 @@ function RegisterHeader({
     filters: Record<string, string | undefined>;
     count: number;
 }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
             <div>
-                <h2 className="font-bold">Access certification register</h2>
+                <h2 className="font-bold">{copy.ui.access_register}</h2>
                 <p className="text-sm text-muted-foreground">
-                    {count.toLocaleString()} point-in-time identity snapshots
+                    {copy.ui.identity_snapshots.replace(
+                        ':count',
+                        count.toLocaleString(),
+                    )}
                 </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -2738,15 +2710,19 @@ function SecurityIncidentRegisterHeader({
     filters: Record<string, string | undefined>;
     count: number;
 }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
             <div>
                 <h2 className="font-bold">
-                    Security incident and exercise register
+                    {copy.ui.incident_register}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                    {count.toLocaleString()} live or explicitly labelled
-                    exercise records with immutable response evidence
+                    {copy.ui.incident_records.replace(
+                        ':count',
+                        count.toLocaleString(),
+                    )}
                 </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -2776,15 +2752,19 @@ function DelegationRegisterHeader({
     filters: Record<string, string | undefined>;
     count: number;
 }) {
+    const copy = usePage().props.localization.security.workspace;
+
     return (
         <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
             <div>
                 <h2 className="font-bold">
-                    Temporary and emergency access register
+                    {copy.ui.delegation_register}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                    {count.toLocaleString()} governed, time-bound authorization
-                    records
+                    {copy.ui.delegation_records.replace(
+                        ':count',
+                        count.toLocaleString(),
+                    )}
                 </p>
             </div>
             <div className="flex flex-wrap gap-2">

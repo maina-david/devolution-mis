@@ -76,6 +76,59 @@ declare module '@inertiajs/core' {
                 evidence: Record<string, string>;
                 learning: Record<string, string>;
                 analytics: Record<string, string>;
+                security: {
+                    workspace: {
+                        head_title: string;
+                        eyebrow: string;
+                        title: string;
+                        description: string;
+                        filters: { status: string; county: string };
+                        metrics: Record<string, string>;
+                        ui: Record<string, string>;
+                        identity: {
+                            title: string;
+                            description: string;
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        incidents: {
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        supply_chain: {
+                            title: string;
+                            description: string;
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        delegations: {
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        threats: {
+                            title: string;
+                            description: string;
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        campaigns: {
+                            title: string;
+                            description: string;
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                        access: {
+                            columns: string[];
+                            empty_title: string;
+                            empty_description: string;
+                        };
+                    };
+                };
                 referenceData: Record<string, string>;
                 welcome: Record<string, string>;
                 support: Record<string, string> & {

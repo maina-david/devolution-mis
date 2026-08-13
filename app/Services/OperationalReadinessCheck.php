@@ -56,9 +56,9 @@ class OperationalReadinessCheck
                     ->pluck('indexname')
                     ->all();
                 $missingIndexes = array_values(array_diff($requiredIndexes, $availableIndexes));
-                abort_if($missingIndexes !== [], 503, 'Required discovery indexes are unavailable: '.implode(', ', $missingIndexes));
+                abort_if($missingIndexes !== [], 503, __('operations.readiness.search_indexes_missing', ['indexes' => implode(', ', $missingIndexes)]));
 
-                return count($requiredIndexes).' required discovery indexes are available.';
+                return __('operations.readiness.search_indexes_available', ['count' => count($requiredIndexes)]);
             }),
             'document_malware_scanner' => $this->timed(fn (): string => $this->documentSecurityScanner->readinessDetail()),
         ];
