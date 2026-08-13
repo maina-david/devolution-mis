@@ -99,7 +99,7 @@ class AccessControlManagementTest extends TestCase
         $this->assertIsString($source);
         $this->assertStringContainsString('flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8', $source);
         $this->assertStringContainsString('authenticated-page-header', $source);
-        $this->assertStringContainsString('Identity and access governance', $source);
+        $this->assertStringContainsString('{copy.eyebrow}', $source);
         $this->assertStringContainsString('index()', $source);
         $this->assertStringNotContainsString("href: '#'", $source);
     }

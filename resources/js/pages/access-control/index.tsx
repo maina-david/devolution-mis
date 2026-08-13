@@ -1,4 +1,4 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import { Ellipsis, KeyRound, Pencil, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
 import TableEmptyState from '@/components/table-empty-state';
@@ -59,6 +59,10 @@ type User = {
 };
 type PaginationLink = { url: string | null; label: string; active: boolean };
 
+function useAccessControlCopy(): Record<string, string> {
+    return usePage().props.localization.accessControl;
+}
+
 export default function AccessControl({
     roles,
     permissions,
@@ -79,6 +83,7 @@ export default function AccessControl({
     };
     filters: { search: string; per_page: number };
 }) {
+    const copy = useAccessControlCopy();
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -92,42 +97,37 @@ export default function AccessControl({
 
     return (
         <>
-            <Head title="Roles and permissions" />
+            <Head title={copy.head_title} />
             <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
-                    <p>Identity and access governance</p>
-                    <h1>Roles & permissions</h1>
-                    <p>
-                        Govern role inheritance and exceptional direct user
-                        permissions from one audited, least-privilege control
-                        plane.
-                    </p>
+                    <p>{copy.eyebrow}</p>
+                    <h1>{copy.title}</h1>
+                    <p>{copy.description}</p>
                 </section>
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <Metric
                         icon={ShieldCheck}
-                        label="Programme roles"
+                        label={copy.programme_roles}
                         value={roles.length}
                     />
                     <Metric
                         icon={KeyRound}
-                        label="Permission definitions"
+                        label={copy.permission_definitions}
                         value={permissions.length}
                     />
                     <Metric
                         icon={Users}
-                        label="Users in register"
+                        label={copy.users_in_register}
                         value={users.total}
                     />
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Role permission matrix</CardTitle>
+                        <CardTitle>{copy.role_matrix}</CardTitle>
                         <CardDescription>
-                            Role permissions are inherited by every user
-                            assigned to that role. Changes are audited.
+                            {copy.role_matrix_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -142,9 +142,10 @@ export default function AccessControl({
                                             {role.label}
                                         </h2>
                                         <p className="text-sm text-muted-foreground">
-                                            {role.userCount} users ·{' '}
+                                            {role.userCount} {copy.users}{' '}
+                                            {copy.separator}{' '}
                                             {role.permissions.length}{' '}
-                                            permissions
+                                            {copy.permissions}
                                         </p>
                                     </div>
                                     <Button
@@ -152,14 +153,15 @@ export default function AccessControl({
                                         size="sm"
                                         onClick={() => setSelectedRole(role)}
                                     >
-                                        <Pencil data-icon="inline-start" /> Edit
+                                        <Pencil data-icon="inline-start" />{' '}
+                                        {copy.edit}
                                     </Button>
                                 </div>
                                 <p className="line-clamp-3 text-sm text-muted-foreground">
                                     {role.permissions
                                         .map(humanize)
                                         .join(', ') ||
-                                        'No inherited permissions'}
+                                        copy.no_inherited_permissions}
                                 </p>
                             </div>
                         ))}
@@ -168,34 +170,33 @@ export default function AccessControl({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Direct permission exceptions</CardTitle>
+                        <CardTitle>{copy.direct_exceptions}</CardTitle>
                         <CardDescription>
-                            Direct grants are explicit exceptions layered over
-                            the role. Use them sparingly and record a reason.
+                            {copy.direct_exceptions_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
                         <Input
                             defaultValue={filters.search}
                             onChange={(event) => search(event.target.value)}
-                            placeholder="Search users by name or email"
-                            aria-label="Search users"
+                            placeholder={copy.search_placeholder}
+                            aria-label={copy.search_users}
                         />
                         <div className="overflow-x-auto rounded-lg border">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead className="w-16">
-                                            No.
+                                            {copy.number}
                                         </TableHead>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Inherited</TableHead>
-                                        <TableHead>Direct</TableHead>
-                                        <TableHead>Effective</TableHead>
+                                        <TableHead>{copy.user}</TableHead>
+                                        <TableHead>{copy.role}</TableHead>
+                                        <TableHead>{copy.inherited}</TableHead>
+                                        <TableHead>{copy.direct}</TableHead>
+                                        <TableHead>{copy.effective}</TableHead>
                                         <TableHead className="w-16">
                                             <span className="sr-only">
-                                                Actions
+                                                {copy.actions}
                                             </span>
                                         </TableHead>
                                     </TableRow>
@@ -240,7 +241,7 @@ export default function AccessControl({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            aria-label={`Actions for ${user.name}`}
+                                                            aria-label={`${copy.actions_for} ${user.name}`}
                                                         >
                                                             <Ellipsis />
                                                         </Button>
@@ -253,8 +254,9 @@ export default function AccessControl({
                                                                 )
                                                             }
                                                         >
-                                                            Manage direct
-                                                            permissions
+                                                            {
+                                                                copy.manage_direct_permissions
+                                                            }
                                                         </DropdownMenuItem>
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
@@ -265,8 +267,10 @@ export default function AccessControl({
                                         <TableRow>
                                             <TableCell colSpan={7}>
                                                 <TableEmptyState
-                                                    title="No users found"
-                                                    description="No authorized users match the active search."
+                                                    title={copy.no_users}
+                                                    description={
+                                                        copy.no_users_description
+                                                    }
                                                 />
                                             </TableCell>
                                         </TableRow>
@@ -276,8 +280,9 @@ export default function AccessControl({
                         </div>
                         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
                             <span>
-                                Showing {users.from ?? 0}–{users.to ?? 0} of{' '}
-                                {users.total}
+                                {copy.showing} {users.from ?? 0}
+                                {copy.range_separator}
+                                {users.to ?? 0} {copy.of} {users.total}
                             </span>
                             <div className="flex gap-1">
                                 {users.links.map((link, linkIndex) =>
@@ -313,9 +318,11 @@ export default function AccessControl({
                 open={selectedRole !== null}
                 onOpenChange={(open) => !open && setSelectedRole(null)}
                 title={
-                    selectedRole ? `Edit ${selectedRole.label}` : 'Edit role'
+                    selectedRole
+                        ? `${copy.edit} ${selectedRole.label}`
+                        : copy.edit_role
                 }
-                description="Select the complete inherited permission set for this role."
+                description={copy.role_sheet_description}
                 action={
                     selectedRole
                         ? updateRole.form({ role: selectedRole.name })
@@ -329,10 +336,10 @@ export default function AccessControl({
                 onOpenChange={(open) => !open && setSelectedUser(null)}
                 title={
                     selectedUser
-                        ? `Direct permissions · ${selectedUser.name}`
-                        : 'Direct permissions'
+                        ? `${copy.direct_permissions} ${copy.separator} ${selectedUser.name}`
+                        : copy.direct_permissions
                 }
-                description="Select only exceptional permissions. Role-inherited permissions remain unchanged."
+                description={copy.user_sheet_description}
                 action={
                     selectedUser
                         ? updateUserPermissions.form({
@@ -369,6 +376,8 @@ function PermissionSheet({
     defaults: string[];
     inherited?: string[];
 }) {
+    const copy = useAccessControlCopy();
+
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="overflow-y-auto sm:max-w-2xl">
@@ -391,7 +400,9 @@ function PermissionSheet({
                                             errors.permissions,
                                         )}
                                     >
-                                        <FieldLabel>Permissions</FieldLabel>
+                                        <FieldLabel>
+                                            {copy.permissions}
+                                        </FieldLabel>
                                         <div className="grid gap-3 rounded-lg border p-3 sm:grid-cols-2">
                                             {permissions.map((permission) => (
                                                 <label
@@ -414,7 +425,7 @@ function PermissionSheet({
                                                             {inherited.includes(
                                                                 permission.value,
                                                             )
-                                                                ? ' · inherited by role'
+                                                                ? ` ${copy.separator} ${copy.inherited_by_role}`
                                                                 : ''}
                                                         </span>
                                                     </span>
@@ -429,14 +440,16 @@ function PermissionSheet({
                                         data-invalid={Boolean(errors.reason)}
                                     >
                                         <FieldLabel htmlFor="permission-change-reason">
-                                            Business reason
+                                            {copy.business_reason}
                                         </FieldLabel>
                                         <Textarea
                                             id="permission-change-reason"
                                             name="reason"
                                             required
                                             minLength={20}
-                                            placeholder="Record the approved operational reason for this access change."
+                                            placeholder={
+                                                copy.reason_placeholder
+                                            }
                                         />
                                         <FieldError>{errors.reason}</FieldError>
                                     </Field>
@@ -447,7 +460,7 @@ function PermissionSheet({
                                         disabled={processing}
                                         aria-busy={processing}
                                     >
-                                        Save permission changes
+                                        {copy.save_changes}
                                     </Button>
                                 </SheetFooter>
                             </>

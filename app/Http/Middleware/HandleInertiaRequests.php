@@ -125,6 +125,7 @@ class HandleInertiaRequests extends Middleware
                 'migration' => __('migration.ui'),
                 'travelClearance' => __('travel-clearance'),
                 'assessmentConfiguration' => __('assessment-configuration'),
+                'accessControl' => __('access-control'),
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),
