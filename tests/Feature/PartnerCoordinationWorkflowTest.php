@@ -32,6 +32,7 @@ use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -51,7 +52,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $administrator = User::factory()->devolutionAdmin()->create();
         $release = $this->publishedReferenceRelease([$county], [$sector], [$organization], $administrator);
 
-        $this->actingAs($administrator)->post(route('partners.profiles.store'), [
+        $this->withSession(['locale' => 'fr'])->actingAs($administrator)->post(route('partners.profiles.store'), [
             'organization_id' => $organization->id,
             'partner_type' => 'multilateral',
             'country' => 'Kenya',
@@ -63,7 +64,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
             'county_ids' => [$county->id],
             'sector_ids' => [$sector->id],
             'user_ids' => [$representative->id],
-        ])->assertRedirect();
+        ])->assertRedirect()->assertInertiaFlash('toast.message', 'Le profil du partenaire a été créé. La couverture de collaboration a été réanalysée.');
 
         $partner = PartnerProfile::query()->sole();
         $this->assertTrue(Str::isUuid($partner->id));
@@ -430,17 +431,17 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $exceptionContribution = PartnerContribution::factory()->create(['partner_profile_id' => $partner->id, 'devolution_project_id' => $project->id, 'reported_by' => $representative->id, 'contribution_type' => 'loan']);
         $exception = PartnerContributionReconciliation::factory()->create(['partner_contribution_id' => $exceptionContribution->id, 'reviewed_by' => $manager->id, 'decision' => 'exception']);
 
-        $this->artisan('partners:monitor-operational-alerts')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('partners:monitor-operational-alerts'));
         $this->assertSame(3, PartnerOperationalAlert::query()->count());
         Notification::assertSentToTimes($representative, ProgrammeAlert::class, 3);
         Notification::assertSentToTimes($manager, ProgrammeAlert::class, 3);
 
-        $this->artisan('partners:monitor-operational-alerts')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('partners:monitor-operational-alerts'));
         $this->assertSame(3, PartnerOperationalAlert::query()->count());
         Notification::assertSentToTimes($representative, ProgrammeAlert::class, 3);
 
         PartnerContributionReconciliation::factory()->create(['partner_contribution_id' => $exceptionContribution->id, 'reviewed_by' => $manager->id, 'version' => 2, 'decision' => 'verified', 'predecessor_checksum' => $exception->decision_checksum]);
-        $this->artisan('partners:monitor-operational-alerts')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('partners:monitor-operational-alerts'));
         $this->assertSame('system_resolved', PartnerOperationalAlert::query()->where('alert_type', 'contribution_reconciliation_exception')->value('status'));
 
         $this->actingAs($outsider)->get(route('partners.index'))->assertOk()->assertInertia(fn (Assert $page) => $page->has('operationalAlerts', 0));
@@ -481,7 +482,10 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $plan = PartnerCollaborationPlan::query()->sole();
         $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'submit'])->assertRedirect();
         $manager->givePermissionTo(ProgrammePermission::ApprovePartnerAgreements->value);
-        $this->actingAs($manager)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'approve', 'decision_note' => 'Self approval attempt must fail.'])->assertForbidden();
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($manager)
+            ->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'approve', 'decision_note' => 'Self approval attempt must fail.'])
+            ->assertForbidden();
         $this->actingAs($approver)->patch(route('partners.collaboration-plans.transition', [$plan]), ['transition' => 'approve', 'decision_note' => 'Independent review confirms the plan is measurable and within scope.'])->assertRedirect();
 
         $this->actingAs($manager)->post(route('partners.collaboration-actions.store', [$plan]), ['county_id' => $county->id, 'code' => 'ACT-001', 'title' => 'Deploy county reporting toolkit', 'description' => 'Deploy and validate the approved reporting toolkit with county officers.', 'accountable_user_id' => $owner->id, 'accountable_organization_id' => $accountableOrganization->id, 'due_on' => today()->addMonths(3)->toDateString()])->assertRedirect();
@@ -576,7 +580,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $upcoming = PartnerCollaborationAction::factory()->create(['partner_collaboration_plan_id' => $plan->id, 'county_id' => $county->id, 'code' => 'EXPORT-ACT-001', 'accountable_user_id' => $owner->id, 'created_by' => $manager->id, 'due_on' => today()->addDays(3)]);
         $overdue = PartnerCollaborationAction::factory()->create(['partner_collaboration_plan_id' => $plan->id, 'county_id' => $county->id, 'code' => 'EXPORT-ACT-002', 'accountable_user_id' => $owner->id, 'created_by' => $manager->id, 'due_on' => today()->subDay()]);
 
-        $this->artisan('partners:send-action-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('partners:send-action-reminders'));
         $this->assertNotNull($upcoming->refresh()->reminder_sent_at);
         $this->assertNull($upcoming->escalated_at);
         $this->assertNotNull($overdue->refresh()->reminder_sent_at);
@@ -584,7 +588,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         Notification::assertSentToTimes($owner, ProgrammeAlert::class, 2);
         Notification::assertSentToTimes($manager, ProgrammeAlert::class, 1);
 
-        $this->artisan('partners:send-action-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('partners:send-action-reminders'));
         Notification::assertSentToTimes($owner, ProgrammeAlert::class, 2);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $overdue->id, 'action' => 'partner.collaboration_action.escalated']);
 
