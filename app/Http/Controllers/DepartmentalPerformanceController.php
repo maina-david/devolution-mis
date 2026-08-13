@@ -62,14 +62,14 @@ class DepartmentalPerformanceController extends Controller
     {
         $cycle = PerformanceCycle::create([...$request->validated(), 'created_by' => $this->user($request)->id]);
 
-        return back()->with('success', "Performance cycle {$cycle->code} created.");
+        return back()->with('success', __('departmental-performance.outcomes.cycle_created', ['code' => $cycle->code]));
     }
 
     public function store(StorePerformancePlanRequest $request, CreatePerformancePlan $createPerformancePlan): RedirectResponse
     {
         $createPerformancePlan->handle($this->user($request), $request->validated());
 
-        return back()->with('success', 'Weighted performance plan created.');
+        return back()->with('success', __('departmental-performance.outcomes.plan_created'));
     }
 
     public function transition(TransitionPerformancePlanRequest $request, PerformancePlan $performancePlan, TransitionPerformancePlan $transitionPerformancePlan): RedirectResponse
@@ -78,7 +78,7 @@ class DepartmentalPerformanceController extends Controller
         abort_unless($this->visiblePlans($user)->whereKey($performancePlan)->exists(), 403);
         $transitionPerformancePlan->handle($performancePlan, $user, $request->validated());
 
-        return back()->with('success', 'Performance lifecycle updated.');
+        return back()->with('success', __('departmental-performance.outcomes.lifecycle_updated'));
     }
 
     public function requestGoalAmendment(StorePerformanceGoalAmendmentRequest $request, PerformancePlan $performancePlan, PerformanceGoal $performanceGoal, RequestPerformanceGoalAmendment $requestAmendment): RedirectResponse
@@ -87,7 +87,7 @@ class DepartmentalPerformanceController extends Controller
         abort_unless($this->visiblePlans($user)->whereKey($performancePlan)->exists(), 403);
         $requestAmendment->handle($performancePlan, $performanceGoal, $user, $request->validated());
 
-        return back()->with('success', 'Goal amendment submitted for independent decision.');
+        return back()->with('success', __('departmental-performance.outcomes.amendment_submitted'));
     }
 
     public function decideGoalAmendment(DecidePerformanceGoalAmendmentRequest $request, PerformancePlan $performancePlan, PerformanceGoalAmendment $performanceGoalAmendment, DecidePerformanceGoalAmendment $decideAmendment): RedirectResponse
@@ -97,7 +97,7 @@ class DepartmentalPerformanceController extends Controller
         abort_unless($performanceGoalAmendment->performance_plan_id === $performancePlan->id, 404);
         $decideAmendment->handle($performanceGoalAmendment, $user, $request->validated());
 
-        return back()->with('success', 'Goal amendment decision retained.');
+        return back()->with('success', __('departmental-performance.outcomes.amendment_decided'));
     }
 
     /** @return Builder<PerformancePlan> */

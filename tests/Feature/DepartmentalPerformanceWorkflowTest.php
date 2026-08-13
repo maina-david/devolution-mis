@@ -17,12 +17,14 @@ use Database\Seeders\PerformanceWorkflowSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Tests\TestCase;
 
 class DepartmentalPerformanceWorkflowTest extends TestCase
@@ -38,7 +40,11 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $cycle = $this->cycle($publisher);
         $this->seed(PerformanceWorkflowSeeder::class);
 
-        $this->actingAs($employee)->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))->assertRedirect();
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($employee)
+            ->post(route('departmental-performance.plans.store'), $this->planPayload($cycle, $supervisor))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Plan de performance pondéré créé.');
         $plan = PerformancePlan::query()->with('goals')->sole();
         $this->assertTrue(Str::isUuid($plan->id));
         $this->assertCount(2, $plan->goals);
@@ -274,14 +280,14 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         $cycle = $this->cycle($creator);
         $plan = PerformancePlan::factory()->create(['performance_cycle_id' => $cycle->id, 'employee_id' => $employee->id, 'supervisor_id' => $supervisor->id, 'status' => 'supervisor_review', 'decision_due_at' => now()->subHour()]);
 
-        $this->artisan('departmental-performance:send-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('departmental-performance:send-reminders'));
         $this->assertNotNull($plan->refresh()->reminder_sent_at);
         $this->assertNotNull($plan->escalated_at);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $plan->id, 'action' => 'performance.plan.escalated']);
         Notification::assertSentToTimes($employee, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($supervisor, ProgrammeAlert::class, 1);
 
-        $this->artisan('departmental-performance:send-reminders')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('departmental-performance:send-reminders'));
         Notification::assertSentToTimes($employee, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($supervisor, ProgrammeAlert::class, 1);
     }
@@ -323,7 +329,9 @@ class DepartmentalPerformanceWorkflowTest extends TestCase
         ]];
     }
 
-    /** @param array<string, mixed> $payload */
+    /** @param array<string, mixed> $payload
+     * @return TestResponse<SymfonyResponse>
+     */
     private function transition(User $actor, PerformancePlan $plan, array $payload): TestResponse
     {
         return $this->actingAs($actor)->patch(route('departmental-performance.plans.transition', [$plan]), $payload);

@@ -37,8 +37,8 @@ class TransitionPerformancePlan
                 $plan->reviews()->create(['reviewer_id' => $actor->id, 'stage' => $transition, 'rating' => $transition === 'finalize_review' ? $plan->supervisor_score : null, 'comments' => $attributes['rationale'], 'capacity_gaps' => $attributes['capacity_gaps'] ?? null, 'development_actions' => $attributes['development_actions'] ?? null, 'reviewed_at' => now()]);
             }
             $recipient = $actor->id === $plan->employee_id ? $plan->supervisor : $plan->employee;
-            $recipient->notify(new ProgrammeAlert('Performance plan updated', "Your performance plan is now {$instance->current_state}.", 'departmental-performance'));
-            $this->auditLogger->record($actor, $plan, 'performance.plan.transitioned', "Performance plan transitioned to {$instance->current_state}.", null, ['transition' => $transition]);
+            $recipient->notify(ProgrammeAlert::translated('departmental-performance.notifications.plan_updated_title', 'departmental-performance.notifications.plan_updated_message', 'departmental-performance', messageParameters: ['state' => $instance->current_state]));
+            $this->auditLogger->record($actor, $plan, 'performance.plan.transitioned', __('departmental-performance.audit.plan_transitioned', ['state' => $instance->current_state]), null, ['transition' => $transition]);
 
             return $plan->refresh();
         });
@@ -53,12 +53,12 @@ class TransitionPerformancePlan
     private function recordRatings(PerformancePlan $plan, array $ratings, bool $selfReview): float
     {
         $goals = $plan->goals()->get()->keyBy('id');
-        abort_unless(count($ratings) === $goals->count(), 422, 'Every goal requires a rating.');
+        abort_unless(count($ratings) === $goals->count(), 422, __('departmental-performance.errors.every_goal_rating'));
         $weightedScore = 0.0;
         foreach ($ratings as $rating) {
             /** @var PerformanceGoal|null $goal */
             $goal = $goals->get($rating['id']);
-            abort_unless($goal instanceof PerformanceGoal, 422, 'A rating references a goal outside this plan.');
+            abort_unless($goal instanceof PerformanceGoal, 422, __('departmental-performance.errors.rating_outside_plan'));
             $score = (float) $rating['rating'];
             $goal->update($selfReview ? ['actual_value' => $rating['actual_value'] ?? null, 'self_rating' => $score, 'employee_narrative' => $rating['narrative'] ?? null, 'evidence_reference' => $rating['evidence_reference'] ?? null] : ['supervisor_rating' => $score, 'supervisor_comment' => $rating['narrative'] ?? null]);
             $weightedScore += $score * ((float) $goal->weight / 100);
