@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     ArrowLeft,
     Banknote,
@@ -256,6 +256,7 @@ export default function ProjectShow({
         counties: Array<{ id: string; name: string; logoUrl?: string | null }>;
     };
 }) {
+    const copy = usePage().props.localization.projects;
     const [previewDocument, setPreviewDocument] =
         useState<ProjectDocument | null>(null);
 
@@ -268,7 +269,7 @@ export default function ProjectShow({
                 <Button asChild variant="ghost" className="w-fit">
                     <a href={index.url()}>
                         <ArrowLeft aria-hidden="true" />
-                        Projects
+                        {copy.projects}
                     </a>
                 </Button>
                 <section className="authenticated-page-header">
@@ -284,7 +285,8 @@ export default function ProjectShow({
                         className="mb-5"
                     />
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        {project.code} · {project.lifecycle_stage}
+                        {project.code} {copy.separator}{' '}
+                        {project.lifecycle_stage}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold">{project.title}</h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
@@ -354,11 +356,9 @@ export default function ProjectShow({
                 <Card>
                     <CardHeader className="flex-row items-start justify-between gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <CardTitle>Project document register</CardTitle>
+                            <CardTitle>{copy.document_register}</CardTitle>
                             <CardDescription>
-                                Governed lifecycle records with private storage,
-                                malware quarantine, checksums, OCR eligibility,
-                                immutable versions, and audited retrieval.
+                                {copy.document_register_description}
                             </CardDescription>
                         </div>
                         {capabilities.uploadDocuments &&
@@ -413,7 +413,7 @@ export default function ProjectShow({
                                                 />
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="project-document-source-type">
-                                                        Source type
+                                                        {copy.source_type}
                                                     </Label>
                                                     <SearchableSelect
                                                         id="project-document-source-type"
@@ -437,7 +437,7 @@ export default function ProjectShow({
                                                 </div>
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="project-document-file">
-                                                        Document
+                                                        {copy.document}
                                                     </Label>
                                                     <Input
                                                         id="project-document-file"
@@ -497,19 +497,20 @@ export default function ProjectShow({
                                                     {document.title}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {document.category} ·{' '}
+                                                    {document.category}{' '}
+                                                    {copy.separator}{' '}
                                                     {document.sourceType ===
                                                     'scanned'
                                                         ? 'Scanned copy'
                                                         : 'Born-digital file'}{' '}
-                                                    ·{' '}
+                                                    {copy.separator}{' '}
                                                     {document.originalName ??
                                                         document.mimeType ??
                                                         'File'}
                                                 </p>
                                                 <div className="mt-2 flex flex-wrap gap-2">
                                                     <Badge variant="outline">
-                                                        Scan:{' '}
+                                                        {copy.scan_label}{' '}
                                                         {document.scanStatus}
                                                     </Badge>
                                                     <Badge variant="outline">
@@ -524,7 +525,7 @@ export default function ProjectShow({
                                                             )}
                                                     </Badge>
                                                     <Badge variant="secondary">
-                                                        OCR:{' '}
+                                                        {copy.ocr_label}{' '}
                                                         {document.ocrStatus}
                                                     </Badge>
                                                 </div>
@@ -543,7 +544,7 @@ export default function ProjectShow({
                                                         }
                                                     >
                                                         <Eye data-icon="inline-start" />
-                                                        Preview
+                                                        {copy.preview}
                                                     </Button>
                                                 )}
                                                 <Button
@@ -560,7 +561,7 @@ export default function ProjectShow({
                                                         )}
                                                     >
                                                         <Download data-icon="inline-start" />
-                                                        Download
+                                                        {copy.download}
                                                     </a>
                                                 </Button>
                                             </div>
@@ -570,7 +571,7 @@ export default function ProjectShow({
                             </div>
                         ) : (
                             <p className="py-8 text-center text-sm text-muted-foreground">
-                                No project lifecycle records have been uploaded.
+                                    {copy.no_documents}
                             </p>
                         )}
                     </CardContent>
@@ -587,17 +588,19 @@ export default function ProjectShow({
                             <SheetDescription>
                                 {previewDocument?.originalName ??
                                     'Secure project record'}{' '}
-                                · {previewDocument?.category}
+                                {copy.separator} {previewDocument?.category}
                             </SheetDescription>
                         </SheetHeader>
                         {previewDocument && (
                             <div className="flex flex-col gap-4 px-4 pb-6">
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline">
-                                        Scan: {previewDocument.scanStatus}
+                                        {copy.scan_label}{' '}
+                                        {previewDocument.scanStatus}
                                     </Badge>
                                     <Badge variant="secondary">
-                                        OCR: {previewDocument.ocrStatus}
+                                        {copy.ocr_label}{' '}
+                                        {previewDocument.ocrStatus}
                                     </Badge>
                                 </div>
                                 <iframe
@@ -614,7 +617,7 @@ export default function ProjectShow({
                                         })}
                                     >
                                         <Download data-icon="inline-start" />
-                                        Download original document
+                                        {copy.download_original}
                                     </a>
                                 </Button>
                             </div>
@@ -671,7 +674,7 @@ export default function ProjectShow({
                                         )}
                                     />
                                 </div>
-                                <Button type="submit">Add milestone</Button>
+                                <Button type="submit">{copy.add_milestone}</Button>
                             </Form>
                         </Panel>
                         <Panel icon={Banknote} title="Add budget line">
@@ -714,7 +717,7 @@ export default function ProjectShow({
                                     required
                                     placeholder="2026/27"
                                 />
-                                <Button type="submit">Add budget line</Button>
+                                <Button type="submit">{copy.add_budget_line}</Button>
                             </Form>
                         </Panel>
                         <Panel icon={CircleAlert} title="Register risk">
@@ -759,7 +762,7 @@ export default function ProjectShow({
                                     required
                                     placeholder="Mitigation"
                                 />
-                                <Button type="submit">Register risk</Button>
+                                <Button type="submit">{copy.register_risk}</Button>
                             </Form>
                         </Panel>
                         <Panel icon={ShoppingCart} title="Add procurement">
@@ -801,7 +804,7 @@ export default function ProjectShow({
                                     name="planned_notice_date"
                                     label="Planned notice date"
                                 />
-                                <Button type="submit">Add procurement</Button>
+                                <Button type="submit">{copy.add_procurement}</Button>
                             </Form>
                         </Panel>
                     </div>
@@ -838,7 +841,7 @@ export default function ProjectShow({
                                 />
                                 <div className="grid gap-2">
                                     <Label htmlFor="project-transition-comment">
-                                        Decision rationale
+                                        {copy.decision_rationale}
                                     </Label>
                                     <Input
                                         id="project-transition-comment"
@@ -858,7 +861,7 @@ export default function ProjectShow({
                 {capabilities.verifyUpdates && (
                     <section className="rounded-xl border bg-card p-5">
                         <h2 className="font-bold">
-                            Progress verification queue
+                            {copy.progress_verification_queue}
                         </h2>
                         <div className="mt-3 space-y-3">
                             {project.progress_updates
@@ -881,9 +884,10 @@ export default function ProjectShow({
                                             className="grid gap-3"
                                         >
                                             <span className="text-sm">
-                                                {String(item.reporting_date)} ·{' '}
+                                                {String(item.reporting_date)}{' '}
+                                                {copy.separator}{' '}
                                                 {String(item.physical_progress)}
-                                                %
+                                                {copy.percent}
                                             </span>
                                             <StaticSearchableSelect
                                                 id={`project-verification-${item.id}`}
@@ -900,7 +904,7 @@ export default function ProjectShow({
                                                 placeholder="Independent verification rationale"
                                             />
                                             <Button type="submit">
-                                                Record
+                                                {copy.record}
                                             </Button>
                                         </Form>
                                     </FormSheet>
@@ -1108,6 +1112,7 @@ function ProjectSchedule({
     canReview: boolean;
     locked: boolean;
 }) {
+    const copy = usePage().props.localization.projects;
     const scheduled = milestones
         .map((milestone) => ({
             milestone,
@@ -1144,11 +1149,11 @@ function ProjectSchedule({
         <Card>
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div className="flex flex-col gap-1.5">
-                    <CardTitle>Delivery schedule assurance</CardTitle>
+                    <CardTitle>{copy.schedule_assurance}</CardTitle>
                     <CardDescription>
-                        Approved schedule baselines, deterministic critical
-                        path, float and forecast variance as at{' '}
-                        {analysis?.as_of ?? '—'}.
+                        {copy.schedule_assurance_description}{' '}
+                        {analysis?.as_of ?? '—'}
+                        {copy.full_stop}
                     </CardDescription>
                 </div>
                 {canManage && !locked && !pendingBaseline && (
@@ -1167,7 +1172,7 @@ function ProjectSchedule({
                                 <>
                                     <div className="flex flex-col gap-2">
                                         <Label htmlFor="schedule-baseline-reason">
-                                            Baseline rationale
+                                            {copy.baseline_rationale}
                                         </Label>
                                         <Textarea
                                             id="schedule-baseline-reason"
@@ -1189,7 +1194,7 @@ function ProjectSchedule({
                                         )}
                                     </div>
                                     <Button type="submit" disabled={processing}>
-                                        Submit baseline for review
+                                        {copy.submit_baseline}
                                     </Button>
                                 </>
                             )}
@@ -1235,8 +1240,9 @@ function ProjectSchedule({
                     >
                         <div className="flex flex-col gap-4">
                             <p className="text-sm text-muted-foreground">
-                                Requested by {pendingBaseline.requester}.
-                                Critical path:{' '}
+                                {copy.requested_by}{' '}
+                                {pendingBaseline.requester}
+                                {copy.full_stop} {copy.critical_path_label}{' '}
                                 {pendingBaseline.analysis.critical_path_codes.join(
                                     ' → ',
                                 ) || '—'}
@@ -1278,7 +1284,7 @@ function ProjectSchedule({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Record independent decision
+                                            {copy.record_independent_decision}
                                         </Button>
                                     </>
                                 )}
@@ -1298,7 +1304,9 @@ function ProjectSchedule({
                                 }
                                 title={baseline.snapshotChecksum}
                             >
-                                v{baseline.version} · {baseline.status} ·{' '}
+                                {copy.version_prefix}{baseline.version}{' '}
+                                {copy.separator} {baseline.status}{' '}
+                                {copy.separator}{' '}
                                 {baseline.analysis.project_finish}
                             </Badge>
                         ))}
@@ -1311,18 +1319,17 @@ function ProjectSchedule({
                             aria-hidden="true"
                         />
                         <p className="mt-3 font-medium">
-                            No scheduled milestones
+                            {copy.no_scheduled_milestones}
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            Add a milestone with planned dates to build the
-                            delivery timeline.
+                            {copy.no_scheduled_milestones_description}
                         </p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto" tabIndex={0}>
                         <div className="min-w-[48rem]">
                             <div className="grid grid-cols-[15rem_1fr] gap-4 border-b pb-2 text-xs text-muted-foreground">
-                                <span>Milestone and dependencies</span>
+                                <span>{copy.milestone_dependencies}</span>
                                 <span className="flex justify-between">
                                     <time dateTime={scheduleDate(minimum)}>
                                         {scheduleDate(minimum)}
@@ -1367,7 +1374,8 @@ function ProjectSchedule({
                                         >
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium">
-                                                    {String(milestone.code)} ·{' '}
+                                                    {String(milestone.code)}{' '}
+                                                    {copy.separator}{' '}
                                                     {String(milestone.title)}
                                                 </p>
                                                 <p className="mt-1 text-xs text-muted-foreground">
@@ -1377,7 +1385,7 @@ function ProjectSchedule({
                                                 </p>
                                                 {timing?.is_critical && (
                                                     <Badge className="mt-2">
-                                                        Critical path
+                                                        {copy.critical_path}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -1407,7 +1415,7 @@ function ProjectSchedule({
                                                     >
                                                         {scheduleDate(start)}
                                                     </time>{' '}
-                                                    to{' '}
+                                                    {copy.to}{' '}
                                                     <time
                                                         dateTime={scheduleDate(
                                                             end,
@@ -1415,7 +1423,10 @@ function ProjectSchedule({
                                                     >
                                                         {scheduleDate(end)}
                                                     </time>{' '}
-                                                    · {progress}% complete ·{' '}
+                                                    {copy.separator}{' '}
+                                                    {progress}
+                                                    {copy.percent_complete}{' '}
+                                                    {copy.separator}{' '}
                                                     {String(milestone.status)}
                                                     {timing
                                                         ? ` · ${timing.total_float_days}d float · forecast ${timing.forecast_end} · ${formatVariance(timing.forecast_variance_days)}`
@@ -1460,16 +1471,16 @@ function ProjectResourcePlan({
     canManage: boolean;
     locked: boolean;
 }) {
+    const copy = usePage().props.localization.projects;
+
     return (
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(20rem,0.7fr)]">
             <Card>
                 <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="space-y-1.5">
-                        <CardTitle>Resource and capacity plan</CardTitle>
+                        <CardTitle>{copy.resource_plan}</CardTitle>
                         <CardDescription>
-                            Daily capacity, milestone allocations and derived
-                            costs in the project currency. Overlapping work
-                            cannot exceed registered capacity.
+                            {copy.resource_plan_description}
                         </CardDescription>
                     </div>
                     {canManage && !locked && (
@@ -1545,7 +1556,7 @@ function ProjectResourcePlan({
                                             />
                                             <div className="grid gap-2">
                                                 <Label htmlFor="resource-capacity">
-                                                    Capacity per day
+                                                    {copy.capacity_per_day}
                                                 </Label>
                                                 <Input
                                                     id="resource-capacity"
@@ -1561,8 +1572,10 @@ function ProjectResourcePlan({
                                             </div>
                                             <div className="grid gap-2">
                                                 <Label htmlFor="resource-rate">
-                                                    Cost per unit (
-                                                    {projectCurrency})
+                                                    {copy.cost_per_unit}{' '}
+                                                    {copy.open_parenthesis}
+                                                    {projectCurrency}
+                                                    {copy.close_parenthesis}
                                                 </Label>
                                                 <Input
                                                     id="resource-rate"
@@ -1592,7 +1605,7 @@ function ProjectResourcePlan({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Register resource
+                                                {copy.register_resource}
                                             </Button>
                                         </>
                                     )}
@@ -1658,7 +1671,7 @@ function ProjectResourcePlan({
                                                 />
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="allocation-rate">
-                                                        Planned units per day
+                                                        {copy.planned_units_per_day}
                                                     </Label>
                                                     <Input
                                                         id="allocation-rate"
@@ -1674,7 +1687,7 @@ function ProjectResourcePlan({
                                                 </div>
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="allocation-notes">
-                                                        Planning notes
+                                                        {copy.planning_notes}
                                                     </Label>
                                                     <Textarea
                                                         id="allocation-notes"
@@ -1686,7 +1699,7 @@ function ProjectResourcePlan({
                                                     type="submit"
                                                     disabled={processing}
                                                 >
-                                                    Allocate capacity
+                                                    {copy.allocate_capacity}
                                                 </Button>
                                             </>
                                         )}
@@ -1699,7 +1712,7 @@ function ProjectResourcePlan({
                 <CardContent>
                     {resources.length === 0 ? (
                         <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                            No project resources have been registered.
+                            {copy.no_resources}
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -1711,19 +1724,22 @@ function ProjectResourcePlan({
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
                                             <p className="font-semibold">
-                                                {resource.code} ·{' '}
+                                                {resource.code}{' '}
+                                                {copy.separator}{' '}
                                                 {resource.name}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
                                                 {formatNumber(
                                                     resource.capacityPerDay,
                                                 )}{' '}
-                                                {resource.capacityUnit}/day ·{' '}
+                                                {resource.capacityUnit}
+                                                {copy.per_day}{' '}
+                                                {copy.separator}{' '}
                                                 {formatCurrency(
                                                     resource.costRate,
                                                     resource.currency,
                                                 )}{' '}
-                                                per unit
+                                                {copy.per_unit}
                                             </p>
                                         </div>
                                         <div className="flex gap-2">
@@ -1736,8 +1752,11 @@ function ProjectResourcePlan({
                                         </div>
                                     </div>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Available {resource.availableFrom} –{' '}
-                                        {resource.availableTo} · planned cost{' '}
+                                        {copy.available}{' '}
+                                        {resource.availableFrom}{' '}
+                                        {copy.date_separator}{' '}
+                                        {resource.availableTo}{' '}
+                                        {copy.separator} {copy.planned_cost}{' '}
                                         {formatCurrency(
                                             resource.plannedCost,
                                             resource.currency,
@@ -1761,11 +1780,11 @@ function ProjectResourcePlan({
                                                                 {
                                                                     allocation.startsOn
                                                                 }{' '}
-                                                                –{' '}
+                                                                {copy.date_separator}{' '}
                                                                 {
                                                                     allocation.endsOn
                                                                 }{' '}
-                                                                ·{' '}
+                                                                {copy.separator}{' '}
                                                                 {formatNumber(
                                                                     allocation.plannedUnits,
                                                                 )}{' '}
@@ -1786,7 +1805,7 @@ function ProjectResourcePlan({
                                         </div>
                                     ) : (
                                         <p className="mt-4 text-sm text-muted-foreground">
-                                            No milestone allocations yet.
+                                            {copy.no_allocations}
                                         </p>
                                     )}
                                 </div>
@@ -1797,16 +1816,16 @@ function ProjectResourcePlan({
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Earned-value forecast</CardTitle>
+                    <CardTitle>{copy.earned_value_forecast}</CardTitle>
                     <CardDescription>
-                        {analysis.method} · as of {analysis.as_of}
+                        {analysis.method} {copy.separator} {copy.as_of}{' '}
+                        {analysis.as_of}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     {!analysis.available ? (
                         <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-                            Approve a complete weighted schedule baseline and
-                            record a positive budget to enable forecasting.
+                            {copy.forecast_unavailable_description}
                         </div>
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
@@ -1931,6 +1950,8 @@ function Register({
     locked: boolean;
     milestoneOptions?: Entity[];
 }) {
+    const copy = usePage().props.localization.projects;
+
     return (
         <section className="rounded-xl border bg-card p-5">
             <h2 className="font-bold">{title}</h2>
@@ -1951,7 +1972,7 @@ function Register({
                     ))
                 ) : (
                     <p className="py-6 text-sm text-muted-foreground">
-                        No records yet.
+                        {copy.no_records}
                     </p>
                 )}
             </div>
@@ -1981,6 +2002,7 @@ function RegisterRow({
     locked: boolean;
     milestoneOptions: Entity[];
 }) {
+    const copy = usePage().props.localization.projects;
     const [editing, setEditing] = useState(false);
     const editable = canManage && kind !== 'progress' && !locked;
 
@@ -2009,7 +2031,7 @@ function RegisterRow({
                                     <DropdownMenuItem
                                         onSelect={() => setEditing(true)}
                                     >
-                                        <Pencil /> Amend record
+                                        <Pencil /> {copy.amend_record}
                                     </DropdownMenuItem>
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>
@@ -2020,10 +2042,11 @@ function RegisterRow({
             <Sheet open={editing} onOpenChange={setEditing}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
                     <SheetHeader>
-                        <SheetTitle>Amend {registerLabel(kind)}</SheetTitle>
+                        <SheetTitle>
+                            {copy.amend} {registerLabel(kind)}
+                        </SheetTitle>
                         <SheetDescription>
-                            Record the updated control values and the attributed
-                            reason retained in immutable audit history.
+                            {copy.amend_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pb-8">
@@ -2051,6 +2074,7 @@ function RegisterEditForm({
     args: { project: string };
     milestoneOptions: Entity[];
 }) {
+    const copy = usePage().props.localization.projects;
     const route =
         kind === 'milestone'
             ? updateMilestone.form({ ...args, milestone: item.id })
@@ -2300,7 +2324,7 @@ function RegisterEditForm({
                     )}
                     <div className="grid gap-2">
                         <Label htmlFor={`amendment-reason-${item.id}`}>
-                            Amendment reason
+                            {copy.amendment_reason}
                         </Label>
                         <Input
                             id={`amendment-reason-${item.id}`}
@@ -2319,7 +2343,7 @@ function RegisterEditForm({
                         )}
                     </div>
                     <Button type="submit" disabled={processing}>
-                        Record amendment
+                        {copy.record_amendment}
                     </Button>
                 </>
             )}

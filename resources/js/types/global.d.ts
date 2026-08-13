@@ -76,6 +76,7 @@ declare module '@inertiajs/core' {
                 evidence: Record<string, string>;
                 learning: Record<string, string>;
                 analytics: Record<string, string>;
+                projects: Record<string, string>;
                 security: {
                     workspace: {
                         head_title: string;
