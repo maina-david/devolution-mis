@@ -38,4 +38,55 @@ class CitizenIssueAnalyticsTest extends TestCase
         $this->assertSame([['label' => 'publishable-signal', 'total' => 3]], $report['categories']);
         $this->assertSame(3, $report['minimumPublishedCount']);
     }
+
+    public function test_it_reports_satisfaction_coverage_segments_and_resolution_time_correlation(): void
+    {
+        $county = County::factory()->create();
+        foreach ([
+            ['rating' => 5, 'hours' => 12, 'category' => 'complaint', 'channel' => 'web'],
+            ['rating' => 4, 'hours' => 24, 'category' => 'complaint', 'channel' => 'web'],
+            ['rating' => 3, 'hours' => 36, 'category' => 'complaint', 'channel' => 'phone'],
+            ['rating' => 2, 'hours' => 48, 'category' => 'grievance', 'channel' => 'phone'],
+            ['rating' => 1, 'hours' => 60, 'category' => 'grievance', 'channel' => 'phone'],
+        ] as $sample) {
+            CitizenCase::factory()->create([
+                'county_id' => $county->id,
+                'category' => $sample['category'],
+                'channel' => $sample['channel'],
+                'status' => 'resolved',
+                'created_at' => now()->subHours($sample['hours']),
+                'resolved_at' => now(),
+                'satisfaction_rating' => $sample['rating'],
+                'satisfaction_recorded_at' => now(),
+            ]);
+        }
+
+        $report = app(CitizenIssueAnalytics::class)->report(CitizenCase::query()->where('county_id', $county->id));
+
+        $this->assertSame(5, $report['satisfaction']['responses']);
+        $this->assertSame(100.0, $report['satisfaction']['responseRate']);
+        $this->assertSame(3.0, $report['satisfaction']['averageRating']);
+        $this->assertCount(5, $report['satisfaction']['distribution']);
+        $this->assertSame('complaint', $report['satisfaction']['byCategory'][0]['label']);
+        $this->assertSame(4.0, $report['satisfaction']['byCategory'][0]['averageRating']);
+        $this->assertSame(5, $report['satisfaction']['resolutionTimeCorrelation']['samples']);
+        $this->assertSame(-1.0, $report['satisfaction']['resolutionTimeCorrelation']['coefficient']);
+    }
+
+    public function test_public_satisfaction_analytics_suppress_small_cells(): void
+    {
+        CitizenCase::factory()->count(2)->create([
+            'status' => 'resolved',
+            'resolved_at' => now(),
+            'satisfaction_rating' => 5,
+            'satisfaction_recorded_at' => now(),
+        ]);
+
+        $report = app(CitizenIssueAnalytics::class)->report(public: true);
+
+        $this->assertNull($report['satisfaction']['responses']);
+        $this->assertNull($report['satisfaction']['averageRating']);
+        $this->assertSame([], $report['satisfaction']['distribution']);
+        $this->assertNull($report['satisfaction']['resolutionTimeCorrelation']['coefficient']);
+    }
 }

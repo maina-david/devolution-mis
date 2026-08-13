@@ -45,6 +45,48 @@ class CitizenIssueAnalytics
             ->map(fn (Model $case): array => ['month' => (string) $case->getAttribute('month'), 'total' => (int) $case->getAttribute('total'), 'resolved' => (int) $case->getAttribute('resolved')])
             ->all();
 
+        $rated = (clone $query)->whereNotNull('satisfaction_rating');
+        $ratingCount = (clone $rated)->count();
+        $resolvedCount = (clone $query)->whereIn('status', ['resolved', 'closed'])->count();
+        $satisfactionVisible = $ratingCount >= $minimum;
+        $satisfactionGroups = function (string $column) use ($rated, $minimum, $satisfactionVisible): array {
+            if (! $satisfactionVisible) {
+                return [];
+            }
+
+            $expression = match ($column) {
+                'category' => 'category as label, count(*) as responses, round(avg(satisfaction_rating)::numeric, 2) as average_rating',
+                'channel' => 'channel as label, count(*) as responses, round(avg(satisfaction_rating)::numeric, 2) as average_rating',
+                default => throw new \InvalidArgumentException('Unsupported satisfaction analytics dimension.'),
+            };
+
+            return (clone $rated)
+                ->selectRaw($expression)
+                ->whereNotNull($column)
+                ->groupBy($column)
+                ->havingRaw('count(*) >= ?', [$minimum])
+                ->orderByDesc('responses')
+                ->limit(10)
+                ->get()
+                ->map(fn (Model $case): array => [
+                    'label' => (string) $case->getAttribute('label'),
+                    'responses' => (int) $case->getAttribute('responses'),
+                    'averageRating' => (float) $case->getAttribute('average_rating'),
+                ])->all();
+        };
+        $correlationSamples = 0;
+        $correlationCoefficient = null;
+        if ($satisfactionVisible) {
+            $correlation = (clone $rated)
+                ->whereNotNull('resolved_at')
+                ->selectRaw('count(*) as samples, corr(satisfaction_rating::numeric, extract(epoch from (resolved_at - created_at)) / 3600) as coefficient')
+                ->first();
+            $correlationSamples = (int) $correlation->getAttribute('samples');
+            if ($correlationSamples >= $minimum && $correlation->getAttribute('coefficient') !== null) {
+                $correlationCoefficient = round((float) $correlation->getAttribute('coefficient'), 3);
+            }
+        }
+
         return [
             'categories' => $groups('category'),
             'channels' => $groups('channel'),
@@ -52,6 +94,20 @@ class CitizenIssueAnalytics
             'overdue' => (clone $query)->whereNotIn('status', ['resolved', 'closed'])->where('resolution_due_at', '<', now())->count(),
             'averageResolutionHours' => round((float) ((clone $query)->whereNotNull('resolved_at')->selectRaw('avg(extract(epoch from (resolved_at - created_at)) / 3600) as aggregate')->value('aggregate') ?? 0), 1),
             'minimumPublishedCount' => $minimum,
+            'satisfaction' => [
+                'responses' => $satisfactionVisible ? $ratingCount : null,
+                'responseRate' => $satisfactionVisible && $resolvedCount > 0 ? round(($ratingCount / $resolvedCount) * 100, 1) : null,
+                'averageRating' => $satisfactionVisible ? round((float) ((clone $rated)->avg('satisfaction_rating') ?? 0), 2) : null,
+                'distribution' => $satisfactionVisible
+                    ? (clone $rated)->selectRaw('satisfaction_rating as rating, count(*) as total')->groupBy('satisfaction_rating')->havingRaw('count(*) >= ?', [$minimum])->orderBy('satisfaction_rating')->get()->map(fn (Model $case): array => ['rating' => (int) $case->getAttribute('rating'), 'total' => (int) $case->getAttribute('total')])->all()
+                    : [],
+                'byCategory' => $satisfactionGroups('category'),
+                'byChannel' => $satisfactionGroups('channel'),
+                'resolutionTimeCorrelation' => [
+                    'samples' => $correlationCoefficient === null ? null : $correlationSamples,
+                    'coefficient' => $correlationCoefficient,
+                ],
+            ],
         ];
     }
 }

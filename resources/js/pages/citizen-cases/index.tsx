@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -89,6 +89,14 @@ type ReferenceDataLineage = {
     effectiveFrom: string | null;
     checksum: string;
 };
+type SatisfactionAnalytics = {
+    responses: number | null;
+    responseRate: number | null;
+    resolutionTimeCorrelation: {
+        samples: number | null;
+        coefficient: number | null;
+    };
+};
 type Props = {
     workspace: {
         title: string;
@@ -106,6 +114,7 @@ type Props = {
         grievances: number;
         satisfaction: string | null;
     };
+    analytics: { satisfaction: SatisfactionAnalytics };
     cases: Case[];
     options: { users: Option[]; organizations: Option[]; sectors: Option[] };
 };
@@ -115,10 +124,12 @@ export default function CitizenCasesIndex({
     filters,
     capabilities,
     summary,
+    analytics,
     cases,
     options,
 }: Props) {
     const lookup = new Map(cases.map((item) => [item.id, item]));
+    const copy = usePage().props.localization.citizen;
 
     return (
         <>
@@ -178,6 +189,36 @@ export default function CitizenCasesIndex({
                         }
                     />
                 </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>{copy.satisfaction_insights}</CardTitle>
+                        <CardDescription>
+                            {copy.satisfaction_insights_description}
+                        </CardDescription>
+                    </CardHeader>
+                    <div className="grid gap-4 px-6 pb-6 md:grid-cols-3">
+                        <Metric
+                            label={copy.rating_responses}
+                            value={analytics.satisfaction.responses ?? '—'}
+                        />
+                        <Metric
+                            label={copy.rating_response_rate}
+                            value={
+                                analytics.satisfaction.responseRate === null
+                                    ? '—'
+                                    : `${analytics.satisfaction.responseRate}%`
+                            }
+                        />
+                        <Metric
+                            label={copy.resolution_rating_correlation}
+                            value={
+                                analytics.satisfaction
+                                    .resolutionTimeCorrelation.coefficient ??
+                                '—'
+                            }
+                        />
+                    </div>
+                </Card>
                 <DateRangeFilter
                     initialFrom={filters.from}
                     initialTo={filters.to}

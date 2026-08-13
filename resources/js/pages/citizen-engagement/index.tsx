@@ -62,6 +62,7 @@ type Props = {
             overdue: number;
             averageResolutionHours: number;
             minimumPublishedCount: number;
+            satisfaction: SatisfactionAnalytics;
         };
     };
     privacyNoticeVersion: string;
@@ -213,8 +214,77 @@ export default function CitizenEngagementIndex({
                         </CardContent>
                     </Card>
                 </section>
+                <SatisfactionInsights
+                    analytics={dashboard.issueAnalytics.satisfaction}
+                    copy={copy}
+                />
             </div>
         </CitizenEngagementShell>
+    );
+}
+
+type SatisfactionAnalytics = {
+    responses: number | null;
+    responseRate: number | null;
+    averageRating: number | null;
+    distribution: Array<{ rating: number; total: number }>;
+    byCategory: Array<{
+        label: string;
+        responses: number;
+        averageRating: number;
+    }>;
+    byChannel: Array<{
+        label: string;
+        responses: number;
+        averageRating: number;
+    }>;
+    resolutionTimeCorrelation: {
+        samples: number | null;
+        coefficient: number | null;
+    };
+};
+
+function SatisfactionInsights({
+    analytics,
+    copy,
+}: {
+    analytics: SatisfactionAnalytics;
+    copy: Record<string, string>;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{copy.satisfaction_insights}</CardTitle>
+                <CardDescription>
+                    {copy.satisfaction_insights_description}
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {analytics.responses === null ? (
+                    <p className="text-sm text-muted-foreground">
+                        {copy.insufficient_satisfaction_data}
+                    </p>
+                ) : (
+                    <div className="grid gap-5 md:grid-cols-3">
+                        <Metric
+                            label={copy.rating_responses}
+                            value={analytics.responses}
+                        />
+                        <Metric
+                            label={copy.rating_response_rate}
+                            value={`${analytics.responseRate}%`}
+                        />
+                        <Metric
+                            label={copy.resolution_rating_correlation}
+                            value={
+                                analytics.resolutionTimeCorrelation
+                                    .coefficient ?? '—'
+                            }
+                        />
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 }
 

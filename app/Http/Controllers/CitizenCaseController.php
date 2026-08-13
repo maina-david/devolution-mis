@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\WorkflowInstance;
 use App\Notifications\ProgrammeAlert;
 use App\Services\AuditLogger;
+use App\Services\CitizenIssueAnalytics;
 use App\Services\EffectiveReferenceDataReleaseResolver;
 use App\Services\ProgrammeCountyScope;
 use App\Services\ProgrammeWorkspaceData;
@@ -35,7 +36,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CitizenCaseController extends Controller
 {
-    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, EffectiveReferenceDataReleaseResolver $referenceDataResolver): Response
+    public function index(WorkspaceIndexRequest $request, ProgrammeWorkspaceData $workspaceData, ProgrammeCountyScope $countyScope, EffectiveReferenceDataReleaseResolver $referenceDataResolver, CitizenIssueAnalytics $issueAnalytics): Response
     {
         Gate::authorize(ProgrammePermission::ViewCitizenCases->value);
         $user = $this->user($request);
@@ -53,7 +54,7 @@ class CitizenCaseController extends Controller
         $organizationIds = $this->snapshotIds($release?->snapshot['organizations'] ?? []);
         $sectorIds = $this->snapshotIds($release?->snapshot['sectors'] ?? []);
 
-        return Inertia::render('citizen-cases/index', ['workspace' => $workspaceData->citizenCases($user, WorkspaceFilters::fromRequest($request)), 'filters' => WorkspaceFilters::fromRequest($request), 'capabilities' => ['manage' => $user->can(ProgrammePermission::ManageCitizenCases->value), 'respond' => $user->can(ProgrammePermission::RespondCitizenCases->value), 'resolve' => $user->can(ProgrammePermission::ResolveCitizenCases->value)], 'summary' => $summary, 'cases' => $cases->map(fn (CitizenCase $case): array => $this->casePayload($case)), 'options' => ['users' => User::query()->whereHas('roles.permissions', fn ($query) => $query->where('name', ProgrammePermission::RespondCitizenCases->value))->orderBy('name')->get(['id', 'name', 'email']), 'organizations' => Organization::query()->whereIn('id', $organizationIds)->where('status', 'active')->orderBy('name')->get(['id', 'name']), 'sectors' => Sector::query()->whereIn('id', $sectorIds)->where('is_active', true)->orderBy('name')->get(['id', 'name'])]]);
+        return Inertia::render('citizen-cases/index', ['workspace' => $workspaceData->citizenCases($user, WorkspaceFilters::fromRequest($request)), 'filters' => WorkspaceFilters::fromRequest($request), 'capabilities' => ['manage' => $user->can(ProgrammePermission::ManageCitizenCases->value), 'respond' => $user->can(ProgrammePermission::RespondCitizenCases->value), 'resolve' => $user->can(ProgrammePermission::ResolveCitizenCases->value)], 'summary' => $summary, 'analytics' => $issueAnalytics->report($visibleCases), 'cases' => $cases->map(fn (CitizenCase $case): array => $this->casePayload($case)), 'options' => ['users' => User::query()->whereHas('roles.permissions', fn ($query) => $query->where('name', ProgrammePermission::RespondCitizenCases->value))->orderBy('name')->get(['id', 'name', 'email']), 'organizations' => Organization::query()->whereIn('id', $organizationIds)->where('status', 'active')->orderBy('name')->get(['id', 'name']), 'sectors' => Sector::query()->whereIn('id', $sectorIds)->where('is_active', true)->orderBy('name')->get(['id', 'name'])]]);
     }
 
     public function triage(TriageCitizenCaseRequest $request, CitizenCase $case, TriageCitizenCase $triageCase, ProgrammeCountyScope $countyScope): RedirectResponse
