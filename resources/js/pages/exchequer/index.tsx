@@ -267,12 +267,12 @@ export default function ExchequerTracking({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">
-                                {copy.register_title}
-                            </h2>
+                            <h2 className="font-bold">{copy.register_title}</h2>
                             <p className="text-sm text-muted-foreground">
                                 {interpolate(copy.register_description, {
-                                    count: requests.total.toLocaleString(locale),
+                                    count: requests.total.toLocaleString(
+                                        locale,
+                                    ),
                                 })}
                             </p>
                         </div>
@@ -504,7 +504,10 @@ function RequestActions({
                                                               request
                                                                   .referenceData
                                                                   .effectiveFrom,
-                                                              { dateStyle: 'medium' },
+                                                              {
+                                                                  dateStyle:
+                                                                      'medium',
+                                                              },
                                                           )
                                                         : copy.date_unavailable}
                                                 </p>
@@ -578,7 +581,9 @@ function RequestActions({
                                 ) : (
                                     <WorkspaceEmptyState
                                         title={copy.awaiting_first_event}
-                                        description={copy.awaiting_first_event_description}
+                                        description={
+                                            copy.awaiting_first_event_description
+                                        }
                                     />
                                 )}
                             </>

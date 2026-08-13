@@ -792,8 +792,7 @@ function CommunityReportActions({
                         <SheetDescription>
                             {humanize(report.category)} {copy.separator}{' '}
                             {humanize(report.severity)} {copy.severity}{' '}
-                            {copy.separator}{' '}
-                            {humanize(report.status)}
+                            {copy.separator} {humanize(report.status)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-5 px-4 pt-4 pb-8">
@@ -890,8 +889,7 @@ function CommunityReportActions({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            {copy.confirm}{' '}
-                                            {humanize(surface)}
+                                            {copy.confirm} {humanize(surface)}
                                         </Button>
                                     </>
                                 )}
@@ -1323,9 +1321,7 @@ function ItemDetails({
                 ))}
             </div>
             <div className="rounded-lg border bg-muted/30 p-3 text-sm">
-                <p className="font-semibold">
-                    {copy.reference_data_lineage}
-                </p>
+                <p className="font-semibold">{copy.reference_data_lineage}</p>
                 {item.referenceData ? (
                     <p className="mt-1 break-all text-muted-foreground">
                         {copy.release_version_prefix}
@@ -1352,8 +1348,7 @@ function ItemDetails({
                             })}
                             target="_blank"
                         >
-                            <FileText /> {copy.preview}{' '}
-                            {item.document.title}
+                            <FileText /> {copy.preview} {item.document.title}
                         </a>
                     </Button>
                 )}

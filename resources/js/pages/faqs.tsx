@@ -14,10 +14,7 @@ export default function Faqs() {
     return (
         <>
             <Head title={copy.faqs_title}>
-                <meta
-                    name="description"
-                    content={copy.faqs_meta}
-                />
+                <meta name="description" content={copy.faqs_meta} />
             </Head>
 
             <PublicLayout>

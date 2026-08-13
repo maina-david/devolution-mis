@@ -38,7 +38,9 @@ export default function ProgrammeEvaluationDocumentControls(props: Props) {
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
                         <Files aria-hidden="true" />
-                        {copy.records} {'('}{props.documents.length}{')'}
+                        {copy.records} {'('}
+                        {props.documents.length}
+                        {')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
@@ -262,7 +264,9 @@ function UploadRecord(props: Props) {
                         </div>
                         {progress && (
                             <p role="status" className="text-sm">
-                                {copy.uploading}{':'} {progress.percentage}{'%'}
+                                {copy.uploading}
+                                {':'} {progress.percentage}
+                                {'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>

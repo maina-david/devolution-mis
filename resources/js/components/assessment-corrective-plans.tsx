@@ -290,8 +290,7 @@ function PlanCard({
                     <p className="text-sm text-muted-foreground">
                         {plan.source.label} {'·'} {copy.due}{' '}
                         {formatDateTime(plan.dueAt, { dateStyle: 'medium' })}{' '}
-                        {'·'}{' '}
-                        {copy.submitted_by} {plan.submittedBy}
+                        {'·'} {copy.submitted_by} {plan.submittedBy}
                     </p>
                 </div>
                 <Badge variant="outline">
@@ -307,15 +306,18 @@ function PlanCard({
                                     {action.code} {'·'} {action.title}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                    {copy.owner}{':'} {action.owner} {'·'}{' '}
-                                    {copy.target}{':'} {action.target} {'·'}{' '}
-                                    {copy.due}{' '}
+                                    {copy.owner}
+                                    {':'} {action.owner} {'·'} {copy.target}
+                                    {':'} {action.target} {'·'} {copy.due}{' '}
                                     {formatDateTime(action.dueAt, {
                                         dateStyle: 'medium',
                                     })}
                                 </p>
                             </div>
-                            <Badge>{action.progress}{'%'}</Badge>
+                            <Badge>
+                                {action.progress}
+                                {'%'}
+                            </Badge>
                         </div>
                         <Progress value={action.progress} className="mt-3" />
                         <p className="mt-3 text-sm">{action.description}</p>
@@ -353,8 +355,8 @@ function PlanCard({
                                 key={update.id}
                                 className="mt-2 text-xs text-muted-foreground"
                             >
-                                {update.progress}{'%'} {'·'}{' '}
-                                {update.document.title} {'·'}{' '}
+                                {update.progress}
+                                {'%'} {'·'} {update.document.title} {'·'}{' '}
                                 {translateValue(copy, update.status)} {'·'}{' '}
                                 {update.submittedBy}
                             </p>

@@ -518,7 +518,9 @@ export default function Operations({
                 <section className="grid gap-4 xl:grid-cols-2">
                     <div className="overflow-hidden rounded-xl border bg-card">
                         <div className="border-b px-5 py-4 sm:px-6">
-                            <h2 className="font-bold">{copy.failed_queue_jobs}</h2>
+                            <h2 className="font-bold">
+                                {copy.failed_queue_jobs}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
                                 {failedJobs.total.toLocaleString()}{' '}
                                 {copy.failed_queue_jobs_description}
@@ -763,8 +765,7 @@ function OperationalAlertAction({
                         <SheetTitle>{humanize(alert.metric)}</SheetTitle>
                         <SheetDescription>
                             {humanize(alert.service)} {copy.separator}{' '}
-                            {humanize(alert.severity)}
-                            {' '}{copy.separator}{' '}
+                            {humanize(alert.severity)} {copy.separator}{' '}
                             {humanize(alert.status)}
                         </SheetDescription>
                     </SheetHeader>
@@ -816,8 +817,8 @@ function OperationalAlertAction({
                                     {copy.immutable_timeline}
                                 </h3>
                                 <p className="text-xs text-muted-foreground">
-                                    {copy.showing_latest}{' '}
-                                    {alert.events.length} {copy.of}{' '}
+                                    {copy.showing_latest} {alert.events.length}{' '}
+                                    {copy.of}{' '}
                                     {alert.eventCount.toLocaleString()}{' '}
                                     {copy.retained_events}
                                 </p>
@@ -1085,7 +1086,8 @@ function FailedJobAction({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            <RotateCcw /> {copy.retry_failed_job}
+                                            <RotateCcw />{' '}
+                                            {copy.retry_failed_job}
                                         </Button>
                                     </>
                                 )}
@@ -1438,9 +1440,7 @@ function RegisterHeader({
     return (
         <div className="flex items-center justify-between border-b px-5 py-4 sm:px-6">
             <div>
-                <h2 className="font-bold">
-                    {copy.backup_restore_evidence}
-                </h2>
+                <h2 className="font-bold">{copy.backup_restore_evidence}</h2>
                 <p className="text-sm text-muted-foreground">
                     {total.toLocaleString()} {copy.recovery_artifacts}
                 </p>

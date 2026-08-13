@@ -11,7 +11,12 @@ type ErrorPageProps = {
     goBackLabel: string;
 };
 
-export default function ErrorPage({ status, title, description, goBackLabel }: ErrorPageProps) {
+export default function ErrorPage({
+    status,
+    title,
+    description,
+    goBackLabel,
+}: ErrorPageProps) {
     const { auth, localization } = usePage().props;
     const copy = localization.copy;
     const destination = auth?.user ? dashboard() : home();
@@ -39,7 +44,9 @@ export default function ErrorPage({ status, title, description, goBackLabel }: E
                                 className="h-14 w-20 rounded bg-white object-contain p-1"
                             />
                             <span>
-                                <strong className="block text-lg leading-tight">IDMIS</strong>
+                                <strong className="block text-lg leading-tight">
+                                    IDMIS
+                                </strong>
                                 <span className="block text-xs text-primary-foreground/80">
                                     {copy.departmentName}
                                 </span>
@@ -55,25 +62,35 @@ export default function ErrorPage({ status, title, description, goBackLabel }: E
                             <p className="font-mono text-sm font-semibold text-primary">
                                 HTTP {status}
                             </p>
-                            <h1 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">
+                            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.035em] text-balance sm:text-5xl">
                                 {title}
                             </h1>
-                            <p className="mt-5 max-w-[65ch] text-pretty text-base leading-7 text-muted-foreground sm:text-lg">
+                            <p className="mt-5 max-w-[65ch] text-base leading-7 text-pretty text-muted-foreground sm:text-lg">
                                 {description}
                             </p>
                             <div className="mt-8 flex flex-wrap gap-3">
                                 <Button asChild>
                                     <Link href={destination}>
                                         <House aria-hidden="true" />
-                                        {auth?.user ? copy.dashboard : copy.home}
+                                        {auth?.user
+                                            ? copy.dashboard
+                                            : copy.home}
                                     </Link>
                                 </Button>
-                                <Button type="button" variant="outline" onClick={() => window.history.back()}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => window.history.back()}
+                                >
                                     <ArrowLeft aria-hidden="true" />
                                     {goBackLabel}
                                 </Button>
                                 <Button asChild variant="ghost">
-                                    <a href={help().url} target="_blank" rel="noreferrer">
+                                    <a
+                                        href={help().url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
                                         <LifeBuoy aria-hidden="true" />
                                         {copy.help}
                                     </a>
@@ -82,7 +99,9 @@ export default function ErrorPage({ status, title, description, goBackLabel }: E
                         </div>
 
                         <div className="border-t border-border pt-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-                            <p className="text-sm font-semibold">{copy.authorizedAccessOnly}</p>
+                            <p className="text-sm font-semibold">
+                                {copy.authorizedAccessOnly}
+                            </p>
                             <p className="mt-2 text-sm leading-6 text-muted-foreground">
                                 {copy.protectCredentialsDescription}
                             </p>

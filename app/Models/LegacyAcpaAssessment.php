@@ -15,6 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property CarbonImmutable $period
  * @property CarbonImmutable $imported_at
+ * @property-read int $appeals_count
+ * @property-read int $assessor_assignments_count
+ * @property-read int $criterion_results_count
+ * @property-read int $evidence_manifests_count
+ * @property-read int $findings_count
  * @property-read Collection<int, LegacyAcpaComponent> $components
  */
 #[Fillable(['data_migration_batch_id', 'data_migration_row_id', 'county_id', 'assessment_reference', 'period', 'cycle_name', 'status', 'overall_score', 'source_name', 'source_reference', 'source_checksum', 'record_checksum', 'imported_by', 'imported_at'])]

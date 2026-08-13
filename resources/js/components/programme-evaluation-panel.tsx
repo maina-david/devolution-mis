@@ -85,9 +85,7 @@ export default function ProgrammeEvaluationPanel({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>
-                            {copy.register}
-                        </DropdownMenuLabel>
+                        <DropdownMenuLabel>{copy.register}</DropdownMenuLabel>
                         <DropdownMenuGroup>
                             {['csv', 'xlsx', 'pdf', 'json'].map((format) => (
                                 <DropdownMenuItem key={format} asChild>
@@ -125,14 +123,20 @@ export default function ProgrammeEvaluationPanel({
                         >
                             {({ processing, errors }) => (
                                 <>
-                                    <Field label={copy.code} error={errors.code}>
+                                    <Field
+                                        label={copy.code}
+                                        error={errors.code}
+                                    >
                                         <Input
                                             name="code"
                                             required
                                             placeholder="EVAL-2026-01"
                                         />
                                     </Field>
-                                    <Field label={copy.evaluation} error={errors.title}>
+                                    <Field
+                                        label={copy.evaluation}
+                                        error={errors.title}
+                                    >
                                         <Input name="title" required />
                                     </Field>
                                     <Field
@@ -243,7 +247,9 @@ export default function ProgrammeEvaluationPanel({
                                     {item.code}
                                 </TableCell>
                                 <TableCell>{item.title}</TableCell>
-                                <TableCell>{copy[item.type] ?? item.type}</TableCell>
+                                <TableCell>
+                                    {copy[item.type] ?? item.type}
+                                </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col gap-1.5">
                                         {item.county ? (
@@ -299,14 +305,18 @@ export default function ProgrammeEvaluationPanel({
                                                 <EvaluationTransition
                                                     evaluationId={item.id}
                                                     name="start"
-                                                    label={copy.start_evaluation}
+                                                    label={
+                                                        copy.start_evaluation
+                                                    }
                                                     disabled={
                                                         !hasCleanDocument(
                                                             item,
                                                             'programme-evaluation-tor',
                                                         )
                                                     }
-                                                    disabledReason={copy.tor_required}
+                                                    disabledReason={
+                                                        copy.tor_required
+                                                    }
                                                 />
                                             )}
                                         {item.status === 'in_progress' &&
@@ -314,14 +324,18 @@ export default function ProgrammeEvaluationPanel({
                                                 <EvaluationTransition
                                                     evaluationId={item.id}
                                                     name="submit_review"
-                                                    label={copy.submit_for_review}
+                                                    label={
+                                                        copy.submit_for_review
+                                                    }
                                                     disabled={
                                                         !hasCleanDocument(
                                                             item,
                                                             'programme-evaluation-report',
                                                         )
                                                     }
-                                                    disabledReason={copy.report_required}
+                                                    disabledReason={
+                                                        copy.report_required
+                                                    }
                                                 />
                                             )}
                                         {item.status === 'review' &&

@@ -412,7 +412,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                    {copy.create_organization}
+                                                {copy.create_organization}
                                             </Button>
                                         </>
                                     )}
@@ -491,7 +491,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                    {copy.create_sector}
+                                                {copy.create_sector}
                                             </Button>
                                         </>
                                     )}
@@ -503,7 +503,8 @@ export default function ReferenceDataIndex({
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Database aria-hidden="true" /> {copy.programmes}
+                                <Database aria-hidden="true" />{' '}
+                                {copy.programmes}
                             </CardTitle>
                             <CardDescription>
                                 {copy.programmes_description}
@@ -574,7 +575,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                    {copy.create_programme}
+                                                {copy.create_programme}
                                             </Button>
                                         </>
                                     )}
@@ -1037,7 +1038,9 @@ function CountyRegister({
                                                                 )
                                                             }
                                                         >
-                                                            {copy.archive_county}
+                                                            {
+                                                                copy.archive_county
+                                                            }
                                                         </DropdownMenuItem>
                                                     </DropdownMenuGroup>
                                                 </DropdownMenuContent>
@@ -1111,7 +1114,9 @@ function CountyRegister({
             <Sheet open={bulkOpen} onOpenChange={setBulkOpen}>
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>{copy.archive_selected_counties}</SheetTitle>
+                        <SheetTitle>
+                            {copy.archive_selected_counties}
+                        </SheetTitle>
                         <SheetDescription>
                             {copy.archive_selected_description}
                         </SheetDescription>
@@ -1446,7 +1451,9 @@ function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
-                        <SheetTitle>{copy.archive_programme_coverage}</SheetTitle>
+                        <SheetTitle>
+                            {copy.archive_programme_coverage}
+                        </SheetTitle>
                         <SheetDescription>
                             {copy.archive_coverage_description}
                         </SheetDescription>
@@ -1572,7 +1579,8 @@ function ReleaseRegister({
                             releases.map((release) => (
                                 <TableRow key={release.id}>
                                     <TableCell className="font-medium">
-                                        {copy.version_prefix}{release.version}
+                                        {copy.version_prefix}
+                                        {release.version}
                                     </TableCell>
                                     <TableCell>
                                         <Badge
@@ -1627,7 +1635,9 @@ function ReleaseRegister({
                                                                 }
                                                             >
                                                                 <ClipboardCheck />
-                                                                {copy.review_and_publish}
+                                                                {
+                                                                    copy.review_and_publish
+                                                                }
                                                             </DropdownMenuItem>
                                                         </DropdownMenuGroup>
                                                     </DropdownMenuContent>
@@ -1656,8 +1666,7 @@ function ReleaseRegister({
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
                         <SheetTitle>
-                            {copy.publish_release}{' '}
-                            {copy.version_prefix}
+                            {copy.publish_release} {copy.version_prefix}
                             {selected?.version}
                         </SheetTitle>
                         <SheetDescription>

@@ -571,7 +571,7 @@ export default function ProjectShow({
                             </div>
                         ) : (
                             <p className="py-8 text-center text-sm text-muted-foreground">
-                                    {copy.no_documents}
+                                {copy.no_documents}
                             </p>
                         )}
                     </CardContent>
@@ -674,7 +674,9 @@ export default function ProjectShow({
                                         )}
                                     />
                                 </div>
-                                <Button type="submit">{copy.add_milestone}</Button>
+                                <Button type="submit">
+                                    {copy.add_milestone}
+                                </Button>
                             </Form>
                         </Panel>
                         <Panel icon={Banknote} title="Add budget line">
@@ -717,7 +719,9 @@ export default function ProjectShow({
                                     required
                                     placeholder="2026/27"
                                 />
-                                <Button type="submit">{copy.add_budget_line}</Button>
+                                <Button type="submit">
+                                    {copy.add_budget_line}
+                                </Button>
                             </Form>
                         </Panel>
                         <Panel icon={CircleAlert} title="Register risk">
@@ -762,7 +766,9 @@ export default function ProjectShow({
                                     required
                                     placeholder="Mitigation"
                                 />
-                                <Button type="submit">{copy.register_risk}</Button>
+                                <Button type="submit">
+                                    {copy.register_risk}
+                                </Button>
                             </Form>
                         </Panel>
                         <Panel icon={ShoppingCart} title="Add procurement">
@@ -804,7 +810,9 @@ export default function ProjectShow({
                                     name="planned_notice_date"
                                     label="Planned notice date"
                                 />
-                                <Button type="submit">{copy.add_procurement}</Button>
+                                <Button type="submit">
+                                    {copy.add_procurement}
+                                </Button>
                             </Form>
                         </Panel>
                     </div>
@@ -1240,8 +1248,7 @@ function ProjectSchedule({
                     >
                         <div className="flex flex-col gap-4">
                             <p className="text-sm text-muted-foreground">
-                                {copy.requested_by}{' '}
-                                {pendingBaseline.requester}
+                                {copy.requested_by} {pendingBaseline.requester}
                                 {copy.full_stop} {copy.critical_path_label}{' '}
                                 {pendingBaseline.analysis.critical_path_codes.join(
                                     ' → ',
@@ -1304,9 +1311,9 @@ function ProjectSchedule({
                                 }
                                 title={baseline.snapshotChecksum}
                             >
-                                {copy.version_prefix}{baseline.version}{' '}
-                                {copy.separator} {baseline.status}{' '}
-                                {copy.separator}{' '}
+                                {copy.version_prefix}
+                                {baseline.version} {copy.separator}{' '}
+                                {baseline.status} {copy.separator}{' '}
                                 {baseline.analysis.project_finish}
                             </Badge>
                         ))}
@@ -1423,8 +1430,7 @@ function ProjectSchedule({
                                                     >
                                                         {scheduleDate(end)}
                                                     </time>{' '}
-                                                    {copy.separator}{' '}
-                                                    {progress}
+                                                    {copy.separator} {progress}
                                                     {copy.percent_complete}{' '}
                                                     {copy.separator}{' '}
                                                     {String(milestone.status)}
@@ -1671,7 +1677,9 @@ function ProjectResourcePlan({
                                                 />
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="allocation-rate">
-                                                        {copy.planned_units_per_day}
+                                                        {
+                                                            copy.planned_units_per_day
+                                                        }
                                                     </Label>
                                                     <Input
                                                         id="allocation-rate"
@@ -1724,8 +1732,7 @@ function ProjectResourcePlan({
                                     <div className="flex flex-wrap items-start justify-between gap-3">
                                         <div>
                                             <p className="font-semibold">
-                                                {resource.code}{' '}
-                                                {copy.separator}{' '}
+                                                {resource.code} {copy.separator}{' '}
                                                 {resource.name}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
@@ -1733,8 +1740,7 @@ function ProjectResourcePlan({
                                                     resource.capacityPerDay,
                                                 )}{' '}
                                                 {resource.capacityUnit}
-                                                {copy.per_day}{' '}
-                                                {copy.separator}{' '}
+                                                {copy.per_day} {copy.separator}{' '}
                                                 {formatCurrency(
                                                     resource.costRate,
                                                     resource.currency,
@@ -1755,8 +1761,8 @@ function ProjectResourcePlan({
                                         {copy.available}{' '}
                                         {resource.availableFrom}{' '}
                                         {copy.date_separator}{' '}
-                                        {resource.availableTo}{' '}
-                                        {copy.separator} {copy.planned_cost}{' '}
+                                        {resource.availableTo} {copy.separator}{' '}
+                                        {copy.planned_cost}{' '}
                                         {formatCurrency(
                                             resource.plannedCost,
                                             resource.currency,
@@ -1780,7 +1786,9 @@ function ProjectResourcePlan({
                                                                 {
                                                                     allocation.startsOn
                                                                 }{' '}
-                                                                {copy.date_separator}{' '}
+                                                                {
+                                                                    copy.date_separator
+                                                                }{' '}
                                                                 {
                                                                     allocation.endsOn
                                                                 }{' '}

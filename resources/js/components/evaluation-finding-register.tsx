@@ -831,7 +831,9 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    {copy.upload_evidence}
+                                                                    {
+                                                                        copy.upload_evidence
+                                                                    }
                                                                 </DropdownMenuItem>
                                                             )}
                                                         {isOwner &&
@@ -851,7 +853,9 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    {copy.submit_progress}
+                                                                    {
+                                                                        copy.submit_progress
+                                                                    }
                                                                 </DropdownMenuItem>
                                                             )}
                                                         {canVerify &&
@@ -864,7 +868,9 @@ function FindingActionPlan({
                                                                         )
                                                                     }
                                                                 >
-                                                                    {copy.verify_progress}
+                                                                    {
+                                                                        copy.verify_progress
+                                                                    }
                                                                 </DropdownMenuItem>
                                                             )}
                                                     </DropdownMenuGroup>
@@ -899,8 +905,7 @@ function FindingActionPlan({
                                 >
                                     <span>
                                         <strong>{action.code}</strong>{' '}
-                                        {copy.separator}{' '}
-                                        {document.title}{' '}
+                                        {copy.separator} {document.title}{' '}
                                         <Badge variant="outline">
                                             {document.sourceType}
                                         </Badge>

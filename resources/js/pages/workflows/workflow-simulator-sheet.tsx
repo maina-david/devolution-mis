@@ -128,10 +128,7 @@ export default function WorkflowSimulatorSheet({
                 }).url,
             );
         } catch {
-            http.setError(
-                'initial_context',
-                copy.invalid_json,
-            );
+            http.setError('initial_context', copy.invalid_json);
         }
     }
 
@@ -390,7 +387,8 @@ export default function WorkflowSimulatorSheet({
                                 {copy.scenario_checksum}{' '}
                                 {result.scenarioChecksum}
                                 <br />
-                                {copy.version_checksum} {result.version.checksum}
+                                {copy.version_checksum}{' '}
+                                {result.version.checksum}
                             </p>
                         </div>
                     )}

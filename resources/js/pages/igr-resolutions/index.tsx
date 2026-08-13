@@ -252,9 +252,7 @@ export default function IgrResolutionsIndex({
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
                         {copy.eyebrow}
                     </p>
-                    <h1 className="mt-3 text-3xl font-bold">
-                        {copy.title}
-                    </h1>
+                    <h1 className="mt-3 text-3xl font-bold">{copy.title}</h1>
                     <p className="mt-3 max-w-3xl text-[#c7d6dd]">
                         {copy.description}
                     </p>
@@ -412,7 +410,10 @@ export default function IgrResolutionsIndex({
                         </div>
                         <dl className="grid grid-cols-2 gap-3 self-start">
                             {[
-                                ['Links', dependencyAnalytics.summary.totalLinks],
+                                [
+                                    'Links',
+                                    dependencyAnalytics.summary.totalLinks,
+                                ],
                                 [
                                     'Blocking',
                                     dependencyAnalytics.summary.blockingLinks,
@@ -561,7 +562,9 @@ export default function IgrResolutionsIndex({
                                                 compact
                                             />
                                         ) : (
-                                            <span>{copy.national_multi_county}</span>
+                                            <span>
+                                                {copy.national_multi_county}
+                                            </span>
                                         )}
                                         <div className="text-right text-xs text-muted-foreground">
                                             <p className="font-medium text-foreground">
@@ -769,7 +772,7 @@ function AnalyticsRanking({
                 ))
             ) : (
                 <p className="text-sm text-muted-foreground">
-                                {copy.no_matching_data}
+                    {copy.no_matching_data}
                 </p>
             )}
         </div>
@@ -1035,7 +1038,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                             <div className="flex flex-col gap-3 rounded-lg border p-3">
                                 <div className="flex items-center justify-between gap-3">
                                     <p className="font-medium">
-                                    {copy.responsible_parties}
+                                        {copy.responsible_parties}
                                     </p>
                                     <Button
                                         type="button"
@@ -1048,7 +1051,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                         }
                                     >
                                         <Plus aria-hidden="true" />
-                                {copy.add_party}
+                                        {copy.add_party}
                                     </Button>
                                 </div>
                                 {Array.from(
@@ -1191,7 +1194,10 @@ function ResolutionCard({
                 <div className="min-w-44">
                     <div className="mb-1 flex justify-between text-xs">
                         <span>{copy.implementation}</span>
-                        <span>{resolution.progress}{copy.percent}</span>
+                        <span>
+                            {resolution.progress}
+                            {copy.percent}
+                        </span>
                     </div>
                     <Progress value={resolution.progress} />
                 </div>
@@ -1211,7 +1217,9 @@ function ResolutionCard({
             {resolution.meeting ? (
                 <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 text-sm sm:grid-cols-2">
                     <div>
-                        <p className="font-medium">{copy.formal_meeting_provenance}</p>
+                        <p className="font-medium">
+                            {copy.formal_meeting_provenance}
+                        </p>
                         <p className="text-muted-foreground">
                             {resolution.meeting.reference} {copy.separator}{' '}
                             {resolution.meeting.title}
@@ -1225,7 +1233,8 @@ function ResolutionCard({
                             {copy.separator} {resolution.meeting.venue}
                         </p>
                         <p className="text-muted-foreground">
-                            {copy.minutes_label} {resolution.meeting.minutesReference}
+                            {copy.minutes_label}{' '}
+                            {resolution.meeting.minutesReference}
                             {resolution.meeting.chair
                                 ? ` · Chair: ${resolution.meeting.chair}`
                                 : ''}
@@ -1284,7 +1293,9 @@ function ResolutionCard({
             )}
             {resolution.gaps.length > 0 && (
                 <div className="flex flex-col gap-3 rounded-lg border p-3">
-                    <p className="font-medium">{copy.governed_implementation_gaps}</p>
+                    <p className="font-medium">
+                        {copy.governed_implementation_gaps}
+                    </p>
                     {resolution.gaps.map((gap) => (
                         <ResolutionGapCard
                             key={gap.id}
@@ -1542,8 +1553,8 @@ function ResolutionCard({
                                 className="rounded-md bg-muted/40 p-3 text-sm"
                             >
                                 <p className="font-medium">
-                                    {update.progress}{copy.percent}{' '}
-                                    {copy.separator}{' '}
+                                    {update.progress}
+                                    {copy.percent} {copy.separator}{' '}
                                     {new Date(
                                         update.reportedAt,
                                     ).toLocaleString()}
@@ -1645,8 +1656,7 @@ function ResolutionGapCard({
                     <p className="mt-2 font-medium">{gap.title}</p>
                     <p className="text-muted-foreground">
                         {copy.owner_label} {gap.owner} {copy.separator}{' '}
-                        {copy.due}{' '}
-                        {new Date(gap.dueOn).toLocaleDateString()}
+                        {copy.due} {new Date(gap.dueOn).toLocaleDateString()}
                     </p>
                 </div>
                 {gap.county && <CountyIdentity county={gap.county} compact />}

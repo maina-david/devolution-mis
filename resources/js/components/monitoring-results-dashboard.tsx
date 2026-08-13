@@ -195,9 +195,9 @@ export default function MonitoringResultsDashboard({
             <div className="grid gap-5 xl:grid-cols-2">
                 <Card>
                     <CardHeader>
-                            <CardTitle>{copy.verified_indicator_ranges}</CardTitle>
+                        <CardTitle>{copy.verified_indicator_ranges}</CardTitle>
                         <CardDescription>
-                                {copy.verified_indicator_ranges_description}
+                            {copy.verified_indicator_ranges_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto p-0">
@@ -240,7 +240,7 @@ export default function MonitoringResultsDashboard({
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
                                                 {indicator.minimum.toLocaleString()}
-                                                    {copy.range_separator}
+                                                {copy.range_separator}
                                                 {indicator.maximum.toLocaleString()}
                                             </TableCell>
                                             <TableCell className="text-right tabular-nums">
@@ -261,9 +261,9 @@ export default function MonitoringResultsDashboard({
 
                 <Card>
                     <CardHeader>
-                            <CardTitle>{copy.disaggregation}</CardTitle>
+                        <CardTitle>{copy.disaggregation}</CardTitle>
                         <CardDescription>
-                                {copy.disaggregation_description}
+                            {copy.disaggregation_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto p-0">
@@ -321,9 +321,9 @@ export default function MonitoringResultsDashboard({
 
             <Card>
                 <CardHeader>
-                        <CardTitle>{copy.project_result_contributions}</CardTitle>
+                    <CardTitle>{copy.project_result_contributions}</CardTitle>
                     <CardDescription>
-                            {copy.project_result_contributions_description}
+                        {copy.project_result_contributions_description}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="overflow-x-auto p-0">
@@ -375,7 +375,8 @@ export default function MonitoringResultsDashboard({
                                             </Link>
                                         </TableCell>
                                         <TableCell>
-                                            {item.indicator.code} {copy.separator}{' '}
+                                            {item.indicator.code}{' '}
+                                            {copy.separator}{' '}
                                             {item.indicator.name}
                                         </TableCell>
                                         <TableCell>{item.dimension}</TableCell>
@@ -583,8 +584,7 @@ function TargetPerformance({
                                             </span>
                                             <span className="block max-w-64 text-xs text-muted-foreground">
                                                 {row.indicator.name}{' '}
-                                                {copy.separator}{' '}
-                                                {row.dimension}
+                                                {copy.separator} {row.dimension}
                                             </span>
                                         </TableCell>
                                         <TableCell>

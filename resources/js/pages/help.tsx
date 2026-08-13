@@ -21,10 +21,7 @@ export default function Help() {
     return (
         <>
             <Head title={copy.page_title}>
-                <meta
-                    name="description"
-                    content={copy.meta_description}
-                />
+                <meta name="description" content={copy.meta_description} />
             </Head>
 
             <PublicLayout>

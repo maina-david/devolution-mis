@@ -1039,9 +1039,11 @@ function TransitionForm({
                             <Card key={goal.id}>
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        {goal.code} {copy.separator} {goal.title}{' '}
+                                        {goal.code} {copy.separator}{' '}
+                                        {goal.title}{' '}
                                         <Badge variant="outline">
-                                            {goal.weight}{copy.percent}
+                                            {goal.weight}
+                                            {copy.percent}
                                         </Badge>
                                     </CardTitle>
                                 </CardHeader>
@@ -1386,9 +1388,7 @@ function PlanDetails({
                 ))}
             </div>
             <div>
-                <h3 className="font-semibold">
-                    {copy.overall_expectations}
-                </h3>
+                <h3 className="font-semibold">{copy.overall_expectations}</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
                     {plan.expectations}
                 </p>
@@ -1402,16 +1402,17 @@ function PlanDetails({
                                 {goal.code} {copy.separator} {goal.title}
                             </p>
                             <Badge variant="outline">
-                                {goal.weight}{copy.percent}
+                                {goal.weight}
+                                {copy.percent}
                             </Badge>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            {goal.kpi}{copy.colon} {copy.target_label}{' '}
-                            {goal.target} {goal.unit} {copy.separator}{' '}
-                            {copy.actual_label} {goal.actual ?? 'pending'}{' '}
-                            {copy.separator} {copy.self_label}{' '}
-                            {goal.selfRating ?? '—'} {copy.separator}{' '}
-                            {copy.supervisor_label}{' '}
+                            {goal.kpi}
+                            {copy.colon} {copy.target_label} {goal.target}{' '}
+                            {goal.unit} {copy.separator} {copy.actual_label}{' '}
+                            {goal.actual ?? 'pending'} {copy.separator}{' '}
+                            {copy.self_label} {goal.selfRating ?? '—'}{' '}
+                            {copy.separator} {copy.supervisor_label}{' '}
                             {goal.supervisorRating ?? '—'}
                         </p>
                         <div className="mt-4 grid gap-2">

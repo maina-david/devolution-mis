@@ -583,19 +583,32 @@ export default function SecurityGovernance({
                         icon={ShieldAlert}
                         label={copy.metrics.threats}
                         value={threats.total}
-                        detail={copy.metrics.high_risk.replace(':count', String(highThreats))}
+                        detail={copy.metrics.high_risk.replace(
+                            ':count',
+                            String(highThreats),
+                        )}
                     />
                     <Metric
                         icon={Fingerprint}
                         label={copy.metrics.campaigns}
                         value={campaigns.length}
-                        detail={copy.metrics.open.replace(':count', String(campaigns.filter((campaign) => campaign.status === 'open').length))}
+                        detail={copy.metrics.open.replace(
+                            ':count',
+                            String(
+                                campaigns.filter(
+                                    (campaign) => campaign.status === 'open',
+                                ).length,
+                            ),
+                        )}
                     />
                     <Metric
                         icon={UserCheck}
                         label={copy.metrics.decisions}
                         value={accessItems.total - pendingAccess}
-                        detail={copy.metrics.pending.replace(':count', String(pendingAccess))}
+                        detail={copy.metrics.pending.replace(
+                            ':count',
+                            String(pendingAccess),
+                        )}
                     />
                     <Metric
                         icon={UserX}
@@ -610,20 +623,33 @@ export default function SecurityGovernance({
                         icon={PackageCheck}
                         label={copy.metrics.supply_chain}
                         value={supplyChainScans.total}
-                        detail={copy.metrics.failed.replace(':count', String(supplyChainScans.data.filter((scan) => scan.outcome === 'fail').length))}
+                        detail={copy.metrics.failed.replace(
+                            ':count',
+                            String(
+                                supplyChainScans.data.filter(
+                                    (scan) => scan.outcome === 'fail',
+                                ).length,
+                            ),
+                        )}
                     />
                     <Metric
                         icon={RadioTower}
                         label={copy.metrics.response}
                         value={securityIncidents.total}
-                        detail={copy.metrics.exercises.replace(':count', String(securityIncidents.data.filter((incident) => incident.recordType === 'exercise').length))}
+                        detail={copy.metrics.exercises.replace(
+                            ':count',
+                            String(
+                                securityIncidents.data.filter(
+                                    (incident) =>
+                                        incident.recordType === 'exercise',
+                                ).length,
+                            ),
+                        )}
                     />
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
-                        <h2 className="font-bold">
-                            {copy.identity.title}
-                        </h2>
+                        <h2 className="font-bold">{copy.identity.title}</h2>
                         <p className="text-sm text-muted-foreground">
                             {copy.identity.description}
                         </p>
@@ -705,9 +731,7 @@ export default function SecurityGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
-                        <h2 className="font-bold">
-                            {copy.supply_chain.title}
-                        </h2>
+                        <h2 className="font-bold">{copy.supply_chain.title}</h2>
                         <p className="text-sm text-muted-foreground">
                             {copy.supply_chain.description}
                         </p>
@@ -778,9 +802,7 @@ export default function SecurityGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <div className="border-b px-5 py-4">
-                        <h2 className="font-bold">
-                            {copy.threats.title}
-                        </h2>
+                        <h2 className="font-bold">{copy.threats.title}</h2>
                         <p className="text-sm text-muted-foreground">
                             {copy.threats.description}
                         </p>
@@ -1002,7 +1024,8 @@ function IdentityLifecycleAction({
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setOpen(true)}>
-                            <Eye aria-hidden="true" /> {copy.ui.review_lifecycle}
+                            <Eye aria-hidden="true" />{' '}
+                            {copy.ui.review_lifecycle}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -1279,8 +1302,7 @@ function SecurityIncidentAction({
                         <DropdownMenuItem
                             onSelect={() => setSurface('details')}
                         >
-                            <Eye className="size-4" />{' '}
-                            {copy.ui.review_response}
+                            <Eye className="size-4" /> {copy.ui.review_response}
                         </DropdownMenuItem>
                         {canManage && incident.status !== 'closed' && (
                             <DropdownMenuItem
@@ -1295,8 +1317,7 @@ function SecurityIncidentAction({
                                 onSelect={() => setSurface('transition')}
                             >
                                 <ShieldCheck className="size-4" />{' '}
-                                {copy.ui.record}{' '}
-                                {humanize(transition ?? '')}
+                                {copy.ui.record} {humanize(transition ?? '')}
                             </DropdownMenuItem>
                         )}
                     </DropdownMenuGroup>
@@ -1427,7 +1448,8 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                                     </p>
                                     <p className="text-xs text-muted-foreground">
                                         {humanize(document.purpose)}{' '}
-                                        {copy.ui.separator} {document.sourceType}{' '}
+                                        {copy.ui.separator}{' '}
+                                        {document.sourceType}{' '}
                                         {copy.ui.separator}{' '}
                                         {document.scanStatus}
                                     </p>
@@ -1642,8 +1664,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                             </Badge>
                             <span className="text-sm text-muted-foreground">
                                 {formatDate(scan.completedAt)}{' '}
-                                {copy.ui.separator}{' '}
-                                {scan.initiatedBy}
+                                {copy.ui.separator} {scan.initiatedBy}
                             </span>
                         </div>
                         <dl className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
@@ -1925,8 +1946,7 @@ function DelegationAction({
                         <SheetDescription>
                             {delegation.beneficiary.name} {copy.ui.separator}{' '}
                             {humanize(delegation.accessType)}{' '}
-                            {copy.ui.separator}{' '}
-                            {humanize(delegation.status)}
+                            {copy.ui.separator} {humanize(delegation.status)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pb-8">
@@ -1988,8 +2008,7 @@ function DelegationAction({
                                     label="Audit findings and follow-up"
                                 />
                                 <Button type="submit">
-                                    <Fingerprint />{' '}
-                                    {copy.ui.complete_review}
+                                    <Fingerprint /> {copy.ui.complete_review}
                                 </Button>
                             </Form>
                         ) : (
@@ -2119,8 +2138,7 @@ function ThreatAction({
                         <SheetDescription>
                             {threat.reference} {copy.ui.separator}{' '}
                             {humanize(threat.category)} {copy.ui.separator}{' '}
-                            {copy.ui.inherent_risk}{' '}
-                            {threat.inherentRiskScore}
+                            {copy.ui.inherent_risk} {threat.inherentRiskScore}
                             {copy.ui.out_of_25}
                         </SheetDescription>
                     </SheetHeader>
@@ -2715,9 +2733,7 @@ function SecurityIncidentRegisterHeader({
     return (
         <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
             <div>
-                <h2 className="font-bold">
-                    {copy.ui.incident_register}
-                </h2>
+                <h2 className="font-bold">{copy.ui.incident_register}</h2>
                 <p className="text-sm text-muted-foreground">
                     {copy.ui.incident_records.replace(
                         ':count',
@@ -2757,9 +2773,7 @@ function DelegationRegisterHeader({
     return (
         <div className="flex flex-col justify-between gap-3 border-b px-5 py-4 sm:flex-row sm:items-center">
             <div>
-                <h2 className="font-bold">
-                    {copy.ui.delegation_register}
-                </h2>
+                <h2 className="font-bold">{copy.ui.delegation_register}</h2>
                 <p className="text-sm text-muted-foreground">
                     {copy.ui.delegation_records.replace(
                         ':count',

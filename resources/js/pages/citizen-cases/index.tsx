@@ -178,7 +178,10 @@ export default function CitizenCasesIndex({
                     <Metric label={copy.cases} value={summary.total} />
                     <Metric label={copy.open} value={summary.open} />
                     <Metric label={copy.overdue} value={summary.overdue} />
-                    <Metric label={copy.grievances} value={summary.grievances} />
+                    <Metric
+                        label={copy.grievances}
+                        value={summary.grievances}
+                    />
                     <Metric
                         label={copy.satisfaction}
                         value={
@@ -211,9 +214,8 @@ export default function CitizenCasesIndex({
                         <Metric
                             label={copy.resolution_rating_correlation}
                             value={
-                                analytics.satisfaction
-                                    .resolutionTimeCorrelation.coefficient ??
-                                '—'
+                                analytics.satisfaction.resolutionTimeCorrelation
+                                    .coefficient ?? '—'
                             }
                         />
                     </div>
@@ -393,7 +395,10 @@ function CaseSheet({
                     </div>
                     {citizenCase.accessibilityNeeds && (
                         <div className="rounded-lg bg-muted p-3 text-sm">
-                            <strong>{copy.accessibility_support}{':'}</strong>{' '}
+                            <strong>
+                                {copy.accessibility_support}
+                                {':'}
+                            </strong>{' '}
                             {citizenCase.accessibilityNeeds}
                         </div>
                     )}

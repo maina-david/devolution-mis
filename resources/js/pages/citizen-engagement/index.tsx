@@ -185,17 +185,20 @@ export default function CitizenEngagementIndex({
                         <CardContent>
                             {dashboard.issueAnalytics.categories.length ? (
                                 <ul className="flex flex-col gap-2">
-                                    {dashboard.issueAnalytics.categories.map((issue) => (
-                                        <li
-                                            key={issue.label}
-                                            className="flex justify-between gap-3 text-sm"
-                                        >
-                                            <span className="capitalize">
-                                                {copy[issue.label] ?? issue.label}
-                                            </span>
-                                            <strong>{issue.total}</strong>
-                                        </li>
-                                    ))}
+                                    {dashboard.issueAnalytics.categories.map(
+                                        (issue) => (
+                                            <li
+                                                key={issue.label}
+                                                className="flex justify-between gap-3 text-sm"
+                                            >
+                                                <span className="capitalize">
+                                                    {copy[issue.label] ??
+                                                        issue.label}
+                                                </span>
+                                                <strong>{issue.total}</strong>
+                                            </li>
+                                        ),
+                                    )}
                                 </ul>
                             ) : (
                                 <p className="text-sm text-muted-foreground">

@@ -239,9 +239,7 @@ export default function WorkspaceDataTable({
             helper.accessor((): WorkspaceRow['cells'][number] => null, {
                 id: 'actions',
                 enableSorting: false,
-            header: () => (
-                <span className="sr-only">{copy.actions}</span>
-            ),
+                header: () => <span className="sr-only">{copy.actions}</span>,
                 cell: ({ row }) => (
                     <div className="flex justify-end">
                         {renderActionControl ? (

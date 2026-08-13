@@ -35,6 +35,7 @@ use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
 use App\Models\LearningOfflineSync;
 use App\Models\LegacyAcpaAssessment;
+use App\Models\LegacyAcpaComponent;
 use App\Models\OperationalAlert;
 use App\Models\OperationalBackup;
 use App\Models\PartnerAgreement;
@@ -180,7 +181,7 @@ class ProgrammeWorkspaceData
             'status' => $assessment->status,
             'meta' => [
                 'countyId' => $assessment->county_id,
-                'components' => $assessment->components->map(fn ($component): array => [
+                'components' => $assessment->components->map(fn (LegacyAcpaComponent $component): array => [
                     'id' => $component->id,
                     'type' => $component->record_type,
                     'reference' => $component->record_reference,

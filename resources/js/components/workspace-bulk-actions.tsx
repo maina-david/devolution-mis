@@ -231,9 +231,7 @@ function EvidenceDecisionSheet({
                     variant={approving ? 'outline' : 'destructive'}
                 >
                     {approving ? <FileCheck2Icon /> : <ShieldXIcon />}
-                    {approving
-                        ? copy.verify_selected
-                        : copy.reject_selected}
+                    {approving ? copy.verify_selected : copy.reject_selected}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-md">

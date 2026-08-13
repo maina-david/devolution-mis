@@ -516,14 +516,11 @@ function ServicePolicyRegister({
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             {copy.respond}{' '}
                                             {target.first_response}
-                                            {copy.hour_suffix}{' '}
-                                            {copy.separator} {copy.resolve}{' '}
-                                            {target.resolution}
-                                            {copy.hour_suffix}{' '}
-                                            {copy.separator} {copy.remind}{' '}
-                                            {target.reminder}
-                                            {copy.hour_suffix}{' '}
-                                            {copy.before_due}
+                                            {copy.hour_suffix} {copy.separator}{' '}
+                                            {copy.resolve} {target.resolution}
+                                            {copy.hour_suffix} {copy.separator}{' '}
+                                            {copy.remind} {target.reminder}
+                                            {copy.hour_suffix} {copy.before_due}
                                         </p>
                                     </div>
                                 ),
@@ -1172,9 +1169,8 @@ function TicketSheet({
                     </div>
                     <SheetTitle>{ticket.subject}</SheetTitle>
                     <SheetDescription>
-                        {copy.requested}{' '}
-                        {formatDateTime(ticket.requestedAt)} {copy.by}{' '}
-                        {ticket.requester.name}
+                        {copy.requested} {formatDateTime(ticket.requestedAt)}{' '}
+                        {copy.by} {ticket.requester.name}
                         {copy.full_stop}
                     </SheetDescription>
                 </SheetHeader>
@@ -1374,8 +1370,7 @@ function TicketSheet({
                                             {formatDateTime(
                                                 activity.occurredAt,
                                             )}{' '}
-                                            {copy.separator}{' '}
-                                            {copy.checksum}{' '}
+                                            {copy.separator} {copy.checksum}{' '}
                                             {activity.checksum.slice(0, 12)}
                                             {copy.ellipsis}
                                         </p>

@@ -124,10 +124,14 @@ export default function SearchableSelect({
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                             placeholder={interpolate(copy.search_options, {
-                                label: (label || copy.select_option).toLocaleLowerCase(),
+                                label: (
+                                    label || copy.select_option
+                                ).toLocaleLowerCase(),
                             })}
                             aria-label={interpolate(copy.search_options, {
-                                label: (label || copy.select_option).toLocaleLowerCase(),
+                                label: (
+                                    label || copy.select_option
+                                ).toLocaleLowerCase(),
                             })}
                             className="pl-9"
                             autoFocus

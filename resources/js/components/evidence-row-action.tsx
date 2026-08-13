@@ -174,8 +174,7 @@ export default function EvidenceRowAction({
     canManageRecords: boolean;
     meta?: EvidenceMeta;
 }) {
-    const { current: locale, evidence: copy } =
-        usePage().props.localization;
+    const { current: locale, evidence: copy } = usePage().props.localization;
     const [activeSheet, setActiveSheet] = useState<'preview' | 'manage' | null>(
         null,
     );
@@ -352,13 +351,27 @@ export default function EvidenceRowAction({
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>{copy.attempt}</TableHead>
-                                                <TableHead>{copy.source}</TableHead>
-                                                <TableHead>{copy.actor}</TableHead>
-                                                <TableHead>{copy.engine}</TableHead>
-                                                <TableHead>{copy.status}</TableHead>
-                                                <TableHead>{copy.duration}</TableHead>
-                                                <TableHead>{copy.result}</TableHead>
+                                                <TableHead>
+                                                    {copy.attempt}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.source}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.actor}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.engine}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.status}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.duration}
+                                                </TableHead>
+                                                <TableHead>
+                                                    {copy.result}
+                                                </TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -366,7 +379,8 @@ export default function EvidenceRowAction({
                                                 (attempt) => (
                                                     <TableRow key={attempt.id}>
                                                         <TableCell>
-                                                            {'#'}{attempt.number}
+                                                            {'#'}
+                                                            {attempt.number}
                                                         </TableCell>
                                                         <TableCell>
                                                             {attempt.triggerSource.replaceAll(
@@ -396,9 +410,17 @@ export default function EvidenceRowAction({
                                                         </TableCell>
                                                         <TableCell>
                                                             {attempt.errorCode ??
-                                                                interpolate(copy.characters, {
-                                                                    count: (attempt.characterCount ?? 0).toLocaleString(locale),
-                                                                })}
+                                                                interpolate(
+                                                                    copy.characters,
+                                                                    {
+                                                                        count: (
+                                                                            attempt.characterCount ??
+                                                                            0
+                                                                        ).toLocaleString(
+                                                                            locale,
+                                                                        ),
+                                                                    },
+                                                                )}
                                                         </TableCell>
                                                     </TableRow>
                                                 ),
@@ -542,7 +564,9 @@ export default function EvidenceRowAction({
                                                 id={`tags-${documentId}`}
                                                 name="tags"
                                                 defaultValue={meta.tags ?? ''}
-                                                placeholder={copy.tags_placeholder}
+                                                placeholder={
+                                                    copy.tags_placeholder
+                                                }
                                             />
                                         </div>
                                         <DatePickerField
@@ -571,7 +595,8 @@ export default function EvidenceRowAction({
                                             meta.checksum?.slice(0, 12) ?? '—',
                                         scan: meta.scanStatus ?? 'pending',
                                         ocr:
-                                            meta.ocrStatus ?? copy.not_requested,
+                                            meta.ocrStatus ??
+                                            copy.not_requested,
                                     })}
                                     {meta.extractionCompletedAt
                                         ? interpolate(copy.completed_at, {
@@ -598,7 +623,9 @@ export default function EvidenceRowAction({
                                         <Input
                                             name="change_summary"
                                             required
-                                            placeholder={copy.replacement_reason}
+                                            placeholder={
+                                                copy.replacement_reason
+                                            }
                                         />
                                         <Button
                                             type="submit"
@@ -647,7 +674,9 @@ export default function EvidenceRowAction({
                                                             </h4>
                                                             {version.isCurrent && (
                                                                 <Badge>
-                                                                    {copy.current}
+                                                                    {
+                                                                        copy.current
+                                                                    }
                                                                 </Badge>
                                                             )}
                                                             <Badge variant="outline">
@@ -687,7 +716,9 @@ export default function EvidenceRowAction({
                                                                         target="_blank"
                                                                         rel="noreferrer"
                                                                     >
-                                                                        {copy.preview}
+                                                                        {
+                                                                            copy.preview
+                                                                        }
                                                                     </a>
                                                                 </Button>
                                                             )}
@@ -703,7 +734,9 @@ export default function EvidenceRowAction({
                                                                         versionArgs,
                                                                     )}
                                                                 >
-                                                                    {copy.download}
+                                                                    {
+                                                                        copy.download
+                                                                    }
                                                                 </a>
                                                             </Button>
                                                         )}
@@ -753,17 +786,23 @@ export default function EvidenceRowAction({
                                                 <Input
                                                     name="reference"
                                                     required
-                                                    placeholder={copy.hold_reference}
+                                                    placeholder={
+                                                        copy.hold_reference
+                                                    }
                                                 />
                                                 <Input
                                                     name="authority"
                                                     required
-                                                    placeholder={copy.issuing_authority}
+                                                    placeholder={
+                                                        copy.issuing_authority
+                                                    }
                                                 />
                                                 <Input
                                                     name="reason"
                                                     required
-                                                    placeholder={copy.hold_reason}
+                                                    placeholder={
+                                                        copy.hold_reason
+                                                    }
                                                 />
                                                 <Button
                                                     type="submit"
@@ -870,13 +909,17 @@ export default function EvidenceRowAction({
                                                             <Label
                                                                 htmlFor={`release-reason-${hold.id}`}
                                                             >
-                                                                {copy.release_reason}
+                                                                {
+                                                                    copy.release_reason
+                                                                }
                                                             </Label>
                                                             <Input
                                                                 id={`release-reason-${hold.id}`}
                                                                 name="release_reason"
                                                                 required
-                                                                placeholder={copy.release_placeholder}
+                                                                placeholder={
+                                                                    copy.release_placeholder
+                                                                }
                                                             />
                                                             <Button
                                                                 type="submit"
@@ -885,7 +928,9 @@ export default function EvidenceRowAction({
                                                                     processing
                                                                 }
                                                             >
-                                                                {copy.release_hold}
+                                                                {
+                                                                    copy.release_hold
+                                                                }
                                                             </Button>
                                                         </>
                                                     )}
@@ -982,7 +1027,9 @@ function DispositionControls({
                                                 id={`disposition-authority-${documentId}`}
                                                 name="authority_reference"
                                                 required
-                                                placeholder={copy.authority_placeholder}
+                                                placeholder={
+                                                    copy.authority_placeholder
+                                                }
                                             />
                                         </div>
                                         <DatePickerField
@@ -1001,7 +1048,9 @@ function DispositionControls({
                                                 id={`disposition-reason-${documentId}`}
                                                 name="reason"
                                                 required
-                                                placeholder={copy.disposition_placeholder}
+                                                placeholder={
+                                                    copy.disposition_placeholder
+                                                }
                                             />
                                         </div>
                                         <Button
@@ -1054,8 +1103,7 @@ function DispositionRecord({
     disposition: DocumentDisposition;
     canManageRecords: boolean;
 }) {
-    const { current: locale, evidence: copy } =
-        usePage().props.localization;
+    const { current: locale, evidence: copy } = usePage().props.localization;
     const dispositionArgs = { ...args, disposition: disposition.id };
 
     return (

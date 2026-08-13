@@ -210,9 +210,8 @@ export default function AssessmentAnalytics({
                                                 {cycle.name} ({cycle.code})
                                             </span>
                                             <span className="text-muted-foreground">
-                                                {copy.average}{' '}
-                                                {cycle.average}% {copy.from}{' '}
-                                                {cycle.publications}{' '}
+                                                {copy.average} {cycle.average}%{' '}
+                                                {copy.from} {cycle.publications}{' '}
                                                 {cycle.publications === 1
                                                     ? copy.publication
                                                     : copy.publications}
@@ -240,8 +239,7 @@ export default function AssessmentAnalytics({
                                         </div>
                                         <p className="text-xs text-muted-foreground">
                                             {copy.range} {cycle.minimum}%{' '}
-                                            {copy.to}{' '}
-                                            {cycle.maximum}%
+                                            {copy.to} {cycle.maximum}%
                                         </p>
                                     </div>
                                 ))}

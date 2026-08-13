@@ -594,7 +594,9 @@ export default function Learning({
                             </h2>
                             <p className="text-sm text-muted-foreground">
                                 {interpolate(copy.offline_count, {
-                                    count: offlineSyncs.total.toLocaleString(locale),
+                                    count: offlineSyncs.total.toLocaleString(
+                                        locale,
+                                    ),
                                 })}
                             </p>
                         </div>
@@ -877,9 +879,8 @@ function CohortActions({
                                     })}
                         </SheetTitle>
                         <SheetDescription>
-                            {cohort.code} {copy.separator}{' '}
-                            {cohort.course.code} {copy.separator}{' '}
-                            {cohort.instructor}
+                            {cohort.code} {copy.separator} {cohort.course.code}{' '}
+                            {copy.separator} {cohort.instructor}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-5 px-4 pt-4 pb-8">
@@ -1095,7 +1096,8 @@ function OfflineSyncActions({
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('approve')}
                                 >
-                                    <ShieldCheck /> {copy.approve_reconciliation}
+                                    <ShieldCheck />{' '}
+                                    {copy.approve_reconciliation}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onSelect={() => setSurface('reject')}
@@ -1117,10 +1119,7 @@ function OfflineSyncActions({
                             {surface === 'details'
                                 ? copy.offline_evidence
                                 : interpolate(copy.offline_progress_action, {
-                                      action: displayValue(
-                                          copy,
-                                          surface ?? '',
-                                      ),
+                                      action: displayValue(copy, surface ?? ''),
                                   })}
                         </SheetTitle>
                         <SheetDescription>
@@ -1178,7 +1177,8 @@ function OfflineSyncActions({
                                             {copy.decision_rationale}
                                         </dt>
                                         <dd className="text-muted-foreground">
-                                            {sync.decisionReason ?? copy.pending}
+                                            {sync.decisionReason ??
+                                                copy.pending}
                                         </dd>
                                     </div>
                                 </dl>
@@ -1509,9 +1509,7 @@ function CourseForm({
                                             optional
                                         />
                                         <div className="grid gap-2 md:col-span-2">
-                                            <Label>
-                                                {copy.text_content}
-                                            </Label>
+                                            <Label>{copy.text_content}</Label>
                                             <Textarea
                                                 name={`modules[0][lessons][${index}][content_body]`}
                                                 rows={3}
@@ -1897,9 +1895,7 @@ function CourseActions({
                                     name="learning_course_id"
                                     value={course.id}
                                 />
-                                <p>
-                                    {copy.enroll_confirmation}
-                                </p>
+                                <p>{copy.enroll_confirmation}</p>
                                 <Button type="submit">
                                     {copy.confirm_enrolment}
                                 </Button>
@@ -2100,7 +2096,8 @@ function CourseDetails({
                                             course.offlinePackage.id,
                                     })}
                                 >
-                                    <DownloadIcon /> {copy.download_offline_package}
+                                    <DownloadIcon />{' '}
+                                    {copy.download_offline_package}
                                 </a>
                             </Button>
                         )}
@@ -2120,9 +2117,8 @@ function CourseDetails({
                                     {new Date(
                                         classroom.startsAt,
                                     ).toLocaleString(locale)}{' '}
-                                    {copy.separator}{' '}
-                                    {classroom.facilitator} {copy.separator}{' '}
-                                    {classroom.platform}
+                                    {copy.separator} {classroom.facilitator}{' '}
+                                    {copy.separator} {classroom.platform}
                                 </p>
                             </div>
                         </div>
@@ -2266,7 +2262,9 @@ function CourseDetails({
                                                                     )}
                                                                 >
                                                                     <DownloadIcon />{' '}
-                                                                    {copy.download}
+                                                                    {
+                                                                        copy.download
+                                                                    }
                                                                 </a>
                                                             </Button>
                                                         )}
@@ -2276,7 +2274,9 @@ function CourseDetails({
                                             {lesson.assetMetadata
                                                 ?.accessible_alternative && (
                                                 <p className="text-xs text-muted-foreground">
-                                                    {copy.accessible_alternative}{' '}
+                                                    {
+                                                        copy.accessible_alternative
+                                                    }{' '}
                                                     {
                                                         lesson.assetMetadata
                                                             .accessible_alternative
@@ -2363,9 +2363,7 @@ function CourseDetails({
                                 )}
                             />
                         ))}
-                        <Button type="submit">
-                            {copy.submit_assessment}
-                        </Button>
+                        <Button type="submit">{copy.submit_assessment}</Button>
                     </Form>
                 )}
             {enrollment?.certificate && (

@@ -42,7 +42,9 @@ export default function PrivacyIncidentDocumentControls({
             <Sheet>
                 <SheetTrigger asChild>
                     <Button type="button" size="sm" variant="outline">
-                        <Files /> {copy.records} {'('}{documents.length}{')'}
+                        <Files /> {copy.records} {'('}
+                        {documents.length}
+                        {')'}
                     </Button>
                 </SheetTrigger>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
@@ -254,7 +256,8 @@ function UploadRecord({
                         </div>
                         {progress && (
                             <p className="text-sm text-muted-foreground">
-                                {copy.uploading} {progress.percentage}{'%'}
+                                {copy.uploading} {progress.percentage}
+                                {'%'}
                             </p>
                         )}
                         <Button type="submit" disabled={processing}>

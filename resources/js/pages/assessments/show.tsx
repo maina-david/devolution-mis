@@ -221,7 +221,9 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Card>
                         <CardHeader>
-                            <CardDescription>{copy.computed_score}</CardDescription>
+                            <CardDescription>
+                                {copy.computed_score}
+                            </CardDescription>
                             <CardTitle>
                                 {assessment.score ?? 'Not calculated'}
                             </CardTitle>
@@ -257,7 +259,9 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardDescription>{copy.open_findings}</CardDescription>
+                            <CardDescription>
+                                {copy.open_findings}
+                            </CardDescription>
                             <CardTitle>
                                 {
                                     assessment.findings.filter(
@@ -450,7 +454,8 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                 <h3 className="font-medium">{copy.findings}</h3>
                                 {assessment.findings.map((item) => (
                                     <p key={item.id} className="text-sm">
-                                        {item.code} {copy.separator} {item.title}{' '}
+                                        {item.code} {copy.separator}{' '}
+                                        {item.title}{' '}
                                         <Badge variant="outline">
                                             {item.status}
                                         </Badge>
@@ -503,8 +508,7 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                             variant="secondary"
                                         >
                                             {item.code} {item.name}
-                                            {copy.colon}{' '}
-                                            {item.score}
+                                            {copy.colon} {item.score}
                                         </Badge>
                                     ),
                                 )}
@@ -514,8 +518,12 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
                                     <thead>
                                         <tr className="border-b text-left">
                                             <th className="p-2">{copy.rank}</th>
-                                            <th className="p-2">{copy.county}</th>
-                                            <th className="p-2">{copy.score}</th>
+                                            <th className="p-2">
+                                                {copy.county}
+                                            </th>
+                                            <th className="p-2">
+                                                {copy.score}
+                                            </th>
                                             <th className="p-2">{copy.band}</th>
                                             <th className="p-2">
                                                 {copy.percentile}
@@ -602,7 +610,9 @@ function GovernanceActions({
                                         placeholder="Evidence-backed county response"
                                         required
                                     />
-                                    <Button type="submit">{copy.respond}</Button>
+                                    <Button type="submit">
+                                        {copy.respond}
+                                    </Button>
                                 </Form>
                             )}
                             {capabilities.review && finding.county_response && (
@@ -638,7 +648,9 @@ function GovernanceActions({
                         capabilities.approve && (
                             <Card key={appeal.id}>
                                 <CardHeader>
-                                    <CardTitle>{copy.appeal_adjudication}</CardTitle>
+                                    <CardTitle>
+                                        {copy.appeal_adjudication}
+                                    </CardTitle>
                                     <CardDescription>
                                         {appeal.grounds}
                                     </CardDescription>
