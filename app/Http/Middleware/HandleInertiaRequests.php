@@ -140,6 +140,7 @@ class HandleInertiaRequests extends Middleware
                 'evaluationPanel' => __('evaluation-panel'),
                 'indicatorDefinitions' => __('indicator-definitions'),
                 'programmeUserProfile' => __('programme-user-profile'),
+                'programmeWorkspace' => __('programme-workspace'),
                 'evaluationDocuments' => __('evaluation-documents'),
                 'help' => __('help'),
                 'accessControl' => __('access-control'),

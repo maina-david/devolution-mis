@@ -26,7 +26,7 @@ class WorkspaceDataManagementTest extends TestCase
             'created_at' => $sequence->index === 0 ? '2025-01-10' : '2026-08-01',
         ])->create();
 
-        $this->actingAs($admin)->get(route('assessments.index', ['from' => '2026-01-01',
+        $this->actingAs($admin)->withSession(['locale' => 'fr'])->get(route('assessments.index', ['from' => '2026-01-01',
             'to' => '2026-12-31',
             'search' => 'Cycle',
             'per_page' => 10,
@@ -35,6 +35,9 @@ class WorkspaceDataManagementTest extends TestCase
             ->where('workspace.pagination.total', 11)
             ->where('workspace.pagination.lastPage', 2)
             ->where('filters.from', '2026-01-01')
+            ->where('localization.current', 'fr')
+            ->where('localization.programmeWorkspace.authorized_records', 'Dossiers autorisés')
+            ->where('localization.programmeWorkspace.no_matching_records', 'Aucun dossier correspondant')
         );
     }
 

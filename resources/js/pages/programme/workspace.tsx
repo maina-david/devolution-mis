@@ -47,6 +47,7 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import { interpolate } from '@/hooks/use-localization';
 import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { show as showAssessment } from '@/routes/assessments';
 import { index as assessmentAnalytics } from '@/routes/assessments/analytics';
@@ -97,7 +98,8 @@ export default function ProgrammeWorkspace({
     cycles = [],
 }: Props) {
     const page = usePage();
-    const { auth } = page.props;
+    const { auth, localization } = page.props;
+    const copy = localization.programmeWorkspace;
     const enabledCapabilities = Object.entries(capabilities).filter(
         ([, enabled]) => enabled,
     );
@@ -195,7 +197,7 @@ export default function ProgrammeWorkspace({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Integrated devolution operations
+                                {copy.operations_context}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                                 {workspace.title}
@@ -211,7 +213,11 @@ export default function ProgrammeWorkspace({
                                     className="border-white/20 bg-white/10 text-white"
                                 >
                                     <ShieldCheck aria-hidden="true" />
-                                    Can {humanize(capability)}
+                                    {interpolate(copy.can_capability, {
+                                        capability:
+                                            copy[`capability_${capability}`] ??
+                                            humanize(capability),
+                                    })}
                                 </Badge>
                             ))}
                         </div>
@@ -234,8 +240,11 @@ export default function ProgrammeWorkspace({
                             {capabilities.bulkImport && (
                                 <Button variant="outline" asChild>
                                     <Link href={dataImportsIndex()}>
-                                        <FileUp data-icon="inline-start" />
-                                        Bulk upload users
+                                        <FileUp
+                                            data-icon="inline-start"
+                                            aria-hidden="true"
+                                        />
+                                        {copy.bulk_upload_users}
                                     </Link>
                                 </Button>
                             )}
@@ -256,12 +265,14 @@ export default function ProgrammeWorkspace({
                             ? [
                                   {
                                       key: 'status',
-                                      label: 'Outcome',
+                                      label: copy.outcome,
                                       value: filters.status,
                                       options: ['pass', 'warn', 'fail'].map(
                                           (value) => ({
                                               id: value,
-                                              name: humanize(value),
+                                              name:
+                                                  copy[`outcome_${value}`] ??
+                                                  humanize(value),
                                           }),
                                       ),
                                   },
@@ -274,11 +285,14 @@ export default function ProgrammeWorkspace({
                     <div className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 sm:px-6">
                         <div>
                             <h2 className="font-bold text-foreground">
-                                Authorized records
+                                {copy.authorized_records}
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                {workspace.pagination.total.toLocaleString()}{' '}
-                                records in your current access scope
+                                {interpolate(copy.records_in_scope, {
+                                    count: workspace.pagination.total.toLocaleString(
+                                        localization.current,
+                                    ),
+                                })}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -294,8 +308,11 @@ export default function ProgrammeWorkspace({
                                         )}
                                     <Button variant="outline" asChild>
                                         <Link href={assessmentAnalytics.url()}>
-                                            <ChartNoAxesCombined data-icon="inline-start" />
-                                            Compare results
+                                            <ChartNoAxesCombined
+                                                data-icon="inline-start"
+                                                aria-hidden="true"
+                                            />
+                                            {copy.compare_results}
                                         </Link>
                                     </Button>
                                 </>
@@ -303,8 +320,11 @@ export default function ProgrammeWorkspace({
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline">
-                                        <DownloadIcon data-icon="inline-start" />
-                                        Export
+                                        <DownloadIcon
+                                            data-icon="inline-start"
+                                            aria-hidden="true"
+                                        />
+                                        {copy.export}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -440,12 +460,11 @@ export default function ProgrammeWorkspace({
                                 <EmptyMedia variant="icon">
                                     <SearchXIcon aria-hidden="true" />
                                 </EmptyMedia>
-                                <EmptyTitle>No matching records</EmptyTitle>
+                                <EmptyTitle>
+                                    {copy.no_matching_records}
+                                </EmptyTitle>
                                 <EmptyDescription>
-                                    Adjust the search, date, or assessment
-                                    cycle. If the result remains empty, confirm
-                                    that your county or programme access is
-                                    assigned.
+                                    {copy.no_matching_records_description}
                                 </EmptyDescription>
                             </EmptyHeader>
                         </Empty>

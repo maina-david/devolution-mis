@@ -114,6 +114,7 @@ declare module '@inertiajs/core' {
                 evaluationPanel: Record<string, string>;
                 indicatorDefinitions: Record<string, string>;
                 programmeUserProfile: Record<string, string>;
+                programmeWorkspace: Record<string, string>;
                 evaluationDocuments: Record<string, string>;
                 help: Record<string, string>;
                 accessControl: Record<string, string>;

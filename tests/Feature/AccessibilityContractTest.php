@@ -172,6 +172,12 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-describedby={', $partnerAlerts);
         $this->assertStringContainsString('aria-busy={processing}', $partnerAlerts);
         $this->assertStringContainsString('aria-hidden="true"', $partnerAlerts);
+
+        $programmeWorkspace = $this->source('resources/js/pages/programme/workspace.tsx');
+        $this->assertStringContainsString('localization.programmeWorkspace', $programmeWorkspace);
+        $this->assertStringContainsString('toLocaleString(', $programmeWorkspace);
+        $this->assertStringContainsString('copy.no_matching_records', $programmeWorkspace);
+        $this->assertStringContainsString('aria-hidden="true"', $programmeWorkspace);
     }
 
     private function source(string $path): string
