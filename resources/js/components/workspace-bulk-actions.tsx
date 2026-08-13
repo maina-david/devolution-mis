@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import {
     DownloadIcon,
     FileCheck2Icon,
@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import SearchableSelect from '@/components/searchable-select';
-import StaticSearchableSelect from '@/components/static-searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -74,6 +73,7 @@ function AssessmentTransitionSheet({
     transition: 'submit' | 'review';
     clearSelection: () => void;
 }) {
+    const copy = useBulkActionCopy();
     const [open, setOpen] = useState(false);
     const submitting = transition === 'submit';
 
@@ -82,19 +82,19 @@ function AssessmentTransitionSheet({
             <SheetTrigger asChild>
                 <Button type="button" size="sm">
                     <ListChecksIcon data-icon="inline-start" />
-                    {submitting ? 'Submit selected' : 'Start selected reviews'}
+                    {submitting
+                        ? copy.submit_selected
+                        : copy.start_selected_reviews}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-md">
                 <SheetHeader>
                     <SheetTitle>
-                        {submitting ? 'Submit' : 'Start review for'}{' '}
-                        {rows.length} assessments
+                        {submitting ? copy.submit : copy.start_review_for}{' '}
+                        {rows.length} {copy.assessments}
                     </SheetTitle>
                     <SheetDescription>
-                        The complete selection is checked for lifecycle state,
-                        permission and county portfolio before any assessment
-                        changes. A failed check leaves every record unchanged.
+                        {copy.assessment_description}
                     </SheetDescription>
                 </SheetHeader>
                 <Form
@@ -125,7 +125,8 @@ function AssessmentTransitionSheet({
                                 disabled={processing}
                                 aria-busy={processing}
                             >
-                                Confirm {submitting ? 'submission' : 'review'}
+                                {copy.confirm}{' '}
+                                {submitting ? copy.submission : copy.review}
                             </Button>
                         </>
                     )}
@@ -146,6 +147,7 @@ export function WorkspaceBulkExportActions({
     filters: Record<string, string | undefined>;
     selectionMode?: 'selected' | 'filtered';
 }) {
+    const copy = useBulkActionCopy();
     const query = {
         ...filters,
         ids:
@@ -159,7 +161,9 @@ export function WorkspaceBulkExportActions({
             <DropdownMenuTrigger asChild>
                 <Button type="button" size="sm" variant="outline">
                     <DownloadIcon />
-                    Export selected
+                    {selectionMode === 'selected'
+                        ? copy.export_selected
+                        : copy.export_filtered}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -214,6 +218,7 @@ function EvidenceDecisionSheet({
     status: 'verified' | 'rejected';
     clearSelection: () => void;
 }) {
+    const copy = useBulkActionCopy();
     const [open, setOpen] = useState(false);
     const approving = status === 'verified';
 
@@ -226,19 +231,19 @@ function EvidenceDecisionSheet({
                     variant={approving ? 'outline' : 'destructive'}
                 >
                     {approving ? <FileCheck2Icon /> : <ShieldXIcon />}
-                    {approving ? 'Verify selected' : 'Reject selected'}
+                    {approving
+                        ? copy.verify_selected
+                        : copy.reject_selected}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-md">
                 <SheetHeader>
                     <SheetTitle>
-                        {approving ? 'Verify' : 'Reject'} {rows.length} evidence
-                        records
+                        {approving ? copy.verify : copy.reject} {rows.length}{' '}
+                        {copy.evidence_records}
                     </SheetTitle>
                     <SheetDescription>
-                        This decision is applied atomically. If any record is
-                        quarantined, missing, or outside your county portfolio,
-                        no selected record will change.
+                        {copy.evidence_description}
                     </SheetDescription>
                 </SheetHeader>
                 <Form
@@ -267,8 +272,8 @@ function EvidenceDecisionSheet({
                                 aria-busy={processing}
                             >
                                 {approving
-                                    ? 'Confirm verification'
-                                    : 'Confirm rejection'}
+                                    ? copy.confirm_verification
+                                    : copy.confirm_rejection}
                             </Button>
                         </>
                     )}
@@ -285,6 +290,7 @@ export function ProgrammeUserBulkActions({
     rows: WorkspaceRow[];
     clearSelection: () => void;
 }) {
+    const copy = useBulkActionCopy();
     const [open, setOpen] = useState(false);
 
     return (
@@ -292,19 +298,16 @@ export function ProgrammeUserBulkActions({
             <SheetTrigger asChild>
                 <Button type="button" size="sm" variant="destructive">
                     <UserXIcon />
-                    Deactivate selected
+                    {copy.deactivate_selected}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-md">
                 <SheetHeader>
                     <SheetTitle>
-                        Deactivate {rows.length} user accounts
+                        {copy.deactivate} {rows.length} {copy.user_accounts}
                     </SheetTitle>
                     <SheetDescription>
-                        Access will be removed atomically and each account will
-                        retain an attributed audit event. Your own account and
-                        identities outside your management scope cannot be
-                        processed.
+                        {copy.deactivate_description}
                     </SheetDescription>
                 </SheetHeader>
                 <Form
@@ -331,7 +334,7 @@ export function ProgrammeUserBulkActions({
                                 disabled={processing}
                                 aria-busy={processing}
                             >
-                                Confirm bulk deactivation
+                                {copy.confirm_bulk_deactivation}
                             </Button>
                         </>
                     )}
@@ -358,6 +361,7 @@ export function CitizenCaseBulkTriageActions({
     selection: { mode: 'selected' | 'filtered'; count: number };
     clearSelection: () => void;
 }) {
+    const copy = useBulkActionCopy();
     const [open, setOpen] = useState(false);
 
     return (
@@ -365,19 +369,17 @@ export function CitizenCaseBulkTriageActions({
             <SheetTrigger asChild>
                 <Button type="button" size="sm">
                     <UsersRoundIcon />
-                    Triage selected
+                    {copy.triage_selected}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-lg">
                 <SheetHeader>
                     <SheetTitle>
-                        Triage and assign {selection.count} citizen cases
+                        {copy.triage_and_assign} {selection.count}{' '}
+                        {copy.citizen_cases}
                     </SheetTitle>
                     <SheetDescription>
-                        The complete selection is locked and checked before any
-                        case changes. Every case must be newly received, within
-                        your county scope, and accessible to the chosen handler.
-                        One failed check leaves all selected cases unchanged.
+                        {copy.triage_description}
                     </SheetDescription>
                 </SheetHeader>
                 <Form
@@ -418,14 +420,14 @@ export function CitizenCaseBulkTriageActions({
                             <SearchableSelect
                                 id="bulk-citizen-case-assignee"
                                 name="assigned_to"
-                                label="Case handler"
+                                label={copy.case_handler}
                                 options={users}
                                 error={errors.assigned_to}
                             />
                             <SearchableSelect
                                 id="bulk-citizen-case-organization"
                                 name="assigned_organization_id"
-                                label="Assigned organization"
+                                label={copy.assigned_organization}
                                 options={organizations}
                                 optional
                                 error={errors.assigned_organization_id}
@@ -433,31 +435,39 @@ export function CitizenCaseBulkTriageActions({
                             <SearchableSelect
                                 id="bulk-citizen-case-sector"
                                 name="sector_id"
-                                label="Sector"
+                                label={copy.sector}
                                 options={sectors}
                                 optional
                                 error={errors.sector_id}
                             />
-                            <StaticSearchableSelect
+                            <SearchableSelect
                                 id="bulk-citizen-case-priority"
                                 name="priority"
-                                label="Priority"
-                                values={['low', 'medium', 'high', 'critical']}
+                                label={copy.priority}
+                                options={[
+                                    'low',
+                                    'medium',
+                                    'high',
+                                    'critical',
+                                ].map((value) => ({
+                                    id: value,
+                                    name: copy[value],
+                                }))}
                                 error={errors.priority}
                             />
                             <SearchableSelect
                                 id="bulk-citizen-case-sensitivity"
                                 name="is_sensitive"
-                                label="Sensitivity"
+                                label={copy.sensitivity}
                                 options={[
-                                    { id: '0', name: 'Standard case' },
-                                    { id: '1', name: 'Sensitive case' },
+                                    { id: '0', name: copy.standard_case },
+                                    { id: '1', name: copy.sensitive_case },
                                 ]}
                                 error={errors.is_sensitive}
                             />
                             <div className="flex flex-col gap-2">
                                 <Label htmlFor="bulk-citizen-case-note">
-                                    Triage rationale
+                                    {copy.triage_rationale}
                                 </Label>
                                 <Textarea
                                     id="bulk-citizen-case-note"
@@ -477,7 +487,7 @@ export function CitizenCaseBulkTriageActions({
                                 disabled={processing}
                                 aria-busy={processing}
                             >
-                                Confirm atomic triage
+                                {copy.confirm_atomic_triage}
                             </Button>
                         </>
                     )}
@@ -485,4 +495,8 @@ export function CitizenCaseBulkTriageActions({
             </SheetContent>
         </Sheet>
     );
+}
+
+function useBulkActionCopy(): Record<string, string> {
+    return usePage().props.localization.bulkActions;
 }

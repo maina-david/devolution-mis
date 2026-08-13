@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'submit_selected' => 'Submit selected', 'start_selected_reviews' => 'Start selected reviews',
+    'submit' => 'Submit', 'start_review_for' => 'Start review for', 'assessments' => 'assessments',
+    'assessment_description' => 'The complete selection is checked for lifecycle state, permission and county portfolio before any assessment changes. A failed check leaves every record unchanged.',
+    'confirm' => 'Confirm', 'submission' => 'submission', 'review' => 'review',
+    'export_selected' => 'Export selected', 'export_filtered' => 'Export filtered',
+    'verify_selected' => 'Verify selected', 'reject_selected' => 'Reject selected',
+    'verify' => 'Verify', 'reject' => 'Reject', 'evidence_records' => 'evidence records',
+    'evidence_description' => 'This decision is applied atomically. If any record is quarantined, missing, or outside your county portfolio, no selected record will change.',
+    'confirm_verification' => 'Confirm verification', 'confirm_rejection' => 'Confirm rejection',
+    'deactivate_selected' => 'Deactivate selected', 'deactivate' => 'Deactivate',
+    'user_accounts' => 'user accounts',
+    'deactivate_description' => 'Access will be removed atomically and each account will retain an attributed audit event. Your own account and identities outside your management scope cannot be processed.',
+    'confirm_bulk_deactivation' => 'Confirm bulk deactivation',
+    'triage_selected' => 'Triage selected', 'triage_and_assign' => 'Triage and assign',
+    'citizen_cases' => 'citizen cases',
+    'triage_description' => 'The complete selection is locked and checked before any case changes. Every case must be newly received, within your county scope, and accessible to the chosen handler. One failed check leaves all selected cases unchanged.',
+    'case_handler' => 'Case handler', 'assigned_organization' => 'Assigned organization',
+    'sector' => 'Sector', 'priority' => 'Priority', 'low' => 'Low', 'medium' => 'Medium',
+    'high' => 'High', 'critical' => 'Critical', 'sensitivity' => 'Sensitivity',
+    'standard_case' => 'Standard case', 'sensitive_case' => 'Sensitive case',
+    'triage_rationale' => 'Triage rationale', 'confirm_atomic_triage' => 'Confirm atomic triage',
+];

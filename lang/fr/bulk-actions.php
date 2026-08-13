@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'submit_selected' => 'Soumettre la sélection', 'start_selected_reviews' => 'Démarrer les examens sélectionnés',
+    'submit' => 'Soumettre', 'start_review_for' => 'Démarrer l’examen de', 'assessments' => 'évaluations',
+    'assessment_description' => 'La sélection complète est contrôlée pour l’état du cycle de vie, les autorisations et le portefeuille de comtés avant toute modification. Un contrôle échoué laisse tous les dossiers inchangés.',
+    'confirm' => 'Confirmer', 'submission' => 'la soumission', 'review' => 'l’examen',
+    'export_selected' => 'Exporter la sélection', 'export_filtered' => 'Exporter les résultats filtrés',
+    'verify_selected' => 'Vérifier la sélection', 'reject_selected' => 'Rejeter la sélection',
+    'verify' => 'Vérifier', 'reject' => 'Rejeter', 'evidence_records' => 'dossiers de preuve',
+    'evidence_description' => 'Cette décision est appliquée atomiquement. Si un dossier est en quarantaine, absent ou hors de votre portefeuille de comtés, aucun dossier sélectionné ne sera modifié.',
+    'confirm_verification' => 'Confirmer la vérification', 'confirm_rejection' => 'Confirmer le rejet',
+    'deactivate_selected' => 'Désactiver la sélection', 'deactivate' => 'Désactiver',
+    'user_accounts' => 'comptes utilisateurs',
+    'deactivate_description' => 'L’accès sera retiré atomiquement et chaque compte conservera un événement d’audit attribué. Votre propre compte et les identités hors de votre périmètre de gestion ne peuvent pas être traités.',
+    'confirm_bulk_deactivation' => 'Confirmer la désactivation groupée',
+    'triage_selected' => 'Trier la sélection', 'triage_and_assign' => 'Trier et attribuer',
+    'citizen_cases' => 'dossiers citoyens',
+    'triage_description' => 'La sélection complète est verrouillée et contrôlée avant toute modification. Chaque dossier doit être nouvellement reçu, relever de votre comté et être accessible au gestionnaire choisi. Un contrôle échoué laisse tous les dossiers sélectionnés inchangés.',
+    'case_handler' => 'Gestionnaire du dossier', 'assigned_organization' => 'Organisation attribuée',
+    'sector' => 'Secteur', 'priority' => 'Priorité', 'low' => 'Faible', 'medium' => 'Moyenne',
+    'high' => 'Élevée', 'critical' => 'Critique', 'sensitivity' => 'Sensibilité',
+    'standard_case' => 'Dossier standard', 'sensitive_case' => 'Dossier sensible',
+    'triage_rationale' => 'Justification du triage', 'confirm_atomic_triage' => 'Confirmer le triage atomique',
+];

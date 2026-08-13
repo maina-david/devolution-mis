@@ -95,6 +95,7 @@ declare module '@inertiajs/core' {
                 integrationManagement: Record<string, string>;
                 workflowManagement: Record<string, string>;
                 workflowSimulator: Record<string, string>;
+                bulkActions: Record<string, string>;
                 partnerCoordination: Record<string, string>;
                 dashboard: Record<string, string>;
                 migration: Record<string, string>;

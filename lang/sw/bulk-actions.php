@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'submit_selected' => 'Wasilisha zilizochaguliwa', 'start_selected_reviews' => 'Anza ukaguzi uliochaguliwa',
+    'submit' => 'Wasilisha', 'start_review_for' => 'Anza ukaguzi wa', 'assessments' => 'tathmini',
+    'assessment_description' => 'Chaguo lote hukaguliwa kwa hali ya mzunguko, ruhusa na mkoba wa kaunti kabla ya tathmini yoyote kubadilishwa. Ukaguzi mmoja ukishindwa, rekodi zote hubaki bila kubadilishwa.',
+    'confirm' => 'Thibitisha', 'submission' => 'uwasilishaji', 'review' => 'ukaguzi',
+    'export_selected' => 'Hamisha zilizochaguliwa', 'export_filtered' => 'Hamisha zilizochujwa',
+    'verify_selected' => 'Thibitisha zilizochaguliwa', 'reject_selected' => 'Kataa zilizochaguliwa',
+    'verify' => 'Thibitisha', 'reject' => 'Kataa', 'evidence_records' => 'rekodi za ushahidi',
+    'evidence_description' => 'Uamuzi huu unatekelezwa kwa pamoja. Ikiwa rekodi yoyote imetengwa, haipo au iko nje ya mkoba wako wa kaunti, hakuna rekodi iliyochaguliwa itakayobadilika.',
+    'confirm_verification' => 'Thibitisha uthibitishaji', 'confirm_rejection' => 'Thibitisha kukataliwa',
+    'deactivate_selected' => 'Zima zilizochaguliwa', 'deactivate' => 'Zima',
+    'user_accounts' => 'akaunti za watumiaji',
+    'deactivate_description' => 'Ufikiaji utaondolewa kwa pamoja na kila akaunti itahifadhi tukio la ukaguzi lenye mhusika. Akaunti yako na watumiaji walio nje ya upeo wako wa usimamizi hawawezi kuchakatwa.',
+    'confirm_bulk_deactivation' => 'Thibitisha uzimaji wa pamoja',
+    'triage_selected' => 'Panga zilizochaguliwa', 'triage_and_assign' => 'Panga na gawa',
+    'citizen_cases' => 'kesi za wananchi',
+    'triage_description' => 'Chaguo lote hufungwa na kukaguliwa kabla ya kesi yoyote kubadilishwa. Kila kesi lazima iwe imepokelewa karibuni, ndani ya upeo wako wa kaunti na ipatikane kwa mhudumu aliyechaguliwa. Ukaguzi mmoja ukishindwa, kesi zote hubaki bila kubadilishwa.',
+    'case_handler' => 'Mhudumu wa kesi', 'assigned_organization' => 'Shirika lililogawiwa',
+    'sector' => 'Sekta', 'priority' => 'Kipaumbele', 'low' => 'Chini', 'medium' => 'Wastani',
+    'high' => 'Juu', 'critical' => 'Muhimu sana', 'sensitivity' => 'Usiri',
+    'standard_case' => 'Kesi ya kawaida', 'sensitive_case' => 'Kesi nyeti',
+    'triage_rationale' => 'Sababu ya upangaji', 'confirm_atomic_triage' => 'Thibitisha upangaji wa pamoja',
+];
