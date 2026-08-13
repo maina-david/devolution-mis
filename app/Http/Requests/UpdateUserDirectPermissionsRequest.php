@@ -29,11 +29,18 @@ class UpdateUserDirectPermissionsRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
-            $target = $this->route('programmeUser');
-            if ($target instanceof User && $this->user()?->is($target)) {
+            $target = $this->targetUser();
+            if ($target !== null && $this->user()?->is($target)) {
                 $validator->errors()->add('permissions', 'You cannot change your own direct permissions.');
             }
         }];
+    }
+
+    public function targetUser(): ?User
+    {
+        $identifier = $this->route('programmeUser');
+
+        return is_string($identifier) ? User::query()->find($identifier) : null;
     }
 
     /** @return list<string> */

@@ -88,13 +88,14 @@ class AccessControlController extends Controller
         return back();
     }
 
-    public function updateUser(UpdateUserDirectPermissionsRequest $request, User $programmeUser, AuditLogger $auditLogger): RedirectResponse
+    public function updateUser(UpdateUserDirectPermissionsRequest $request, string $programmeUser, AuditLogger $auditLogger): RedirectResponse
     {
         $actor = $this->user($request);
-        $before = $programmeUser->getDirectPermissions()->pluck('name')->sort()->values()->all();
+        $targetUser = User::query()->findOrFail($programmeUser);
+        $before = $targetUser->getDirectPermissions()->pluck('name')->sort()->values()->all();
 
-        DB::transaction(function () use ($request, $programmeUser, $actor, $before, $auditLogger): void {
-            $target = User::query()->lockForUpdate()->findOrFail($programmeUser->id);
+        DB::transaction(function () use ($request, $targetUser, $actor, $before, $auditLogger): void {
+            $target = User::query()->lockForUpdate()->findOrFail($targetUser->id);
             $target->syncPermissions($request->permissionNames());
             $auditLogger->record($actor, $target, 'access.direct_permissions.updated', 'Direct user permission exceptions updated.', $target->county_id, [
                 'before' => $before,

@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\ProgrammePermission;
 use App\Enums\UserRole;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -68,6 +70,56 @@ class AuthorizationFuzzTest extends TestCase
         foreach (['access-control.index', 'operations.index', 'audit-assurance.index', 'security-governance.index', 'data-migrations.index'] as $routeName) {
             $this->get(route($routeName))->assertRedirect(route('login'));
         }
+    }
+
+    #[DataProvider('unprivilegedRoleProvider')]
+    public function test_direct_permission_route_does_not_disclose_whether_a_target_uuid_exists(UserRole $role): void
+    {
+        $user = $this->userForRole($role);
+        $existingTarget = User::factory()->assessor()->create();
+        $payload = [
+            'permissions' => [ProgrammePermission::ViewGrants->value],
+            'reason' => 'Hostile identifier enumeration must fail before resource resolution.',
+        ];
+
+        $this->actingAs($user)
+            ->patch(route('access-control.user-permissions.update', ['programmeUser' => $existingTarget->id]), $payload)
+            ->assertForbidden();
+        $this->actingAs($user)
+            ->patch(route('access-control.user-permissions.update', ['programmeUser' => (string) Str::uuid7()]), $payload)
+            ->assertForbidden();
+
+        $this->assertCount(0, $existingTarget->fresh()->getDirectPermissions());
+    }
+
+    public function test_privileged_actor_hostile_payloads_fail_atomically_without_audit_side_effects(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+        $target = User::factory()->assessor()->create();
+        $role = Role::query()->where('name', UserRole::CountyOfficial->value)->firstOrFail();
+        $originalRolePermissions = $role->permissions()->pluck('name')->sort()->values()->all();
+        $payloads = [
+            ['permissions' => ProgrammePermission::ManageUserAccess->value, 'reason' => str_repeat('scalar payload ', 2)],
+            ['permissions' => [[ProgrammePermission::ManageUserAccess->value]], 'reason' => str_repeat('nested payload ', 2)],
+            ['permissions' => [ProgrammePermission::ManageUserAccess->value, ProgrammePermission::ManageUserAccess->value], 'reason' => str_repeat('duplicate payload ', 2)],
+            ['permissions' => ['*', "manage-user-access\0configure-platform"], 'reason' => str_repeat('wildcard payload ', 2)],
+        ];
+
+        foreach ($payloads as $payload) {
+            $this->actingAs($admin)
+                ->patch(route('access-control.roles.update', ['role' => $role->name]), $payload)
+                ->assertSessionHasErrors();
+            $this->actingAs($admin)
+                ->patch(route('access-control.user-permissions.update', ['programmeUser' => $target->id]), $payload)
+                ->assertSessionHasErrors();
+        }
+
+        $this->assertSame($originalRolePermissions, $role->fresh()->permissions()->pluck('name')->sort()->values()->all());
+        $this->assertCount(0, $target->fresh()->getDirectPermissions());
+        $this->assertSame(0, AuditEvent::query()->whereIn('action', [
+            'access.role_permissions.updated',
+            'access.direct_permissions.updated',
+        ])->count());
     }
 
     private function userForRole(UserRole $role): User
