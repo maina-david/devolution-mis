@@ -96,6 +96,7 @@ declare module '@inertiajs/core' {
                 workflowManagement: Record<string, string>;
                 partnerCoordination: Record<string, string>;
                 dashboard: Record<string, string>;
+                migration: Record<string, string>;
                 monitoringResults: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;

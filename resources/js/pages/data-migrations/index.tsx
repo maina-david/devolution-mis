@@ -1,4 +1,4 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     DatabaseBackup,
@@ -225,6 +225,10 @@ const statusOptions = [
     { id: 'applied', name: 'Applied' },
 ];
 
+function useMigrationCopy(): Record<string, string> {
+    return usePage().props.localization.migration;
+}
+
 export default function HistoricalDataMigrations({
     batches,
     filters,
@@ -237,6 +241,7 @@ export default function HistoricalDataMigrations({
     lineageTranslations: t,
     legacyAcpa,
 }: Props) {
+    const copy = useMigrationCopy();
     const [selected, setSelected] = useState<Batch | null>(null);
     const [action, setAction] = useState<'details' | 'review' | 'apply'>(
         'details',
@@ -294,16 +299,13 @@ export default function HistoricalDataMigrations({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-75">
-                                Controlled provenance and reconciliation
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Bulk data imports
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl opacity-80">
-                                Validate, approve and atomically apply governed
-                                operational registers and historical result
-                                datasets from checksum-retained CSV or XLSX
-                                sources.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.stage && (
@@ -317,11 +319,9 @@ export default function HistoricalDataMigrations({
 
                 <Alert>
                     <DatabaseBackup />
-                    <AlertTitle>Three-person control</AlertTitle>
+                    <AlertTitle>{copy.three_person_control}</AlertTitle>
                     <AlertDescription>
-                        Upload, independent review and final application must be
-                        performed by different authorized users. Applied records
-                        and their checksum-bound provenance are immutable.
+                        {copy.three_person_control_description}
                     </AlertDescription>
                 </Alert>
 
@@ -355,13 +355,13 @@ export default function HistoricalDataMigrations({
                             <div className="grid gap-4 lg:grid-cols-[12rem_1fr]">
                                 <dl className="rounded-lg border p-4">
                                     <dt className="text-sm text-muted-foreground">
-                                        Records requiring disposition
+                                        {copy.records_requiring_disposition}
                                     </dt>
                                     <dd className="mt-1 text-3xl font-semibold">
                                         {legacyInventory.total}
                                     </dd>
                                     <dt className="mt-4 text-sm text-muted-foreground">
-                                        Record types
+                                        {copy.record_types}
                                     </dt>
                                     <dd className="font-semibold">
                                         {legacyInventory.recordTypes}
@@ -546,7 +546,8 @@ export default function HistoricalDataMigrations({
                                                                 )
                                                             }
                                                         >
-                                                            <PlayCircle /> Apply
+                                                            <PlayCircle />{' '}
+                                                            {copy.apply}{' '}
                                                             {
                                                                 t.apply_disposition
                                                             }
@@ -684,10 +685,9 @@ export default function HistoricalDataMigrations({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Migration batches</CardTitle>
+                        <CardTitle>{copy.migration_batches}</CardTitle>
                         <CardDescription>
-                            Private source files, validation outcomes and
-                            maker-checker application history.
+                            {copy.migration_batches_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -741,7 +741,8 @@ export default function HistoricalDataMigrations({
                                                             )
                                                         }
                                                     >
-                                                        <Eye /> View details
+                                                        <Eye />{' '}
+                                                        {copy.view_details}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem asChild>
                                                         <a
@@ -751,7 +752,9 @@ export default function HistoricalDataMigrations({
                                                             })}
                                                         >
                                                             <Download />{' '}
-                                                            Download source
+                                                            {
+                                                                copy.download_source
+                                                            }
                                                         </a>
                                                     </DropdownMenuItem>
                                                     {batch.invalidRows > 0 && (
@@ -767,8 +770,9 @@ export default function HistoricalDataMigrations({
                                                                 )}
                                                             >
                                                                 <Download />
-                                                                Download row
-                                                                exceptions
+                                                                {
+                                                                    copy.download_exceptions
+                                                                }
                                                             </a>
                                                         </DropdownMenuItem>
                                                     )}
@@ -788,7 +792,9 @@ export default function HistoricalDataMigrations({
                                                                 }
                                                             >
                                                                 <CheckCircle2 />
-                                                                Record review
+                                                                {
+                                                                    copy.record_review
+                                                                }
                                                             </DropdownMenuItem>
                                                         )}
                                                     {capabilities.apply &&
@@ -803,7 +809,9 @@ export default function HistoricalDataMigrations({
                                                                 }
                                                             >
                                                                 <PlayCircle />{' '}
-                                                                Apply records
+                                                                {
+                                                                    copy.apply_records
+                                                                }
                                                             </DropdownMenuItem>
                                                         )}
                                                 </DropdownMenuGroup>
@@ -1306,6 +1314,7 @@ function LineageDispositionSheet({
 }
 
 function MigrationForm() {
+    const copy = useMigrationCopy();
     const [datasetType, setDatasetType] = useState('acpa_scores');
     const requiredColumns =
         datasetType === 'acpa_reconstruction'
@@ -1314,9 +1323,9 @@ function MigrationForm() {
 
     return (
         <FormSheet
-            title="Stage historical source"
-            description="Upload an authorized CSV or XLSX source for row-level validation and county reconciliation. No record is applied at this stage."
-            triggerLabel="Upload historical data"
+            title={copy.stage_historical_source}
+            description={copy.stage_historical_source_description}
+            triggerLabel={copy.upload_historical_data}
             icon={FileUp}
             size="lg"
         >
@@ -1325,7 +1334,7 @@ function MigrationForm() {
                     <div className="flex flex-col gap-5">
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="migration-file">
-                                CSV or XLSX source
+                                {copy.csv_xlsx_source}
                             </Label>
                             <Input
                                 id="migration-file"
@@ -1336,10 +1345,9 @@ function MigrationForm() {
                                 required
                             />
                             <p className="text-xs text-muted-foreground">
-                                Required columns: {requiredColumns}. Maximum
-                                5,000 rows and 20 MB. Legacy ACPA files use one
-                                assessment header followed by criterion,
-                                evidence, finding, assessor and appeal records.
+                                {copy.required_columns_label} {requiredColumns}
+                                {'. '}
+                                {copy.required_columns_suffix}
                             </p>
                             {errors.file && (
                                 <ErrorText>{errors.file}</ErrorText>
@@ -1348,7 +1356,7 @@ function MigrationForm() {
                         <StaticSearchableSelect
                             id="migration-dataset-type"
                             name="dataset_type"
-                            label="Dataset type"
+                            label={copy.dataset_type}
                             values={datasetOptions.map((option) => option.id)}
                             value={datasetType}
                             onValueChange={setDatasetType}
@@ -1358,32 +1366,32 @@ function MigrationForm() {
                         <TextField
                             id="migration-source-name"
                             name="source_name"
-                            label="Source name"
+                            label={copy.source_name}
                             error={errors.source_name}
                         />
                         <TextField
                             id="migration-source-reference"
                             name="source_reference"
-                            label="Source reference"
+                            label={copy.source_reference}
                             error={errors.source_reference}
                         />
                         <div className="grid gap-4 sm:grid-cols-2">
                             <DatePickerField
                                 name="period_from"
-                                label="Period from"
+                                label={copy.period_from}
                                 error={errors.period_from}
                             />
                             <DatePickerField
                                 name="period_to"
-                                label="Period to"
+                                label={copy.period_to}
                                 error={errors.period_to}
                             />
                         </div>
                         <Button type="submit" disabled={processing}>
                             <FileUp data-icon="inline-start" />
                             {processing
-                                ? 'Validating source…'
-                                : 'Stage and validate'}
+                                ? copy.validating_source
+                                : copy.stage_and_validate}
                         </Button>
                     </div>
                 )}
@@ -1393,13 +1401,14 @@ function MigrationForm() {
 }
 
 function ReferenceImportForm() {
+    const copy = useMigrationCopy();
     const [datasetType, setDatasetType] = useState('organizations');
 
     return (
         <FormSheet
-            title="Upload reference data"
-            description="Upload a create-only CSV or XLSX template. The file is dry-run validated and cannot change the registry until independent approval and final application."
-            triggerLabel="Upload reference data"
+            title={copy.upload_reference_data}
+            description={copy.upload_reference_data_description}
+            triggerLabel={copy.upload_reference_data}
             icon={FileUp}
             size="lg"
         >
@@ -1409,7 +1418,7 @@ function ReferenceImportForm() {
                         <StaticSearchableSelect
                             id="reference-import-dataset-type"
                             name="dataset_type"
-                            label="Registry"
+                            label={copy.registry}
                             values={referenceDatasetOptions.map(
                                 (option) => option.id,
                             )}
@@ -1420,7 +1429,7 @@ function ReferenceImportForm() {
                         <TemplateDownloadMenu datasetType={datasetType} />
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="reference-import-file">
-                                Completed CSV or XLSX template
+                                {copy.completed_template}
                             </Label>
                             <Input
                                 id="reference-import-file"
@@ -1431,10 +1440,7 @@ function ReferenceImportForm() {
                                 required
                             />
                             <p className="text-xs text-muted-foreground">
-                                Maximum 5,000 rows and 20 MB. Existing or
-                                duplicate identifiers and overlapping coverage
-                                periods are rejected; imports never overwrite
-                                current records.
+                                {copy.reference_import_limits}
                             </p>
                             {errors.file && (
                                 <ErrorText>{errors.file}</ErrorText>
@@ -1443,20 +1449,20 @@ function ReferenceImportForm() {
                         <TextField
                             id="reference-import-source-name"
                             name="source_name"
-                            label="Authoritative source name"
+                            label={copy.authoritative_source_name}
                             error={errors.source_name}
                         />
                         <TextField
                             id="reference-import-source-reference"
                             name="source_reference"
-                            label="Approval or source reference"
+                            label={copy.approval_or_source_reference}
                             error={errors.source_reference}
                         />
                         <Button type="submit" disabled={processing}>
                             <FileUp data-icon="inline-start" />
                             {processing
-                                ? 'Validating file…'
-                                : 'Upload and dry-run validate'}
+                                ? copy.validating_file
+                                : copy.upload_and_validate}
                         </Button>
                     </div>
                 )}
@@ -1466,18 +1472,20 @@ function ReferenceImportForm() {
 }
 
 function TemplateDownloadMenu({ datasetType }: { datasetType: string }) {
+    const copy = useMigrationCopy();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button type="button" variant="outline">
                     <Download data-icon="inline-start" />
-                    Download {humanize(datasetType)} template
+                    {copy.download} {humanize(datasetType)} {copy.template}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
                 <DropdownMenuItem asChild>
                     <a href={showTemplate.url({ datasetType })}>
-                        <Download /> CSV template
+                        <Download /> {copy.csv_template}
                     </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -1487,7 +1495,7 @@ function TemplateDownloadMenu({ datasetType }: { datasetType: string }) {
                             { query: { format: 'xlsx' } },
                         )}
                     >
-                        <FileSpreadsheet /> XLSX template
+                        <FileSpreadsheet /> {copy.xlsx_template}
                     </a>
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -1504,52 +1512,54 @@ function BatchSheet({
     action: 'details' | 'review' | 'apply';
     onOpenChange: (open: boolean) => void;
 }) {
+    const copy = useMigrationCopy();
+
     return (
         <Sheet open={Boolean(batch)} onOpenChange={onOpenChange}>
             <SheetContent className="overflow-y-auto sm:max-w-2xl">
                 <SheetHeader>
                     <SheetTitle>
                         {action === 'review'
-                            ? 'Review migration batch'
+                            ? copy.review_migration_batch
                             : action === 'apply'
-                              ? 'Apply immutable records'
-                              : 'Migration batch details'}
+                              ? copy.apply_immutable_records
+                              : copy.migration_batch_details}
                     </SheetTitle>
                     <SheetDescription>
-                        {batch?.reference} · {batch?.sourceName}
+                        {batch?.reference} {copy.separator} {batch?.sourceName}
                     </SheetDescription>
                 </SheetHeader>
                 {batch && (
                     <div className="flex flex-col gap-5 px-4 pb-8">
                         <div className="grid gap-3 sm:grid-cols-2">
                             <Detail
-                                label="Status"
+                                label={copy.status}
                                 value={humanize(batch.status)}
                             />
                             <Detail
-                                label="Dataset"
+                                label={copy.dataset}
                                 value={humanize(batch.datasetType)}
                             />
                             <Detail
-                                label="Valid rows"
+                                label={copy.valid_rows}
                                 value={String(batch.validRows)}
                             />
                             <Detail
-                                label="Exceptions"
+                                label={copy.exceptions}
                                 value={String(batch.invalidRows)}
                             />
                             <Detail
-                                label="Submitted by"
+                                label={copy.submitted_by}
                                 value={batch.submittedBy}
                             />
                             <Detail
-                                label="Reviewed by"
-                                value={batch.reviewedBy ?? 'Pending'}
+                                label={copy.reviewed_by}
+                                value={batch.reviewedBy ?? copy.pending}
                             />
                         </div>
                         <div>
                             <p className="text-xs font-medium text-muted-foreground">
-                                SHA-256 source checksum
+                                {copy.batch_source_checksum}
                             </p>
                             <p className="mt-1 font-mono text-xs break-all">
                                 {batch.fileChecksum}
@@ -1559,32 +1569,33 @@ function BatchSheet({
                             <div className="rounded-lg border bg-muted/30 p-4">
                                 <div className="grid gap-3 sm:grid-cols-2">
                                     <Detail
-                                        label="Catalogue release candidate"
+                                        label={copy.catalogue_release_candidate}
                                         value={`v${batch.referenceDataRelease.version}`}
                                     />
                                     <Detail
-                                        label="Release status"
+                                        label={copy.release_status}
                                         value={humanize(
                                             batch.referenceDataRelease.status,
                                         )}
                                     />
                                 </div>
                                 <p className="mt-4 text-xs font-medium text-muted-foreground">
-                                    Release SHA-256 checksum
+                                    {copy.release_checksum}
                                 </p>
                                 <p className="mt-1 font-mono text-xs break-all">
                                     {batch.referenceDataRelease.checksum}
                                 </p>
                                 <p className="mt-3 text-xs text-muted-foreground">
-                                    This candidate requires independent
-                                    publication before it becomes effective.
+                                    {copy.release_candidate_notice}
                                 </p>
                             </div>
                         )}
                         {Object.keys(batch.errorCounts).length > 0 && (
                             <Alert variant="destructive">
                                 <XCircle />
-                                <AlertTitle>Validation exceptions</AlertTitle>
+                                <AlertTitle>
+                                    {copy.validation_exceptions}
+                                </AlertTitle>
                                 <AlertDescription>
                                     {Object.entries(batch.errorCounts)
                                         .map(
@@ -1603,7 +1614,7 @@ function BatchSheet({
                                     })}
                                 >
                                     <Download data-icon="inline-start" />
-                                    Download row-level exception report
+                                    {copy.download_exception_report}
                                 </a>
                             </Button>
                         )}
@@ -1618,13 +1629,13 @@ function BatchSheet({
                                         <StaticSearchableSelect
                                             id="migration-review-decision"
                                             name="decision"
-                                            label="Decision"
+                                            label={copy.decision}
                                             values={['approve', 'reject']}
                                             error={errors.decision}
                                         />
                                         <div className="flex flex-col gap-2">
                                             <Label htmlFor="migration-review-notes">
-                                                Independent review notes
+                                                {copy.independent_notes}
                                             </Label>
                                             <Textarea
                                                 id="migration-review-notes"
@@ -1645,7 +1656,7 @@ function BatchSheet({
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Record review decision
+                                            {copy.record_review_decision}
                                         </Button>
                                     </div>
                                 )}
@@ -1667,20 +1678,20 @@ function BatchSheet({
                                         <Alert>
                                             <PlayCircle />
                                             <AlertTitle>
-                                                Final controlled application
+                                                {copy.final_application}
                                             </AlertTitle>
                                             <AlertDescription>
-                                                This atomically creates the
-                                                validated records. The operator
-                                                must be independent of both
-                                                submitter and reviewer.
+                                                {
+                                                    copy.batch_final_application_description
+                                                }
                                             </AlertDescription>
                                         </Alert>
                                         <Button
                                             type="submit"
                                             disabled={processing}
                                         >
-                                            Apply {batch.validRows} records
+                                            {copy.apply} {batch.validRows}{' '}
+                                            {copy.records}
                                         </Button>
                                     </div>
                                 )}

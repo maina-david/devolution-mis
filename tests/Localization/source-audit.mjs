@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { globSync } from 'node:fs';
 
 const limits = {
-    frontendLiterals: 772,
+    frontendLiterals: 736,
     backendMessages: 654,
 };
 
@@ -57,7 +57,8 @@ const backendMessages = globSync('app/**/*.php').flatMap((file) => {
 });
 const report = {
     frontendLiterals: frontendMessages.length,
-    frontendFiles: new Set(frontendMessages.map((message) => message.file)).size,
+    frontendFiles: new Set(frontendMessages.map((message) => message.file))
+        .size,
     backendMessages: backendMessages.length,
     limits,
 };
@@ -68,6 +69,8 @@ if (
     report.frontendLiterals > limits.frontendLiterals ||
     report.backendMessages > limits.backendMessages
 ) {
-    console.error('Localization debt increased. Extract new user-facing copy before merging.');
+    console.error(
+        'Localization debt increased. Extract new user-facing copy before merging.',
+    );
     process.exitCode = 1;
 }
