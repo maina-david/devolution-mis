@@ -1,4 +1,4 @@
-import { Form, Head, Link } from '@inertiajs/react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
 import {
     ClockAlert,
     ClipboardCheck,
@@ -248,6 +248,7 @@ export default function SupportDesk({
     policyOptions,
     capabilities,
 }: Props) {
+    const copy = usePage().props.localization.supportDesk;
     const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
         null,
     );
@@ -264,16 +265,13 @@ export default function SupportDesk({
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-75">
-                                Operational support and SLA assurance
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                IDMIS service desk
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl opacity-80">
-                                Submit, triage, investigate and independently
-                                accept support requests with county scope,
-                                immutable activity history, governed records and
-                                monitored response targets.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.submit && (
@@ -350,10 +348,9 @@ export default function SupportDesk({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Support case register</CardTitle>
+                        <CardTitle>{copy.support_case_register}</CardTitle>
                         <CardDescription>
-                            Server-paginated operational records. Select rows
-                            for authorized CSV, XLSX, JSON or PDF export.
+                            {copy.support_case_register_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto p-0">
@@ -420,15 +417,15 @@ function ServicePolicyRegister({
     capabilities: Props['capabilities'];
     effectivePolicyId: string | null;
 }) {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <Card>
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle>Governed service catalogue</CardTitle>
+                    <CardTitle>{copy.governed_service_catalogue}</CardTitle>
                     <CardDescription>
-                        Effective-dated targets, government business hours,
-                        responder roster and escalation authority used by new
-                        tickets.
+                        {copy.governed_service_catalogue_description}
                     </CardDescription>
                 </div>
                 {capabilities.configurePolicy && (
@@ -441,8 +438,7 @@ function ServicePolicyRegister({
             <CardContent className="flex flex-col gap-4">
                 {policies.length === 0 && (
                     <p className="text-sm text-muted-foreground">
-                        No service policy has been configured. New ticket intake
-                        remains fail-closed.
+                        {copy.no_service_policy}
                     </p>
                 )}
                 {policies.map((policy) => (
@@ -454,7 +450,9 @@ function ServicePolicyRegister({
                                         {policy.name}
                                     </h3>
                                     <Badge variant="outline">
-                                        {policy.code} · v{policy.version}
+                                        {policy.code} {copy.separator}{' '}
+                                        {copy.version_prefix}
+                                        {policy.version}
                                     </Badge>
                                     <Badge
                                         variant={
@@ -469,7 +467,7 @@ function ServicePolicyRegister({
                                         {humanize(policy.authorityStatus)}
                                     </Badge>
                                     {policy.id === effectivePolicyId && (
-                                        <Badge>Effective now</Badge>
+                                        <Badge>{copy.effective_now}</Badge>
                                     )}
                                 </div>
                                 <p className="mt-2 text-sm text-muted-foreground">
@@ -516,9 +514,16 @@ function ServicePolicyRegister({
                                             {humanize(priority)}
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            Respond {target.first_response}h ·
-                                            resolve {target.resolution}h ·
-                                            remind {target.reminder}h before due
+                                            {copy.respond}{' '}
+                                            {target.first_response}
+                                            {copy.hour_suffix}{' '}
+                                            {copy.separator} {copy.resolve}{' '}
+                                            {target.resolution}
+                                            {copy.hour_suffix}{' '}
+                                            {copy.separator} {copy.remind}{' '}
+                                            {target.reminder}
+                                            {copy.hour_suffix}{' '}
+                                            {copy.before_due}
                                         </p>
                                     </div>
                                 ),
@@ -532,16 +537,20 @@ function ServicePolicyRegister({
 }
 
 function PolicyExportMenu() {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                     <Download aria-hidden="true" />
-                    Export policies
+                    {copy.export_policies}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Export governed register</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                    {copy.export_governed_register}
+                </DropdownMenuLabel>
                 <DropdownMenuGroup>
                     {['csv', 'xlsx', 'json', 'pdf'].map((format) => (
                         <DropdownMenuItem key={format} asChild>
@@ -568,6 +577,7 @@ function CreateServicePolicySheet({
 }: {
     options: Props['policyOptions'];
 }) {
+    const copy = usePage().props.localization.supportDesk;
     const [effectiveFrom, setEffectiveFrom] = useState('');
 
     return (
@@ -607,7 +617,7 @@ function CreateServicePolicySheet({
                         </div>
                         <Field data-invalid={Boolean(errors.description)}>
                             <FieldLabel htmlFor="policy-description">
-                                Scope and service commitment
+                                {copy.scope_and_service_commitment}
                             </FieldLabel>
                             <Textarea
                                 id="policy-description"
@@ -673,11 +683,10 @@ function CreateServicePolicySheet({
                                 id="priority-targets-heading"
                                 className="font-semibold"
                             >
-                                Business-hour service targets
+                                {copy.business_hour_service_targets}
                             </h3>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                Deadlines exclude non-working hours and calendar
-                                exceptions.
+                                {copy.business_hour_service_targets_description}
                             </p>
                             <div className="mt-4 grid gap-4 md:grid-cols-2">
                                 {Object.entries(priorityDefaults).map(
@@ -755,12 +764,10 @@ function CreateServicePolicySheet({
                         )}
                         <section aria-labelledby="roster-heading">
                             <h3 id="roster-heading" className="font-semibold">
-                                National duty roster
+                                {copy.national_duty_roster}
                             </h3>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                Tier one receives new cases; tier three receives
-                                escalations. The two duties must be assigned to
-                                different authorized users.
+                                {copy.national_duty_roster_description}
                             </p>
                             <div className="mt-4 grid gap-5 sm:grid-cols-2">
                                 <SearchableSelect
@@ -951,6 +958,8 @@ function CreateTicketSheet({
     national: boolean;
     intakeAvailable: boolean;
 }) {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <FormSheet
             title="Submit support request"
@@ -1036,7 +1045,7 @@ function CreateTicketSheet({
                         <input type="hidden" name="channel" value="web" />
                         <Field data-invalid={Boolean(errors.subject)}>
                             <FieldLabel htmlFor="support-subject">
-                                Subject
+                                {copy.subject}
                             </FieldLabel>
                             <Input
                                 id="support-subject"
@@ -1056,7 +1065,7 @@ function CreateTicketSheet({
                         </Field>
                         <Field data-invalid={Boolean(errors.description)}>
                             <FieldLabel htmlFor="support-description">
-                                Description
+                                {copy.description_label}
                             </FieldLabel>
                             <Textarea
                                 id="support-description"
@@ -1092,19 +1101,25 @@ function TicketMenu({
     detail: TicketDetail | undefined;
     onView: () => void;
 }) {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Ticket actions">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={copy.ticket_actions}
+                >
                     <MoreHorizontal aria-hidden="true" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                    <DropdownMenuLabel>Ticket actions</DropdownMenuLabel>
+                    <DropdownMenuLabel>{copy.ticket_actions}</DropdownMenuLabel>
                     <DropdownMenuItem onSelect={onView} disabled={!detail}>
                         <Eye aria-hidden="true" />
-                        Open complete record
+                        {copy.open_complete_record}
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -1125,6 +1140,8 @@ function TicketSheet({
     assignees: SearchableSelectOption[];
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.supportDesk;
+
     if (!ticket) {
         return null;
     }
@@ -1150,13 +1167,15 @@ function TicketSheet({
                             {humanize(ticket.status)}
                         </Badge>
                         <Badge variant="outline">
-                            {humanize(ticket.priority)} priority
+                            {humanize(ticket.priority)} {copy.priority}
                         </Badge>
                     </div>
                     <SheetTitle>{ticket.subject}</SheetTitle>
                     <SheetDescription>
-                        Requested {formatDateTime(ticket.requestedAt)} by{' '}
-                        {ticket.requester.name}.
+                        {copy.requested}{' '}
+                        {formatDateTime(ticket.requestedAt)} {copy.by}{' '}
+                        {ticket.requester.name}
+                        {copy.full_stop}
                     </SheetDescription>
                 </SheetHeader>
 
@@ -1164,10 +1183,10 @@ function TicketSheet({
                     {ticket.county && <CountyIdentity county={ticket.county} />}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Request narrative</CardTitle>
+                            <CardTitle>{copy.request_narrative}</CardTitle>
                             <CardDescription>
-                                {humanize(ticket.category)} ·{' '}
-                                {humanize(ticket.channel)} channel
+                                {humanize(ticket.category)} {copy.separator}{' '}
+                                {humanize(ticket.channel)} {copy.channel}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -1211,7 +1230,7 @@ function TicketSheet({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Assign resolver
+                                                {copy.assign_resolver}
                                             </Button>
                                         </FieldGroup>
                                     )}
@@ -1245,12 +1264,12 @@ function TicketSheet({
                             id="support-documents-heading"
                             className="text-lg font-semibold"
                         >
-                            Governed documents
+                            {copy.governed_documents}
                         </h2>
                         <div className="mt-3 flex flex-col gap-3">
                             {ticket.documents.length === 0 ? (
                                 <p className="rounded-lg border border-dashed p-5 text-sm text-muted-foreground">
-                                    No support records have been uploaded.
+                                    {copy.no_support_records}
                                 </p>
                             ) : (
                                 ticket.documents.map((document) => (
@@ -1265,20 +1284,20 @@ function TicketSheet({
                                             <p className="text-sm text-muted-foreground">
                                                 {document.originalName ??
                                                     'Stored record'}{' '}
-                                                ·{' '}
+                                                {copy.separator}{' '}
                                                 {formatBytes(
                                                     document.sizeBytes,
                                                 )}
                                             </p>
                                             <div className="mt-2 flex flex-wrap gap-2">
                                                 <Badge variant="outline">
-                                                    Scan:{' '}
+                                                    {copy.scan_label}{' '}
                                                     {humanize(
                                                         document.scanStatus,
                                                     )}
                                                 </Badge>
                                                 <Badge variant="outline">
-                                                    OCR:{' '}
+                                                    {copy.ocr_label}{' '}
                                                     {humanize(
                                                         document.ocrStatus,
                                                     )}
@@ -1299,7 +1318,7 @@ function TicketSheet({
                                                     rel="noreferrer"
                                                 >
                                                     <Eye aria-hidden="true" />
-                                                    Preview
+                                                    {copy.preview}
                                                 </a>
                                             </Button>
                                             <Button
@@ -1313,7 +1332,7 @@ function TicketSheet({
                                                     })}
                                                 >
                                                     <Download aria-hidden="true" />
-                                                    Download
+                                                    {copy.download}
                                                 </a>
                                             </Button>
                                         </div>
@@ -1329,7 +1348,7 @@ function TicketSheet({
                             id="support-history-heading"
                             className="text-lg font-semibold"
                         >
-                            Immutable activity history
+                            {copy.immutable_activity_history}
                         </h2>
                         <ol className="mt-4 flex flex-col gap-4">
                             {[...ticket.activities]
@@ -1351,12 +1370,14 @@ function TicketSheet({
                                             {activity.narrative}
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            {activity.actor} ·{' '}
+                                            {activity.actor} {copy.separator}{' '}
                                             {formatDateTime(
                                                 activity.occurredAt,
                                             )}{' '}
-                                            · checksum{' '}
-                                            {activity.checksum.slice(0, 12)}…
+                                            {copy.separator}{' '}
+                                            {copy.checksum}{' '}
+                                            {activity.checksum.slice(0, 12)}
+                                            {copy.ellipsis}
                                         </p>
                                     </li>
                                 ))}
@@ -1364,8 +1385,11 @@ function TicketSheet({
                     </section>
 
                     <p className="text-xs text-muted-foreground">
-                        Reference catalogue v{ticket.referenceData.version} ·{' '}
-                        checksum {ticket.referenceData.checksum.slice(0, 16)}…
+                        {copy.reference_catalogue_version_prefix}
+                        {ticket.referenceData.version} {copy.separator}{' '}
+                        {copy.checksum}{' '}
+                        {ticket.referenceData.checksum.slice(0, 16)}
+                        {copy.ellipsis}
                     </p>
                 </div>
             </SheetContent>
@@ -1374,6 +1398,7 @@ function TicketSheet({
 }
 
 function SlaCard({ ticket }: { ticket: TicketDetail }) {
+    const copy = usePage().props.localization.supportDesk;
     const [observedAt] = useState(() => Date.now());
     const requested = new Date(ticket.requestedAt).getTime();
     const due = new Date(ticket.resolutionDueAt).getTime();
@@ -1388,7 +1413,7 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Service-level targets</CardTitle>
+                <CardTitle>{copy.service_level_targets}</CardTitle>
                 <CardDescription>
                     {ticket.servicePolicy
                         ? `${humanize(ticket.servicePolicy.authorityStatus)} ${ticket.servicePolicy.code} v${ticket.servicePolicy.version} · ${ticket.servicePolicy.calendar.code} v${ticket.servicePolicy.calendar.version}`
@@ -1428,10 +1453,12 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
                 </div>
                 {ticket.servicePolicy && (
                     <p className="text-xs text-muted-foreground">
-                        Policy checksum{' '}
-                        {ticket.servicePolicy.checksum.slice(0, 16)}… · calendar
-                        checksum{' '}
-                        {ticket.servicePolicy.calendar.checksum.slice(0, 16)}…
+                        {copy.policy_checksum}{' '}
+                        {ticket.servicePolicy.checksum.slice(0, 16)}
+                        {copy.ellipsis} {copy.separator}{' '}
+                        {copy.calendar_checksum}{' '}
+                        {ticket.servicePolicy.calendar.checksum.slice(0, 16)}
+                        {copy.ellipsis}
                     </p>
                 )}
             </CardContent>
@@ -1446,6 +1473,7 @@ function TransitionForm({
     ticket: TicketDetail;
     options: SearchableSelectOption[];
 }) {
+    const copy = usePage().props.localization.supportDesk;
     const [selectedTransition, setSelectedTransition] = useState(
         options[0]?.id ?? '',
     );
@@ -1474,7 +1502,7 @@ function TransitionForm({
                             <FieldLabel
                                 htmlFor={`resolution-summary-${ticket.id}`}
                             >
-                                Resolution summary
+                                {copy.resolution_summary}
                             </FieldLabel>
                             <Textarea
                                 id={`resolution-summary-${ticket.id}`}
@@ -1489,7 +1517,7 @@ function TransitionForm({
                         </Field>
                     )}
                     <Button type="submit" disabled={processing}>
-                        Record workflow action
+                        {copy.record_workflow_action}
                     </Button>
                 </FieldGroup>
             )}
@@ -1498,6 +1526,8 @@ function TransitionForm({
 }
 
 function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <Form
             {...storeSupportTicket.form({ supportTicket: ticket.id })}
@@ -1507,7 +1537,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                 <FieldGroup>
                     <Field data-invalid={Boolean(errors.title)}>
                         <FieldLabel htmlFor={`document-title-${ticket.id}`}>
-                            Record title
+                            {copy.record_title}
                         </FieldLabel>
                         <Input
                             id={`document-title-${ticket.id}`}
@@ -1548,7 +1578,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                     </div>
                     <Field data-invalid={Boolean(errors.category)}>
                         <FieldLabel htmlFor={`document-category-${ticket.id}`}>
-                            Records category
+                            {copy.records_category}
                         </FieldLabel>
                         <Input
                             id={`document-category-${ticket.id}`}
@@ -1561,7 +1591,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                     </Field>
                     <Field data-invalid={Boolean(errors.document)}>
                         <FieldLabel htmlFor={`document-file-${ticket.id}`}>
-                            File
+                            {copy.file}
                         </FieldLabel>
                         <Input
                             id={`document-file-${ticket.id}`}
@@ -1581,7 +1611,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                     )}
                     <Button type="submit" disabled={processing}>
                         <FileUp aria-hidden="true" />
-                        Upload governed record
+                        {copy.upload_governed_record}
                     </Button>
                 </FieldGroup>
             )}
@@ -1590,9 +1620,11 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
 }
 
 function NarrativeField({ id, error }: { id: string; error?: string }) {
+    const copy = usePage().props.localization.supportDesk;
+
     return (
         <Field data-invalid={Boolean(error)}>
-            <FieldLabel htmlFor={id}>Action narrative</FieldLabel>
+            <FieldLabel htmlFor={id}>{copy.action_narrative}</FieldLabel>
             <Textarea
                 id={id}
                 name="narrative"
