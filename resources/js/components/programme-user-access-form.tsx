@@ -1,8 +1,9 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import FormSheet from '@/components/form-sheet';
+import InputError from '@/components/input-error';
 import SearchableMultiSelect from '@/components/searchable-multi-select';
 import SearchableSelect from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ export default function ProgrammeUserAccessForm({
     roles: Option[];
     counties: CountyIdentityValue[];
 }) {
+    const copy = usePage().props.localization.accessControl;
     const [role, setRole] = useState(roles[0]?.value ?? '');
     const isCountyRole = ['county-official', 'county-admin'].includes(role);
     const isPortfolioRole = [
@@ -29,9 +31,9 @@ export default function ProgrammeUserAccessForm({
 
     return (
         <FormSheet
-            title="Grant programme access"
-            description="Create an administrator-approved identity and send password setup instructions."
-            triggerLabel="Grant access"
+            title={copy.grant_programme_access}
+            description={copy.grant_programme_access_description}
+            triggerLabel={copy.grant_access}
             icon={UserPlus}
             size="xl"
         >
@@ -43,32 +45,52 @@ export default function ProgrammeUserAccessForm({
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="access-name">Name</Label>
+                            <Label htmlFor="access-name">{copy.name}</Label>
                             <Input
                                 id="access-name"
                                 name="name"
                                 required
-                                aria-invalid={!!errors.name}
+                                aria-invalid={Boolean(errors.name)}
+                                aria-describedby={
+                                    errors.name
+                                        ? 'access-name-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="access-name-error"
+                                message={errors.name}
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="access-email">Official email</Label>
+                            <Label htmlFor="access-email">
+                                {copy.official_email}
+                            </Label>
                             <Input
                                 id="access-email"
                                 name="email"
                                 type="email"
                                 required
-                                aria-invalid={!!errors.email}
+                                aria-invalid={Boolean(errors.email)}
+                                aria-describedby={
+                                    errors.email
+                                        ? 'access-email-error'
+                                        : undefined
+                                }
+                            />
+                            <InputError
+                                id="access-email-error"
+                                message={errors.email}
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="access-role">Programme role</Label>
+                        <div>
                             <SearchableSelect
                                 id="access-role"
                                 name="role"
-                                label=""
+                                label={copy.programme_role}
                                 value={role}
                                 onValueChange={setRole}
+                                error={errors.role}
                                 options={roles.map((option) => ({
                                     id: option.value,
                                     name: option.label,
@@ -80,7 +102,7 @@ export default function ProgrammeUserAccessForm({
                                 <SearchableSelect
                                     id="access-county"
                                     name="county_id"
-                                    label="Home county"
+                                    label={copy.home_county}
                                     options={counties}
                                     error={errors.county_id}
                                 />
@@ -97,7 +119,7 @@ export default function ProgrammeUserAccessForm({
                             <div className="md:col-span-2">
                                 <SearchableMultiSelect
                                     name="assigned_county_ids[]"
-                                    label="Assigned county portfolio"
+                                    label={copy.assigned_county_portfolio}
                                     options={counties}
                                     error={errors.assigned_county_ids}
                                 />
@@ -107,9 +129,10 @@ export default function ProgrammeUserAccessForm({
                             <Button
                                 type="submit"
                                 disabled={processing || !role}
+                                aria-busy={processing}
                             >
                                 <UserPlus aria-hidden="true" />
-                                Grant access
+                                {copy.grant_access}
                             </Button>
                         </div>
                     </>

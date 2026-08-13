@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { destroy } from '@/routes/programme-users';
@@ -10,9 +10,13 @@ export default function ProgrammeUserRowAction({
     userId: string;
     isCurrentUser: boolean;
 }) {
+    const copy = usePage().props.localization.accessControl;
+
     if (isCurrentUser) {
         return (
-            <span className="text-xs text-muted-foreground">Current user</span>
+            <span className="text-xs text-muted-foreground">
+                {copy.current_user}
+            </span>
         );
     }
 
@@ -24,9 +28,10 @@ export default function ProgrammeUserRowAction({
                     size="sm"
                     variant="outline"
                     disabled={processing}
+                    aria-busy={processing}
                 >
                     <UserX aria-hidden="true" />
-                    Deactivate
+                    {copy.deactivate}
                 </Button>
             )}
         </Form>

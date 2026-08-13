@@ -45,6 +45,8 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.auditAssurance.fail_closed', 'Uthibitishaji unaokataa hitilafu')
                 ->where('localization.monitoringResults.results_learning_control_plane', 'Kituo cha udhibiti wa matokeo na mafunzo')
                 ->where('localization.projects.investment_delivery_control', 'Udhibiti wa utekelezaji wa uwekezaji')
+                ->where('localization.accessControl.grant_programme_access', 'Toa ufikiaji wa programu')
+                ->where('localization.programmeWorkspace.setting_value', 'Thamani ya mpangilio')
                 ->where('localization.navigation.platform_governance', 'Utawala wa jukwaa')
                 ->where('localization.evidence.manage_document', 'Simamia hati')
                 ->where('localization.evidence.outcomes.uploaded', 'Ushahidi umepakiwa kwa usalama.')
@@ -58,6 +60,35 @@ class LocalePreferenceTest extends TestCase
         $this->actingAs($user)
             ->get(route('home'))
             ->assertInertia(fn ($page) => $page->where('localization.current', 'sw'));
+    }
+
+    public function test_programme_access_controls_use_synchronized_locale_copy(): void
+    {
+        $sources = [
+            resource_path('js/components/programme-user-access-form.tsx'),
+            resource_path('js/components/programme-user-row-action.tsx'),
+            resource_path('js/components/platform-setting-row-action.tsx'),
+        ];
+
+        foreach ($sources as $sourcePath) {
+            $source = file_get_contents($sourcePath);
+
+            $this->assertIsString($source);
+            $this->assertStringContainsString('props.localization.', $source);
+        }
+
+        $accessForm = (string) file_get_contents($sources[0]);
+        $userAction = (string) file_get_contents($sources[1]);
+        $settingAction = (string) file_get_contents($sources[2]);
+
+        foreach (['Grant programme access', 'Official email', 'Assigned county portfolio'] as $literal) {
+            $this->assertStringNotContainsString($literal, $accessForm);
+        }
+
+        $this->assertStringNotContainsString('Current user', $userAction);
+        $this->assertStringNotContainsString('Deactivate', $userAction);
+        $this->assertStringNotContainsString('Setting value', $settingAction);
+        $this->assertStringNotContainsString('>Save<', $settingAction);
     }
 
     public function test_guest_can_change_session_locale_without_creating_a_profile_preference(): void

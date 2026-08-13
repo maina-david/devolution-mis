@@ -137,6 +137,20 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('aria-describedby={error ? `${id}-error` : undefined}', $projectProgress);
         $this->assertStringContainsString('aria-busy={processing}', $projectProgress);
 
+        $programmeAccess = $this->source('resources/js/components/programme-user-access-form.tsx');
+        $this->assertStringContainsString("'access-name-error'", $programmeAccess);
+        $this->assertStringContainsString("'access-email-error'", $programmeAccess);
+        $this->assertStringContainsString('<InputError', $programmeAccess);
+        $this->assertStringContainsString('aria-busy={processing}', $programmeAccess);
+
+        $programmeUserAction = $this->source('resources/js/components/programme-user-row-action.tsx');
+        $this->assertStringContainsString('aria-busy={processing}', $programmeUserAction);
+
+        $platformSetting = $this->source('resources/js/components/platform-setting-row-action.tsx');
+        $this->assertStringContainsString('aria-invalid={Boolean(errors.value)}', $platformSetting);
+        $this->assertStringContainsString('<InputError', $platformSetting);
+        $this->assertStringContainsString('aria-busy={processing}', $platformSetting);
+
         $setup = $this->source('resources/js/components/two-factor-setup-modal.tsx');
         $this->assertStringContainsString('aria-label={copy.two_factor_qr_code}', $setup);
         $this->assertStringContainsString('aria-label={copy.manual_setup_key}', $setup);

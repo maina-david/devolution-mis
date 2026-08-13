@@ -276,7 +276,7 @@ class AuthenticatedNavigationContractTest extends TestCase
     {
         $accessForm = $this->source('resources/js/components/programme-user-access-form.tsx');
         $this->assertStringContainsString('<FormSheet', $accessForm);
-        $this->assertStringContainsString('triggerLabel="Grant access"', $accessForm);
+        $this->assertStringContainsString('triggerLabel={copy.grant_access}', $accessForm);
         $this->assertStringNotContainsString('<section className="rounded-xl border', $accessForm);
 
         $grantAction = $this->source('resources/js/components/grant-row-action.tsx');
