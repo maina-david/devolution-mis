@@ -135,6 +135,24 @@ class LocalePreferenceTest extends TestCase
         $this->assertStringNotContainsString('Search is temporarily unavailable.', $source);
     }
 
+    public function test_shared_linked_document_boundary_uses_the_request_locale_for_conflicts_and_outcomes(): void
+    {
+        $source = file_get_contents(app_path('Http/Controllers/LinkedDocumentController.php'));
+
+        $this->assertIsString($source);
+        $this->assertStringContainsString("__('linked-documents.errors.project_closed')", $source);
+        $this->assertStringContainsString("__('linked-documents.outcomes.project_uploaded')", $source);
+        $this->assertStringContainsString("__('linked-documents.activity.support_uploaded')", $source);
+        $this->assertStringNotContainsString("'message' => 'Project record uploaded securely.'", $source);
+
+        App::setLocale('sw');
+        $this->assertSame('Hati za mradi zimefungwa baada ya kufungwa kwa mradi.', __('linked-documents.errors.project_closed'));
+        $this->assertSame('Rekodi ya mradi imepakiwa kwa usalama.', __('linked-documents.outcomes.project_uploaded'));
+
+        App::setLocale('fr');
+        $this->assertSame('Les dossiers de performance sont verrouillés en dehors de l’étape applicable de leur cycle de vie.', __('linked-documents.errors.performance_stage'));
+    }
+
     public function test_official_devolution_branding_is_used_for_app_and_browser_icons(): void
     {
         $logo = file_get_contents(resource_path('js/components/app-logo-icon.tsx'));

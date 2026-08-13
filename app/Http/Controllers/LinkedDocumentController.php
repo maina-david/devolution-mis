@@ -40,11 +40,11 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $supportTicket), 403);
-        abort_if($supportTicket->status === 'closed', 409, 'Support records are locked after requester acceptance and closure.');
+        abort_if($supportTicket->status === 'closed', 409, __('linked-documents.errors.support_closed'));
         abort_unless($user->id === $supportTicket->requester_id || $user->id === $supportTicket->assigned_to || $user->can(ProgrammePermission::ManageSupportTickets->value), 403);
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_unless(in_array($recordPurpose, ['request', 'investigation', 'resolution'], true), 422, 'Unsupported support record purpose.');
-        abort_if($recordPurpose === 'resolution' && ! in_array($supportTicket->status, ['in_progress', 'resolved'], true), 409, 'Resolution evidence is accepted only during investigation or resolution review.');
+        abort_unless(in_array($recordPurpose, ['request', 'investigation', 'resolution'], true), 422, __('linked-documents.errors.support_purpose'));
+        abort_if($recordPurpose === 'resolution' && ! in_array($supportTicket->status, ['in_progress', 'resolved'], true), 409, __('linked-documents.errors.support_resolution_stage'));
         $document = $storeDocument->handle($supportTicket, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => "support-ticket-{$recordPurpose}-evidence", 'county_id' => $supportTicket->county_id]);
         $supportTicket->update(['last_activity_at' => now(), 'reminder_sent_at' => null]);
         $recordActivity->handle(
@@ -53,7 +53,7 @@ class LinkedDocumentController extends Controller
             'document_uploaded',
             $supportTicket->status,
             $supportTicket->status,
-            'A governed support record was uploaded.',
+            __('linked-documents.activity.support_uploaded'),
             [
                 'document_id' => $document->id,
                 'document_checksum' => $document->content_checksum,
@@ -61,7 +61,7 @@ class LinkedDocumentController extends Controller
                 'scan_status' => $document->scan_status,
             ],
         );
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Support record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.support_uploaded')]);
 
         return back();
     }
@@ -72,9 +72,9 @@ class LinkedDocumentController extends Controller
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $replication), 403);
         abort_unless($user->id === $replication->accountable_user_id || $user->can(ProgrammePermission::ManageKnowledge->value), 403);
-        abort_unless(in_array($replication->status, ['adapting', 'piloting'], true), 409, 'Replication evidence is accepted only during adaptation or piloting.');
+        abort_unless(in_array($replication->status, ['adapting', 'piloting'], true), 409, __('linked-documents.errors.replication_stage'));
         $storeDocument->handle($replication, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'innovation-replication-evidence', 'county_id' => $replication->target_county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Replication evidence uploaded securely for independent verification.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.replication_uploaded')]);
 
         return back();
     }
@@ -84,15 +84,15 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $securityIncident) && $user->can(ProgrammePermission::ManageSecurityGovernance->value), 403);
-        abort_if($securityIncident->status === 'closed', 409, 'Incident evidence is locked after independent closure.');
+        abort_if($securityIncident->status === 'closed', 409, __('linked-documents.errors.incident_closed'));
         $recordPurpose = $request->string('record_purpose')->toString();
         $allowedPurposes = ['investigation', 'containment', 'recovery', 'closure'];
-        abort_unless(in_array($recordPurpose, $allowedPurposes, true), 422, 'Unsupported security incident record purpose.');
-        abort_if($recordPurpose === 'containment' && ! in_array($securityIncident->status, ['acknowledged', 'contained'], true), 409, 'Containment evidence is accepted only during acknowledgement and containment.');
-        abort_if($recordPurpose === 'recovery' && ! in_array($securityIncident->status, ['eradicated', 'recovered'], true), 409, 'Recovery evidence is accepted only after eradication.');
-        abort_if($recordPurpose === 'closure' && $securityIncident->status !== 'recovered', 409, 'Closure evidence is accepted only after recovery.');
+        abort_unless(in_array($recordPurpose, $allowedPurposes, true), 422, __('linked-documents.errors.security_purpose'));
+        abort_if($recordPurpose === 'containment' && ! in_array($securityIncident->status, ['acknowledged', 'contained'], true), 409, __('linked-documents.errors.containment_stage'));
+        abort_if($recordPurpose === 'recovery' && ! in_array($securityIncident->status, ['eradicated', 'recovered'], true), 409, __('linked-documents.errors.recovery_stage'));
+        abort_if($recordPurpose === 'closure' && $securityIncident->status !== 'recovered', 409, __('linked-documents.errors.security_closure_stage'));
         $storeDocument->handle($securityIncident, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => "security-incident-{$recordPurpose}-evidence", 'county_id' => null]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Security incident evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.security_uploaded')]);
 
         return back();
     }
@@ -102,13 +102,13 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $privacyIncident) && $user->can(ProgrammePermission::ManageDataGovernance->value), 403);
-        abort_if($privacyIncident->status === 'closed', 409, 'Incident evidence is locked after independent closure.');
+        abort_if($privacyIncident->status === 'closed', 409, __('linked-documents.errors.incident_closed'));
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_unless(in_array($recordPurpose, ['investigation', 'notification', 'closure'], true), 422, 'Unsupported incident record purpose.');
-        abort_if($recordPurpose === 'notification' && ! in_array($privacyIncident->status, ['notification_required', 'remediation'], true), 409, 'Notification evidence may be uploaded only after independent risk assessment.');
-        abort_if($recordPurpose === 'closure' && $privacyIncident->status !== 'remediation', 409, 'Closure evidence may be uploaded only during remediation.');
+        abort_unless(in_array($recordPurpose, ['investigation', 'notification', 'closure'], true), 422, __('linked-documents.errors.privacy_purpose'));
+        abort_if($recordPurpose === 'notification' && ! in_array($privacyIncident->status, ['notification_required', 'remediation'], true), 409, __('linked-documents.errors.notification_stage'));
+        abort_if($recordPurpose === 'closure' && $privacyIncident->status !== 'remediation', 409, __('linked-documents.errors.privacy_closure_stage'));
         $storeDocument->handle($privacyIncident, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => "privacy-incident-{$recordPurpose}-evidence", 'county_id' => $privacyIncident->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Incident evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.privacy_uploaded')]);
 
         return back();
     }
@@ -118,9 +118,9 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($user->id === $travelRequest->requester_id && $documentAccess->allowsSubject($user, $travelRequest), 403);
-        abort_unless($travelRequest->status === 'draft', 409, 'Supporting documents are locked after submission.');
+        abort_unless($travelRequest->status === 'draft', 409, __('linked-documents.errors.travel_submitted'));
         $storeDocument->handle($travelRequest, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'travel-supporting-document', 'county_id' => $travelRequest->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Supporting document uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.travel_uploaded')]);
 
         return back();
     }
@@ -130,12 +130,12 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $project), 403);
-        abort_if($project->status === 'closed' || $project->lifecycle_stage === 'closed', 409, 'Project documents are locked after closure.');
+        abort_if($project->status === 'closed' || $project->lifecycle_stage === 'closed', 409, __('linked-documents.errors.project_closed'));
         $recordPurpose = $request->string('record_purpose', 'lifecycle_record')->toString();
-        abort_if($recordPurpose === 'closure_report' && $project->lifecycle_stage !== 'execution', 409, 'The project closure report may be uploaded only during execution.');
+        abort_if($recordPurpose === 'closure_report' && $project->lifecycle_stage !== 'execution', 409, __('linked-documents.errors.project_closure_stage'));
         $purpose = $recordPurpose === 'closure_report' ? 'project-closure-report' : 'project-lifecycle-document';
         $storeDocument->handle($project, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => $purpose, 'county_id' => $project->lead_county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Project record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.project_uploaded')]);
 
         return back();
     }
@@ -145,13 +145,13 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $agreement), 403);
-        abort_unless($agreement->status === 'draft', 409, 'Agreement records are locked after submission.');
+        abort_unless($agreement->status === 'draft', 409, __('linked-documents.errors.agreement_submitted'));
         if (! $user->can(ProgrammePermission::ManagePartners->value)) {
             abort_unless($agreement->partner->users()->whereKey($user)->exists(), 403);
         }
         $countyId = $agreement->partner->counties()->orderBy('code')->value('counties.id');
         $storeDocument->handle($agreement, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'partner-agreement-record', 'county_id' => $countyId]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Agreement record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.agreement_uploaded')]);
 
         return back();
     }
@@ -162,12 +162,12 @@ class LinkedDocumentController extends Controller
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $meeting), 403);
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_if($meeting->status === 'closed', 409, 'Meeting records are locked after minutes approval.');
-        abort_if($recordPurpose === 'agenda' && $meeting->status !== 'scheduled', 409, 'Agenda records are locked after outcomes are recorded.');
-        abort_if($recordPurpose === 'minutes' && $meeting->status !== 'minutes_pending', 409, 'Minutes records may be uploaded only after outcomes are recorded.');
+        abort_if($meeting->status === 'closed', 409, __('linked-documents.errors.meeting_closed'));
+        abort_if($recordPurpose === 'agenda' && $meeting->status !== 'scheduled', 409, __('linked-documents.errors.agenda_recorded'));
+        abort_if($recordPurpose === 'minutes' && $meeting->status !== 'minutes_pending', 409, __('linked-documents.errors.minutes_stage'));
         $countyId = $meeting->workingGroup->counties()->orderBy('code')->value('counties.id');
         $storeDocument->handle($meeting, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => "dswg-{$recordPurpose}-record", 'county_id' => $countyId]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Meeting record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.meeting_uploaded')]);
 
         return back();
     }
@@ -177,11 +177,11 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $changeRequest), 403);
-        abort_if($changeRequest->decision()->exists(), 409, 'Change evidence is locked after a decision.');
+        abort_if($changeRequest->decision()->exists(), 409, __('linked-documents.errors.agreement_change_decided'));
         abort_unless($user->can(ProgrammePermission::ManagePartners->value) || $changeRequest->requested_by === $user->id, 403);
         $countyId = $changeRequest->agreement->partner->counties()->orderBy('code')->value('counties.id');
         $storeDocument->handle($changeRequest, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'partner-agreement-change-evidence', 'county_id' => $countyId]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Agreement change evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.agreement_change_uploaded')]);
 
         return back();
     }
@@ -193,7 +193,7 @@ class LinkedDocumentController extends Controller
         abort_unless($documentAccess->allowsSubject($user, $contribution), 403);
         abort_unless($user->can(ProgrammePermission::ManagePartners->value) || $contribution->reported_by === $user->id || $contribution->partner->users()->whereKey($user)->exists(), 403);
         $storeDocument->handle($contribution, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'partner-contribution-reconciliation-evidence', 'county_id' => $contribution->project->lead_county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Contribution evidence uploaded securely for independent reconciliation.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.contribution_uploaded')]);
 
         return back();
     }
@@ -204,9 +204,9 @@ class LinkedDocumentController extends Controller
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $action), 403);
         abort_unless($user->can(ProgrammePermission::ManagePartners->value) || $action->accountable_user_id === $user->id, 403);
-        abort_if($action->status === 'completed', 409, 'Action evidence is locked after verified completion.');
+        abort_if($action->status === 'completed', 409, __('linked-documents.errors.partner_action_completed'));
         $storeDocument->handle($action, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'partner-collaboration-action-evidence', 'county_id' => $action->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Collaboration action evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.collaboration_action_uploaded')]);
 
         return back();
     }
@@ -217,10 +217,10 @@ class LinkedDocumentController extends Controller
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $action), 403);
         abort_unless($user->can(ProgrammePermission::ManageDswg->value) || $action->accountable_user_id === $user->id, 403);
-        abort_unless($action->status === 'in_progress', 409, 'Action evidence may be uploaded only while implementation is in progress.');
+        abort_unless($action->status === 'in_progress', 409, __('linked-documents.errors.dswg_action_stage'));
         $countyId = $action->county_id ?? $action->meeting->workingGroup->counties()->orderBy('code')->value('counties.id');
         $storeDocument->handle($action, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'dswg-action-evidence', 'county_id' => $countyId]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Action evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.action_uploaded')]);
 
         return back();
     }
@@ -230,13 +230,13 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $resolution), 403);
-        abort_unless(in_array($resolution->status, ['open', 'in_progress'], true), 409, 'Resolution records are locked during closure review and after closure.');
+        abort_unless(in_array($resolution->status, ['open', 'in_progress'], true), 409, __('linked-documents.errors.igr_closed'));
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_if($recordPurpose === 'resolution' && $resolution->status !== 'open', 409, 'The adopted resolution record is locked after implementation starts.');
+        abort_if($recordPurpose === 'resolution' && $resolution->status !== 'open', 409, __('linked-documents.errors.igr_resolution_started'));
         $countyId = $resolution->assignments()->whereNotNull('county_id')->orderBy('created_at')->value('county_id');
         $purpose = $recordPurpose === 'resolution' ? 'igr-resolution-record' : 'igr-implementation-evidence';
         $storeDocument->handle($resolution, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => $purpose, 'county_id' => $countyId]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'IGR record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.igr_uploaded')]);
 
         return back();
     }
@@ -246,17 +246,17 @@ class LinkedDocumentController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
         abort_unless($documentAccess->allowsSubject($user, $evaluation), 403);
-        abort_unless(in_array($evaluation->status, ['planned', 'in_progress'], true), 409, 'Evaluation records are locked during review and after approval.');
+        abort_unless(in_array($evaluation->status, ['planned', 'in_progress'], true), 409, __('linked-documents.errors.evaluation_closed'));
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_if($recordPurpose === 'terms_of_reference' && $evaluation->status !== 'planned', 409, 'Terms of reference are locked after implementation starts.');
-        abort_if($recordPurpose === 'evaluation_report' && $evaluation->status !== 'in_progress', 409, 'Evaluation reports may be uploaded only while the study is in progress.');
+        abort_if($recordPurpose === 'terms_of_reference' && $evaluation->status !== 'planned', 409, __('linked-documents.errors.evaluation_tor_started'));
+        abort_if($recordPurpose === 'evaluation_report' && $evaluation->status !== 'in_progress', 409, __('linked-documents.errors.evaluation_report_stage'));
         $purpose = match ($recordPurpose) {
             'terms_of_reference' => 'programme-evaluation-tor',
             'evaluation_report' => 'programme-evaluation-report',
             default => 'programme-evaluation-supporting',
         };
         $storeDocument->handle($evaluation, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => $purpose, 'county_id' => $evaluation->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Evaluation record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.evaluation_uploaded')]);
 
         return back();
     }
@@ -268,7 +268,7 @@ class LinkedDocumentController extends Controller
         abort_unless($documentAccess->allowsSubject($user, $finding), 403);
         abort_unless($finding->status === 'open' && $finding->accountable_owner_id === $user->id, 403);
         $storeDocument->handle($finding, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'evaluation-finding-response-evidence', 'county_id' => $finding->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Finding response evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.finding_uploaded')]);
 
         return back();
     }
@@ -280,7 +280,7 @@ class LinkedDocumentController extends Controller
         abort_unless($documentAccess->allowsSubject($user, $action), 403);
         abort_unless($action->finding->status === 'open' && $action->status !== 'completed' && $action->accountable_owner_id === $user->id, 403);
         $storeDocument->handle($action, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => 'evaluation-finding-action-evidence', 'county_id' => $action->finding->county_id]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Action evidence uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.action_uploaded')]);
 
         return back();
     }
@@ -292,14 +292,14 @@ class LinkedDocumentController extends Controller
         abort_unless($documentAccess->allowsSubject($user, $performancePlan), 403);
 
         $recordPurpose = $request->string('record_purpose')->toString();
-        abort_unless(in_array($recordPurpose, ['goal_plan', 'self_review_evidence', 'final_appraisal'], true), 422, 'Unsupported performance record purpose.');
+        abort_unless(in_array($recordPurpose, ['goal_plan', 'self_review_evidence', 'final_appraisal'], true), 422, __('linked-documents.errors.performance_purpose'));
 
         $expectedStatus = match ($recordPurpose) {
             'goal_plan' => 'draft',
             'self_review_evidence' => 'self_review',
             'final_appraisal' => 'supervisor_review',
         };
-        abort_unless($performancePlan->status === $expectedStatus, 409, 'Performance records are locked outside their applicable lifecycle stage.');
+        abort_unless($performancePlan->status === $expectedStatus, 409, __('linked-documents.errors.performance_stage'));
 
         $isEmployeeRecord = in_array($recordPurpose, ['goal_plan', 'self_review_evidence'], true);
         abort_unless($isEmployeeRecord ? $performancePlan->employee_id === $user->id : $performancePlan->supervisor_id === $user->id, 403);
@@ -310,7 +310,7 @@ class LinkedDocumentController extends Controller
             'final_appraisal' => 'performance-final-appraisal',
         };
         $storeDocument->handle($performancePlan, $user, $request->file('document'), ['title' => $request->string('title')->toString(), 'category' => $request->string('category')->toString(), 'source_type' => $request->string('source_type')->toString(), 'purpose' => $purpose, 'county_id' => null]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Performance record uploaded securely.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('linked-documents.outcomes.performance_uploaded')]);
 
         return back();
     }
