@@ -15,7 +15,7 @@ class BulkCitizenCaseTriageController extends Controller
         /** @var User $user */
         $user = $request->user();
         $count = $triage->handle($user, $request->validated());
-        Inertia::flash('toast', ['type' => 'success', 'message' => "{$count} citizen cases triaged and assigned atomically."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('citizen.casework.outcomes.bulk_triaged', ['count' => $count])]);
 
         return back();
     }

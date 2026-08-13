@@ -50,4 +50,10 @@ return [
     'update_case_status' => 'Mettre à jour le statut gouverné du dossier', 'resolution_summary' => 'Résumé de la résolution',
     'rationale' => 'justification',
     'action_sheet_description' => 'Les modifications sont autorisées, horodatées et inscrites dans la piste d’audit immuable.',
+    'casework' => [
+        'errors' => ['assignee_county' => 'Le destinataire n’est pas autorisé pour ce comté.', 'triage_required' => 'Le dossier doit d’abord être trié.', 'attachment_quarantined' => 'La pièce jointe est en quarantaine.', 'bulk_limit' => 'Le triage groupé filtré est limité à 100 dossiers correspondants. Restreignez les filtres actifs puis réessayez.', 'bulk_empty' => 'Aucun dossier citoyen ne correspond à la sélection groupée gouvernée.', 'bulk_unauthorized' => 'La sélection contient un dossier citoyen indisponible ou non autorisé.', 'bulk_untriaged_required' => 'Chaque dossier sélectionné doit être nouvellement reçu et non trié.', 'assignee_response_permission' => 'Le destinataire n’est pas autorisé à répondre aux dossiers citoyens.', 'assignee_all_counties' => 'Le destinataire ne peut pas accéder à tous les comtés sélectionnés.'],
+        'outcomes' => ['triaged' => 'Le dossier a été trié et attribué.', 'message_recorded' => 'Le message du dossier a été enregistré.', 'workflow_updated' => 'Le workflow du dossier a été mis à jour.', 'bulk_triaged' => ':count dossiers citoyens ont été triés et attribués atomiquement.'],
+        'audit' => ['transitioned' => 'Le dossier :reference est passé à l’état :status.', 'attachment_downloaded' => 'Pièce jointe du dossier téléchargée : :title.'],
+        'notifications' => ['assigned_title' => 'Dossier citoyen attribué', 'assigned_message' => ':reference : :subject'],
+    ],
 ];

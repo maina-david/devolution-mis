@@ -102,4 +102,10 @@ return [
     'update_case_status' => 'Update governed case status', 'resolution_summary' => 'Resolution summary',
     'rationale' => 'rationale',
     'action_sheet_description' => 'Changes are authorized, time-stamped and written to the immutable audit trail.',
+    'casework' => [
+        'errors' => ['assignee_county' => 'The assignee is not authorized for this county.', 'triage_required' => 'The case must be triaged first.', 'attachment_quarantined' => 'The attachment is quarantined.', 'bulk_limit' => 'Filtered bulk triage is limited to 100 matching cases. Narrow the active filters and try again.', 'bulk_empty' => 'No citizen cases match the governed bulk selection.', 'bulk_unauthorized' => 'The selection contains an unavailable or unauthorized citizen case.', 'bulk_untriaged_required' => 'Every selected case must be newly received and untriaged.', 'assignee_response_permission' => 'The assignee is not authorized to respond to citizen cases.', 'assignee_all_counties' => 'The assignee cannot access every selected county.'],
+        'outcomes' => ['triaged' => 'Case triaged and assigned.', 'message_recorded' => 'Case message recorded.', 'workflow_updated' => 'Case workflow updated.', 'bulk_triaged' => ':count citizen cases triaged and assigned atomically.'],
+        'audit' => ['transitioned' => 'Case :reference transitioned to :status.', 'attachment_downloaded' => 'Case attachment downloaded: :title.'],
+        'notifications' => ['assigned_title' => 'Citizen case assigned', 'assigned_message' => ':reference: :subject'],
+    ],
 ];

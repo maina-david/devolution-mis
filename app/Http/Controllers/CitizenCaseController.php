@@ -62,11 +62,11 @@ class CitizenCaseController extends Controller
         $user = $this->user($request);
         $this->authorizeCase($user, $case, $countyScope);
         $assignee = User::query()->whereKey($request->validated('assigned_to'))->firstOrFail();
-        abort_unless($assignee->canAccessCounty($case->county), 422, 'The assignee is not authorized for this county.');
+        abort_unless($assignee->canAccessCounty($case->county), 422, __('citizen.casework.errors.assignee_county'));
         $triageCase->handle($case, $user, $request->validated());
-        $assignee->notify(new ProgrammeAlert('Citizen case assigned', "{$case->reference}: {$case->subject}", 'citizen-cases'));
+        $assignee->notify(ProgrammeAlert::translated('citizen.casework.notifications.assigned_title', 'citizen.casework.notifications.assigned_message', 'citizen-cases', messageParameters: ['reference' => $case->reference, 'subject' => $case->subject]));
 
-        return back()->with('success', 'Case triaged and assigned.');
+        return back()->with('success', __('citizen.casework.outcomes.triaged'));
     }
 
     public function message(StoreCitizenCaseMessageRequest $request, CitizenCase $case, AddCitizenCaseMessage $addMessage, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -77,7 +77,7 @@ class CitizenCaseController extends Controller
         abort_if($request->validated('visibility') === 'internal' && ! $user->can(ProgrammePermission::ManageCitizenCases->value), 403);
         $addMessage->handle($case, $user, $request->validated('body'), $request->validated('visibility'), $request->file('attachment'), $request->validated('source_type', 'born_digital'));
 
-        return back()->with('success', 'Case message recorded.');
+        return back()->with('success', __('citizen.casework.outcomes.message_recorded'));
     }
 
     public function transition(TransitionCitizenCaseRequest $request, CitizenCase $case, TransitionWorkflow $transitionWorkflow, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
@@ -86,7 +86,7 @@ class CitizenCaseController extends Controller
         $this->authorizeCase($user, $case, $countyScope);
         $this->authorizeHandler($user, $case);
         $instance = $case->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'The case must be triaged first.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('citizen.casework.errors.triage_required'));
         $name = $request->validated('transition');
         if (in_array($name, ['approve_resolution', 'reject_resolution'], true)) {
             Gate::authorize(ProgrammePermission::ResolveCitizenCases->value);
@@ -97,9 +97,9 @@ class CitizenCaseController extends Controller
         $resolutionSummary = $name === 'submit_resolution' ? $request->validated('resolution_summary') : $case->resolution_summary;
         $transitioned = $transitionWorkflow->handle($instance, $name, $user, ['resolution_summary_present' => filled($resolutionSummary)], $request->validated('comment'));
         $case->update(['status' => $transitioned->current_state, 'resolution_summary' => $resolutionSummary, 'escalated_at' => $name === 'escalate' ? now() : $case->escalated_at, 'resolved_at' => $name === 'approve_resolution' ? now() : $case->resolved_at]);
-        $auditLogger->record($user, $case, 'citizen_case.transitioned', "Case {$case->reference} transitioned to {$transitioned->current_state}.", $case->county_id, ['transition' => $name]);
+        $auditLogger->record($user, $case, 'citizen_case.transitioned', __('citizen.casework.audit.transitioned', ['reference' => $case->reference, 'status' => $transitioned->current_state]), $case->county_id, ['transition' => $name]);
 
-        return back()->with('success', 'Case workflow updated.');
+        return back()->with('success', __('citizen.casework.outcomes.workflow_updated'));
     }
 
     public function attachment(Request $request, CitizenCaseAttachment $attachment, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): StreamedResponse
@@ -107,9 +107,9 @@ class CitizenCaseController extends Controller
         $user = $this->user($request);
         $case = $attachment->citizenCase;
         $this->authorizeCase($user, $case, $countyScope);
-        abort_unless($attachment->scan_status === 'clean', 423, 'The attachment is quarantined.');
+        abort_unless($attachment->scan_status === 'clean', 423, __('citizen.casework.errors.attachment_quarantined'));
         abort_unless(Storage::exists($attachment->path), 404);
-        $auditLogger->record($user, $attachment, 'citizen_case.attachment_downloaded', "Case attachment downloaded: {$attachment->title}.", $case->county_id);
+        $auditLogger->record($user, $attachment, 'citizen_case.attachment_downloaded', __('citizen.casework.audit.attachment_downloaded', ['title' => $attachment->title]), $case->county_id);
 
         return Storage::download($attachment->path, $attachment->original_name);
     }

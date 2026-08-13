@@ -43,21 +43,21 @@ class BulkTriageCitizenCases
                 ->limit(101)
                 ->lockForUpdate()
                 ->get();
-            abort_if($cases->count() > 100, 422, 'Filtered bulk triage is limited to 100 matching cases. Narrow the active filters and try again.');
-            abort_if($cases->isEmpty(), 422, 'No citizen cases match the governed bulk selection.');
+            abort_if($cases->count() > 100, 422, __('citizen.casework.errors.bulk_limit'));
+            abort_if($cases->isEmpty(), 422, __('citizen.casework.errors.bulk_empty'));
             if ($selectionMode === 'selected') {
-                abort_unless($cases->count() === count($ids), 403, 'The selection contains an unavailable or unauthorized citizen case.');
+                abort_unless($cases->count() === count($ids), 403, __('citizen.casework.errors.bulk_unauthorized'));
             }
-            abort_if($cases->contains(fn (CitizenCase $case): bool => $case->status !== 'received' || $case->workflow_instance_id !== null), 409, 'Every selected case must be newly received and untriaged.');
+            abort_if($cases->contains(fn (CitizenCase $case): bool => $case->status !== 'received' || $case->workflow_instance_id !== null), 409, __('citizen.casework.errors.bulk_untriaged_required'));
 
             $assignee = User::query()->whereKey($attributes['assigned_to'])->firstOrFail();
-            abort_unless($assignee->can('citizen-cases:respond'), 422, 'The assignee is not authorized to respond to citizen cases.');
-            abort_if($cases->contains(fn (CitizenCase $case): bool => ! $assignee->canAccessCounty($case->county)), 422, 'The assignee cannot access every selected county.');
+            abort_unless($assignee->can('citizen-cases:respond'), 422, __('citizen.casework.errors.assignee_response_permission'));
+            abort_if($cases->contains(fn (CitizenCase $case): bool => ! $assignee->canAccessCounty($case->county)), 422, __('citizen.casework.errors.assignee_all_counties'));
 
             $triageAttributes = Arr::only($attributes, ['assigned_to', 'assigned_organization_id', 'sector_id', 'priority', 'is_sensitive', 'triage_note']);
             foreach ($cases as $case) {
                 $this->triageCase->handle($case, $actor, $triageAttributes);
-                DB::afterCommit(fn () => $assignee->notify(new ProgrammeAlert('Citizen case assigned', "{$case->reference}: {$case->subject}", 'citizen-cases')));
+                DB::afterCommit(fn () => $assignee->notify(ProgrammeAlert::translated('citizen.casework.notifications.assigned_title', 'citizen.casework.notifications.assigned_message', 'citizen-cases', messageParameters: ['reference' => $case->reference, 'subject' => $case->subject])));
             }
 
             return $cases->count();

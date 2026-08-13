@@ -52,4 +52,10 @@ return [
     'update_case_status' => 'Sasisha hali inayosimamiwa ya kesi', 'resolution_summary' => 'Muhtasari wa utatuzi',
     'rationale' => 'sababu',
     'action_sheet_description' => 'Mabadiliko yanaidhinishwa, yanawekewa muda na kuandikwa katika kumbukumbu ya ukaguzi isiyobadilika.',
+    'casework' => [
+        'errors' => ['assignee_county' => 'Mkabidhiwa hajaidhinishwa kwa kaunti hii.', 'triage_required' => 'Kesi lazima ipangwe kwanza.', 'attachment_quarantined' => 'Kiambatisho kimetengwa kwa usalama.', 'bulk_limit' => 'Upangaji wa pamoja uliochujwa una kikomo cha kesi 100. Punguza vichujio na ujaribu tena.', 'bulk_empty' => 'Hakuna kesi za wananchi zinazolingana na uteuzi unaodhibitiwa.', 'bulk_unauthorized' => 'Uteuzi una kesi ya mwananchi isiyopatikana au isiyoidhinishwa.', 'bulk_untriaged_required' => 'Kila kesi iliyochaguliwa lazima iwe imepokelewa hivi karibuni na haijapangwa.', 'assignee_response_permission' => 'Mkabidhiwa hajaidhinishwa kujibu kesi za wananchi.', 'assignee_all_counties' => 'Mkabidhiwa hawezi kufikia kila kaunti iliyochaguliwa.'],
+        'outcomes' => ['triaged' => 'Kesi imepangwa na kugawiwa.', 'message_recorded' => 'Ujumbe wa kesi umerekodiwa.', 'workflow_updated' => 'Mtiririko wa kesi umesasishwa.', 'bulk_triaged' => 'Kesi :count za wananchi zimepangwa na kugawiwa kwa pamoja bila kugawanyika.'],
+        'audit' => ['transitioned' => 'Kesi :reference imehamishwa hadi :status.', 'attachment_downloaded' => 'Kiambatisho cha kesi kimepakuliwa: :title.'],
+        'notifications' => ['assigned_title' => 'Kesi ya mwananchi imegawiwa', 'assigned_message' => ':reference: :subject'],
+    ],
 ];

@@ -312,6 +312,18 @@ class BulkWorkspaceActionTest extends TestCase
         }
     }
 
+    public function test_citizen_casework_catalogues_are_synchronized(): void
+    {
+        $english = require lang_path('en/citizen.php');
+        $kiswahili = require lang_path('sw/citizen.php');
+        $french = require lang_path('fr/citizen.php');
+
+        foreach (['errors', 'outcomes', 'audit', 'notifications'] as $section) {
+            $this->assertSame(array_keys($english['casework'][$section]), array_keys($kiswahili['casework'][$section]));
+            $this->assertSame(array_keys($english['casework'][$section]), array_keys($french['casework'][$section]));
+        }
+    }
+
     /**
      * @param  list<County>  $counties
      */
