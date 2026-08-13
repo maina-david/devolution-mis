@@ -30,6 +30,7 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceDataTable from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { formatDateTime } from '@/lib/reference-catalog';
 import { show as showCounty } from '@/routes/counties';
@@ -93,10 +94,6 @@ type Report = {
     options: { counties: CountyIdentityValue[] };
 };
 
-const chartConfig = {
-    contributions: { label: 'Visible contributions', color: 'var(--primary)' },
-} satisfies ChartConfig;
-
 export default function CommunityAnalytics({
     report,
     filters,
@@ -105,6 +102,15 @@ export default function CommunityAnalytics({
     filters: Filters;
 }) {
     const page = usePage();
+    const { localization } = page.props;
+    const copy = localization.knowledge.ui;
+    const locale = localization.current;
+    const chartConfig = {
+        contributions: {
+            label: copy.visible_contributions,
+            color: 'var(--primary)',
+        },
+    } satisfies ChartConfig;
     const query = {
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -118,19 +124,22 @@ export default function CommunityAnalytics({
             status: item.status,
             cells: [
                 item.title,
-                item.county ?? 'National',
+                item.county ?? copy.national,
                 item.contributions,
                 item.contributors,
                 item.subscriptions,
                 item.reports,
                 item.openReports,
-                `${item.resolutionRate}%`,
+                new Intl.NumberFormat(locale, {
+                    style: 'percent',
+                    maximumFractionDigits: 1,
+                }).format(item.resolutionRate / 100),
                 item.lastActivityAt
                     ? formatDateTime(item.lastActivityAt, {
                           dateStyle: 'medium',
                       })
                     : '—',
-                item.status,
+                copy[item.status] ?? item.status,
             ],
         }),
     );
@@ -144,7 +153,10 @@ export default function CommunityAnalytics({
             item.subscriptions,
             item.reports,
             item.openReports,
-            `${item.resolutionRate}%`,
+            new Intl.NumberFormat(locale, {
+                style: 'percent',
+                maximumFractionDigits: 1,
+            }).format(item.resolutionRate / 100),
         ],
         href: preserveDrilldownFilters(
             showCounty.url({ county: item.county.id }),
@@ -154,21 +166,19 @@ export default function CommunityAnalytics({
 
     return (
         <>
-            <Head title="Knowledge community analytics" />
+            <Head title={copy.community_analytics_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-sm font-medium opacity-80">
-                                Knowledge Management
+                                {copy.knowledge_management}
                             </p>
                             <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Community health
+                                {copy.community_health}
                             </h1>
                             <p className="mt-3 text-sm opacity-80 sm:text-base">
-                                Engagement, subscriptions and governed
-                                moderation outcomes across your authorized
-                                county portfolio.
+                                {copy.community_health_description}
                             </p>
                         </div>
                         <ExportMenu query={query} />
@@ -180,11 +190,11 @@ export default function CommunityAnalytics({
                     initialFrom={filters.from}
                     initialTo={filters.to}
                     initialSearch={filters.search ?? ''}
-                    searchPlaceholder="Search discussions"
+                    searchPlaceholder={copy.search_discussions}
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             value: filters.county_id,
                             options: report.options.counties.map((county) => ({
                                 id: county.id,
@@ -193,12 +203,12 @@ export default function CommunityAnalytics({
                         },
                         {
                             key: 'status',
-                            label: 'Discussion status',
+                            label: copy.discussion_status,
                             value: filters.status,
                             options: [
-                                { id: 'open', name: 'Open' },
-                                { id: 'closed', name: 'Closed' },
-                                { id: 'archived', name: 'Archived' },
+                                { id: 'open', name: copy.open },
+                                { id: 'closed', name: copy.closed },
+                                { id: 'archived', name: copy.archived },
                             ],
                         },
                     ]}
@@ -206,45 +216,48 @@ export default function CommunityAnalytics({
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Summary
-                        label="Discussions"
+                        label={copy.discussions}
                         value={report.summary.discussions}
                     />
                     <Summary
-                        label="Visible contributions"
+                        label={copy.visible_contributions}
                         value={report.summary.contributions}
                     />
                     <Summary
-                        label="Subscriptions"
+                        label={copy.subscriptions}
                         value={report.summary.subscriptions}
                     />
                     <Summary
-                        label="Report resolution"
-                        value={`${report.summary.resolutionRate}%`}
+                        label={copy.report_resolution}
+                        value={new Intl.NumberFormat(locale, {
+                            style: 'percent',
+                            maximumFractionDigits: 1,
+                        }).format(report.summary.resolutionRate / 100)}
                     />
                 </div>
 
                 {report.summary.discussions === 0 ? (
                     <WorkspaceEmptyState
-                        title="No community activity matches"
-                        description="Adjust the date, county, status or search filters."
+                        title={copy.no_community_activity}
+                        description={copy.adjust_analytics_filters}
                         className="min-h-72"
                     />
                 ) : (
                     <>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Contribution trend</CardTitle>
+                                <CardTitle>{copy.contribution_trend}</CardTitle>
                                 <CardDescription>
-                                    Visible contributions within the selected
-                                    activity period. Hidden moderation content
-                                    is never included.
+                                    {copy.contribution_trend_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {report.trend.length === 0 ? (
                                     <WorkspaceEmptyState
-                                        title="No contribution trend"
-                                        description="The discussions in scope have no visible contributions in this period."
+                                        title={copy.no_contribution_trend}
+                                        description={
+                                            copy.no_contribution_trend_description
+                                        }
                                     />
                                 ) : (
                                     <ChartContainer
@@ -280,26 +293,24 @@ export default function CommunityAnalytics({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Discussion health</CardTitle>
+                                <CardTitle>{copy.discussion_health}</CardTitle>
                                 <CardDescription>
-                                    Visible engagement and aggregate moderation
-                                    outcomes; no hidden post body or report
-                                    narrative is exposed.
+                                    {copy.discussion_health_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <WorkspaceDataTable
                                     columns={[
-                                        'Discussion',
-                                        'County scope',
-                                        'Contributions',
-                                        'Contributors',
-                                        'Subscriptions',
-                                        'Reports',
-                                        'Open reports',
-                                        'Resolution',
-                                        'Last activity',
-                                        'Status',
+                                        copy.discussion,
+                                        copy.county_scope,
+                                        copy.contributions,
+                                        copy.contributors,
+                                        copy.subscriptions,
+                                        copy.reports,
+                                        copy.open_reports,
+                                        copy.resolution,
+                                        copy.last_activity,
+                                        copy.status,
                                     ]}
                                     rows={discussionRows}
                                     pagination={report.discussions.pagination}
@@ -314,23 +325,24 @@ export default function CommunityAnalytics({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle>Cross-county portfolio</CardTitle>
+                                <CardTitle>
+                                    {copy.cross_county_portfolio}
+                                </CardTitle>
                                 <CardDescription>
-                                    County identities drill into complete county
-                                    records while preserving the active filters.
+                                    {copy.cross_county_description}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <WorkspaceDataTable
                                     columns={[
-                                        'County',
-                                        'Discussions',
-                                        'Contributions',
-                                        'Contributors',
-                                        'Subscriptions',
-                                        'Reports',
-                                        'Open reports',
-                                        'Resolution',
+                                        copy.county,
+                                        copy.discussions,
+                                        copy.contributions,
+                                        copy.contributors,
+                                        copy.subscriptions,
+                                        copy.reports,
+                                        copy.open_reports,
+                                        copy.resolution,
                                     ]}
                                     rows={countyRows}
                                     pagination={report.counties.pagination}
@@ -345,23 +357,32 @@ export default function CommunityAnalytics({
 }
 
 function Summary({ label, value }: { label: string; value: string | number }) {
+    const locale = usePage().props.localization.current;
+
     return (
         <Card>
             <CardHeader className="flex-row items-center justify-between gap-3">
                 <CardDescription>{label}</CardDescription>
                 <BarChart3 className="size-4 text-primary" aria-hidden="true" />
             </CardHeader>
-            <CardContent className="text-3xl font-bold">{value}</CardContent>
+            <CardContent className="text-3xl font-bold">
+                {typeof value === 'number'
+                    ? value.toLocaleString(locale)
+                    : value}
+            </CardContent>
         </Card>
     );
 }
 
 function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="secondary">
-                    <Download data-icon="inline-start" /> Export evidence
+                    <Download data-icon="inline-start" aria-hidden="true" />
+                    {copy.export_evidence}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -380,15 +401,17 @@ function ExportMenu({ query }: { query: Record<string, string | undefined> }) {
 }
 
 function DiscussionActions({ title }: { title: string }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button
                     variant="ghost"
                     size="icon"
-                    aria-label={`Actions for ${title}`}
+                    aria-label={interpolate(copy.discussion_actions, { title })}
                 >
-                    <MoreHorizontal />
+                    <MoreHorizontal aria-hidden="true" />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -399,12 +422,12 @@ function DiscussionActions({ title }: { title: string }) {
                                 query: { search: title },
                             })}
                         >
-                            Open in repository
+                            {copy.open_in_repository}
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         <Link href={analyticsIndex.url()}>
-                            Reset analytics filters
+                            {copy.reset_analytics_filters}
                         </Link>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>

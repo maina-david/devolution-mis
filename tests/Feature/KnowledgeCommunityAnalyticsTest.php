@@ -95,6 +95,32 @@ class KnowledgeCommunityAnalyticsTest extends TestCase
         $this->assertStringContainsString('County public participation', $content);
         $this->assertStringNotContainsString('Unrelated procurement practice', $content);
         $this->assertDatabaseHas('audit_events', ['actor_id' => $admin->id, 'action' => 'knowledge.community_analytics.exported']);
+
+        $swahiliCsv = $this->actingAs($admin)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('knowledge.community-analytics.export', ['csv', ...$filters]));
+        $swahiliCsv->assertOk()->assertDownload();
+        $this->assertStringContainsString('Kaunti,"Msimbo wa kaunti",Mjadala', $swahiliCsv->streamedContent());
+        $this->assertDatabaseHas('audit_events', [
+            'actor_id' => $admin->id,
+            'action' => 'knowledge.community_analytics.exported',
+            'description' => 'Uchanganuzi wa jumuiya ya maarifa umehamishwa kama CSV.',
+        ]);
+    }
+
+    public function test_community_health_interface_uses_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        KnowledgeDiscussion::factory()->create(['county_id' => $county->id]);
+        $countyAdmin = User::factory()->countyAdmin($county)->create();
+
+        $this->actingAs($countyAdmin)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('knowledge.community-analytics.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('localization.knowledge.ui.community_health', 'Santé de la communauté')
+                ->where('localization.knowledge.ui.visible_contributions', 'Contributions visibles'));
     }
 
     public function test_dedicated_analytics_permission_enforces_the_complete_role_and_scope_matrix(): void

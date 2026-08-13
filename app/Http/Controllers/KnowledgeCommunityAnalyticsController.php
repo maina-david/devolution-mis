@@ -32,7 +32,7 @@ class KnowledgeCommunityAnalyticsController extends Controller
         $user = $this->user($request);
         $filters = $this->filters($request);
         $rows = $this->analytics->exportRows($user, $filters);
-        $this->auditLogger->record($user, $user, 'knowledge.community_analytics.exported', 'Knowledge community analytics exported as '.mb_strtoupper($format).'.', $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
+        $this->auditLogger->record($user, $user, 'knowledge.community_analytics.exported', __('knowledge.ui.export_audit', ['format' => mb_strtoupper($format)]), $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
         $filename = 'knowledge-community-analytics-'.now()->format('Ymd-His');
 
         return match ($format) {
@@ -63,7 +63,7 @@ class KnowledgeCommunityAnalyticsController extends Controller
     private function xlsx(array $rows, string $filename): BinaryFileResponse
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-community-analytics-');
-        abort_if($path === false, 500, 'Export file could not be created.');
+        abort_if($path === false, 500, __('knowledge.ui.export_failed'));
         $writer = new Writer;
         $writer->openToFile($path);
         $writer->addRow(Row::fromValues($this->headings()));
@@ -89,10 +89,13 @@ class KnowledgeCommunityAnalyticsController extends Controller
                 }
             }
 
-            return '<tr><td>'.$logo.e($county['name'] ?? 'National').'</td><td>'.e($row['title']).'</td><td>'.e($row['status']).'</td><td>'.e($row['contributions']).'</td><td>'.e($row['contributors']).'</td><td>'.e($row['subscriptions']).'</td><td>'.e($row['reports']).'</td><td>'.e($row['openReports']).'</td><td>'.e($row['resolutionRate']).'%</td></tr>';
+            return '<tr><td>'.$logo.e($county['name'] ?? __('knowledge.ui.national')).'</td><td>'.e($row['title']).'</td><td>'.e(__('knowledge.ui.'.$row['status'])).'</td><td>'.e($row['contributions']).'</td><td>'.e($row['contributors']).'</td><td>'.e($row['subscriptions']).'</td><td>'.e($row['reports']).'</td><td>'.e($row['openReports']).'</td><td>'.e($row['resolutionRate']).'%</td></tr>';
         })->implode('');
+        $headings = collect([__('knowledge.ui.county'), __('knowledge.ui.discussion'), __('knowledge.ui.status'), __('knowledge.ui.contributions'), __('knowledge.ui.contributors'), __('knowledge.ui.subscriptions'), __('knowledge.ui.reports'), __('knowledge.ui.open_reports'), __('knowledge.ui.resolution_rate')])
+            ->map(fn (string $heading): string => '<th>'.e($heading).'</th>')
+            ->implode('');
         $dompdf = new Dompdf;
-        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>IDMIS knowledge community analytics</h1><p>Generated '.e(now()->toDayDateTimeString()).'</p><table><thead><tr><th>County</th><th>Discussion</th><th>Status</th><th>Contributions</th><th>Contributors</th><th>Subscriptions</th><th>Reports</th><th>Open reports</th><th>Resolution rate</th></tr></thead><tbody>'.$body.'</tbody></table>');
+        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>'.e(__('knowledge.ui.community_analytics_title')).'</h1><p>'.e(__('knowledge.ui.generated', ['date' => now()->translatedFormat('j F Y H:i')])).'</p><table><thead><tr>'.$headings.'</tr></thead><tbody>'.$body.'</tbody></table>');
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
@@ -102,7 +105,7 @@ class KnowledgeCommunityAnalyticsController extends Controller
     /** @return list<string> */
     private function headings(): array
     {
-        return ['County', 'County code', 'Discussion', 'Visibility', 'Status', 'Contributions', 'Contributors', 'Subscriptions', 'Reports', 'Open reports', 'Resolution rate', 'Last activity'];
+        return [__('knowledge.ui.county'), __('knowledge.ui.county_code'), __('knowledge.ui.discussion'), __('knowledge.ui.visibility'), __('knowledge.ui.status'), __('knowledge.ui.contributions'), __('knowledge.ui.contributors'), __('knowledge.ui.subscriptions'), __('knowledge.ui.reports'), __('knowledge.ui.open_reports'), __('knowledge.ui.resolution_rate'), __('knowledge.ui.last_activity')];
     }
 
     /**
@@ -113,7 +116,7 @@ class KnowledgeCommunityAnalyticsController extends Controller
     {
         $county = is_array($row['county']) ? $row['county'] : [];
 
-        return [(string) ($county['name'] ?? 'National'), (string) ($county['code'] ?? ''), (string) $row['title'], (string) $row['visibility'], (string) $row['status'], (int) $row['contributions'], (int) $row['contributors'], (int) $row['subscriptions'], (int) $row['reports'], (int) $row['openReports'], (float) $row['resolutionRate'], is_string($row['lastActivityAt']) ? $row['lastActivityAt'] : null];
+        return [(string) ($county['name'] ?? __('knowledge.ui.national')), (string) ($county['code'] ?? ''), (string) $row['title'], (string) $row['visibility'], (string) $row['status'], (int) $row['contributions'], (int) $row['contributors'], (int) $row['subscriptions'], (int) $row['reports'], (int) $row['openReports'], (float) $row['resolutionRate'], is_string($row['lastActivityAt']) ? $row['lastActivityAt'] : null];
     }
 
     /** @return array<string, mixed> */
