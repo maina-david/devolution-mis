@@ -268,7 +268,7 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('opacity: 1', $styles);
 
         $assessmentConfiguration = $this->source('resources/js/pages/assessment-configuration/index.tsx');
-        $this->assertStringContainsString('triggerLabel="Compose version"', $assessmentConfiguration);
+        $this->assertStringContainsString('triggerLabel={copy.compose_version}', $assessmentConfiguration);
         $this->assertStringNotContainsString('<details className="mt-4 rounded-xl border', $assessmentConfiguration);
     }
 
@@ -285,7 +285,7 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringNotContainsString('className="ml-auto grid w-64', $grantAction);
 
         $configuration = $this->source('resources/js/pages/assessment-configuration/index.tsx');
-        foreach (['triggerLabel="Create scorecard"', 'triggerLabel="Create cycle"', '<DatePickerField', '<SearchableSelect'] as $contract) {
+        foreach (['triggerLabel={copy.create_scorecard}', 'triggerLabel={copy.create_cycle}', '<DatePickerField', '<SearchableSelect'] as $contract) {
             $this->assertStringContainsString($contract, $configuration);
         }
         $this->assertStringNotContainsString('type="date"', $configuration);

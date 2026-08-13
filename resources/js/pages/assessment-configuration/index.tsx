@@ -1,4 +1,4 @@
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
 import { ClipboardList, FileJson2, Gauge, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
@@ -81,6 +81,10 @@ const devolvedFunctions = [
     'Control of drugs and pornography',
     'Community participation in county governance',
 ];
+
+function useAssessmentConfigurationCopy(): Record<string, string> {
+    return usePage().props.localization.assessmentConfiguration;
+}
 
 function baselineConfiguration() {
     return {
@@ -192,11 +196,13 @@ function baselineConfiguration() {
 }
 
 function ScorecardForm() {
+    const copy = useAssessmentConfigurationCopy();
+
     return (
         <FormSheet
-            title="New scorecard"
-            description="Create a stable scorecard definition whose released versions become immutable."
-            triggerLabel="Create scorecard"
+            title={copy.new_scorecard}
+            description={copy.new_scorecard_description}
+            triggerLabel={copy.create_scorecard}
             icon={ClipboardList}
         >
             <Form
@@ -207,16 +213,16 @@ function ScorecardForm() {
                 {({ processing }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="scorecard-code">Code</Label>
+                            <Label htmlFor="scorecard-code">{copy.code}</Label>
                             <Input id="scorecard-code" name="code" required />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="scorecard-name">Name</Label>
+                            <Label htmlFor="scorecard-name">{copy.name}</Label>
                             <Input id="scorecard-name" name="name" required />
                         </div>
                         <div className="grid gap-2 sm:col-span-2">
                             <Label htmlFor="scorecard-description">
-                                Description
+                                {copy.description_label}
                             </Label>
                             <Input
                                 id="scorecard-description"
@@ -229,7 +235,7 @@ function ScorecardForm() {
                             disabled={processing}
                             className="sm:col-span-2"
                         >
-                            Create scorecard
+                            {copy.create_scorecard}
                         </Button>
                     </>
                 )}
@@ -239,18 +245,18 @@ function ScorecardForm() {
 }
 
 function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
+    const copy = useAssessmentConfigurationCopy();
+
     return (
         <FormSheet
-            title="New assessment cycle"
-            description="Pin a reporting period to an immutable released scorecard version."
-            triggerLabel="Create cycle"
+            title={copy.new_cycle}
+            description={copy.new_cycle_description}
+            triggerLabel={copy.create_cycle}
             icon={Gauge}
             size="xl"
             triggerDisabled={versions.length === 0}
             triggerTitle={
-                versions.length === 0
-                    ? 'Publish a scorecard version before creating a cycle.'
-                    : undefined
+                versions.length === 0 ? copy.publish_before_cycle : undefined
             }
         >
             <Form
@@ -261,18 +267,18 @@ function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-2">
-                            <Label htmlFor="cycle-code">Code</Label>
+                            <Label htmlFor="cycle-code">{copy.code}</Label>
                             <Input id="cycle-code" name="code" required />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="cycle-name">Name</Label>
+                            <Label htmlFor="cycle-name">{copy.name}</Label>
                             <Input id="cycle-name" name="name" required />
                         </div>
                         <div className="sm:col-span-2">
                             <SearchableSelect
                                 id="cycle-scorecard"
                                 name="assessment_scorecard_version_id"
-                                label="Released scorecard"
+                                label={copy.released_scorecard}
                                 options={versions.map((version) => ({
                                     id: version.id,
                                     name: version.label,
@@ -282,25 +288,25 @@ function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
                         </div>
                         <DatePickerField
                             name="period_start"
-                            label="Period start"
+                            label={copy.period_start}
                             error={errors.period_start}
                             required
                         />
                         <DatePickerField
                             name="period_end"
-                            label="Period end"
+                            label={copy.period_end}
                             error={errors.period_end}
                             required
                         />
                         <DatePickerField
                             name="submission_opens_at"
-                            label="Submission opens"
+                            label={copy.submission_opens}
                             error={errors.submission_opens_at}
                             includeTime
                         />
                         <DatePickerField
                             name="submission_closes_at"
-                            label="Submission closes"
+                            label={copy.submission_closes}
                             error={errors.submission_closes_at}
                             includeTime
                         />
@@ -310,7 +316,7 @@ function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
                             disabled={processing}
                             className="sm:col-span-2"
                         >
-                            Create cycle
+                            {copy.create_cycle}
                         </Button>
                     </>
                 )}
@@ -320,6 +326,7 @@ function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
 }
 
 function VersionComposer({ scorecardId }: { scorecardId: string }) {
+    const copy = useAssessmentConfigurationCopy();
     const [configuration, setConfiguration] = useState(() =>
         JSON.stringify(baselineConfiguration(), null, 2),
     );
@@ -335,33 +342,32 @@ function VersionComposer({ scorecardId }: { scorecardId: string }) {
                 preserveScroll: true,
             });
         } catch {
-            setError('The scorecard configuration must be valid JSON.');
+            setError(copy.valid_json_error);
         }
     }
 
     return (
         <FormSheet
-            title="Compose next scorecard version"
-            description="Create a governed draft from the complete scorecard configuration before review and publication."
-            triggerLabel="Compose version"
+            title={copy.compose_version_title}
+            description={copy.compose_version_description}
+            triggerLabel={copy.compose_version}
             icon={FileJson2}
             size="xl"
         >
             <form onSubmit={submit} className="space-y-3 pt-4">
                 <p className="text-xs leading-5 text-muted-foreground">
-                    The baseline contains all fourteen devolved functions.
-                    Replace provisional standards, norms, criteria, weights and
-                    evidence rules with approved content before publishing.
+                    {copy.baseline_notice}
                 </p>
                 <textarea
                     value={configuration}
                     onChange={(event) => setConfiguration(event.target.value)}
                     className="min-h-96 w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-xs"
-                    aria-label="Scorecard version JSON"
+                    aria-label={copy.scorecard_json}
                 />
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" size="sm">
-                    <FileJson2 data-icon="inline-start" /> Save draft version
+                    <FileJson2 data-icon="inline-start" />{' '}
+                    {copy.save_draft_version}
                 </Button>
             </form>
         </FormSheet>
@@ -375,6 +381,8 @@ function Pagination({
     page: PageData<unknown>;
     label: string;
 }) {
+    const copy = useAssessmentConfigurationCopy();
+
     if (page.last_page <= 1) {
         return null;
     }
@@ -382,11 +390,11 @@ function Pagination({
     return (
         <nav
             className="flex items-center justify-between gap-3"
-            aria-label={`${label} pagination`}
+            aria-label={`${label} ${copy.pagination}`}
         >
             <p className="text-sm text-muted-foreground">
-                Page {page.current_page} of {page.last_page} · {page.total}{' '}
-                total
+                {copy.page} {page.current_page} {copy.of} {page.last_page}{' '}
+                {copy.separator} {page.total} {copy.total}
             </p>
             <div className="flex gap-2">
                 <Button
@@ -402,7 +410,7 @@ function Pagination({
                         })
                     }
                 >
-                    Previous
+                    {copy.previous}
                 </Button>
                 <Button
                     type="button"
@@ -417,7 +425,7 @@ function Pagination({
                         })
                     }
                 >
-                    Next
+                    {copy.next}
                 </Button>
             </div>
         </nav>
@@ -430,6 +438,8 @@ export default function AssessmentConfiguration({
     cycles,
     publishedVersions,
 }: Props) {
+    const copy = useAssessmentConfigurationCopy();
+
     function search(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -442,19 +452,17 @@ export default function AssessmentConfiguration({
 
     return (
         <>
-            <Head title="Assessment configuration" />
+            <Head title={copy.head_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                        Devolution performance assessment
+                        {copy.eyebrow}
                     </p>
                     <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                        Scorecards and assessment cycles
+                        {copy.title}
                     </h1>
                     <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                        Govern reproducible digital scorecards across all
-                        fourteen devolved functions, enabler themes, standards,
-                        criteria, MCDA rules and evidence requirements.
+                        {copy.description}
                     </p>
                 </section>
 
@@ -467,10 +475,10 @@ export default function AssessmentConfiguration({
                     <Input
                         name="search"
                         defaultValue={filters.search}
-                        placeholder="Search scorecards"
+                        placeholder={copy.search_scorecards}
                     />
                     <Button type="submit" variant="outline">
-                        <Search data-icon="inline-start" /> Search
+                        <Search data-icon="inline-start" /> {copy.search}
                     </Button>
                 </form>
 
@@ -484,12 +492,14 @@ export default function AssessmentConfiguration({
                                         {scorecard.name}
                                     </CardTitle>
                                     <CardDescription>
-                                        {scorecard.code} ·{' '}
+                                        {scorecard.code} {copy.separator}{' '}
                                         {scorecard.description ??
-                                            'No description'}
+                                            copy.no_description}
                                     </CardDescription>
                                 </div>
-                                <Badge>{scorecard.status}</Badge>
+                                <Badge>
+                                    {translateValue(copy, scorecard.status)}
+                                </Badge>
                             </CardHeader>
                             <CardContent>
                                 <div className="flex flex-wrap gap-2">
@@ -506,9 +516,16 @@ export default function AssessmentConfiguration({
                                                         : 'secondary'
                                                 }
                                             >
-                                                v{version.version} ·{' '}
+                                                {copy.version_prefix}
+                                                {version.version}{' '}
+                                                {copy.separator}{' '}
                                                 {version.functionCount}{' '}
-                                                functions · {version.status}
+                                                {copy.functions}{' '}
+                                                {copy.separator}{' '}
+                                                {translateValue(
+                                                    copy,
+                                                    version.status,
+                                                )}
                                                 {version.checksum
                                                     ? ` · ${version.checksum.slice(0, 8)}`
                                                     : ''}
@@ -531,7 +548,7 @@ export default function AssessmentConfiguration({
                                                     }
                                                 >
                                                     <Gauge data-icon="inline-start" />{' '}
-                                                    Publish
+                                                    {copy.publish}
                                                 </Button>
                                             )}
                                         </span>
@@ -547,15 +564,14 @@ export default function AssessmentConfiguration({
                             </CardContent>
                         </Card>
                     ))}
-                    <Pagination page={scorecards} label="Scorecards" />
+                    <Pagination page={scorecards} label={copy.scorecards} />
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Assessment cycles</CardTitle>
+                        <CardTitle>{copy.assessment_cycles}</CardTitle>
                         <CardDescription>
-                            Reporting periods pinned to immutable scorecard
-                            releases.
+                            {copy.assessment_cycles_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -569,18 +585,28 @@ export default function AssessmentConfiguration({
                                         {cycle.name}
                                     </p>
                                     <p className="text-sm text-muted-foreground">
-                                        {cycle.code} · {cycle.periodStart} to{' '}
-                                        {cycle.periodEnd} ·{' '}
-                                        {cycle.scorecard ?? 'No scorecard'}
+                                        {cycle.code} {copy.separator}{' '}
+                                        {cycle.periodStart} {copy.to}{' '}
+                                        {cycle.periodEnd} {copy.separator}{' '}
+                                        {cycle.scorecard ?? copy.no_scorecard}
                                     </p>
                                 </div>
-                                <Badge variant="outline">{cycle.status}</Badge>
+                                <Badge variant="outline">
+                                    {translateValue(copy, cycle.status)}
+                                </Badge>
                             </div>
                         ))}
-                        <Pagination page={cycles} label="Assessment cycles" />
+                        <Pagination
+                            page={cycles}
+                            label={copy.assessment_cycles}
+                        />
                     </CardContent>
                 </Card>
             </div>
         </>
     );
+}
+
+function translateValue(copy: Record<string, string>, value: string): string {
+    return copy[`value_${value}`] ?? value;
 }

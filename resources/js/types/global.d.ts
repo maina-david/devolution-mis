@@ -98,6 +98,7 @@ declare module '@inertiajs/core' {
                 dashboard: Record<string, string>;
                 migration: Record<string, string>;
                 travelClearance: Record<string, string>;
+                assessmentConfiguration: Record<string, string>;
                 monitoringResults: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;
