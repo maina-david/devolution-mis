@@ -2,6 +2,9 @@
 
 return ['outcomes' => [
     'incident_created' => 'Tukio au zoezi la usalama limeingizwa kwenye mchakato unaodhibitiwa wa mwitikio.', 'incident_transitioned' => 'Mpito wa tukio la usalama na ushahidi usiobadilika vimerekodiwa.', 'threat_submitted' => 'Tishio limewasilishwa kwa tathmini huru.', 'threat_reviewed' => 'Tathmini huru ya tishio imerekodiwa.', 'campaign_launched' => 'Kampeni ya uthibitishaji wa ufikiaji imeanzishwa.', 'certification_recorded' => 'Uamuzi wa uthibitishaji wa ufikiaji umerekodiwa.', 'access_reinstated' => 'Ufikiaji umerejeshwa kwa uhuru; mtumiaji lazima athibitishe utambulisho tena.', 'temporary_access_submitted' => 'Ufikiaji wa muda umewasilishwa kwa idhini huru.', 'temporary_access_decided' => 'Uamuzi wa ufikiaji wa muda umerekodiwa.', 'temporary_access_revoked' => 'Ufikiaji wa muda umebatilishwa mara moja.', 'emergency_review_recorded' => 'Tathmini ya baada ya matumizi ya ufikiaji wa dharura imerekodiwa.',
+], 'access_review' => [
+    'errors' => ['campaign_closed' => 'Kampeni hii imefungwa.', 'assigned_reviewer_required' => 'Mkaguzi huru aliyeteuliwa pekee ndiye anayeweza kuamua kipengele hiki.', 'self_certification' => 'Wakaguzi hawawezi kuthibitisha ufikiaji wao wenyewe.', 'already_decided' => 'Kipengele hiki cha ufikiaji tayari kimeamuliwa.', 'identity_missing' => 'Utambulisho unaokaguliwa haupo tena.', 'strong_authentication_required' => 'Ufikiaji wenye mamlaka hauwezi kuhifadhiwa bila MFA au passkey iliyosajiliwa.'],
+    'audit' => ['decided' => 'Uamuzi :decision wa tathmini ya ufikiaji umerekodiwa kwa utambulisho wa jukumu :role.'],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Watumiaji hawawezi kujiombea ufikiaji uliokabidhiwa.',

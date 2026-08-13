@@ -2,6 +2,9 @@
 
 return ['outcomes' => [
     'incident_created' => 'Security incident or exercise entered into the governed response process.', 'incident_transitioned' => 'Security incident transition and immutable evidence recorded.', 'threat_submitted' => 'Threat submitted for independent review.', 'threat_reviewed' => 'Independent threat review recorded.', 'campaign_launched' => 'Access certification campaign launched.', 'certification_recorded' => 'Access certification decision recorded.', 'access_reinstated' => 'Access independently reinstated; the user must authenticate again.', 'temporary_access_submitted' => 'Temporary access submitted for independent approval.', 'temporary_access_decided' => 'Temporary-access decision recorded.', 'temporary_access_revoked' => 'Temporary access revoked immediately.', 'emergency_review_recorded' => 'Emergency-access post-use review recorded.',
+], 'access_review' => [
+    'errors' => ['campaign_closed' => 'This campaign is closed.', 'assigned_reviewer_required' => 'Only the assigned independent reviewer can decide this item.', 'self_certification' => 'Reviewers cannot certify their own access.', 'already_decided' => 'This access item already has a decision.', 'identity_missing' => 'The reviewed identity no longer exists.', 'strong_authentication_required' => 'Privileged access cannot be retained without MFA or a registered passkey.'],
+    'audit' => ['decided' => 'Access review decision :decision recorded for :role identity.'],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Users cannot request delegated access for themselves.',

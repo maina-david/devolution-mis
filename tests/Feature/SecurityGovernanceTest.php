@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\DecideAccessReviewItem;
 use App\Models\AccessReviewCampaign;
 use App\Models\AccessReviewItem;
 use App\Models\County;
@@ -10,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SecurityGovernanceTest extends TestCase
@@ -100,6 +102,31 @@ class SecurityGovernanceTest extends TestCase
         $viewer = User::factory()->topManagement()->create();
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($viewer)->get(route('workspace.export', ['security-governance', $format]))->assertOk()->assertDownload();
+        }
+    }
+
+    public function test_access_review_safeguards_follow_the_active_locale(): void
+    {
+        $reviewer = User::factory()->platformAdmin()->withTwoFactor()->create();
+        $campaign = AccessReviewCampaign::factory()->create([
+            'reviewer_id' => $reviewer->id,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
+        $item = AccessReviewItem::factory()->create([
+            'access_review_campaign_id' => $campaign->id,
+        ]);
+        app()->setLocale('fr');
+
+        try {
+            app(DecideAccessReviewItem::class)->handle($item, $reviewer, [
+                'decision' => 'retain',
+                'rationale' => 'La campagne clôturée doit refuser toute nouvelle décision.',
+            ]);
+            $this->fail('A completed access-review campaign must reject new decisions.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('Cette campagne est clôturée.', $exception->getMessage());
         }
     }
 

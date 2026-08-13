@@ -18,15 +18,15 @@ class DecideAccessReviewItem
     {
         return DB::transaction(function () use ($item, $reviewer, $attributes): AccessReviewItem {
             $item = AccessReviewItem::query()->with(['campaign', 'user'])->lockForUpdate()->findOrFail($item->id);
-            abort_unless($item->campaign->status === 'open', 409, 'This campaign is closed.');
-            abort_unless($item->campaign->reviewer_id === $reviewer->id, 403, 'Only the assigned independent reviewer can decide this item.');
-            abort_if($item->user_id === $reviewer->id, 403, 'Reviewers cannot certify their own access.');
-            abort_unless($item->decision === 'pending', 409, 'This access item already has a decision.');
+            abort_unless($item->campaign->status === 'open', 409, __('security.access_review.errors.campaign_closed'));
+            abort_unless($item->campaign->reviewer_id === $reviewer->id, 403, __('security.access_review.errors.assigned_reviewer_required'));
+            abort_if($item->user_id === $reviewer->id, 403, __('security.access_review.errors.self_certification'));
+            abort_unless($item->decision === 'pending', 409, __('security.access_review.errors.already_decided'));
             $user = $item->user;
-            abort_unless($user instanceof User, 409, 'The reviewed identity no longer exists.');
+            abort_unless($user instanceof User, 409, __('security.access_review.errors.identity_missing'));
 
             if ($attributes['decision'] === 'retain' && in_array($item->role_name, config('security-governance.privileged_roles'), true)) {
-                abort_unless($user->two_factor_confirmed_at !== null || $user->passkeys()->exists(), 409, 'Privileged access cannot be retained without MFA or a registered passkey.');
+                abort_unless($user->two_factor_confirmed_at !== null || $user->passkeys()->exists(), 409, __('security.access_review.errors.strong_authentication_required'));
             }
 
             $sessionsRevoked = 0;
@@ -41,7 +41,7 @@ class DecideAccessReviewItem
 
             $item->update(['reviewed_by' => $reviewer->id, 'decision' => $attributes['decision'], 'rationale' => $attributes['rationale'], 'remediation_action' => $attributes['remediation_action'] ?? null, 'remediation_due_at' => $attributes['remediation_due_at'] ?? null, 'reviewed_at' => now(), 'revoked_at' => $attributes['decision'] === 'revoke' ? now() : null, 'sessions_revoked' => $sessionsRevoked]);
             $this->refreshCampaign($item->campaign);
-            $this->auditLogger->record($reviewer, $item, 'security.access-review.decided', "Access review decision {$attributes['decision']} recorded for {$item->role_name} identity.", metadata: ['decision' => $attributes['decision'], 'sessions_revoked' => $sessionsRevoked]);
+            $this->auditLogger->record($reviewer, $item, 'security.access-review.decided', __('security.access_review.audit.decided', ['decision' => $attributes['decision'], 'role' => $item->role_name]), metadata: ['decision' => $attributes['decision'], 'sessions_revoked' => $sessionsRevoked]);
 
             return $item->refresh();
         });
