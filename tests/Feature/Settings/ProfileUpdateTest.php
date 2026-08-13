@@ -4,9 +4,11 @@ namespace Tests\Feature\Settings;
 
 use App\Models\AuditEvent;
 use App\Models\User;
+use App\Services\ProfilePhotoProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -14,7 +16,7 @@ class ProfileUpdateTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_profile_page_is_displayed()
+    public function test_profile_page_is_displayed(): void
     {
         $user = User::factory()->create();
 
@@ -43,7 +45,7 @@ class ProfileUpdateTest extends TestCase
                 ->where('localization.settingsProfile.current_password', 'Mot de passe actuel'));
     }
 
-    public function test_profile_information_can_be_updated()
+    public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();
 
@@ -65,7 +67,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertNull($user->email_verified_at);
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
+    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
         $user = User::factory()->create();
 
@@ -83,7 +85,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
-    public function test_user_can_delete_their_account()
+    public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();
 
@@ -102,7 +104,7 @@ class ProfileUpdateTest extends TestCase
         $this->assertSoftDeleted($user);
     }
 
-    public function test_correct_password_must_be_provided_to_delete_account()
+    public function test_correct_password_must_be_provided_to_delete_account(): void
     {
         $user = User::factory()->create();
 
@@ -141,7 +143,9 @@ class ProfileUpdateTest extends TestCase
 
         $content = Storage::disk('local')->get($user->profile_photo_path);
         $this->assertSame(hash('sha256', $content), $user->profile_photo_checksum);
-        $this->assertSame([512, 512], array_slice(getimagesizefromstring($content), 0, 2));
+        $dimensions = getimagesizefromstring($content);
+        $this->assertIsArray($dimensions);
+        $this->assertSame([512, 512], array_slice($dimensions, 0, 2));
 
         $response = $this->actingAs($user)->get(route('profile.photo'));
         $response->assertOk()->assertHeader('Content-Type', 'image/webp')->assertHeader('X-Content-Type-Options', 'nosniff');
@@ -183,5 +187,20 @@ class ProfileUpdateTest extends TestCase
         Storage::disk('local')->put($user->profile_photo_path, 'tampered');
 
         $this->actingAs($user)->get(route('profile.photo'))->assertStatus(409);
+    }
+
+    public function test_profile_photo_processing_failures_use_the_active_locale(): void
+    {
+        app()->setLocale('fr');
+
+        try {
+            app(ProfilePhotoProcessor::class)->process(UploadedFile::fake()->create('not-an-image.jpg', 1, 'image/jpeg'));
+            $this->fail('The invalid image should fail closed.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'Le fichier sélectionné n’a pas pu être décodé comme une image prise en charge.',
+                $exception->errors()['photo'][0],
+            );
+        }
     }
 }

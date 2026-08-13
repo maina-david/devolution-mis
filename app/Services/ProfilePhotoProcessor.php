@@ -17,12 +17,12 @@ class ProfilePhotoProcessor
         $source = is_string($sourceContent) ? @imagecreatefromstring($sourceContent) : false;
 
         if (! $source instanceof GdImage) {
-            throw ValidationException::withMessages(['photo' => 'The selected file could not be decoded as a supported image.']);
+            throw ValidationException::withMessages(['photo' => __('settings-profile.processor_errors.decode_failed')]);
         }
 
         $output = imagecreatetruecolor(self::OUTPUT_SIZE, self::OUTPUT_SIZE);
         if (! $output instanceof GdImage) {
-            throw ValidationException::withMessages(['photo' => 'The profile photo could not be prepared.']);
+            throw ValidationException::withMessages(['photo' => __('settings-profile.processor_errors.prepare_failed')]);
         }
 
         $sourceWidth = imagesx($source);
@@ -34,11 +34,11 @@ class ProfilePhotoProcessor
         imagealphablending($output, true);
         $background = imagecolorallocate($output, 255, 255, 255);
         if ($background === false || ! imagefill($output, 0, 0, $background)) {
-            throw ValidationException::withMessages(['photo' => 'The profile photo background could not be prepared.']);
+            throw ValidationException::withMessages(['photo' => __('settings-profile.processor_errors.background_failed')]);
         }
 
         if (! imagecopyresampled($output, $source, 0, 0, $sourceX, $sourceY, self::OUTPUT_SIZE, self::OUTPUT_SIZE, $sourceSide, $sourceSide)) {
-            throw ValidationException::withMessages(['photo' => 'The profile photo could not be resized.']);
+            throw ValidationException::withMessages(['photo' => __('settings-profile.processor_errors.resize_failed')]);
         }
 
         ob_start();
@@ -46,7 +46,7 @@ class ProfilePhotoProcessor
         $content = ob_get_clean();
 
         if (! $encoded || ! is_string($content) || $content === '') {
-            throw ValidationException::withMessages(['photo' => 'The profile photo could not be encoded securely.']);
+            throw ValidationException::withMessages(['photo' => __('settings-profile.processor_errors.encode_failed')]);
         }
 
         return [
