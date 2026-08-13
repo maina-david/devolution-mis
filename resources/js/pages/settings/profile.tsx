@@ -50,20 +50,20 @@ type Props = {
 };
 
 export default function Profile({ mustVerifyEmail, status, profile }: Props) {
-    const { auth } = usePage<{ auth: Auth }>().props;
+    const { auth, localization } = usePage<{ auth: Auth }>().props;
+    const copy = localization.settingsProfile;
 
     return (
         <>
-            <Head title="Profile settings" />
-            <h1 className="sr-only">Profile settings</h1>
+            <Head title={copy.title} />
+            <h1 className="sr-only">{copy.title}</h1>
 
             <div className="grid gap-6 xl:grid-cols-3">
                 <Card className="xl:col-span-2">
                     <CardHeader>
-                        <CardTitle>Profile photo</CardTitle>
+                        <CardTitle>{copy.profile_photo}</CardTitle>
                         <CardDescription>
-                            Upload, position and crop the photo shown in your
-                            authenticated account header.
+                            {copy.profile_photo_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -78,15 +78,15 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Account status</CardTitle>
+                        <CardTitle>{copy.account_status}</CardTitle>
                         <CardDescription>
-                            Your governed identity and verification state.
+                            {copy.account_status_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Role
+                                {copy.role}
                             </p>
                             <Badge className="mt-1" variant="secondary">
                                 {profile.role}
@@ -94,25 +94,25 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Email verification
+                                {copy.email_verification}
                             </p>
                             <p className="mt-1 flex items-center gap-2 font-medium">
                                 <BadgeCheck aria-hidden="true" />
                                 {auth.user.email_verified_at
-                                    ? 'Verified'
-                                    : 'Pending verification'}
+                                    ? copy.verified
+                                    : copy.pending_verification}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Account created
+                                {copy.account_created}
                             </p>
                             <p className="mt-1 font-medium">
                                 {profile.accountCreatedAt
                                     ? new Date(
                                           profile.accountCreatedAt,
-                                      ).toLocaleDateString()
-                                    : 'Not recorded'}
+                                      ).toLocaleDateString(localization.current)
+                                    : copy.not_recorded}
                             </p>
                         </div>
                     </CardContent>
@@ -121,26 +121,25 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                 <Card className="xl:col-span-2">
                     <CardHeader className="flex-row items-start justify-between gap-4">
                         <div className="flex flex-col gap-1.5">
-                            <CardTitle>Personal information</CardTitle>
+                            <CardTitle>{copy.personal_information}</CardTitle>
                             <CardDescription>
-                                Keep your account name and email address
-                                current.
+                                {copy.personal_information_description}
                             </CardDescription>
                         </div>
                         <Sheet>
                             <SheetTrigger asChild>
                                 <Button variant="outline">
-                                    <Pencil data-icon="inline-start" /> Edit
+                                    <Pencil data-icon="inline-start" />{' '}
+                                    {copy.edit}
                                 </Button>
                             </SheetTrigger>
                             <SheetContent className="overflow-y-auto sm:max-w-lg">
                                 <SheetHeader>
                                     <SheetTitle>
-                                        Edit personal information
+                                        {copy.edit_personal_information}
                                     </SheetTitle>
                                     <SheetDescription>
-                                        Changing your email may require it to be
-                                        verified again.
+                                        {copy.email_change_notice}
                                     </SheetDescription>
                                 </SheetHeader>
                                 <Form
@@ -157,7 +156,7 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                                                     )}
                                                 >
                                                     <FieldLabel htmlFor="name">
-                                                        Full name
+                                                        {copy.full_name}
                                                     </FieldLabel>
                                                     <Input
                                                         id="name"
@@ -186,7 +185,7 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                                                     )}
                                                 >
                                                     <FieldLabel htmlFor="email">
-                                                        Email address
+                                                        {copy.email_address}
                                                     </FieldLabel>
                                                     <Input
                                                         id="email"
@@ -218,7 +217,7 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                                                     aria-busy={processing}
                                                     data-test="update-profile-button"
                                                 >
-                                                    Save changes
+                                                    {copy.save_changes}
                                                 </Button>
                                             </SheetFooter>
                                         </>
@@ -231,7 +230,7 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                         <dl className="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <dt className="text-sm text-muted-foreground">
-                                    Full name
+                                    {copy.full_name}
                                 </dt>
                                 <dd className="mt-1 font-medium">
                                     {auth.user.name}
@@ -239,7 +238,7 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                             </div>
                             <div>
                                 <dt className="text-sm text-muted-foreground">
-                                    Email address
+                                    {copy.email_address}
                                 </dt>
                                 <dd className="mt-1 font-medium break-all">
                                     {auth.user.email}
@@ -251,22 +250,22 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
                         auth.user.email_verified_at === null ? (
                             <div className="mt-5 rounded-lg border p-4">
                                 <p className="text-sm text-muted-foreground">
-                                    Your email address is unverified.{' '}
+                                    {copy.email_unverified}{' '}
                                     <Link
                                         href={send()}
                                         as="button"
                                         className="font-medium text-foreground underline underline-offset-4"
                                     >
-                                        Re-send the verification email
+                                        {copy.resend_verification}
                                     </Link>
-                                    .
+                                    {'.'}
                                 </p>
                                 {status === 'verification-link-sent' ? (
                                     <p
                                         role="status"
                                         className="mt-2 text-sm font-medium text-foreground"
                                     >
-                                        A new verification link has been sent.
+                                        {copy.verification_sent}
                                     </p>
                                 ) : null}
                             </div>
@@ -276,36 +275,36 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Access scope</CardTitle>
+                        <CardTitle>{copy.access_scope}</CardTitle>
                         <CardDescription>
-                            Assigned by an authorized administrator.
+                            {copy.access_scope_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4">
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Home county
+                                {copy.home_county}
                             </p>
                             <div className="mt-2">
                                 {profile.county ? (
                                     <CountyIdentity county={profile.county} />
                                 ) : (
                                     <p className="font-medium">
-                                        National / portfolio
+                                        {copy.national_portfolio}
                                     </p>
                                 )}
                             </div>
                         </div>
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Assigned counties
+                                {copy.assigned_counties}
                             </p>
                             <p className="mt-1 font-medium">
                                 {profile.assignedCounties.length
                                     ? profile.assignedCounties
                                           .map((county) => county.name)
                                           .join(', ')
-                                    : 'None'}
+                                    : copy.none}
                             </p>
                         </div>
                     </CardContent>
@@ -313,22 +312,21 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
 
                 <Card className="xl:col-span-3">
                     <CardHeader>
-                        <CardTitle>Account controls</CardTitle>
+                        <CardTitle>{copy.account_controls}</CardTitle>
                         <CardDescription>
-                            Continue to the complete security, workspace and
-                            display controls for this account.
+                            {copy.account_controls_description}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-3 md:grid-cols-2">
                         <Button variant="outline" asChild>
                             <Link href={editSecurity()}>
                                 <ShieldCheck data-icon="inline-start" />
-                                Password, MFA and passkeys
+                                {copy.password_mfa_passkeys}
                             </Link>
                         </Button>
                         <Button variant="outline" asChild>
                             <Link href={editAppearance()}>
-                                Appearance and theme
+                                {copy.appearance_theme}
                             </Link>
                         </Button>
                     </CardContent>

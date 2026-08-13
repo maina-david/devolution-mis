@@ -100,6 +100,7 @@ declare module '@inertiajs/core' {
                 travelClearance: Record<string, string>;
                 assessmentConfiguration: Record<string, string>;
                 accessControl: Record<string, string>;
+                settingsProfile: Record<string, string>;
                 monitoringResults: Record<string, string>;
                 analytics: Record<string, string>;
                 projects: Record<string, string>;

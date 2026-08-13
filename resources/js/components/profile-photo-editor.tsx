@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { Camera, ImageMinus, Upload } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -43,6 +43,8 @@ export default function ProfilePhotoEditor({
     hasPhoto: boolean;
     updatedAt: string | null;
 }) {
+    const { localization } = usePage().props;
+    const copy = localization.settingsProfile;
     const initials = useInitials();
     const fileInput = useRef<HTMLInputElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
@@ -106,13 +108,13 @@ export default function ProfilePhotoEditor({
         }
 
         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            setClientError('Choose a JPEG, PNG, or WebP image.');
+            setClientError(copy.photo_type_error);
 
             return;
         }
 
         if (file.size > 10 * 1024 * 1024) {
-            setClientError('Choose an image smaller than 10 MB.');
+            setClientError(copy.photo_size_error);
 
             return;
         }
@@ -126,7 +128,7 @@ export default function ProfilePhotoEditor({
         image.onload = () => {
             if (image.width < 256 || image.height < 256) {
                 URL.revokeObjectURL(nextUrl);
-                setClientError('Choose an image at least 256 by 256 pixels.');
+                setClientError(copy.photo_dimensions_error);
 
                 return;
             }
@@ -139,7 +141,7 @@ export default function ProfilePhotoEditor({
         };
         image.onerror = () => {
             URL.revokeObjectURL(nextUrl);
-            setClientError('The selected image could not be opened.');
+            setClientError(copy.photo_open_error);
         };
         image.src = nextUrl;
     };
@@ -152,7 +154,7 @@ export default function ProfilePhotoEditor({
         canvas.current.toBlob(
             (blob) => {
                 if (!blob) {
-                    setClientError('The cropped image could not be prepared.');
+                    setClientError(copy.photo_crop_error);
 
                     return;
                 }
@@ -190,8 +192,8 @@ export default function ProfilePhotoEditor({
                         <p className="font-medium text-foreground">{name}</p>
                         <p className="text-sm text-muted-foreground">
                             {updatedAt
-                                ? `Updated ${new Date(updatedAt).toLocaleString()}`
-                                : 'No profile photo uploaded'}
+                                ? `${copy.updated} ${new Date(updatedAt).toLocaleString(localization.current)}`
+                                : copy.no_photo}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -201,7 +203,7 @@ export default function ProfilePhotoEditor({
                             onClick={() => fileInput.current?.click()}
                         >
                             <Camera data-icon="inline-start" />
-                            {hasPhoto ? 'Replace and crop' : 'Upload and crop'}
+                            {hasPhoto ? copy.replace_crop : copy.upload_crop}
                         </Button>
                         {hasPhoto ? (
                             <Button
@@ -213,7 +215,8 @@ export default function ProfilePhotoEditor({
                                     })
                                 }
                             >
-                                <ImageMinus data-icon="inline-start" /> Remove
+                                <ImageMinus data-icon="inline-start" />{' '}
+                                {copy.remove}
                             </Button>
                         ) : null}
                     </div>
@@ -222,7 +225,7 @@ export default function ProfilePhotoEditor({
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
                         className="sr-only"
-                        aria-label="Choose a profile photo"
+                        aria-label={copy.choose_photo}
                         onChange={(event) =>
                             selectFile(event.target.files?.[0])
                         }
@@ -238,10 +241,9 @@ export default function ProfilePhotoEditor({
             <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
                 <SheetContent className="overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
-                        <SheetTitle>Crop profile photo</SheetTitle>
+                        <SheetTitle>{copy.crop_photo}</SheetTitle>
                         <SheetDescription>
-                            Adjust the zoom and position. The saved photo will
-                            match the square preview exactly.
+                            {copy.crop_photo_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-6 px-4">
@@ -252,13 +254,15 @@ export default function ProfilePhotoEditor({
                                 height={OUTPUT_SIZE}
                                 className="size-full"
                                 role="img"
-                                aria-label="Cropped profile photo preview"
+                                aria-label={copy.crop_preview}
                             />
                         </div>
                         <FieldGroup>
                             <Field>
                                 <FieldLabel htmlFor="photo-zoom">
-                                    Zoom · {crop.zoom.toFixed(1)}×
+                                    {copy.zoom} {copy.separator}{' '}
+                                    {crop.zoom.toFixed(1)}
+                                    {copy.multiply}
                                 </FieldLabel>
                                 <Slider
                                     id="photo-zoom"
@@ -278,12 +282,12 @@ export default function ProfilePhotoEditor({
                                             zoom,
                                         }));
                                     }}
-                                    aria-label="Photo zoom"
+                                    aria-label={copy.photo_zoom}
                                 />
                             </Field>
                             <Field>
                                 <FieldLabel htmlFor="photo-horizontal">
-                                    Horizontal position
+                                    {copy.horizontal_position}
                                 </FieldLabel>
                                 <Slider
                                     id="photo-horizontal"
@@ -302,12 +306,12 @@ export default function ProfilePhotoEditor({
                                             horizontal,
                                         }));
                                     }}
-                                    aria-label="Horizontal photo position"
+                                    aria-label={copy.horizontal_photo_position}
                                 />
                             </Field>
                             <Field>
                                 <FieldLabel htmlFor="photo-vertical">
-                                    Vertical position
+                                    {copy.vertical_position}
                                 </FieldLabel>
                                 <Slider
                                     id="photo-vertical"
@@ -326,11 +330,10 @@ export default function ProfilePhotoEditor({
                                             vertical,
                                         }));
                                     }}
-                                    aria-label="Vertical photo position"
+                                    aria-label={copy.vertical_photo_position}
                                 />
                                 <FieldDescription>
-                                    Use arrow keys on each control for precise
-                                    keyboard adjustment.
+                                    {copy.keyboard_adjustment}
                                 </FieldDescription>
                             </Field>
                         </FieldGroup>
@@ -343,7 +346,8 @@ export default function ProfilePhotoEditor({
                             >
                                 <Progress value={form.progress.percentage} />
                                 <p className="text-sm text-muted-foreground">
-                                    Uploading {form.progress.percentage}%
+                                    {copy.uploading} {form.progress.percentage}
+                                    {'%'}
                                 </p>
                             </div>
                         ) : null}
@@ -355,7 +359,8 @@ export default function ProfilePhotoEditor({
                             onClick={() => fileInput.current?.click()}
                             disabled={form.processing}
                         >
-                            <Upload data-icon="inline-start" /> Choose another
+                            <Upload data-icon="inline-start" />{' '}
+                            {copy.choose_another}
                         </Button>
                         <Button
                             type="button"
@@ -363,7 +368,7 @@ export default function ProfilePhotoEditor({
                             disabled={form.processing || !sourceUrl}
                             aria-busy={form.processing}
                         >
-                            Save cropped photo
+                            {copy.save_cropped_photo}
                         </Button>
                     </SheetFooter>
                 </SheetContent>
