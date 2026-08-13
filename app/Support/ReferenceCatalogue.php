@@ -91,17 +91,17 @@ class ReferenceCatalogue
         $path = resource_path('reference-catalog.json');
         $contents = file_get_contents($path);
         if ($contents === false) {
-            throw new RuntimeException('The generated reference catalogue is unavailable.');
+            throw new RuntimeException(__('reference-catalogue.errors.unavailable'));
         }
 
         try {
             $catalogue = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new RuntimeException('The generated reference catalogue is malformed.', previous: $exception);
+            throw new RuntimeException(__('reference-catalogue.errors.malformed'), previous: $exception);
         }
 
         if (! is_array($catalogue) || ($catalogue['schemaVersion'] ?? null) !== 3) {
-            throw new RuntimeException('The generated reference catalogue has an unsupported schema.');
+            throw new RuntimeException(__('reference-catalogue.errors.unsupported_schema'));
         }
 
         $packages = self::stringMap($catalogue['packages'] ?? null, 'packages');
@@ -125,7 +125,7 @@ class ReferenceCatalogue
         $defaults = self::stringMap($value, 'defaults');
         foreach (['countryCode', 'countryName', 'currencyCode', 'languageCode', 'ocrLanguageCode', 'locale', 'timezone'] as $key) {
             if (! isset($defaults[$key]) || $defaults[$key] === '') {
-                throw new RuntimeException("The generated reference catalogue default {$key} is invalid.");
+                throw new RuntimeException(__('reference-catalogue.errors.invalid_default', ['key' => $key]));
             }
         }
 
@@ -144,13 +144,13 @@ class ReferenceCatalogue
     private static function stringMap(mixed $value, string $field): array
     {
         if (! is_array($value)) {
-            throw new RuntimeException("The generated reference catalogue {$field} field is invalid.");
+            throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => $field]));
         }
 
         $normalized = [];
         foreach ($value as $key => $item) {
             if (! is_string($key) || ! is_string($item)) {
-                throw new RuntimeException("The generated reference catalogue {$field} field is invalid.");
+                throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => $field]));
             }
             $normalized[$key] = $item;
         }
@@ -162,19 +162,19 @@ class ReferenceCatalogue
     private static function stringList(mixed $value, string $field): array
     {
         if (! is_array($value)) {
-            throw new RuntimeException("The generated reference catalogue {$field} field is invalid.");
+            throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => $field]));
         }
 
         $normalized = [];
         foreach ($value as $item) {
             if (! is_string($item)) {
-                throw new RuntimeException("The generated reference catalogue {$field} field is invalid.");
+                throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => $field]));
             }
             $normalized[] = $item;
         }
 
         if ($normalized === []) {
-            throw new RuntimeException("The generated reference catalogue {$field} field is empty.");
+            throw new RuntimeException(__('reference-catalogue.errors.empty_field', ['field' => $field]));
         }
 
         return $normalized;
@@ -184,19 +184,19 @@ class ReferenceCatalogue
     private static function countriesList(mixed $value): array
     {
         if (! is_array($value)) {
-            throw new RuntimeException('The generated reference catalogue countries field is invalid.');
+            throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => 'countries']));
         }
 
         $countries = [];
         foreach ($value as $country) {
             if (! is_array($country) || ! is_string($country['code'] ?? null) || ! is_string($country['name'] ?? null)) {
-                throw new RuntimeException('The generated reference catalogue countries field is invalid.');
+                throw new RuntimeException(__('reference-catalogue.errors.invalid_field', ['field' => 'countries']));
             }
             $countries[] = ['code' => $country['code'], 'name' => $country['name']];
         }
 
         if ($countries === []) {
-            throw new RuntimeException('The generated reference catalogue countries field is empty.');
+            throw new RuntimeException(__('reference-catalogue.errors.empty_field', ['field' => 'countries']));
         }
 
         return $countries;

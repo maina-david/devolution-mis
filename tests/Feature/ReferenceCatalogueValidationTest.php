@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use PHPUnit\Framework\Attributes\DataProvider;
+use ReflectionMethod;
+use RuntimeException;
 use Tests\TestCase;
 
 class ReferenceCatalogueValidationTest extends TestCase
@@ -42,6 +44,37 @@ class ReferenceCatalogueValidationTest extends TestCase
         $rows = DB::select("SELECT table_name, column_name, column_default FROM information_schema.columns WHERE table_schema = 'public' AND column_name IN ('currency', 'timezone', 'country', 'country_code', 'destination_country', 'residency_country', 'language', 'locale') AND column_default IS NOT NULL");
 
         $this->assertSame([], $rows);
+    }
+
+    public function test_catalogue_integrity_failures_follow_the_active_locale(): void
+    {
+        $stringList = new ReflectionMethod(ReferenceCatalogue::class, 'stringList');
+        $defaults = new ReflectionMethod(ReferenceCatalogue::class, 'defaults');
+
+        app()->setLocale('fr');
+
+        try {
+            $stringList->invoke(null, [], 'currencies');
+            $this->fail('An empty generated catalogue field must fail closed.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame(__('reference-catalogue.errors.empty_field', ['field' => 'currencies']), $exception->getMessage());
+        }
+
+        app()->setLocale('sw');
+
+        try {
+            $defaults->invoke(null, ['countryCode' => '']);
+            $this->fail('An invalid generated catalogue default must fail closed.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame(__('reference-catalogue.errors.invalid_default', ['key' => 'countryCode']), $exception->getMessage());
+        }
+
+        $english = require lang_path('en/reference-catalogue.php');
+        $kiswahili = require lang_path('sw/reference-catalogue.php');
+        $french = require lang_path('fr/reference-catalogue.php');
+
+        $this->assertSame(array_keys($english['errors']), array_keys($kiswahili['errors']));
+        $this->assertSame(array_keys($english['errors']), array_keys($french['errors']));
     }
 
     #[DataProvider('referenceValueProvider')]
