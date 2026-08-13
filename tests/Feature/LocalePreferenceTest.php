@@ -78,6 +78,36 @@ class LocalePreferenceTest extends TestCase
                 ->where('localization.copy.citizenEngagement', 'Ushirikishwaji wa wananchi'));
     }
 
+    public function test_authentication_recovery_boundary_uses_the_active_locale_catalogue(): void
+    {
+        $this->withSession(['locale' => 'sw'])
+            ->get(route('password.request'))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('auth/forgot-password')
+                ->where('localization.current', 'sw')
+                ->where('localization.authentication.forgot_password', 'Umesahau nenosiri')
+                ->where('localization.authentication.email_password_reset_link', 'Tuma kiungo cha kuweka upya nenosiri')
+                ->where('localization.authentication.two_factor_authentication', 'Uthibitishaji wa hatua mbili'));
+
+        foreach (['confirm-password', 'forgot-password', 'reset-password', 'two-factor-challenge', 'verify-email'] as $page) {
+            $source = file_get_contents(resource_path("js/pages/auth/{$page}.tsx"));
+
+            $this->assertIsString($source);
+            $this->assertStringContainsString('props.localization.authentication', $source);
+        }
+
+        $forgotPassword = file_get_contents(resource_path('js/pages/auth/forgot-password.tsx'));
+        $twoFactor = file_get_contents(resource_path('js/pages/auth/two-factor-challenge.tsx'));
+        $verifyEmail = file_get_contents(resource_path('js/pages/auth/verify-email.tsx'));
+        $this->assertIsString($forgotPassword);
+        $this->assertIsString($twoFactor);
+        $this->assertIsString($verifyEmail);
+        $this->assertStringNotContainsString('Email password reset link', $forgotPassword);
+        $this->assertStringNotContainsString('Enter the authentication code provided by your authenticator application.', $twoFactor);
+        $this->assertStringNotContainsString('Resend verification email', $verifyEmail);
+    }
+
     public function test_saved_locale_drives_translated_queued_notification_payloads(): void
     {
         $user = User::factory()->create();

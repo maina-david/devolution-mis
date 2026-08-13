@@ -82,6 +82,7 @@ declare module '@inertiajs/core' {
                     continueWithEmail: string;
                 };
                 common: Record<string, string>;
+                authentication: Record<string, string>;
                 globalSearch: Record<string, string>;
                 navigation: Record<string, string>;
                 citizen: Record<string, string>;

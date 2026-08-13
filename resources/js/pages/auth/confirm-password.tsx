@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, setLayoutProps, usePage } from '@inertiajs/react';
 import {
     index as confirmOptions,
     store as confirmStore,
@@ -12,29 +12,36 @@ import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/password/confirm';
 
 export default function ConfirmPassword() {
+    const copy = usePage().props.localization.authentication;
+
+    setLayoutProps({
+        title: copy.confirm_password,
+        description: copy.confirm_password_description,
+    });
+
     return (
         <>
-            <Head title="Confirm password" />
+            <Head title={copy.confirm_password} />
 
             <PasskeyVerify
                 routes={{
                     options: confirmOptions(),
                     submit: confirmStore(),
                 }}
-                label="Confirm with passkey"
-                loadingLabel="Confirming..."
-                separator="Or confirm with password"
+                label={copy.confirm_with_passkey}
+                loadingLabel={copy.confirming}
+                separator={copy.or_confirm_with_password}
             />
 
             <Form {...store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">{copy.password}</Label>
                             <PasswordInput
                                 id="password"
                                 name="password"
-                                placeholder="Password"
+                                placeholder={copy.password}
                                 autoComplete="current-password"
                                 autoFocus
                                 required
@@ -59,7 +66,7 @@ export default function ConfirmPassword() {
                                 data-test="confirm-password-button"
                             >
                                 {processing && <Spinner />}
-                                Confirm password
+                                {copy.confirm_password}
                             </Button>
                         </div>
                     </div>
@@ -68,9 +75,3 @@ export default function ConfirmPassword() {
         </>
     );
 }
-
-ConfirmPassword.layout = {
-    title: 'Confirm password',
-    description:
-        'This is a secure area of the application. Please confirm your password before continuing.',
-};

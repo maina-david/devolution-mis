@@ -117,6 +117,7 @@ class HandleInertiaRequests extends Middleware
                     'continueWithEmail' => __('idmis.public.continue_with_email'),
                 ],
                 'common' => __('idmis.common'),
+                'authentication' => __('auth.ui'),
                 'globalSearch' => __('idmis.global_search'),
                 'navigation' => __('idmis.navigation'),
                 'citizen' => __('citizen'),
