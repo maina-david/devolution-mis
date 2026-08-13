@@ -41,6 +41,7 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import { formatDateTime } from '@/lib/reference-catalog';
 import { index } from '@/routes/citizen-cases';
 import { exportMethod } from '@/routes/workspace';
 
@@ -133,21 +134,19 @@ export default function CitizenCasesIndex({
 
     return (
         <>
-            <Head title="Citizen cases" />
+            <Head title={copy.staff_page_title} />
             <div className="flex max-w-full min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section>
                     <p className="text-sm font-semibold tracking-[0.14em] text-primary uppercase">
-                        Citizen accountability operations
+                        {copy.staff_eyebrow}
                     </p>
                     <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold">
-                                Feedback and grievance casework
+                                {copy.staff_title}
                             </h1>
                             <p className="mt-2 max-w-3xl text-muted-foreground">
-                                Triage, route, respond, escalate and
-                                independently resolve privacy-controlled citizen
-                                cases within SLA.
+                                {copy.staff_description}
                             </p>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -176,12 +175,12 @@ export default function CitizenCasesIndex({
                     </div>
                 </section>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                    <Metric label="Cases" value={summary.total} />
-                    <Metric label="Open" value={summary.open} />
-                    <Metric label="Overdue" value={summary.overdue} />
-                    <Metric label="Grievances" value={summary.grievances} />
+                    <Metric label={copy.cases} value={summary.total} />
+                    <Metric label={copy.open} value={summary.open} />
+                    <Metric label={copy.overdue} value={summary.overdue} />
+                    <Metric label={copy.grievances} value={summary.grievances} />
                     <Metric
-                        label="Satisfaction"
+                        label={copy.satisfaction}
                         value={
                             summary.satisfaction
                                 ? `${summary.satisfaction} / 5`
@@ -285,11 +284,17 @@ CitizenCasesIndex.layout = () => ({
 });
 
 function Metric({ label, value }: { label: string; value: number | string }) {
+    const locale = usePage().props.localization.current;
+
     return (
         <Card>
             <CardHeader>
                 <CardDescription>{label}</CardDescription>
-                <CardTitle className="text-3xl">{value}</CardTitle>
+                <CardTitle className="text-3xl">
+                    {typeof value === 'number'
+                        ? value.toLocaleString(locale)
+                        : value}
+                </CardTitle>
             </CardHeader>
         </Card>
     );
@@ -304,6 +309,7 @@ function CaseSheet({
     capabilities: Props['capabilities'];
     options: Props['options'];
 }) {
+    const copy = usePage().props.localization.citizen;
     const canHandle =
         capabilities.manage || capabilities.resolve || capabilities.respond;
 
@@ -313,81 +319,81 @@ function CaseSheet({
                 <Button
                     size="sm"
                     variant="outline"
-                    aria-label={`Open ${citizenCase.reference}`}
+                    aria-label={`${copy.open_case} ${citizenCase.reference}`}
                 >
                     <Eye aria-hidden="true" />
-                    Open
+                    {copy.open}
                 </Button>
             </SheetTrigger>
             <SheetContent className="overflow-y-auto sm:max-w-2xl">
                 <SheetHeader>
                     <SheetTitle>
-                        {citizenCase.reference} · {citizenCase.subject}
+                        {citizenCase.reference} {'·'} {citizenCase.subject}
                     </SheetTitle>
                     <SheetDescription>
-                        {citizenCase.type} · {citizenCase.category} ·{' '}
-                        {citizenCase.county.name} County
+                        {citizenCase.type} {'·'} {citizenCase.category} {'·'}{' '}
+                        {citizenCase.county.name} {copy.county}
                     </SheetDescription>
                 </SheetHeader>
                 <div className="flex flex-col gap-5 px-4 pb-8">
                     <CountyIdentity county={citizenCase.county} />
                     <div className="flex flex-wrap gap-2">
                         <Badge variant="outline">
-                            {citizenCase.status.replaceAll('_', ' ')}
+                            {copy[citizenCase.status] ?? citizenCase.status}
                         </Badge>
                         <Badge variant="secondary">
-                            {citizenCase.priority}
+                            {copy[citizenCase.priority] ?? citizenCase.priority}
                         </Badge>
                         <Badge variant="secondary">{citizenCase.channel}</Badge>
                         {citizenCase.sensitive && (
-                            <Badge variant="destructive">Sensitive</Badge>
+                            <Badge variant="destructive">
+                                {copy.sensitive}
+                            </Badge>
                         )}
                     </div>
                     <dl className="grid gap-4 text-sm sm:grid-cols-2">
                         <Info
-                            label="Citizen"
-                            value={citizenCase.citizenName ?? 'Withheld'}
+                            label={copy.citizen}
+                            value={citizenCase.citizenName ?? copy.withheld}
                         />
                         <Info
-                            label="Assignee"
-                            value={citizenCase.assignee ?? 'Unassigned'}
+                            label={copy.assignee}
+                            value={citizenCase.assignee ?? copy.unassigned}
                         />
                         <Info
-                            label="First response due"
-                            value={new Date(
+                            label={copy.first_response_due}
+                            value={formatDateTime(
                                 citizenCase.firstResponseDueAt,
-                            ).toLocaleString()}
-                        />
-                        <Info
-                            label="Resolution due"
-                            value={new Date(
-                                citizenCase.resolutionDueAt,
-                            ).toLocaleString()}
-                        />
-                        <Info
-                            label="Intake catalogue"
-                            value={formatReferenceDataLineage(
-                                citizenCase.intakeReferenceData,
-                                'Legacy unpinned',
                             )}
                         />
                         <Info
-                            label="Triage catalogue"
+                            label={copy.resolution_due}
+                            value={formatDateTime(citizenCase.resolutionDueAt)}
+                        />
+                        <Info
+                            label={copy.intake_catalogue}
+                            value={formatReferenceDataLineage(
+                                citizenCase.intakeReferenceData,
+                                copy.legacy_unpinned,
+                            )}
+                        />
+                        <Info
+                            label={copy.triage_catalogue}
                             value={formatReferenceDataLineage(
                                 citizenCase.triageReferenceData,
-                                'Not yet triaged / legacy',
+                                copy.not_triaged_legacy,
                             )}
                         />
                     </dl>
                     <div>
-                        <h3 className="font-medium">Submission</h3>
+                        <h3 className="font-medium">{copy.submission}</h3>
                         <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
                             {citizenCase.description}
                         </p>
                     </div>
                     {citizenCase.accessibilityNeeds && (
                         <div className="rounded-lg bg-muted p-3 text-sm">
-                            <strong>Accessibility support:</strong>{' '}
+                            <strong>{copy.accessibility_support}{':'}</strong>{' '}
                             {citizenCase.accessibilityNeeds}
                         </div>
                     )}
@@ -415,7 +421,7 @@ function CaseSheet({
                         />
                     )}
                     <div>
-                        <h3 className="font-medium">Case history</h3>
+                        <h3 className="font-medium">{copy.case_history}</h3>
                         <ol className="mt-3 flex flex-col gap-3">
                             {citizenCase.messages.map((entry) => (
                                 <li
@@ -424,13 +430,11 @@ function CaseSheet({
                                 >
                                     <div className="flex justify-between gap-3 text-xs text-muted-foreground">
                                         <span>
-                                            {entry.visibility} ·{' '}
+                                            {entry.visibility} {'·'}{' '}
                                             {entry.direction}
                                         </span>
                                         <time dateTime={entry.postedAt}>
-                                            {new Date(
-                                                entry.postedAt,
-                                            ).toLocaleString()}
+                                            {formatDateTime(entry.postedAt)}
                                         </time>
                                     </div>
                                     <p className="mt-2">{entry.body}</p>
@@ -460,10 +464,12 @@ function TriageSheetForm({
     citizenCase: Case;
     options: Props['options'];
 }) {
+    const copy = usePage().props.localization.citizen;
+
     return (
         <ActionSheet
-            trigger="Triage and assign"
-            title="Triage citizen case"
+            trigger={copy.triage_and_assign}
+            title={copy.triage_case}
             icon={<UsersRound aria-hidden="true" />}
         >
             <Form
@@ -475,14 +481,14 @@ function TriageSheetForm({
                         <SelectField
                             id="assigned_to"
                             name="assigned_to"
-                            label="Responsible officer"
+                            label={copy.responsible_officer}
                             options={options.users}
                             error={errors.assigned_to}
                         />
                         <SelectField
                             id="assigned_organization_id"
                             name="assigned_organization_id"
-                            label="Responsible organization"
+                            label={copy.responsible_organization}
                             options={options.organizations}
                             optional
                             error={errors.assigned_organization_id}
@@ -490,7 +496,7 @@ function TriageSheetForm({
                         <SelectField
                             id="sector_id"
                             name="sector_id"
-                            label="Sector"
+                            label={copy.staff_sector}
                             options={options.sectors}
                             optional
                             error={errors.sector_id}
@@ -498,29 +504,29 @@ function TriageSheetForm({
                         <SelectField
                             id="priority"
                             name="priority"
-                            label="Priority"
+                            label={copy.priority}
                             options={[
-                                { id: 'low', name: 'Low' },
-                                { id: 'medium', name: 'Medium' },
-                                { id: 'high', name: 'High' },
-                                { id: 'critical', name: 'Critical' },
+                                { id: 'low', name: copy.low },
+                                { id: 'medium', name: copy.medium },
+                                { id: 'high', name: copy.high },
+                                { id: 'critical', name: copy.critical },
                             ]}
                             error={errors.priority}
                         />
                         <SelectField
                             id="is_sensitive"
                             name="is_sensitive"
-                            label="Sensitivity"
+                            label={copy.sensitivity}
                             options={[
-                                { id: '0', name: 'Standard access' },
-                                { id: '1', name: 'Restricted case' },
+                                { id: '0', name: copy.standard_access },
+                                { id: '1', name: copy.restricted_case },
                             ]}
                             error={errors.is_sensitive}
                         />
                         <TextField
                             id="triage_note"
                             name="triage_note"
-                            label="Triage rationale"
+                            label={copy.triage_rationale}
                             error={errors.triage_note}
                         />
                         <Button
@@ -528,7 +534,7 @@ function TriageSheetForm({
                             disabled={processing}
                             aria-busy={processing}
                         >
-                            Assign case
+                            {copy.assign_case}
                         </Button>
                     </>
                 )}
@@ -544,10 +550,12 @@ function MessageSheetForm({
     citizenCase: Case;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.citizen;
+
     return (
         <ActionSheet
-            trigger="Add response or note"
-            title="Record case communication"
+            trigger={copy.add_response_or_note}
+            title={copy.record_case_communication}
             icon={<MessageSquareReply aria-hidden="true" />}
         >
             <Form
@@ -559,29 +567,29 @@ function MessageSheetForm({
                         <TextField
                             id="body"
                             name="body"
-                            label="Message"
+                            label={copy.message}
                             error={errors.body}
                         />
                         <SelectField
                             id="visibility"
                             name="visibility"
-                            label="Visibility"
+                            label={copy.visibility}
                             options={
                                 capabilities.manage
                                     ? [
                                           {
                                               id: 'public',
-                                              name: 'Public response',
+                                              name: copy.public_response,
                                           },
                                           {
                                               id: 'internal',
-                                              name: 'Internal note',
+                                              name: copy.internal_note,
                                           },
                                       ]
                                     : [
                                           {
                                               id: 'public',
-                                              name: 'Public response',
+                                              name: copy.public_response,
                                           },
                                       ]
                             }
@@ -590,17 +598,17 @@ function MessageSheetForm({
                         <SelectField
                             id="source_type"
                             name="source_type"
-                            label="Attachment source"
+                            label={copy.attachment_source}
                             options={[
-                                { id: 'born_digital', name: 'Born-digital' },
-                                { id: 'scanned', name: 'Scanned paper' },
+                                { id: 'born_digital', name: copy.born_digital },
+                                { id: 'scanned', name: copy.scanned },
                             ]}
                             optional
                             error={errors.source_type}
                         />
                         <div className="flex flex-col gap-2">
                             <Label htmlFor="case-attachment">
-                                Attachment (optional)
+                                {copy.attachment_optional}
                             </Label>
                             <Input
                                 id="case-attachment"
@@ -614,7 +622,7 @@ function MessageSheetForm({
                                 value={progress.percentage}
                                 max="100"
                                 className="w-full"
-                                aria-label="Upload progress"
+                                aria-label={copy.upload_progress}
                             />
                         )}
                         <Button
@@ -622,7 +630,7 @@ function MessageSheetForm({
                             disabled={processing}
                             aria-busy={processing}
                         >
-                            Record communication
+                            {copy.record_communication}
                         </Button>
                     </>
                 )}
@@ -638,37 +646,38 @@ function WorkflowActions({
     citizenCase: Case;
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.citizen;
     const actions: Array<{ name: string; label: string; summary?: boolean }> =
         [];
 
     if (citizenCase.status === 'triaged' && capabilities.respond) {
-        actions.push({ name: 'start', label: 'Start investigation' });
+        actions.push({ name: 'start', label: copy.start_investigation });
     }
 
     if (citizenCase.status === 'in_progress' && capabilities.respond) {
         actions.push(
-            { name: 'escalate', label: 'Escalate' },
+            { name: 'escalate', label: copy.escalate },
             {
                 name: 'submit_resolution',
-                label: 'Submit resolution',
+                label: copy.submit_resolution,
                 summary: true,
             },
         );
     }
 
     if (citizenCase.status === 'escalated' && capabilities.manage) {
-        actions.push({ name: 'resume', label: 'Resume handling' });
+        actions.push({ name: 'resume', label: copy.resume_handling });
     }
 
     if (citizenCase.status === 'resolution_review' && capabilities.resolve) {
         actions.push(
-            { name: 'approve_resolution', label: 'Approve resolution' },
-            { name: 'reject_resolution', label: 'Return for action' },
+            { name: 'approve_resolution', label: copy.approve_resolution },
+            { name: 'reject_resolution', label: copy.return_for_action },
         );
     }
 
     if (citizenCase.status === 'resolved' && capabilities.manage) {
-        actions.push({ name: 'close', label: 'Close case' });
+        actions.push({ name: 'close', label: copy.close_case });
     }
 
     if (!actions.length) {
@@ -677,8 +686,8 @@ function WorkflowActions({
 
     return (
         <ActionSheet
-            trigger="Workflow action"
-            title="Update governed case status"
+            trigger={copy.workflow_action}
+            title={copy.update_case_status}
             icon={<ShieldAlert aria-hidden="true" />}
         >
             <div className="flex flex-col gap-4">
@@ -699,14 +708,14 @@ function WorkflowActions({
                                     <TextField
                                         id={`summary-${action.name}`}
                                         name="resolution_summary"
-                                        label="Resolution summary"
+                                        label={copy.resolution_summary}
                                     />
                                 )}
                                 <Input
                                     name="comment"
                                     required
-                                    placeholder={`${action.label} rationale`}
-                                    aria-label={`${action.label} rationale`}
+                                    placeholder={`${action.label} ${copy.rationale}`}
+                                    aria-label={`${action.label} ${copy.rationale}`}
                                 />
                                 <Button
                                     type="submit"
@@ -739,6 +748,8 @@ function ActionSheet({
     icon: ReactNode;
     children: ReactNode;
 }) {
+    const copy = usePage().props.localization.citizen;
+
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -751,8 +762,7 @@ function ActionSheet({
                 <SheetHeader>
                     <SheetTitle>{title}</SheetTitle>
                     <SheetDescription>
-                        Changes are authorized, time-stamped and written to the
-                        immutable audit trail.
+                        {copy.action_sheet_description}
                     </SheetDescription>
                 </SheetHeader>
                 <div className="px-4 pb-8">{children}</div>
