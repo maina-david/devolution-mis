@@ -123,6 +123,7 @@ class HandleInertiaRequests extends Middleware
                 'partnerCoordination' => __('partner-coordination'),
                 'dashboard' => __('dashboard'),
                 'migration' => __('migration.ui'),
+                'travelClearance' => __('travel-clearance'),
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => __('projects'),

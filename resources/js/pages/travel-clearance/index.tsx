@@ -46,7 +46,6 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
-import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import {
     download as downloadEvidence,
     preview as previewEvidence,
@@ -156,14 +155,18 @@ type Props = {
     };
 };
 
-const statusOptions = [
+const clearanceStatuses = [
     'draft',
     'manager_review',
     'finance_review',
     'approved',
     'rejected',
     'cancelled',
-].map((status) => ({ id: status, name: humanize(status) }));
+];
+
+function useTravelCopy(): Record<string, string> {
+    return usePage().props.localization.travelClearance;
+}
 
 export default function TravelClearance({
     requests,
@@ -172,7 +175,13 @@ export default function TravelClearance({
     options,
     analytics,
 }: Props) {
-    const { auth } = usePage().props;
+    const { auth, localization } = usePage().props;
+    const copy = useTravelCopy();
+    const locale = localization.current;
+    const statusOptions = clearanceStatuses.map((status) => ({
+        id: status,
+        name: translateValue(copy, status),
+    }));
 
     const rows: WorkspaceRow[] = requests.data.map((request) => ({
         id: request.id,
@@ -180,12 +189,16 @@ export default function TravelClearance({
         cells: [
             request.reference,
             request.requester,
-            request.countyIdentity ?? 'National',
+            request.countyIdentity ?? copy.national,
             request.destination,
-            `${formatDate(request.departureDate)} – ${formatDate(request.returnDate)}`,
-            `${request.currency} ${Number(request.estimatedCost).toLocaleString()}`,
+            `${formatDate(request.departureDate, locale)} – ${formatDate(request.returnDate, locale)}`,
+            formatMoney(
+                Number(request.estimatedCost),
+                request.currency,
+                locale,
+            ),
             request.referenceRelease,
-            humanize(request.status),
+            translateValue(copy, request.status),
         ],
     }));
     const pagination: WorkspacePagination = {
@@ -197,21 +210,19 @@ export default function TravelClearance({
 
     return (
         <>
-            <Head title="Travel clearance" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Controlled official travel
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Travel clearance
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl text-[#c7d6dd]">
-                                Route official travel through management review,
-                                independent finance commitment, SLA monitoring,
-                                and an immutable decision trail.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.submit && (
@@ -227,19 +238,19 @@ export default function TravelClearance({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Clearance status',
+                            label: copy.clearance_status,
                             options: statusOptions,
                             value: filters.status,
                         },
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.county_id,
                         },
                         {
                             key: 'sector_id',
-                            label: 'Sector',
+                            label: copy.sector,
                             options: options.sectors,
                             value: filters.sector_id,
                         },
@@ -248,68 +259,87 @@ export default function TravelClearance({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        label="Requests"
+                        label={copy.requests}
                         value={analytics.summary.total.toLocaleString()}
                     />
                     <MetricCard
-                        label="Approved"
+                        label={copy.approved}
                         value={analytics.summary.approved.toLocaleString()}
                     />
                     <MetricCard
-                        label="Rejected"
+                        label={copy.rejected}
                         value={analytics.summary.rejected.toLocaleString()}
                     />
                     <MetricCard
-                        label="Average decision time"
+                        label={copy.average_decision_time}
                         value={
                             analytics.summary.averageTurnaroundHours === null
                                 ? '—'
-                                : `${analytics.summary.averageTurnaroundHours} hours`
+                                : `${analytics.summary.averageTurnaroundHours} ${copy.hours}`
                         }
                     />
                 </section>
 
                 <section className="grid gap-4 xl:grid-cols-3">
                     <AnalyticsTable
-                        title="Cost by currency"
-                        description="Estimated travel exposure is kept currency-specific to avoid invalid conversions."
+                        title={copy.cost_by_currency}
+                        description={copy.cost_by_currency_description}
                         columns={[
-                            'Currency',
-                            'Requests',
-                            'Total estimate',
-                            'Average',
+                            copy.currency,
+                            copy.requests,
+                            copy.total_estimate,
+                            copy.average,
                         ]}
                         rows={analytics.costs.map((item) => ({
                             id: item.id,
                             cells: [
                                 item.currency,
                                 item.requests,
-                                formatMoney(item.totalCost, item.currency),
-                                formatMoney(item.averageCost, item.currency),
+                                formatMoney(
+                                    item.totalCost,
+                                    item.currency,
+                                    locale,
+                                ),
+                                formatMoney(
+                                    item.averageCost,
+                                    item.currency,
+                                    locale,
+                                ),
                             ],
                         }))}
                     />
                     <AnalyticsTable
-                        title="Frequent destinations"
-                        description="Top destinations by request frequency within the authorized portfolio."
-                        columns={['Destination', 'Requests', 'Estimated cost']}
+                        title={copy.frequent_destinations}
+                        description={copy.frequent_destinations_description}
+                        columns={[
+                            copy.destination,
+                            copy.requests,
+                            copy.estimated_cost,
+                        ]}
                         rows={analytics.destinations.map((item) => ({
                             id: item.id,
                             cells: [
                                 item.destination,
                                 item.requests,
-                                formatMoney(item.totalCost, item.currency),
+                                formatMoney(
+                                    item.totalCost,
+                                    item.currency,
+                                    locale,
+                                ),
                             ],
                         }))}
                     />
                     <AnalyticsTable
-                        title="Decision pipeline"
-                        description="Current request distribution across clearance states."
-                        columns={['Status', 'Requests']}
+                        title={copy.decision_pipeline}
+                        description={copy.decision_pipeline_description}
+                        columns={[copy.status, copy.requests]}
                         rows={analytics.statuses.map((item) => ({
                             id: item.id,
                             status: item.status,
-                            cells: [humanize(item.status), item.requests],
+                            cells: [
+                                translateValue(copy, item.status),
+                                item.requests,
+                            ],
                         }))}
                     />
                 </section>
@@ -317,17 +347,19 @@ export default function TravelClearance({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex items-center justify-between gap-4 border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">Clearance register</h2>
+                            <h2 className="font-bold">
+                                {copy.clearance_register}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                {requests.total.toLocaleString()} requests in
-                                your authorized portfolio
+                                {requests.total.toLocaleString()}{' '}
+                                {copy.authorized_portfolio_count}
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="outline">
-                                        <DownloadIcon /> Export
+                                        <DownloadIcon /> {copy.export}
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -363,14 +395,14 @@ export default function TravelClearance({
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Reference',
-                                'Requester',
-                                'County',
-                                'Destination',
-                                'Travel dates',
-                                'Estimate',
-                                'Reference release',
-                                'Status',
+                                copy.reference,
+                                copy.requester,
+                                copy.county,
+                                copy.destination,
+                                copy.travel_dates,
+                                copy.estimate,
+                                copy.reference_release,
+                                copy.status,
                             ]}
                             rows={rows}
                             pagination={pagination}
@@ -394,8 +426,8 @@ export default function TravelClearance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching travel requests"
-                            description="Adjust the dates, search, status, county, or sector filters. Authorized staff can create the first clearance request from this workspace."
+                            title={copy.empty_title}
+                            description={copy.empty_description}
                             className="min-h-72 border-0"
                         />
                     )}
@@ -431,6 +463,8 @@ function AnalyticsTable({
     columns: string[];
     rows: WorkspaceRow[];
 }) {
+    const copy = useTravelCopy();
+
     return (
         <Card className="overflow-hidden">
             <CardHeader>
@@ -451,8 +485,8 @@ function AnalyticsTable({
                     />
                 ) : (
                     <WorkspaceEmptyState
-                        title={`No ${title.toLowerCase()} data`}
-                        description="Matching travel requests will populate this analysis."
+                        title={`${copy.no_data_prefix} ${title.toLowerCase()} ${copy.data}`}
+                        description={copy.analytics_empty_description}
                         className="min-h-48 border-0"
                     />
                 )}
@@ -461,18 +495,23 @@ function AnalyticsTable({
     );
 }
 
-function formatMoney(value: number, currency: string): string {
-    return `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function formatMoney(value: number, currency: string, locale: string): string {
+    return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        maximumFractionDigits: 2,
+    }).format(value);
 }
 
 function TravelRequestForm({ options }: { options: Props['options'] }) {
+    const copy = useTravelCopy();
     const [segments, setSegments] = useState([0]);
 
     return (
         <FormSheet
-            title="New travel request"
-            description="Capture purpose, funding, HRIS reference, and the complete itinerary before submission."
-            triggerLabel="New travel request"
+            title={copy.new_request}
+            description={copy.new_request_description}
+            triggerLabel={copy.new_request}
             icon={Plus}
             size="xl"
         >
@@ -483,7 +522,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             <SearchableSelect
                                 id="travel-county"
                                 name="county_id"
-                                label="County"
+                                label={copy.county}
                                 options={options.counties}
                                 optional
                                 error={errors.county_id}
@@ -491,7 +530,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             <SearchableSelect
                                 id="travel-organization"
                                 name="organization_id"
-                                label="Organization"
+                                label={copy.organization}
                                 options={options.organizations}
                                 optional
                                 error={errors.organization_id}
@@ -499,7 +538,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             <SearchableSelect
                                 id="travel-sector"
                                 name="sector_id"
-                                label="Sector"
+                                label={copy.sector}
                                 options={options.sectors}
                                 optional
                                 error={errors.sector_id}
@@ -507,12 +546,12 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             <SearchableSelect
                                 id="travel-type"
                                 name="travel_type"
-                                label="Travel type"
+                                label={copy.travel_type}
                                 options={[
-                                    { id: 'domestic', name: 'Domestic' },
+                                    { id: 'domestic', name: copy.domestic },
                                     {
                                         id: 'international',
-                                        name: 'International',
+                                        name: copy.international,
                                     },
                                 ]}
                                 defaultValue="domestic"
@@ -520,7 +559,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             />
                             <Field
                                 name="purpose"
-                                label="Purpose"
+                                label={copy.purpose}
                                 error={errors.purpose}
                             />
                             <GeographyCatalogFields
@@ -530,51 +569,51 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             />
                             <DatePickerField
                                 name="departure_date"
-                                label="Departure date"
+                                label={copy.departure_date}
                                 required
                                 error={errors.departure_date}
                             />
                             <DatePickerField
                                 name="return_date"
-                                label="Return date"
+                                label={copy.return_date}
                                 required
                                 error={errors.return_date}
                             />
                             <Field
                                 name="estimated_cost"
-                                label="Total estimated cost"
+                                label={copy.total_estimated_cost}
                                 type="number"
                                 error={errors.estimated_cost}
                             />
                             <ReferenceCatalogSelect
                                 id="travel-currency"
                                 name="currency"
-                                label="Currency"
+                                label={copy.currency}
                                 catalog="currency"
                                 error={errors.currency}
                             />
                             <Field
                                 name="funding_source"
-                                label="Funding source"
+                                label={copy.funding_source}
                                 error={errors.funding_source}
                             />
                             <Field
                                 name="cost_centre"
-                                label="Cost centre"
+                                label={copy.cost_centre}
                                 error={errors.cost_centre}
                             />
                             <Field
                                 name="hris_employee_reference"
-                                label="HRIS employee reference"
+                                label={copy.hris_employee_reference}
                                 error={errors.hris_employee_reference}
                             />
                             <SearchableSelect
                                 id="travel-priority"
                                 name="priority"
-                                label="Priority"
+                                label={copy.priority}
                                 options={[
-                                    { id: 'normal', name: 'Normal' },
-                                    { id: 'urgent', name: 'Urgent' },
+                                    { id: 'normal', name: copy.normal },
+                                    { id: 'urgent', name: copy.urgent },
                                 ]}
                                 defaultValue="normal"
                                 error={errors.priority}
@@ -582,7 +621,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                         </div>
                         <div className="grid gap-2">
                             <Label htmlFor="travel-justification">
-                                Business justification
+                                {copy.business_justification}
                             </Label>
                             <Textarea
                                 id="travel-justification"
@@ -596,10 +635,11 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                         <div className="grid gap-4 rounded-xl border p-4">
                             <div className="flex items-center justify-between gap-4">
                                 <div>
-                                    <h3 className="font-semibold">Itinerary</h3>
+                                    <h3 className="font-semibold">
+                                        {copy.itinerary}
+                                    </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        All segments must fall within the
-                                        request travel dates.
+                                        {copy.itinerary_description}
                                     </p>
                                 </div>
                                 <Button
@@ -613,14 +653,14 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         ])
                                     }
                                 >
-                                    Add segment
+                                    {copy.add_segment}
                                 </Button>
                             </div>
                             {segments.map((segment, position) => (
                                 <Card key={segment}>
                                     <CardHeader className="flex-row items-center justify-between">
                                         <CardTitle className="text-base">
-                                            Segment {position + 1}
+                                            {copy.segment} {position + 1}
                                         </CardTitle>
                                         {segments.length > 1 && (
                                             <Button
@@ -637,14 +677,14 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                                     )
                                                 }
                                             >
-                                                Remove
+                                                {copy.remove}
                                             </Button>
                                         )}
                                     </CardHeader>
                                     <CardContent className="grid gap-4 md:grid-cols-2">
                                         <Field
                                             name={`itineraries[${position}][origin]`}
-                                            label="Origin"
+                                            label={copy.origin}
                                             error={
                                                 errors[
                                                     `itineraries.${position}.origin`
@@ -653,7 +693,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         />
                                         <Field
                                             name={`itineraries[${position}][destination]`}
-                                            label="Destination"
+                                            label={copy.destination}
                                             error={
                                                 errors[
                                                     `itineraries.${position}.destination`
@@ -662,7 +702,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         />
                                         <DatePickerField
                                             name={`itineraries[${position}][departs_at]`}
-                                            label="Departs at"
+                                            label={copy.departs_at}
                                             includeTime
                                             required
                                             error={
@@ -673,7 +713,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         />
                                         <DatePickerField
                                             name={`itineraries[${position}][arrives_at]`}
-                                            label="Arrives at"
+                                            label={copy.arrives_at}
                                             includeTime
                                             required
                                             error={
@@ -685,7 +725,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         <SearchableSelect
                                             id={`segment-mode-${segment}`}
                                             name={`itineraries[${position}][transport_mode]`}
-                                            label="Transport mode"
+                                            label={copy.transport_mode}
                                             options={[
                                                 'air',
                                                 'road',
@@ -694,7 +734,10 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                                 'other',
                                             ].map((value) => ({
                                                 id: value,
-                                                name: humanize(value),
+                                                name: translateValue(
+                                                    copy,
+                                                    value,
+                                                ),
                                             }))}
                                             defaultValue="road"
                                             error={
@@ -705,7 +748,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         />
                                         <Field
                                             name={`itineraries[${position}][carrier]`}
-                                            label="Carrier"
+                                            label={copy.carrier}
                                             error={
                                                 errors[
                                                     `itineraries.${position}.carrier`
@@ -714,7 +757,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                                         />
                                         <Field
                                             name={`itineraries[${position}][estimated_cost]`}
-                                            label="Segment estimated cost"
+                                            label={copy.segment_estimated_cost}
                                             type="number"
                                             defaultValue="0"
                                             error={
@@ -728,7 +771,7 @@ function TravelRequestForm({ options }: { options: Props['options'] }) {
                             ))}
                         </div>
                         <Button type="submit" disabled={processing}>
-                            Save draft request
+                            {copy.save_draft_request}
                         </Button>
                     </>
                 )}
@@ -746,12 +789,13 @@ function TravelRequestActions({
     currentUserId: string;
     capabilities: Props['capabilities'];
 }) {
+    const copy = useTravelCopy();
     const [surface, setSurface] = useState<'details' | string | null>(null);
     const transitions: Array<{ id: string; label: string; visible: boolean }> =
         [
             {
                 id: 'submit',
-                label: 'Submit for manager review',
+                label: copy.submit_manager_review,
                 visible:
                     capabilities.submit &&
                     request.requesterId === currentUserId &&
@@ -759,7 +803,7 @@ function TravelRequestActions({
             },
             {
                 id: 'cancel',
-                label: 'Cancel request',
+                label: copy.cancel_request,
                 visible:
                     capabilities.submit &&
                     request.requesterId === currentUserId &&
@@ -767,26 +811,26 @@ function TravelRequestActions({
             },
             {
                 id: 'manager_approve',
-                label: 'Approve for finance review',
+                label: copy.approve_finance_review,
                 visible:
                     capabilities.approve && request.status === 'manager_review',
             },
             {
                 id: 'manager_reject',
-                label: 'Reject at manager review',
+                label: copy.reject_manager_review,
                 visible:
                     capabilities.approve && request.status === 'manager_review',
             },
             {
                 id: 'finance_clear',
-                label: 'Confirm finance clearance',
+                label: copy.confirm_finance_clearance,
                 visible:
                     capabilities.financeClear &&
                     request.status === 'finance_review',
             },
             {
                 id: 'finance_reject',
-                label: 'Reject finance clearance',
+                label: copy.reject_finance_clearance,
                 visible:
                     capabilities.financeClear &&
                     request.status === 'finance_review',
@@ -800,14 +844,14 @@ function TravelRequestActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${request.reference}`}
+                        aria-label={`${copy.actions_for} ${request.reference}`}
                     >
                         <MoreHorizontal />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-64">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
-                        <Eye /> View complete request
+                        <Eye /> {copy.view_complete_request}
                     </DropdownMenuItem>
                     {transitions
                         .filter((item) => item.visible)
@@ -830,12 +874,12 @@ function TravelRequestActions({
                         <SheetTitle>
                             {surface === 'details'
                                 ? request.reference
-                                : humanize(surface ?? '')}
+                                : translateValue(copy, surface ?? '')}
                         </SheetTitle>
                         <SheetDescription>
                             {surface === 'details'
-                                ? 'Complete travel, itinerary, integration, and decision record.'
-                                : `Record a reasoned decision for ${request.reference}.`}
+                                ? copy.complete_record_description
+                                : `${copy.record_decision_for} ${request.reference}.`}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4 pb-8">
@@ -864,6 +908,7 @@ function TransitionForm({
     request: TravelRequest;
     transitionName: string;
 }) {
+    const copy = useTravelCopy();
     const needsFinanceReference = transitionName === 'finance_clear';
 
     return (
@@ -880,7 +925,7 @@ function TransitionForm({
                     />
                     <div className="grid gap-2">
                         <Label htmlFor={`rationale-${request.id}`}>
-                            Decision rationale
+                            {copy.decision_rationale}
                         </Label>
                         <Textarea
                             id={`rationale-${request.id}`}
@@ -895,7 +940,7 @@ function TransitionForm({
                         needsFinanceReference) && (
                         <Field
                             name="approved_cost"
-                            label="Approved cost"
+                            label={copy.approved_cost}
                             type="number"
                             defaultValue={request.estimatedCost}
                             error={errors.approved_cost}
@@ -904,12 +949,12 @@ function TransitionForm({
                     {needsFinanceReference && (
                         <Field
                             name="finance_commitment_reference"
-                            label="Finance commitment reference"
+                            label={copy.finance_commitment_reference}
                             error={errors.finance_commitment_reference}
                         />
                     )}
                     <Button type="submit" disabled={processing}>
-                        {humanize(transitionName)}
+                        {translateValue(copy, transitionName)}
                     </Button>
                 </>
             )}
@@ -924,43 +969,53 @@ function TravelDetails({
     request: TravelRequest;
     currentUserId: string;
 }) {
+    const copy = useTravelCopy();
+    const locale = usePage().props.localization.current;
+
     return (
         <div className="grid gap-6 pt-4">
             <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-lg border p-3">
                     <p className="text-xs font-medium text-muted-foreground">
-                        County
+                        {copy.county}
                     </p>
                     <div className="pt-2">
                         {request.countyIdentity ? (
                             <CountyIdentity county={request.countyIdentity} />
                         ) : (
-                            <p className="text-sm">National</p>
+                            <p className="text-sm">{copy.national}</p>
                         )}
                     </div>
                 </div>
                 {[
-                    ['Requester', request.requester],
-                    ['Organization', request.organization ?? '—'],
-                    ['Sector', request.sector ?? '—'],
-                    ['Purpose', request.purpose],
-                    ['Destination', request.destination],
+                    [copy.requester, request.requester],
+                    [copy.organization, request.organization ?? '—'],
+                    [copy.sector, request.sector ?? '—'],
+                    [copy.purpose, request.purpose],
+                    [copy.destination, request.destination],
                     [
-                        'Travel dates',
-                        `${formatDate(request.departureDate)} – ${formatDate(request.returnDate)}`,
+                        copy.travel_dates,
+                        `${formatDate(request.departureDate, locale)} – ${formatDate(request.returnDate, locale)}`,
                     ],
                     [
-                        'Estimate',
-                        `${request.currency} ${Number(request.estimatedCost).toLocaleString()}`,
+                        copy.estimate,
+                        formatMoney(
+                            Number(request.estimatedCost),
+                            request.currency,
+                            locale,
+                        ),
                     ],
-                    ['Funding source', request.fundingSource],
-                    ['Cost centre', request.costCentre ?? '—'],
-                    ['HRIS reference', request.hrisReference ?? 'Not linked'],
-                    ['Reference release', request.referenceRelease],
-                    ['Reference checksum', request.referenceChecksum ?? '—'],
+                    [copy.funding_source, request.fundingSource],
+                    [copy.cost_centre, request.costCentre ?? '—'],
                     [
-                        'Finance reference',
-                        request.financeReference ?? 'Pending',
+                        copy.hris_reference,
+                        request.hrisReference ?? copy.not_linked,
+                    ],
+                    [copy.reference_release, request.referenceRelease],
+                    [copy.reference_checksum, request.referenceChecksum ?? '—'],
+                    [
+                        copy.finance_reference,
+                        request.financeReference ?? copy.pending,
                     ],
                 ].map(([label, value]) => (
                     <div key={label} className="rounded-lg border p-3">
@@ -972,7 +1027,7 @@ function TravelDetails({
                 ))}
             </div>
             <div>
-                <h3 className="font-semibold">Business justification</h3>
+                <h3 className="font-semibold">{copy.business_justification}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
                     {request.justification}
                 </p>
@@ -980,7 +1035,9 @@ function TravelDetails({
             <div className="grid gap-3">
                 <div className="flex items-center gap-2">
                     <FileText className="size-4" aria-hidden="true" />
-                    <h3 className="font-semibold">Supporting documents</h3>
+                    <h3 className="font-semibold">
+                        {copy.supporting_documents}
+                    </h3>
                 </div>
                 {request.documents.length ? (
                     request.documents.map((document) => (
@@ -991,11 +1048,13 @@ function TravelDetails({
                             <div>
                                 <p className="font-medium">{document.title}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    {humanize(document.sourceType)} ·{' '}
+                                    {translateValue(copy, document.sourceType)}{' '}
+                                    {copy.separator}{' '}
                                     {document.originalName ??
                                         document.mimeType ??
-                                        'File'}{' '}
-                                    · {humanize(document.scanStatus)}
+                                        copy.file}{' '}
+                                    {copy.separator}{' '}
+                                    {translateValue(copy, document.scanStatus)}
                                 </p>
                             </div>
                             <div className="flex gap-2">
@@ -1007,7 +1066,7 @@ function TravelDetails({
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        Preview
+                                        {copy.preview}
                                     </a>
                                 </Button>
                                 <Button asChild variant="outline" size="sm">
@@ -1016,7 +1075,7 @@ function TravelDetails({
                                             document: document.id,
                                         })}
                                     >
-                                        Download
+                                        {copy.download}
                                     </a>
                                 </Button>
                             </div>
@@ -1024,7 +1083,7 @@ function TravelDetails({
                     ))
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        No supporting documents uploaded.
+                        {copy.no_supporting_documents}
                     </p>
                 )}
                 {request.status === 'draft' &&
@@ -1032,7 +1091,7 @@ function TravelDetails({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">
-                                    Upload supporting record
+                                    {copy.upload_supporting_record}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -1047,26 +1106,26 @@ function TravelDetails({
                                         <>
                                             <Field
                                                 name="title"
-                                                label="Document title"
+                                                label={copy.document_title}
                                                 error={errors.title}
                                             />
                                             <Field
                                                 name="category"
-                                                label="Record category"
+                                                label={copy.record_category}
                                                 error={errors.category}
                                             />
                                             <SearchableSelect
                                                 id={`source-type-${request.id}`}
                                                 name="source_type"
-                                                label="Source type"
+                                                label={copy.source_type}
                                                 options={[
                                                     {
                                                         id: 'digital',
-                                                        name: 'Born-digital file',
+                                                        name: copy.born_digital,
                                                     },
                                                     {
                                                         id: 'scanned',
-                                                        name: 'Scanned copy',
+                                                        name: copy.scanned_copy,
                                                     },
                                                 ]}
                                                 defaultValue="digital"
@@ -1076,7 +1135,7 @@ function TravelDetails({
                                                 <Label
                                                     htmlFor={`travel-document-${request.id}`}
                                                 >
-                                                    Document
+                                                    {copy.document}
                                                 </Label>
                                                 <Input
                                                     id={`travel-document-${request.id}`}
@@ -1109,8 +1168,8 @@ function TravelDetails({
                                             >
                                                 <Upload aria-hidden="true" />
                                                 {progress
-                                                    ? `Uploading ${progress.percentage}%`
-                                                    : 'Upload supporting record'}
+                                                    ? `${copy.uploading} ${progress.percentage}%`
+                                                    : copy.upload_supporting_record}
                                             </Button>
                                         </>
                                     )}
@@ -1122,23 +1181,21 @@ function TravelDetails({
             <div className="grid gap-3">
                 <div className="flex items-center gap-2">
                     <RouteIcon className="size-4" />
-                    <h3 className="font-semibold">Itinerary</h3>
+                    <h3 className="font-semibold">{copy.itinerary}</h3>
                 </div>
                 {request.itineraries.map((item) => (
                     <div key={item.id} className="rounded-lg border p-4">
                         <p className="font-medium">
-                            {item.origin} → {item.destination}
+                            {item.origin} {copy.route_arrow} {item.destination}
                         </p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                            {new Date(item.departsAt).toLocaleString(
-                                DEFAULT_LOCALE,
-                            )}{' '}
-                            –{' '}
-                            {new Date(item.arrivesAt).toLocaleString(
-                                DEFAULT_LOCALE,
-                            )}{' '}
-                            · {humanize(item.transportMode)} ·{' '}
-                            {item.carrier ?? 'Carrier pending'}
+                            {new Date(item.departsAt).toLocaleString(locale)}{' '}
+                            {copy.range_separator}{' '}
+                            {new Date(item.arrivesAt).toLocaleString(locale)}{' '}
+                            {copy.separator}{' '}
+                            {translateValue(copy, item.transportMode)}{' '}
+                            {copy.separator}{' '}
+                            {item.carrier ?? copy.carrier_pending}
                         </p>
                     </div>
                 ))}
@@ -1146,7 +1203,7 @@ function TravelDetails({
             <div className="grid gap-3">
                 <div className="flex items-center gap-2">
                     <FileCheck2 className="size-4" />
-                    <h3 className="font-semibold">Decision history</h3>
+                    <h3 className="font-semibold">{copy.decision_history}</h3>
                 </div>
                 {request.approvals.length ? (
                     request.approvals.map((approval) => (
@@ -1156,8 +1213,9 @@ function TravelDetails({
                         >
                             <div className="flex justify-between gap-3">
                                 <p className="font-medium">
-                                    {humanize(approval.stage)} ·{' '}
-                                    {humanize(approval.decision)}
+                                    {translateValue(copy, approval.stage)}{' '}
+                                    {copy.separator}{' '}
+                                    {translateValue(copy, approval.decision)}
                                 </p>
                                 <Badge variant="outline">
                                     {approval.actor}
@@ -1170,7 +1228,7 @@ function TravelDetails({
                     ))
                 ) : (
                     <p className="text-sm text-muted-foreground">
-                        No approval decisions recorded yet.
+                        {copy.no_decisions}
                     </p>
                 )}
             </div>
@@ -1178,12 +1236,12 @@ function TravelDetails({
                 <Banknote className="size-5" />
                 <div>
                     <p className="text-sm font-medium">
-                        Integration status:{' '}
-                        {humanize(request.integrationStatus)}
+                        {copy.integration_status}
+                        {': '}
+                        {translateValue(copy, request.integrationStatus)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                        HRIS and finance identifiers remain visible for
-                        reconciliation and exception handling.
+                        {copy.integration_description}
                     </p>
                 </div>
             </div>
@@ -1242,8 +1300,11 @@ function humanize(value: string): string {
         .replaceAll('-', ' ')
         .replace(/^./, (letter) => letter.toUpperCase());
 }
-function formatDate(value: string): string {
-    return new Date(`${value}T00:00:00`).toLocaleDateString(DEFAULT_LOCALE, {
+function translateValue(copy: Record<string, string>, value: string): string {
+    return copy[`value_${value}`] ?? humanize(value);
+}
+function formatDate(value: string, locale: string): string {
+    return new Date(`${value}T00:00:00`).toLocaleDateString(locale, {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
