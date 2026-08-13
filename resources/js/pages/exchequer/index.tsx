@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import {
     Banknote,
     Clock,
@@ -44,8 +44,8 @@ import type { WorkspaceRow } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
 import {
     DEFAULT_CURRENCY_CODE,
-    DEFAULT_LOCALE,
     formatCurrency,
+    formatDateTime,
     formatNumber,
 } from '@/lib/reference-catalog';
 import { store as storeExchequer } from '@/routes/exchequer';
@@ -155,6 +155,9 @@ export default function ExchequerTracking({
     options,
     catalogue,
 }: Props) {
+    const { localization } = usePage().props;
+    const copy = localization.exchequer;
+    const locale = localization.current;
     const rows: WorkspaceRow[] = requests.data.map((request) => ({
         id: request.id,
         status: request.overdue ? 'overdue' : request.status,
@@ -164,33 +167,32 @@ export default function ExchequerTracking({
             request.county,
             request.grant,
             formatCurrency(request.amount, request.currency),
-            humanize(request.stage),
+            translateValue(copy, request.stage),
             request.events.length,
             request.events.length
                 ? `${(request.events.at(-1)!.elapsedTotalMinutes / 60).toFixed(1)} h`
-                : 'Not started',
-            request.overdue ? 'Overdue' : humanize(request.status),
+                : copy.not_started,
+            request.overdue
+                ? copy.overdue
+                : translateValue(copy, request.status),
         ],
     }));
 
     return (
         <>
-            <Head title="Exchequer tracking" />
+            <Head title={copy.page_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div className="max-w-3xl">
                             <p className="text-xs font-bold tracking-[0.16em] uppercase opacity-75">
-                                KDSP II funds-flow assurance
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Exchequer turnaround tracker
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-2xl opacity-80">
-                                Trace county fund requests through the National
-                                Treasury, OCoB authorization and CBK credit
-                                confirmation using immutable source events and
-                                auditable elapsed-time evidence.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.create && (
@@ -203,33 +205,33 @@ export default function ExchequerTracking({
                 </section>
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <Metric
-                        title="Requests"
-                        value={summary.total.toLocaleString()}
-                        description="Authorized scope"
+                        title={copy.requests}
+                        value={summary.total.toLocaleString(locale)}
+                        description={copy.authorized_scope}
                     />
                     <Metric
-                        title="Completed"
-                        value={summary.completed.toLocaleString()}
-                        description="CBK credit confirmed"
+                        title={copy.completed}
+                        value={summary.completed.toLocaleString(locale)}
+                        description={copy.cbk_credit_confirmed}
                     />
                     <Metric
-                        title="Overdue"
-                        value={summary.overdue.toLocaleString()}
-                        description="Current stage SLA"
+                        title={copy.overdue}
+                        value={summary.overdue.toLocaleString(locale)}
+                        description={copy.current_stage_sla}
                     />
                     <Metric
-                        title="Credited"
+                        title={copy.credited}
                         value={formatCurrency(summary.creditedAmount)}
-                        description="Completed requests"
+                        description={copy.completed_requests}
                     />
                     <Metric
-                        title="Average turnaround"
+                        title={copy.average_turnaround}
                         value={
                             summary.averageTurnaroundHours === null
-                                ? 'Pending'
+                                ? copy.pending
                                 : `${summary.averageTurnaroundHours} h`
                         }
-                        description="Creation to CBK credit"
+                        description={copy.creation_to_cbk_credit}
                     />
                 </div>
                 <DateRangeFilter
@@ -239,25 +241,25 @@ export default function ExchequerTracking({
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.county_id,
                         },
                         {
                             key: 'status',
-                            label: 'Status',
+                            label: copy.status,
                             options: [
                                 'open',
                                 'completed',
                                 'returned',
                                 'exception',
-                            ].map(option),
+                            ].map((value) => option(value, copy)),
                             value: filters.status,
                         },
                         {
                             key: 'stage',
-                            label: 'Current stage',
-                            options: stages.map(option),
+                            label: copy.current_stage,
+                            options: stages.map((value) => option(value, copy)),
                             value: filters.stage,
                         },
                     ]}
@@ -265,10 +267,13 @@ export default function ExchequerTracking({
                 <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
                     <div className="flex items-center justify-between gap-3 border-b px-5 py-4 sm:px-6">
                         <div>
-                            <h2 className="font-bold">Funds-flow register</h2>
+                            <h2 className="font-bold">
+                                {copy.register_title}
+                            </h2>
                             <p className="text-sm text-muted-foreground">
-                                {requests.total.toLocaleString()} county-scoped
-                                requests with source-attributed stage telemetry
+                                {interpolate(copy.register_description, {
+                                    count: requests.total.toLocaleString(locale),
+                                })}
                             </p>
                         </div>
                         <ExportMenu filters={filters} />
@@ -276,15 +281,15 @@ export default function ExchequerTracking({
                     {rows.length ? (
                         <WorkspaceDataTable
                             columns={[
-                                'Reference',
-                                'Tranche',
-                                'County',
-                                'Grant',
-                                'Amount',
-                                'Stage',
-                                'Events',
-                                'Elapsed',
-                                'Status',
+                                copy.reference,
+                                copy.tranche,
+                                copy.county,
+                                copy.grant,
+                                copy.amount,
+                                copy.stage,
+                                copy.events,
+                                copy.elapsed,
+                                copy.status,
                             ]}
                             rows={rows}
                             pagination={{
@@ -309,8 +314,8 @@ export default function ExchequerTracking({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No exchequer requests found"
-                            description="Adjust the filters or create the first grant-linked request for Treasury submission."
+                            title={copy.empty_title}
+                            description={copy.empty_description}
                             className="min-h-72 border-0"
                         />
                     )}
@@ -349,11 +354,13 @@ function RequestForm({
     options: Props['options'];
     catalogue: Props['catalogue'];
 }) {
+    const copy = useExchequerCopy();
+
     return (
         <FormSheet
-            title="Create exchequer request"
-            description="Bind a controlled tranche to an authorized county grant before external lifecycle events are recorded."
-            triggerLabel="New request"
+            title={copy.create_title}
+            description={copy.create_description}
+            triggerLabel={copy.new_request}
             icon={Plus}
             triggerDisabled={
                 !catalogue.available || options.grants.length === 0
@@ -361,9 +368,9 @@ function RequestForm({
             triggerTitle={
                 catalogue.available
                     ? options.grants.length === 0
-                        ? 'No governed county grants are available.'
+                        ? copy.no_governed_grants
                         : undefined
-                    : 'Publish an effective reference-data catalogue before creating requests.'
+                    : copy.catalogue_required
             }
         >
             <Form action={storeExchequer()} className="grid gap-4 pt-4">
@@ -372,17 +379,17 @@ function RequestForm({
                         <SearchableSelect
                             id="exchequer-grant"
                             name="county_grant_id"
-                            label="County grant"
+                            label={copy.county_grant}
                             options={options.grants}
                         />
                         <Field
                             name="tranche_reference"
-                            label="Tranche reference"
+                            label={copy.tranche_reference}
                             error={errors.tranche_reference}
                         />
                         <Field
                             name="amount"
-                            label="Request amount"
+                            label={copy.request_amount}
                             type="number"
                             min="0.01"
                             step="0.01"
@@ -394,7 +401,8 @@ function RequestForm({
                             value={DEFAULT_CURRENCY_CODE}
                         />
                         <Button type="submit" disabled={processing}>
-                            <Banknote data-icon="inline-start" /> Create request
+                            <Banknote data-icon="inline-start" />{' '}
+                            {copy.create_request}
                         </Button>
                     </>
                 )}
@@ -412,6 +420,7 @@ function RequestActions({
     canRecord: boolean;
     exchanges: Option[];
 }) {
+    const copy = useExchequerCopy();
     const [surface, setSurface] = useState<'details' | 'event' | null>(null);
     const available = nextEvents[request.stage] ?? [];
 
@@ -422,18 +431,20 @@ function RequestActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${request.reference}`}
+                        aria-label={interpolate(copy.actions_for, {
+                            reference: request.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => setSurface('details')}>
-                        <Eye /> Open timeline
+                        <Eye /> {copy.open_timeline}
                     </DropdownMenuItem>
                     {canRecord && available.length > 0 && (
                         <DropdownMenuItem onSelect={() => setSurface('event')}>
-                            <Send /> Record source event
+                            <Send /> {copy.record_source_event}
                         </DropdownMenuItem>
                     )}
                 </DropdownMenuContent>
@@ -446,48 +457,56 @@ function RequestActions({
                     <SheetHeader>
                         <SheetTitle>
                             {surface === 'event'
-                                ? 'Record exchequer event'
+                                ? copy.record_exchequer_event
                                 : request.reference}
                         </SheetTitle>
                         <SheetDescription>
                             {request.county.name} · {request.grant} ·{' '}
-                            {humanize(request.stage)}
+                            {translateValue(copy, request.stage)}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-5 px-4 pt-4 pb-8">
                         {surface === 'details' ? (
                             <>
                                 <div className="flex flex-wrap gap-2">
-                                    <Badge>{humanize(request.status)}</Badge>
+                                    <Badge>
+                                        {translateValue(copy, request.status)}
+                                    </Badge>
                                     <Badge variant="outline">
                                         {request.currency}{' '}
                                         {formatNumber(request.amount)}
                                     </Badge>
                                     {request.overdue && (
                                         <Badge variant="destructive">
-                                            Stage overdue
+                                            {copy.stage_overdue}
                                         </Badge>
                                     )}
                                 </div>
                                 <Card>
                                     <CardHeader>
                                         <CardDescription>
-                                            Authoritative catalogue lineage
+                                            {copy.catalogue_lineage}
                                         </CardDescription>
                                         <CardTitle className="text-base">
                                             {request.referenceData
-                                                ? `Reference data release v${request.referenceData.version}`
-                                                : 'Legacy · unpinned'}
+                                                ? `${copy.reference_data_release} v${request.referenceData.version}`
+                                                : copy.legacy_unpinned}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-2 text-sm">
                                         {request.referenceData ? (
                                             <>
                                                 <p className="text-muted-foreground">
-                                                    Effective{' '}
+                                                    {copy.effective}{' '}
                                                     {request.referenceData
-                                                        .effectiveFrom ??
-                                                        'date unavailable'}
+                                                        .effectiveFrom
+                                                        ? formatDateTime(
+                                                              request
+                                                                  .referenceData
+                                                                  .effectiveFrom,
+                                                              { dateStyle: 'medium' },
+                                                          )
+                                                        : copy.date_unavailable}
                                                 </p>
                                                 <p className="font-mono text-xs break-all text-muted-foreground">
                                                     {
@@ -498,8 +517,7 @@ function RequestActions({
                                             </>
                                         ) : (
                                             <p className="text-muted-foreground">
-                                                Created before authoritative
-                                                catalogue pinning was enforced.
+                                                {copy.legacy_explanation}
                                             </p>
                                         )}
                                     </CardContent>
@@ -509,19 +527,20 @@ function RequestActions({
                                         <Card key={event.id}>
                                             <CardHeader>
                                                 <CardDescription>
-                                                    Stage {index + 1} ·{' '}
+                                                    {copy.stage} {index + 1} ·{' '}
                                                     {event.source}
                                                 </CardDescription>
                                                 <CardTitle className="text-base">
-                                                    {humanize(event.type)}
+                                                    {translateValue(
+                                                        copy,
+                                                        event.type,
+                                                    )}
                                                 </CardTitle>
                                             </CardHeader>
                                             <CardContent className="grid gap-2 text-sm">
                                                 <p>
-                                                    {new Date(
+                                                    {formatDateTime(
                                                         event.occurredAt,
-                                                    ).toLocaleString(
-                                                        DEFAULT_LOCALE,
                                                     )}{' '}
                                                     · {event.recorder}
                                                 </p>
@@ -531,12 +550,12 @@ function RequestActions({
                                                         event.elapsedStageMinutes /
                                                         60
                                                     ).toFixed(1)}{' '}
-                                                    stage hours ·{' '}
+                                                    {copy.stage_hours} ·{' '}
                                                     {(
                                                         event.elapsedTotalMinutes /
                                                         60
                                                     ).toFixed(1)}{' '}
-                                                    total hours
+                                                    {copy.total_hours}
                                                 </p>
                                                 {event.notes && (
                                                     <p>{event.notes}</p>
@@ -546,7 +565,7 @@ function RequestActions({
                                                 </p>
                                                 {event.exchange && (
                                                     <p className="font-mono text-xs text-muted-foreground">
-                                                        Exchange{' '}
+                                                        {copy.exchange}{' '}
                                                         {
                                                             event.exchange
                                                                 .correlationId
@@ -558,8 +577,8 @@ function RequestActions({
                                     ))
                                 ) : (
                                     <WorkspaceEmptyState
-                                        title="Awaiting first source event"
-                                        description="The request is prepared but has not yet been submitted to the National Treasury."
+                                        title={copy.awaiting_first_event}
+                                        description={copy.awaiting_first_event_description}
                                     />
                                 )}
                             </>
@@ -589,6 +608,7 @@ function EventForm({
     exchanges: Option[];
     onSuccess: () => void;
 }) {
+    const copy = useExchequerCopy();
     const [eventType, setEventType] = useState(events[0] ?? '');
 
     return (
@@ -602,25 +622,27 @@ function EventForm({
                     <SearchableSelect
                         id={`exchequer-event-${request.id}`}
                         name="event_type"
-                        label="Event"
-                        options={events.map(option)}
+                        label={copy.event}
+                        options={events.map((value) => option(value, copy))}
                         value={eventType}
                         onValueChange={setEventType}
                     />
                     <SearchableSelect
                         id={`exchequer-source-${request.id}`}
                         name="source_system"
-                        label="Attesting source"
-                        options={(eventSources[eventType] ?? []).map(option)}
+                        label={copy.attesting_source}
+                        options={(eventSources[eventType] ?? []).map((value) =>
+                            option(value, copy),
+                        )}
                     />
                     <Field
                         name="source_event_reference"
-                        label="Source event reference"
+                        label={copy.source_event_reference}
                         error={errors.source_event_reference}
                     />
                     <DatePickerField
                         name="occurred_at"
-                        label="Occurred at"
+                        label={copy.occurred_at}
                         includeTime
                         required
                         error={errors.occurred_at}
@@ -628,19 +650,19 @@ function EventForm({
                     <SearchableSelect
                         id={`exchequer-exchange-${request.id}`}
                         name="integration_exchange_id"
-                        label="Linked successful exchange"
+                        label={copy.linked_exchange}
                         options={exchanges}
                         optional
                     />
                     <TextField
                         name="notes"
-                        label="Exception or processing notes"
+                        label={copy.processing_notes}
                         optional
                         error={errors.notes}
                     />
                     <Button type="submit" disabled={processing}>
-                        <Clock data-icon="inline-start" /> Record immutable
-                        event
+                        <Clock data-icon="inline-start" />{' '}
+                        {copy.record_immutable_event}
                     </Button>
                 </>
             )}
@@ -649,11 +671,13 @@ function EventForm({
 }
 
 function ExportMenu({ filters }: { filters: Props['filters'] }) {
+    const copy = useExchequerCopy();
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                    <Download data-icon="inline-start" /> Export
+                    <Download data-icon="inline-start" /> {copy.export}
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -750,11 +774,29 @@ function TextField({
         </div>
     );
 }
-function option(id: string) {
-    return { id, name: humanize(id) };
+function option(id: string, copy: Record<string, string>) {
+    return { id, name: translateValue(copy, id) };
 }
 function humanize(value: string) {
     return value
         .replaceAll('_', ' ')
         .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function useExchequerCopy(): Record<string, string> {
+    return usePage().props.localization.exchequer;
+}
+
+function translateValue(copy: Record<string, string>, value: string): string {
+    return copy[value.toLocaleLowerCase()] ?? humanize(value);
+}
+
+function interpolate(
+    template: string,
+    replacements: Record<string, string>,
+): string {
+    return Object.entries(replacements).reduce(
+        (message, [key, value]) => message.replace(`:${key}`, value),
+        template,
+    );
 }
