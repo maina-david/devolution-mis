@@ -194,11 +194,14 @@ function PaginationControls({
 }: {
     pagination: Pagination<unknown>;
 }) {
+    const copy = usePage().props.localization.referenceData;
+
     return (
         <div className="flex items-center justify-between gap-3 border-t px-5 py-3 text-sm">
             <span className="text-muted-foreground">
-                Page {pagination.current_page} of {pagination.last_page} ·{' '}
-                {pagination.total.toLocaleString()} records
+                {copy.page} {pagination.current_page} {copy.of}{' '}
+                {pagination.last_page} {copy.separator}{' '}
+                {pagination.total.toLocaleString()} {copy.records}
             </span>
             <div className="flex gap-2">
                 <Button
@@ -213,7 +216,7 @@ function PaginationControls({
                         })
                     }
                 >
-                    Previous
+                    {copy.previous}
                 </Button>
                 <Button
                     variant="outline"
@@ -227,7 +230,7 @@ function PaginationControls({
                         })
                     }
                 >
-                    Next
+                    {copy.next}
                 </Button>
             </div>
         </div>
@@ -264,30 +267,30 @@ export default function ReferenceDataIndex({
     subCounties,
     wards,
 }: Props) {
+    const copy = usePage().props.localization.referenceData;
+
     return (
         <>
-            <Head title="Reference data" />
+            <Head title={copy.head_title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
                         <div>
                             <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">
-                                Shared platform control plane
+                                {copy.eyebrow}
                             </p>
                             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                                Reference data registry
+                                {copy.title}
                             </h1>
                             <p className="mt-3 max-w-3xl text-sm leading-6 text-[#c7d6dd] sm:text-base">
-                                Govern the canonical organizations, sectors, and
-                                programmes reused across all fourteen IDMIS
-                                modules.
+                                {copy.description}
                             </p>
                         </div>
                         {capabilities.manage && (
                             <Button variant="secondary" asChild>
                                 <Link href={dataImportsIndex()}>
                                     <FileUp data-icon="inline-start" />
-                                    Bulk upload
+                                    {copy.bulk_upload}
                                 </Link>
                             </Button>
                         )}
@@ -333,11 +336,11 @@ export default function ReferenceDataIndex({
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Building2 aria-hidden="true" /> Organizations
+                                <Building2 aria-hidden="true" />{' '}
+                                {copy.organizations}
                             </CardTitle>
                             <CardDescription>
-                                National, county, partner and civil-society
-                                bodies.
+                                {copy.organizations_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -409,7 +412,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Create organization
+                                    {copy.create_organization}
                                             </Button>
                                         </>
                                     )}
@@ -421,10 +424,10 @@ export default function ReferenceDataIndex({
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Layers3 aria-hidden="true" /> Sectors
+                                <Layers3 aria-hidden="true" /> {copy.sectors}
                             </CardTitle>
                             <CardDescription>
-                                Shared thematic and reporting classifications.
+                                {copy.sectors_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -488,7 +491,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Create sector
+                                    {copy.create_sector}
                                             </Button>
                                         </>
                                     )}
@@ -500,10 +503,10 @@ export default function ReferenceDataIndex({
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Database aria-hidden="true" /> Programmes
+                                <Database aria-hidden="true" /> {copy.programmes}
                             </CardTitle>
                             <CardDescription>
-                                Authoritative programme portfolio records.
+                                {copy.programmes_description}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -571,7 +574,7 @@ export default function ReferenceDataIndex({
                                                 type="submit"
                                                 disabled={processing}
                                             >
-                                                Create programme
+                                    {copy.create_programme}
                                             </Button>
                                         </>
                                     )}
@@ -812,6 +815,7 @@ function CountyRegister({
     counties: Props['counties'];
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.referenceData;
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [editing, setEditing] = useState<
         Props['counties']['data'][number] | null
@@ -834,10 +838,9 @@ function CountyRegister({
         <Card className="overflow-hidden">
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle>Counties</CardTitle>
+                    <CardTitle>{copy.counties}</CardTitle>
                     <CardDescription>
-                        Govern the official 47-county registry, identity
-                        provenance and map placement.
+                        {copy.counties_description}
                     </CardDescription>
                 </div>
                 {canManage && (
@@ -845,13 +848,13 @@ function CountyRegister({
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button type="button" variant="outline">
-                                    <Database data-icon="inline-start" /> Export
-                                    counties
+                                    <Database data-icon="inline-start" />{' '}
+                                    {copy.export_counties}
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>
-                                    Download format
+                                    {copy.download_format}
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {['csv', 'xlsx', 'json', 'pdf'].map(
@@ -876,8 +879,8 @@ function CountyRegister({
                                     datasetType: 'counties',
                                 })}
                             >
-                                <FileUp data-icon="inline-start" /> Download
-                                import template
+                                <FileUp data-icon="inline-start" />{' '}
+                                {copy.download_import_template}
                             </Link>
                         </Button>
                         <Button asChild variant="outline">
@@ -886,7 +889,8 @@ function CountyRegister({
                                     query: { type: 'counties' },
                                 })}
                             >
-                                <FileUp data-icon="inline-start" /> Bulk upload
+                                <FileUp data-icon="inline-start" />{' '}
+                                {copy.bulk_upload}
                             </Link>
                         </Button>
                         <Button
@@ -895,8 +899,8 @@ function CountyRegister({
                             disabled={selectedIds.length === 0}
                             onClick={() => setBulkOpen(true)}
                         >
-                            <Archive data-icon="inline-start" /> Archive
-                            selected
+                            <Archive data-icon="inline-start" />{' '}
+                            {copy.archive_selected}
                         </Button>
                         <FormSheet
                             title="Create county"
@@ -933,14 +937,14 @@ function CountyRegister({
                                     />
                                 </TableHead>
                             )}
-                            <TableHead>#</TableHead>
-                            <TableHead>County</TableHead>
-                            <TableHead>Region</TableHead>
-                            <TableHead>Map position</TableHead>
-                            <TableHead>References</TableHead>
+                            <TableHead>{copy.number}</TableHead>
+                            <TableHead>{copy.county}</TableHead>
+                            <TableHead>{copy.region}</TableHead>
+                            <TableHead>{copy.map_position}</TableHead>
+                            <TableHead>{copy.references}</TableHead>
                             {canManage && (
                                 <TableHead className="text-right">
-                                    Actions
+                                    {copy.actions}
                                 </TableHead>
                             )}
                         </TableRow>
@@ -983,7 +987,8 @@ function CountyRegister({
                                         {county.region ?? 'Not specified'}
                                     </TableCell>
                                     <TableCell>
-                                        {county.mapX.toFixed(2)},{' '}
+                                        {county.mapX.toFixed(2)}
+                                        {copy.coordinate_separator}{' '}
                                         {county.mapY.toFixed(2)}
                                     </TableCell>
                                     <TableCell>
@@ -1019,7 +1024,7 @@ function CountyRegister({
                                                                 )
                                                             }
                                                         >
-                                                            Edit county
+                                                            {copy.edit_county}
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             disabled={
@@ -1032,7 +1037,7 @@ function CountyRegister({
                                                                 )
                                                             }
                                                         >
-                                                            Archive county
+                                                            {copy.archive_county}
                                                         </DropdownMenuItem>
                                                     </DropdownMenuGroup>
                                                 </DropdownMenuContent>
@@ -1052,10 +1057,9 @@ function CountyRegister({
             >
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
-                        <SheetTitle>Edit county</SheetTitle>
+                        <SheetTitle>{copy.edit_county}</SheetTitle>
                         <SheetDescription>
-                            Update governed county metadata. Published snapshots
-                            retain their prior values.
+                            {copy.edit_county_description}
                         </SheetDescription>
                     </SheetHeader>
                     {editing && (
@@ -1076,9 +1080,9 @@ function CountyRegister({
             >
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>Archive county</SheetTitle>
+                        <SheetTitle>{copy.archive_county}</SheetTitle>
                         <SheetDescription>
-                            Only an unreferenced county can be archived.
+                            {copy.archive_county_description}
                         </SheetDescription>
                     </SheetHeader>
                     {archiving && (
@@ -1096,7 +1100,7 @@ function CountyRegister({
                                         disabled={processing}
                                     >
                                         <Archive data-icon="inline-start" />{' '}
-                                        Archive {archiving.identity.name}
+                                        {copy.archive} {archiving.identity.name}
                                     </Button>
                                 )}
                             </Form>
@@ -1107,10 +1111,9 @@ function CountyRegister({
             <Sheet open={bulkOpen} onOpenChange={setBulkOpen}>
                 <SheetContent>
                     <SheetHeader>
-                        <SheetTitle>Archive selected counties</SheetTitle>
+                        <SheetTitle>{copy.archive_selected_counties}</SheetTitle>
                         <SheetDescription>
-                            This atomic action fails if any selected county is
-                            referenced.
+                            {copy.archive_selected_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="px-4">
@@ -1142,7 +1145,8 @@ function CountyRegister({
                                         disabled={processing}
                                     >
                                         <Archive data-icon="inline-start" />{' '}
-                                        Archive {selectedIds.length} counties
+                                        {copy.archive} {selectedIds.length}{' '}
+                                        {copy.counties_lower}
                                     </Button>
                                 </>
                             )}
@@ -1265,14 +1269,15 @@ function ProgrammeCoverageRegister({
     filters: Props['filters'];
     canManage: boolean;
 }) {
+    const copy = usePage().props.localization.referenceData;
+
     return (
         <Card className="overflow-hidden">
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle>Programme county coverage</CardTitle>
+                    <CardTitle>{copy.programme_county_coverage}</CardTitle>
                     <CardDescription>
-                        Effective-dated programme reach, implementation
-                        authority, funding and source provenance.
+                        {copy.programme_coverage_description}
                     </CardDescription>
                 </div>
                 {canManage && (
@@ -1379,7 +1384,7 @@ function ProgrammeCoverageRegister({
                                         />
                                     </Field>
                                     <Button type="submit" disabled={processing}>
-                                        Save county coverage
+                                        {copy.save_county_coverage}
                                     </Button>
                                 </>
                             )}
@@ -1414,6 +1419,7 @@ function ProgrammeCoverageRegister({
 }
 
 function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
+    const copy = usePage().props.localization.referenceData;
     const [open, setOpen] = useState(false);
 
     return (
@@ -1432,7 +1438,7 @@ function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
                 <DropdownMenuContent align="end">
                     <DropdownMenuGroup>
                         <DropdownMenuItem onSelect={() => setOpen(true)}>
-                            <Trash2 /> Review archive
+                            <Trash2 /> {copy.review_archive}
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
                 </DropdownMenuContent>
@@ -1440,15 +1446,15 @@ function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
             <Sheet open={open} onOpenChange={setOpen}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
-                        <SheetTitle>Archive programme coverage</SheetTitle>
+                        <SheetTitle>{copy.archive_programme_coverage}</SheetTitle>
                         <SheetDescription>
-                            Archive this effective assignment. Published
-                            catalogue snapshots retain their immutable copy.
+                            {copy.archive_coverage_description}
                         </SheetDescription>
                     </SheetHeader>
                     <div className="flex flex-col gap-4 px-4 pb-8">
                         <p className="text-sm text-muted-foreground">
-                            {String(row.cells[0])} · {String(row.cells[4])} ·{' '}
+                            {String(row.cells[0])} {copy.separator}{' '}
+                            {String(row.cells[4])} {copy.separator}{' '}
                             {String(row.cells[6])}
                         </p>
                         <Form
@@ -1463,7 +1469,7 @@ function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
                                     variant="destructive"
                                     disabled={processing}
                                 >
-                                    <Trash2 /> Archive coverage
+                                    <Trash2 /> {copy.archive_coverage}
                                 </Button>
                             )}
                         </Form>
@@ -1483,16 +1489,16 @@ function ReleaseRegister({
     releases: ReferenceDataRelease[];
     capabilities: Props['capabilities'];
 }) {
+    const copy = usePage().props.localization.referenceData;
     const [selected, setSelected] = useState<ReferenceDataRelease | null>(null);
 
     return (
         <Card>
             <CardHeader className="flex-row items-start justify-between gap-4">
                 <div>
-                    <CardTitle>Canonical releases</CardTitle>
+                    <CardTitle>{copy.canonical_releases}</CardTitle>
                     <CardDescription>
-                        Immutable, checksummed catalogue snapshots for
-                        controlled module and integration consumption.
+                        {copy.canonical_releases_description}
                     </CardDescription>
                 </div>
                 {capabilities.manage && (
@@ -1538,7 +1544,7 @@ function ReleaseRegister({
                                         </p>
                                     )}
                                     <Button type="submit" disabled={processing}>
-                                        Submit snapshot
+                                        {copy.submit_snapshot}
                                     </Button>
                                 </>
                             )}
@@ -1550,14 +1556,14 @@ function ReleaseRegister({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Version</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Contents</TableHead>
-                            <TableHead>Submitted by</TableHead>
-                            <TableHead>Effective</TableHead>
-                            <TableHead>Checksum</TableHead>
+                            <TableHead>{copy.version}</TableHead>
+                            <TableHead>{copy.status}</TableHead>
+                            <TableHead>{copy.contents}</TableHead>
+                            <TableHead>{copy.submitted_by}</TableHead>
+                            <TableHead>{copy.effective}</TableHead>
+                            <TableHead>{copy.checksum}</TableHead>
                             <TableHead className="text-right">
-                                Actions
+                                {copy.actions}
                             </TableHead>
                         </TableRow>
                     </TableHeader>
@@ -1566,7 +1572,7 @@ function ReleaseRegister({
                             releases.map((release) => (
                                 <TableRow key={release.id}>
                                     <TableCell className="font-medium">
-                                        v{release.version}
+                                        {copy.version_prefix}{release.version}
                                     </TableCell>
                                     <TableCell>
                                         <Badge
@@ -1592,7 +1598,8 @@ function ReleaseRegister({
                                         {release.effectiveFrom ?? 'Pending'}
                                     </TableCell>
                                     <TableCell className="font-mono text-xs">
-                                        {release.checksum.slice(0, 12)}…
+                                        {release.checksum.slice(0, 12)}
+                                        {copy.ellipsis}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         {capabilities.approve &&
@@ -1620,8 +1627,7 @@ function ReleaseRegister({
                                                                 }
                                                             >
                                                                 <ClipboardCheck />
-                                                                Review and
-                                                                publish
+                                                                {copy.review_and_publish}
                                                             </DropdownMenuItem>
                                                         </DropdownMenuGroup>
                                                     </DropdownMenuContent>
@@ -1650,11 +1656,12 @@ function ReleaseRegister({
                 <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
                     <SheetHeader>
                         <SheetTitle>
-                            Publish reference-data release v{selected?.version}
+                            {copy.publish_release}{' '}
+                            {copy.version_prefix}
+                            {selected?.version}
                         </SheetTitle>
                         <SheetDescription>
-                            Independently validate the snapshot checksum and
-                            record its approval authority and effective date.
+                            {copy.publish_release_description}
                         </SheetDescription>
                     </SheetHeader>
                     {selected && (
@@ -1666,8 +1673,10 @@ function ReleaseRegister({
                             {({ errors, processing }) => (
                                 <>
                                     <p className="text-sm text-muted-foreground">
-                                        Submitted by {selected.submittedBy} ·{' '}
-                                        checksum {selected.checksum}
+                                        {copy.submitted_by}{' '}
+                                        {selected.submittedBy} {copy.separator}{' '}
+                                        {copy.checksum_lower}{' '}
+                                        {selected.checksum}
                                     </p>
                                     <Field
                                         label="Approval reference"
@@ -1689,7 +1698,7 @@ function ReleaseRegister({
                                         error={errors.effective_from}
                                     />
                                     <Button type="submit" disabled={processing}>
-                                        Publish immutable release
+                                        {copy.publish_immutable_release}
                                     </Button>
                                 </>
                             )}
@@ -1712,17 +1721,19 @@ function RegistryTable({
     rows: RegistryCell[][];
     pagination: Pagination<unknown>;
 }) {
+    const copy = usePage().props.localization.referenceData;
+
     return (
         <Card>
             <CardHeader className="flex-row items-center justify-between">
                 <div>
                     <CardTitle>{title}</CardTitle>
                     <CardDescription>
-                        Governed canonical records and lifecycle state.
+                        {copy.registry_description}
                     </CardDescription>
                 </div>
                 <Badge variant="secondary">
-                    {pagination.total.toLocaleString()} records
+                    {pagination.total.toLocaleString()} {copy.records}
                 </Badge>
             </CardHeader>
             <CardContent className="p-0">
