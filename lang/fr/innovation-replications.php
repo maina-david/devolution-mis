@@ -93,4 +93,12 @@ return [
     'clean' => 'Sain',
     'pending_scan' => 'Analyse en attente',
     'infected' => 'Infecté',
+    'errors' => [
+        'scale_ready_required' => 'Seules les innovations vérifiées indépendamment et approuvées pour le déploiement peuvent être répliquées.', 'source_county_required' => 'La réplication intercomtés exige un comté source identifié.',
+        'source_lineage_required' => 'Une innovation prête au déploiement avec une lignée de données de référence vérifiée est requise.', 'different_target_required' => 'Le comté cible de la réplication doit être différent du comté source.',
+        'accountable_scope_required' => 'Le responsable de l’adoption doit être autorisé pour le comté cible.', 'retained_replication_exists' => 'Cette innovation possède déjà un enregistrement de réplication conservé pour le comté cible.',
+        'measured_outcome_required' => 'Une valeur réelle mesurée et un résumé du résultat sont requis pour la vérification.', 'clean_evidence_required' => 'Au moins une preuve de réplication saine et active est requise pour la vérification.',
+        'independent_verifier_required' => 'Le créateur, le responsable de l’adoption et le soumissionnaire du résultat ne peuvent pas vérifier l’adoption.',
+    ],
+    'audit' => ['created' => 'Réplication :reference créée pour :county.', 'transitioned' => 'Réplication :reference passée à l’état :state.', 'verified' => 'Réplication :reference décidée comme :decision.'],
 ];

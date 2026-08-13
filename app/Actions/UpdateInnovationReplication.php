@@ -25,11 +25,11 @@ class UpdateInnovationReplication
             $actualValue = $updates['actual_value'] ?? $replication->actual_value;
             $outcomeSummary = $updates['outcome_summary'] ?? $replication->outcome_summary;
             if ($transition === 'submit_verification' && ($actualValue === null || ! filled($outcomeSummary))) {
-                throw ValidationException::withMessages(['actual_value' => 'A measured actual value and outcome summary are required for verification.']);
+                throw ValidationException::withMessages(['actual_value' => __('innovation-replications.errors.measured_outcome_required')]);
             }
             $hasCleanEvidence = $replication->documentLinks->contains(fn ($link): bool => $link->purpose === 'innovation-replication-evidence' && $link->document->scan_status === 'clean' && $link->document->record_status === 'active');
             if ($transition === 'submit_verification' && ! $hasCleanEvidence) {
-                throw ValidationException::withMessages(['document' => 'At least one clean, active replication evidence record is required for verification.']);
+                throw ValidationException::withMessages(['document' => __('innovation-replications.errors.clean_evidence_required')]);
             }
             $replication->update($updates);
             $instance = $this->transitionWorkflow->handle($replication->workflowInstance()->firstOrFail(), $transition, $actor, ['adaptation_ready' => filled($replication->adaptation_plan), 'measure_ready' => filled($replication->success_measure), 'outcome_ready' => $replication->actual_value !== null && filled($replication->outcome_summary), 'evidence_ready' => $hasCleanEvidence], $attributes['rationale']);
@@ -43,7 +43,7 @@ class UpdateInnovationReplication
                 'verified_at' => $transition === 'submit_verification' ? null : $replication->verified_at,
                 'decision_checksum' => $transition === 'submit_verification' ? null : $replication->decision_checksum,
             ]);
-            $this->auditLogger->record($actor, $replication, 'knowledge.innovation_replication.transitioned', "Replication {$replication->reference} transitioned to {$instance->current_state}.", $replication->target_county_id, ['transition' => $transition]);
+            $this->auditLogger->record($actor, $replication, 'knowledge.innovation_replication.transitioned', __('innovation-replications.audit.transitioned', ['reference' => $replication->reference, 'state' => $instance->current_state]), $replication->target_county_id, ['transition' => $transition]);
 
             return $replication->refresh();
         });

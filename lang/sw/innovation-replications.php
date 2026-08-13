@@ -93,4 +93,12 @@ return [
     'clean' => 'Safi',
     'pending_scan' => 'Inasubiri uchanganuzi',
     'infected' => 'Imeambukizwa',
+    'errors' => [
+        'scale_ready_required' => 'Ubunifu uliothibitishwa kwa uhuru na kuidhinishwa kupanuliwa pekee ndio unaweza kuenezwa.', 'source_county_required' => 'Uenezaji baina ya kaunti unahitaji kaunti chanzo iliyotambuliwa.',
+        'source_lineage_required' => 'Ubunifu ulio tayari kupanuliwa wenye nasaba ya data rejea iliyothibitishwa unahitajika.', 'different_target_required' => 'Kaunti lengwa ya uenezaji lazima iwe tofauti na kaunti chanzo.',
+        'accountable_scope_required' => 'Muasili anayewajibika lazima awe ameidhinishwa kwa kaunti lengwa.', 'retained_replication_exists' => 'Ubunifu huu tayari una rekodi ya uenezaji iliyohifadhiwa kwa kaunti lengwa.',
+        'measured_outcome_required' => 'Thamani halisi iliyopimwa na muhtasari wa matokeo vinahitajika kwa uthibitishaji.', 'clean_evidence_required' => 'Angalau rekodi moja safi na hai ya ushahidi wa uenezaji inahitajika kwa uthibitishaji.',
+        'independent_verifier_required' => 'Muundaji, muasili anayewajibika na mwasilishaji wa matokeo hawawezi kuthibitisha uasili.',
+    ],
+    'audit' => ['created' => 'Uenezaji :reference umeundwa kwa :county.', 'transitioned' => 'Uenezaji :reference umehamishwa hadi :state.', 'verified' => 'Uenezaji :reference umeamuliwa kuwa :decision.'],
 ];

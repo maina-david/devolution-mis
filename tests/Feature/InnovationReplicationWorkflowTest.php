@@ -12,6 +12,7 @@ use Database\Seeders\KnowledgeWorkflowSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -120,6 +121,34 @@ class InnovationReplicationWorkflowTest extends TestCase
 
         $this->actingAs($creator)->post(route('knowledge.innovation-replications.store'), $this->payload($legacyInnovation, $target, $adopter))->assertSessionHasErrors('devolution_innovation_id');
         $this->assertDatabaseCount('innovation_replications', 0);
+    }
+
+    public function test_replication_safeguards_follow_the_active_locale_and_catalogs_remain_in_parity(): void
+    {
+        $source = County::factory()->create();
+        $target = County::factory()->create();
+        $creator = User::factory()->devolutionAdmin()->create();
+        $adopter = User::factory()->countyOfficial($target)->create();
+        $draft = DevolutionInnovation::factory()->create([
+            'county_id' => $source->id,
+            'submitted_by' => $creator->id,
+            'status' => 'draft',
+        ]);
+
+        $this->actingAs($creator)
+            ->withSession(['locale' => 'fr'])
+            ->post(route('knowledge.innovation-replications.store'), $this->payload($draft, $target, $adopter))
+            ->assertSessionHasErrors([
+                'devolution_innovation_id' => 'Seules les innovations vérifiées indépendamment et approuvées pour le déploiement peuvent être répliquées.',
+            ]);
+
+        $englishKeys = array_keys(Arr::dot(require lang_path('en/innovation-replications.php')));
+        sort($englishKeys);
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedKeys = array_keys(Arr::dot(require lang_path("{$locale}/innovation-replications.php")));
+            sort($localizedKeys);
+            $this->assertSame($englishKeys, $localizedKeys, "Innovation replication catalog keys differ for {$locale}.");
+        }
     }
 
     /** @return array<string, mixed> */
