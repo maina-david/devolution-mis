@@ -12,7 +12,11 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import { formatCurrency, formatNumber } from '@/lib/reference-catalog';
+import {
+    DEFAULT_CURRENCY_CODE,
+    formatCurrency,
+    formatNumber,
+} from '@/lib/reference-catalog';
 
 export type PartnerPortfolioCounty = CountyIdentityValue & {
     assessmentStatus: string;
@@ -37,7 +41,9 @@ export default function PartnerPortfolioMap({
         counties.length === 1 ? counties[0] : null,
     );
     const money = (value: number) =>
-        formatCurrency(value, 'KES', { maximumFractionDigits: 0 });
+        formatCurrency(value, DEFAULT_CURRENCY_CODE, {
+            maximumFractionDigits: 0,
+        });
 
     return (
         <section className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(19rem,0.7fr)]">

@@ -41,11 +41,18 @@ class LegacyReferenceInventoryTest extends TestCase
     public function test_applied_retain_and_deprecate_decisions_leave_the_unresolved_inventory_while_rejected_records_return_to_it(): void
     {
         $county = County::factory()->create();
-        $unassigned = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
-        $pending = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
-        $retained = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
-        $deprecated = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
-        $rejected = Assessment::factory()->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+        $assessments = Assessment::factory()
+            ->count(5)
+            ->sequence(
+                ['cycle' => '2018/19 ACPA'],
+                ['cycle' => '2019/20 ACPA'],
+                ['cycle' => '2020/21 ACPA'],
+                ['cycle' => '2021/22 ACPA'],
+                ['cycle' => '2022/23 ACPA'],
+            )
+            ->create(['county_id' => $county->id, 'reference_data_release_id' => null]);
+
+        [$unassigned, $pending, $retained, $deprecated, $rejected] = $assessments->all();
 
         ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $pending->id, 'status' => 'approved']);
         ReferenceLineageDisposition::factory()->create(['record_type' => 'assessment', 'record_id' => $retained->id, 'decision' => 'retain_legacy', 'status' => 'applied']);
