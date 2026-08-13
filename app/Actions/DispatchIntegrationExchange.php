@@ -17,7 +17,7 @@ class DispatchIntegrationExchange
     public function handle(IntegrationContract $contract, User $actor, array $attributes): IntegrationExchange
     {
         $contract->load('system');
-        abort_unless($contract->status === 'published' && ($contract->effective_from === null || $contract->effective_from->isPast()) && ($contract->effective_to === null || $contract->effective_to->isFuture()), 409, 'Only an effective published interface contract can exchange data.');
+        abort_unless($contract->status === 'published' && ($contract->effective_from === null || $contract->effective_from->isPast()) && ($contract->effective_to === null || $contract->effective_to->isFuture()), 409, __('integrations.exchange.errors.effective_outbound_contract'));
         $payload = $attributes['payload'];
         $this->validator->validate($payload, $contract->request_schema);
         $canonical = json_encode($this->canonicalize($payload), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
@@ -28,7 +28,7 @@ class DispatchIntegrationExchange
             DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$idempotencyKey]);
             $existing = IntegrationExchange::query()->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
             if ($existing !== null) {
-                abort_unless($existing->integration_contract_id === $contract->id && hash_equals($existing->payload_checksum, $payloadChecksum), 409, 'The idempotency key is already associated with a different exchange.');
+                abort_unless($existing->integration_contract_id === $contract->id && hash_equals($existing->payload_checksum, $payloadChecksum), 409, __('integrations.exchange.errors.idempotency_conflict'));
 
                 return $existing;
             }

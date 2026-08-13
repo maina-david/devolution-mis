@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\IngestIntegrationExchange;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\IntegrationContract;
@@ -13,6 +14,7 @@ use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 use Laravel\Passport\ClientRepository;
 use Laravel\Passport\Passport;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class IntegrationExchangeIngestionTest extends TestCase
@@ -142,6 +144,35 @@ class IntegrationExchangeIngestionTest extends TestCase
         $this->postJson(route('api.integration-exchanges.store', $contract), $payload, $headers)->assertStatus(202);
 
         $this->assertSame(1, IntegrationExchange::query()->where('integration_contract_id', $contract->id)->count());
+    }
+
+    public function test_exchange_safeguards_are_translated_and_catalogs_remain_in_parity(): void
+    {
+        $client = $this->client('Localized source client');
+        $system = IntegrationSystem::factory()->create([
+            'oauth_client_id' => $client->id,
+            'status' => 'inactive',
+            'direction' => 'inbound',
+        ]);
+        $contract = $this->contract($system);
+        app()->setLocale('fr');
+
+        try {
+            app(IngestIntegrationExchange::class)->handle($contract, $client->id, [], []);
+            $this->fail('Inactive integration systems must reject inbound exchanges.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('integrations.exchange.errors.system_inactive'), $exception->getMessage());
+            $this->assertStringContainsString('n’est pas actif', $exception->getMessage());
+        }
+
+        $englishKeys = array_keys(Arr::dot(require lang_path('en/integrations.php')));
+        sort($englishKeys);
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedKeys = array_keys(Arr::dot(require lang_path("{$locale}/integrations.php")));
+            sort($localizedKeys);
+            $this->assertSame($englishKeys, $localizedKeys, "Integration catalog keys differ for {$locale}.");
+        }
     }
 
     private function client(string $name): Client

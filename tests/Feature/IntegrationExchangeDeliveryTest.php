@@ -65,6 +65,7 @@ class IntegrationExchangeDeliveryTest extends TestCase
 
     public function test_non_retryable_failure_is_dead_lettered_and_manual_retry_is_county_scoped(): void
     {
+        config()->set('inertia.ssr.enabled', false);
         $county = County::factory()->create();
         $otherCounty = County::factory()->create();
         $actor = User::factory()->devolutionAdmin()->create();
@@ -93,7 +94,6 @@ class IntegrationExchangeDeliveryTest extends TestCase
         $this->assertDatabaseHas('integration_exchange_attempts', ['integration_exchange_id' => $exchange->id, 'attempt_number' => 2, 'trigger_source' => 'manual_retry', 'outcome' => 'succeeded']);
         Http::assertSentCount(2);
 
-        config()->set('inertia.ssr.enabled', false);
         $this->actingAs($actor)->get(route('integrations.index'))->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
             ->where('exchanges.data.0.id', $exchange->id)
             ->where('exchanges.data.0.attemptHistory.0.outcome', 'dead_lettered')

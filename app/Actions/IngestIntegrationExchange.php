@@ -28,21 +28,21 @@ class IngestIntegrationExchange
         $contract->load('system.oauthClient');
         $system = $contract->system;
 
-        abort_unless($contract->status === 'published' && ($contract->effective_from === null || $contract->effective_from->isPast()) && ($contract->effective_to === null || $contract->effective_to->isFuture()), 409, 'Only an effective published interface contract can receive data.');
-        abort_unless(in_array($system->direction, ['inbound', 'bidirectional'], true), 409, 'This integration system is not approved for inbound exchange.');
-        abort_unless($system->status === 'active', 409, 'The integration system is not active.');
-        abort_unless($system->oauth_client_id === $clientId, 403, 'The OAuth client is not bound to this integration system.');
+        abort_unless($contract->status === 'published' && ($contract->effective_from === null || $contract->effective_from->isPast()) && ($contract->effective_to === null || $contract->effective_to->isFuture()), 409, __('integrations.exchange.errors.effective_inbound_contract'));
+        abort_unless(in_array($system->direction, ['inbound', 'bidirectional'], true), 409, __('integrations.exchange.errors.inbound_not_approved'));
+        abort_unless($system->status === 'active', 409, __('integrations.exchange.errors.system_inactive'));
+        abort_unless($system->oauth_client_id === $clientId, 403, __('integrations.exchange.errors.oauth_client_unbound'));
 
         if ($system->environment === 'production') {
-            abort_unless($system->production_approved_at !== null && filled($system->production_approval_reference), 409, 'Production source-owner activation approval is required.');
-            abort_unless(filled($contract->source_owner_approval_reference) && filled($contract->data_sharing_agreement_reference), 409, 'Production contract and data-sharing approvals are required.');
+            abort_unless($system->production_approved_at !== null && filled($system->production_approval_reference), 409, __('integrations.exchange.errors.production_source_approval'));
+            abort_unless(filled($contract->source_owner_approval_reference) && filled($contract->data_sharing_agreement_reference), 409, __('integrations.exchange.errors.production_agreements'));
         }
 
         $missingHeaders = collect($contract->required_headers ?? [])
             ->filter(fn (string $header): bool => blank(Arr::get($headers, mb_strtolower($header))))
             ->values();
         if ($missingHeaders->isNotEmpty()) {
-            throw ValidationException::withMessages(['headers' => 'Missing contract-required headers: '.$missingHeaders->implode(', ').'.']);
+            throw ValidationException::withMessages(['headers' => __('integrations.exchange.errors.missing_headers', ['headers' => $missingHeaders->implode(', ')])]);
         }
 
         /** @var array<string, mixed> $payload */
@@ -57,7 +57,7 @@ class IngestIntegrationExchange
 
             $existing = IntegrationExchange::query()->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
             if ($existing !== null) {
-                abort_unless($existing->integration_contract_id === $contract->id && $existing->oauth_client_id === $clientId && hash_equals($existing->payload_checksum, $payloadChecksum), 409, 'The idempotency key is already associated with a different exchange.');
+                abort_unless($existing->integration_contract_id === $contract->id && $existing->oauth_client_id === $clientId && hash_equals($existing->payload_checksum, $payloadChecksum), 409, __('integrations.exchange.errors.idempotency_conflict'));
                 $attemptNumber = $existing->attempt_count + 1;
                 $existing->update(['attempt_count' => $attemptNumber]);
                 $this->recordInboundAttempt($existing, $attemptNumber, 'replayed', $system->oauthClient?->name, $startedAt, $startedNs);
@@ -90,7 +90,7 @@ class IngestIntegrationExchange
             ]);
             $this->recordInboundAttempt($exchange, 1, 'accepted', $system->oauthClient?->name, $startedAt, $startedNs);
 
-            $this->auditLogger->record(null, $exchange, 'integration.exchange.ingested', "Inbound exchange {$exchange->correlation_id} accepted from {$system->code}.", $exchange->county_id, ['contract_id' => $contract->id, 'oauth_client_id' => $clientId, 'payload_checksum' => $payloadChecksum]);
+            $this->auditLogger->record(null, $exchange, 'integration.exchange.ingested', __('integrations.exchange.audit.ingested', ['correlation' => $exchange->correlation_id, 'system' => $system->code]), $exchange->county_id, ['contract_id' => $contract->id, 'oauth_client_id' => $clientId, 'payload_checksum' => $payloadChecksum]);
 
             return ['exchange' => $exchange, 'replayed' => false];
         });
@@ -101,7 +101,7 @@ class IngestIntegrationExchange
         $completedAt = now();
         IntegrationExchangeAttempt::create([
             'integration_exchange_id' => $exchange->id,
-            'initiated_by_name' => $clientName ?? 'OAuth client',
+            'initiated_by_name' => $clientName ?? __('integrations.exchange.oauth_client'),
             'attempt_number' => $attemptNumber,
             'trigger_source' => 'inbound_api',
             'outcome' => $outcome,
