@@ -55,7 +55,9 @@ type Props = {
     documents: TableData;
     grants: TableData;
     administrativeHierarchy: {
+        parentUnitCount: number;
         subCountyCount: number;
+        constituencyCount: number;
         wardCount: number;
         registeredVoters: number;
         units: Array<{
@@ -239,8 +241,8 @@ export default function CountyShow({
                                 <dl className="mb-5 grid gap-3 sm:grid-cols-3">
                                     {[
                                         [
-                                            copy.sub_counties,
-                                            administrativeHierarchy.subCountyCount,
+                                            copy.parent_units,
+                                            administrativeHierarchy.parentUnitCount,
                                         ],
                                         [
                                             copy.wards,
@@ -278,6 +280,18 @@ export default function CountyShow({
                                                         {unit.name}
                                                     </span>
                                                     <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="font-normal"
+                                                        >
+                                                            {copy[
+                                                                `classification_${unit.classification}`
+                                                            ] ??
+                                                                unit.classification.replaceAll(
+                                                                    '_',
+                                                                    ' ',
+                                                                )}
+                                                        </Badge>
                                                         {interpolate(
                                                             copy.ward_count,
                                                             {

@@ -66,7 +66,7 @@ class CountyDetailData
         ];
     }
 
-    /** @return array{subCountyCount:int,wardCount:int,registeredVoters:int,units:list<array{id:string,code:string,name:string,classification:string,sourceAuthority:string,effectiveFrom:string,registeredVoters:int,wards:list<array{id:string,code:string,name:string,registeredVoters:int}>}>} */
+    /** @return array{parentUnitCount:int,subCountyCount:int,constituencyCount:int,wardCount:int,registeredVoters:int,units:list<array{id:string,code:string,name:string,classification:string,sourceAuthority:string,effectiveFrom:string,registeredVoters:int,wards:list<array{id:string,code:string,name:string,registeredVoters:int}>}>} */
     private function administrativeHierarchy(County $county): array
     {
         $subCounties = SubCounty::query()
@@ -108,7 +108,9 @@ class CountyDetailData
         }
 
         return [
-            'subCountyCount' => count($units),
+            'parentUnitCount' => count($units),
+            'subCountyCount' => $subCounties->whereIn('classification', ['county_sub_county', 'national_sub_county'])->count(),
+            'constituencyCount' => $subCounties->where('classification', 'constituency')->count(),
             'wardCount' => $wardCount,
             'registeredVoters' => $registeredVoters,
             'units' => $units,

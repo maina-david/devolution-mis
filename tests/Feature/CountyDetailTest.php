@@ -30,7 +30,7 @@ class CountyDetailTest extends TestCase
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'cycle' => 'Visible cycle', 'created_at' => '2026-02-01']);
         AssessmentDocument::factory()->create(['county_id' => $county->id, 'assessment_id' => $assessment->id, 'title' => 'Visible evidence', 'created_at' => '2026-03-01']);
         CountyGrant::factory()->create(['county_id' => $county->id, 'programme' => 'Visible grant', 'created_at' => '2026-04-01']);
-        $subCounty = SubCounty::factory()->create(['county_id' => $county->id, 'name' => 'Westlands', 'code' => 'SC-047-01']);
+        $subCounty = SubCounty::factory()->create(['county_id' => $county->id, 'name' => 'Westlands', 'code' => 'CST-047-01', 'classification' => 'constituency']);
         Ward::factory()->create(['sub_county_id' => $subCounty->id, 'name' => 'Parklands/Highridge', 'code' => 'WD-047-001', 'registered_voters_2022' => 42_500]);
 
         $this->actingAs($admin)->withSession(['locale' => 'sw'])->get(route('counties.show', [$county, 'from' => '2026-01-01', 'to' => '2026-12-31']))
@@ -43,13 +43,16 @@ class CountyDetailTest extends TestCase
                 ->has('assessments.rows', 1)
                 ->has('documents.rows', 1)
                 ->has('grants.rows', 1)
-                ->where('administrativeHierarchy.subCountyCount', 1)
+                ->where('administrativeHierarchy.parentUnitCount', 1)
+                ->where('administrativeHierarchy.subCountyCount', 0)
+                ->where('administrativeHierarchy.constituencyCount', 1)
                 ->where('administrativeHierarchy.wardCount', 1)
                 ->where('administrativeHierarchy.registeredVoters', 42_500)
                 ->where('administrativeHierarchy.units.0.name', 'Westlands')
                 ->where('administrativeHierarchy.units.0.wards.0.name', 'Parklands/Highridge')
                 ->where('localization.current', 'sw')
-                ->where('localization.countyDetail.administrative_hierarchy', 'Mpangilio wa kiutawala')
+                ->where('localization.countyDetail.administrative_hierarchy', 'Mpangilio wa kiutawala na uchaguzi')
+                ->where('localization.countyDetail.classification_constituency', 'Eneo bunge')
                 ->where('assessments.columns.0', 'Mzunguko')
                 ->where('filters.from', '2026-01-01')
             );
