@@ -455,12 +455,13 @@ function RepositoryTable({
     capabilities: Props['capabilities'];
     filters: Props['filters'];
 }) {
+    const copy = usePage().props.localization.knowledge.ui;
     const pagination = page(items);
 
     return (
         <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
             <TableHeader
-                title="Curated repository"
+                title={copy.curated_repository}
                 description={`${items.total.toLocaleString()} authorized resources`}
                 filters={filters}
             />
@@ -500,7 +501,7 @@ function RepositoryTable({
                 />
             ) : (
                 <WorkspaceEmptyState
-                    title="No knowledge resources found"
+                    title={copy.no_knowledge_resources_found}
                     description="Adjust the filters or contribute the first evidence-backed practice, case study, research output, toolkit, or blog."
                     className="min-h-72 border-0"
                 />
@@ -598,7 +599,7 @@ function InnovationTable({
                 />
             ) : (
                 <WorkspaceEmptyState
-                    title="No matching innovations"
+                    title={copy.no_matching_innovations}
                     description="Submit a locally developed solution for screening and incubation."
                     className="min-h-64 border-0"
                 />
@@ -725,7 +726,7 @@ function ModerationQueue({
                     />
                 ) : (
                     <WorkspaceEmptyState
-                        title="No matching community reports"
+                        title={copy.no_matching_community_reports}
                         description="Reports within your authorized scope will appear here with their SLA and decision state."
                         className="min-h-64 border-0"
                     />
@@ -811,23 +812,23 @@ function CommunityReportActions({
                                     </Badge>
                                 </div>
                                 <Detail
-                                    label="Discussion"
+                                    label={copy.discussion}
                                     value={report.discussion}
                                 />
                                 <Detail
-                                    label="Reported contribution"
+                                    label={copy.reported_contribution}
                                     value={`${report.postAuthor}: ${report.postBody}`}
                                 />
                                 <Detail
-                                    label="Report"
+                                    label={copy.report}
                                     value={report.description}
                                 />
                                 <Detail
-                                    label="Reporter"
+                                    label={copy.reporter}
                                     value={report.reporter}
                                 />
                                 <Detail
-                                    label="SLA due"
+                                    label={copy.sla_due}
                                     value={
                                         report.dueAt
                                             ? new Date(
@@ -837,7 +838,7 @@ function CommunityReportActions({
                                     }
                                 />
                                 <Detail
-                                    label="Decision"
+                                    label={copy.decision}
                                     value={report.resolution ?? 'Pending'}
                                 />
                             </>
@@ -858,7 +859,7 @@ function CommunityReportActions({
                                         />
                                         <TextField
                                             name="rationale"
-                                            label="Decision rationale"
+                                            label={copy.decision_rationale}
                                             error={errors.rationale}
                                         />
                                         {surface !== 'triage' && (
@@ -866,7 +867,9 @@ function CommunityReportActions({
                                                 <SearchableSelect
                                                     id={`report-post-action-${report.id}`}
                                                     name="post_action"
-                                                    label="Contribution action"
+                                                    label={
+                                                        copy.contribution_action
+                                                    }
                                                     options={[
                                                         {
                                                             id: 'hide',
@@ -880,7 +883,9 @@ function CommunityReportActions({
                                                 />
                                                 <TextField
                                                     name="resolution"
-                                                    label="Resolution and safeguards"
+                                                    label={
+                                                        copy.resolution_and_safeguards
+                                                    }
                                                     error={errors.resolution}
                                                 />
                                             </>
@@ -955,7 +960,7 @@ function ItemForm({
 
     return (
         <FormSheet
-            title="Contribute knowledge resource"
+            title={copy.contribute_knowledge_resource}
             description="Create an evidence-backed resource and link it to secure repository evidence or e-learning."
             triggerLabel="New resource"
             triggerDisabled={!catalogue.available}
@@ -973,19 +978,19 @@ function ItemForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <Field
                                 name="title"
-                                label="Resource title"
+                                label={copy.resource_title}
                                 error={errors.title}
                             />
                             <SearchableSelect
                                 id="knowledge-type"
                                 name="item_type"
-                                label="Resource type"
+                                label={copy.resource_type}
                                 options={itemTypes}
                             />
                             <SearchableSelect
                                 id="knowledge-visibility"
                                 name="visibility"
-                                label="Visibility"
+                                label={copy.visibility}
                                 options={['national', 'county', 'internal'].map(
                                     option,
                                 )}
@@ -994,61 +999,61 @@ function ItemForm({
                             <SearchableSelect
                                 id="knowledge-county"
                                 name="county_id"
-                                label="County scope"
+                                label={copy.county_scope}
                                 options={options.counties}
                                 optional
                             />
                             <SearchableSelect
                                 id="knowledge-sector"
                                 name="sector_id"
-                                label="Sector"
+                                label={copy.sector}
                                 options={options.sectors.map(toNamed)}
                                 optional
                             />
                             <SearchableSelect
                                 id="knowledge-document"
                                 name="assessment_document_id"
-                                label="Repository document"
+                                label={copy.repository_document}
                                 options={options.documents.map(toNamed)}
                                 optional
                             />
                             <SearchableSelect
                                 id="knowledge-course"
                                 name="course_ids[]"
-                                label="Linked e-learning course"
+                                label={copy.linked_e_learning_course}
                                 options={options.courses.map(toNamed)}
                                 optional
                             />
                             <Field
                                 name="source_organization"
-                                label="Source organization"
+                                label={copy.source_organization}
                                 optional
                             />
                             <Field
                                 name="external_url"
-                                label="External source URL"
+                                label={copy.external_source_url}
                                 optional
                             />
                             <ReferenceCatalogSelect
                                 id="knowledge-language"
                                 name="language"
-                                label="Language"
+                                label={copy.language}
                                 catalog="language"
                             />
                             <Field
                                 name="tags"
-                                label="Tags (comma separated)"
+                                label={copy.tags_comma_separated}
                                 error={errors.tags}
                             />
                         </div>
                         <TextField
                             name="summary"
-                            label="Executive summary"
+                            label={copy.executive_summary}
                             error={errors.summary}
                         />
                         <TextField
                             name="content_body"
-                            label="Curated content"
+                            label={copy.curated_content}
                             optional
                             error={errors.content_body}
                         />
@@ -1073,7 +1078,7 @@ function DiscussionForm({
 
     return (
         <FormSheet
-            title="Open community discussion"
+            title={copy.open_community_discussion}
             description="Convene a moderated community of practice around a resource or county challenge."
             triggerLabel="New discussion"
             icon={MessageSquare}
@@ -1081,12 +1086,12 @@ function DiscussionForm({
             <Form action={storeDiscussion()} className="grid gap-4 pt-4">
                 {({ processing }) => (
                     <>
-                        <Field name="title" label="Discussion title" />
-                        <TextField name="prompt" label="Opening prompt" />
+                        <Field name="title" label={copy.discussion_title} />
+                        <TextField name="prompt" label={copy.opening_prompt} />
                         <SearchableSelect
                             id="discussion-item"
                             name="knowledge_item_id"
-                            label="Linked resource"
+                            label={copy.linked_resource}
                             options={items.map((item) => ({
                                 id: item.id,
                                 name: `${item.reference} · ${item.title}`,
@@ -1096,14 +1101,14 @@ function DiscussionForm({
                         <SearchableSelect
                             id="discussion-county"
                             name="county_id"
-                            label="County scope"
+                            label={copy.county_scope}
                             options={counties}
                             optional
                         />
                         <SearchableSelect
                             id="discussion-visibility"
                             name="visibility"
-                            label="Visibility"
+                            label={copy.visibility}
                             options={['national', 'county', 'internal'].map(
                                 option,
                             )}
@@ -1132,7 +1137,7 @@ function InnovationForm({
 
     return (
         <FormSheet
-            title="Submit devolution innovation"
+            title={copy.submit_devolution_innovation}
             description="Register a solution for independent screening, incubation, piloting, and scale-up."
             triggerLabel="Submit innovation"
             triggerDisabled={!catalogue.available}
@@ -1148,11 +1153,11 @@ function InnovationForm({
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Field name="title" label="Innovation title" />
+                            <Field name="title" label={copy.innovation_title} />
                             <SearchableSelect
                                 id="innovation-maturity"
                                 name="maturity_level"
-                                label="Maturity level"
+                                label={copy.maturity_level}
                                 options={[
                                     'idea',
                                     'prototype',
@@ -1164,38 +1169,38 @@ function InnovationForm({
                             <SearchableSelect
                                 id="innovation-county"
                                 name="county_id"
-                                label="County"
+                                label={copy.county}
                                 options={counties}
                                 optional
                             />
                             <SearchableSelect
                                 id="innovation-sector"
                                 name="sector_id"
-                                label="Sector"
+                                label={copy.sector}
                                 options={sectors.map(toNamed)}
                                 optional
                             />
                             <Field
                                 name="evidence_reference"
-                                label="Evidence or prototype URL"
+                                label={copy.evidence_or_prototype_url}
                                 optional
                             />
                         </div>
                         <TextField
                             name="problem_statement"
-                            label="Problem statement"
+                            label={copy.problem_statement}
                         />
                         <TextField
                             name="proposed_solution"
-                            label="Proposed solution"
+                            label={copy.proposed_solution}
                         />
                         <TextField
                             name="expected_impact"
-                            label="Expected impact"
+                            label={copy.expected_impact}
                         />
                         <TextField
                             name="incubation_support"
-                            label="Support requested"
+                            label={copy.support_requested}
                             optional
                         />
                         <Button type="submit" disabled={processing}>
@@ -1285,7 +1290,7 @@ function ItemActions({
                                 />
                                 <TextField
                                     name="rationale"
-                                    label="Decision rationale"
+                                    label={copy.decision_rationale}
                                 />
                                 <Button type="submit">
                                     {humanize(surface)}
@@ -1443,9 +1448,11 @@ function ItemDetails({
 }
 
 function DiscussionSubscription({ discussion }: { discussion: Discussion }) {
+    const copy = usePage().props.localization.knowledge.ui;
+
     return (
         <FormSheet
-            title="Discussion notifications"
+            title={copy.discussion_notifications}
             description={`Choose whether new contributions to ${discussion.title} appear in your notification centre.`}
             triggerLabel={discussion.subscribed ? 'Following' : 'Follow'}
             icon={discussion.subscribed ? BellOff : Bell}
@@ -1557,7 +1564,7 @@ function PostActions({
                                     <SearchableSelect
                                         id={`report-category-${post.id}`}
                                         name="category"
-                                        label="Report category"
+                                        label={copy.report_category}
                                         options={[
                                             'misinformation',
                                             'harassment',
@@ -1570,7 +1577,7 @@ function PostActions({
                                     <SearchableSelect
                                         id={`report-severity-${post.id}`}
                                         name="severity"
-                                        label="Potential severity"
+                                        label={copy.potential_severity}
                                         options={[
                                             'low',
                                             'medium',
@@ -1581,7 +1588,9 @@ function PostActions({
                                     />
                                     <TextField
                                         name="description"
-                                        label="What should the moderation team review?"
+                                        label={
+                                            copy.what_should_the_moderation_team_review
+                                        }
                                         error={errors.description}
                                     />
                                     <Button type="submit" disabled={processing}>
@@ -1606,7 +1615,7 @@ function PostActions({
                                     />
                                     <TextField
                                         name="moderation_reason"
-                                        label="Moderation rationale"
+                                        label={copy.moderation_rationale}
                                         error={errors.moderation_reason}
                                     />
                                     <Button type="submit" disabled={processing}>
@@ -1637,7 +1646,7 @@ function PostForm({ discussion }: { discussion: Discussion }) {
                 action={storePost({ discussion: discussion.id })}
                 className="grid gap-4 pt-4"
             >
-                <TextField name="body" label="Contribution" />
+                <TextField name="body" label={copy.contribution} />
                 <Button type="submit">{copy.post_contribution}</Button>
             </Form>
         </FormSheet>
@@ -1762,11 +1771,11 @@ function InnovationActions({
                                     </Badge>
                                 </div>
                                 <Detail
-                                    label="Problem"
+                                    label={copy.problem}
                                     value={innovation.problem}
                                 />
                                 <Detail
-                                    label="Reference-data lineage"
+                                    label={copy.reference_data_lineage}
                                     value={
                                         innovation.referenceData
                                             ? `Release v${innovation.referenceData.version} · ${innovation.referenceData.checksum}`
@@ -1774,15 +1783,15 @@ function InnovationActions({
                                     }
                                 />
                                 <Detail
-                                    label="Proposed solution"
+                                    label={copy.proposed_solution}
                                     value={innovation.solution}
                                 />
                                 <Detail
-                                    label="Expected impact"
+                                    label={copy.expected_impact}
                                     value={innovation.impact}
                                 />
                                 <Detail
-                                    label="Incubation support"
+                                    label={copy.incubation_support}
                                     value={
                                         innovation.incubationSupport ??
                                         'Not yet defined'
@@ -1972,7 +1981,7 @@ function InnovationActions({
                                         <SearchableSelect
                                             id={`panel-recommendation-${innovation.id}`}
                                             name="recommendation"
-                                            label="Recommendation"
+                                            label={copy.recommendation}
                                             options={[
                                                 'advance',
                                                 'revise',
@@ -1981,7 +1990,9 @@ function InnovationActions({
                                         />
                                         <TextField
                                             name="rationale"
-                                            label="Independent assessment rationale"
+                                            label={
+                                                copy.independent_assessment_rationale
+                                            }
                                             error={errors.rationale}
                                         />
                                         <Button
@@ -2006,7 +2017,7 @@ function InnovationActions({
                                         <SearchableSelect
                                             id={`funding-decision-${innovation.id}`}
                                             name="decision"
-                                            label="Decision"
+                                            label={copy.decision}
                                             options={[
                                                 'approved',
                                                 'declined',
@@ -2016,7 +2027,7 @@ function InnovationActions({
                                         <div className="grid gap-4 sm:grid-cols-2">
                                             <Field
                                                 name="amount"
-                                                label="Amount"
+                                                label={copy.amount}
                                                 type="number"
                                                 min="0"
                                                 step="0.01"
@@ -2025,14 +2036,14 @@ function InnovationActions({
                                             <ReferenceCatalogSelect
                                                 id={`innovation-currency-${innovation.id}`}
                                                 name="currency"
-                                                label="Currency"
+                                                label={copy.currency}
                                                 catalog="currency"
                                                 error={errors.currency}
                                             />
                                             <SearchableSelect
                                                 id={`funding-type-${innovation.id}`}
                                                 name="funding_type"
-                                                label="Funding type"
+                                                label={copy.funding_type}
                                                 options={[
                                                     'grant',
                                                     'in_kind',
@@ -2042,7 +2053,7 @@ function InnovationActions({
                                             />
                                             <Field
                                                 name="decision_reference"
-                                                label="Decision reference"
+                                                label={copy.decision_reference}
                                                 error={
                                                     errors.decision_reference
                                                 }
@@ -2050,7 +2061,7 @@ function InnovationActions({
                                         </div>
                                         <TextField
                                             name="rationale"
-                                            label="Funding rationale"
+                                            label={copy.funding_rationale}
                                             error={errors.rationale}
                                         />
                                         <Button
@@ -2075,41 +2086,41 @@ function InnovationActions({
                                         <SearchableSelect
                                             id={`milestone-owner-${innovation.id}`}
                                             name="owner_id"
-                                            label="Accountable owner"
+                                            label={copy.accountable_owner}
                                             options={options.milestoneOwners.map(
                                                 toNamed,
                                             )}
                                         />
                                         <Field
                                             name="title"
-                                            label="Milestone title"
+                                            label={copy.milestone_title}
                                             error={errors.title}
                                         />
                                         <TextField
                                             name="hypothesis"
-                                            label="Testable hypothesis"
+                                            label={copy.testable_hypothesis}
                                             error={errors.hypothesis}
                                         />
                                         <div className="grid gap-4 sm:grid-cols-3">
                                             <Field
                                                 name="success_metric"
-                                                label="Success metric"
+                                                label={copy.success_metric}
                                                 error={errors.success_metric}
                                             />
                                             <Field
                                                 name="baseline_value"
-                                                label="Baseline"
+                                                label={copy.baseline}
                                                 error={errors.baseline_value}
                                             />
                                             <Field
                                                 name="target_value"
-                                                label="Target"
+                                                label={copy.target}
                                                 error={errors.target_value}
                                             />
                                         </div>
                                         <DatePickerField
                                             name="due_at"
-                                            label="Due date"
+                                            label={copy.due_date}
                                             error={errors.due_at}
                                         />
                                         <Button
@@ -2135,16 +2146,18 @@ function InnovationActions({
                                 />
                                 <TextField
                                     name="rationale"
-                                    label="Decision rationale"
+                                    label={copy.decision_rationale}
                                 />
                                 <TextField
                                     name="incubation_support"
-                                    label="Incubation support and next steps"
+                                    label={
+                                        copy.incubation_support_and_next_steps
+                                    }
                                     optional
                                 />
                                 <Field
                                     name="evidence_reference"
-                                    label="Pilot evidence reference"
+                                    label={copy.pilot_evidence_reference}
                                     optional
                                 />
                                 <Button type="submit">
@@ -2292,7 +2305,7 @@ function MilestoneCard({
                                         <SearchableSelect
                                             id={`milestone-status-${milestone.id}`}
                                             name="status"
-                                            label="Result status"
+                                            label={copy.result_status}
                                             options={(milestone.status ===
                                             'planned'
                                                 ? ['in_progress']
@@ -2301,7 +2314,7 @@ function MilestoneCard({
                                         />
                                         <Field
                                             name="actual_value"
-                                            label="Actual value"
+                                            label={copy.actual_value}
                                             optional={
                                                 milestone.status === 'planned'
                                             }
@@ -2309,7 +2322,7 @@ function MilestoneCard({
                                         />
                                         <TextField
                                             name="outcome_summary"
-                                            label="Outcome summary"
+                                            label={copy.outcome_summary}
                                             optional={
                                                 milestone.status === 'planned'
                                             }
@@ -2318,7 +2331,9 @@ function MilestoneCard({
                                         <SearchableSelect
                                             id={`milestone-document-${milestone.id}`}
                                             name="assessment_document_id"
-                                            label="Clean repository evidence"
+                                            label={
+                                                copy.clean_repository_evidence
+                                            }
                                             options={options.documents.map(
                                                 toNamed,
                                             )}
@@ -2349,7 +2364,7 @@ function MilestoneCard({
                                         <SearchableSelect
                                             id={`milestone-verification-${milestone.id}`}
                                             name="verification_decision"
-                                            label="Verification decision"
+                                            label={copy.verification_decision}
                                             options={[
                                                 'verified',
                                                 'rejected',
@@ -2357,7 +2372,9 @@ function MilestoneCard({
                                         />
                                         <TextField
                                             name="verification_rationale"
-                                            label="Independent verification rationale"
+                                            label={
+                                                copy.independent_verification_rationale
+                                            }
                                             error={
                                                 errors.verification_rationale
                                             }
