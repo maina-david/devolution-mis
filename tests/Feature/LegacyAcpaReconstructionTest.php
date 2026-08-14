@@ -87,7 +87,7 @@ class LegacyAcpaReconstructionTest extends TestCase
         $row = $this->completeRows()[2];
         $row[17] = 'not-a-sha256-checksum';
 
-        $batch = app(StageHistoricalDataMigration::class)->handle($submitter, $this->csv([$row]), 'acpa_reconstruction', 'Unreconciled evidence list', 'UNVERIFIED-EVIDENCE', '2018-01-01', '2018-12-31');
+        $batch = app(StageHistoricalDataMigration::class)->handle($submitter, $this->csv([array_values($row)]), 'acpa_reconstruction', 'Unreconciled evidence list', 'UNVERIFIED-EVIDENCE', '2018-01-01', '2018-12-31');
 
         $this->assertSame('validation_failed', $batch->status);
         $this->assertEqualsCanonicalizing(['incomplete_evidence_manifest', 'missing_assessment_header'], $batch->rows->sole()->validation_errors);
@@ -107,12 +107,42 @@ class LegacyAcpaReconstructionTest extends TestCase
         $replay = app(StageHistoricalDataMigration::class)->handle(User::factory()->platformAdmin()->create(), $this->csv($rows), 'acpa_reconstruction', 'Signed ACPA archive replay', 'ACPA-ARCHIVE-REPLAY', '2018-01-01', '2018-12-31');
         $conflictingRows = $rows;
         $conflictingRows[1][7] = '91.0';
-        $conflict = app(StageHistoricalDataMigration::class)->handle(User::factory()->platformAdmin()->create(), $this->csv($conflictingRows), 'acpa_reconstruction', 'Conflicting ACPA archive', 'ACPA-ARCHIVE-CONFLICT', '2018-01-01', '2018-12-31');
+        $conflict = app(StageHistoricalDataMigration::class)->handle(User::factory()->platformAdmin()->create(), $this->csv(array_map(array_values(...), $conflictingRows)), 'acpa_reconstruction', 'Conflicting ACPA archive', 'ACPA-ARCHIVE-CONFLICT', '2018-01-01', '2018-12-31');
 
         $this->assertSame('validation_failed', $replay->status);
         $this->assertContains('duplicate_applied_record', $replay->rows->first()->validation_errors);
         $this->assertSame('validation_failed', $conflict->status);
         $this->assertContains('conflicting_applied_record', $conflict->rows->firstWhere('row_number', 3)->validation_errors);
+    }
+
+    public function test_reconstruction_rejects_broken_cross_record_integrity_and_component_only_appends(): void
+    {
+        Storage::fake('local');
+        County::factory()->create(['code' => 1]);
+        $rows = $this->completeRows();
+        $rows[1][7] = '120';
+        $rows[2][5] = 'UNKNOWN-CRITERION';
+        $rows[4][10] = 'supporting_assessor';
+        $rows[5][14] = '';
+
+        $invalid = app(StageHistoricalDataMigration::class)->handle(User::factory()->platformAdmin()->create(), $this->csv(array_map(array_values(...), $rows)), 'acpa_reconstruction', 'Broken ACPA archive', 'ACPA-BROKEN', '2018-01-01', '2018-12-31');
+
+        $this->assertSame('validation_failed', $invalid->status);
+        $this->assertContains('criterion_score_out_of_range', $invalid->rows->firstWhere('row_number', 3)->validation_errors);
+        $this->assertContains('unknown_criterion_reference', $invalid->rows->firstWhere('row_number', 4)->validation_errors);
+        $this->assertContains('missing_lead_assessor', $invalid->rows->firstWhere('row_number', 2)->validation_errors);
+        $this->assertContains('missing_appeal_decision', $invalid->rows->firstWhere('row_number', 7)->validation_errors);
+
+        $validRows = $this->completeRows();
+        $submitter = User::factory()->platformAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $applier = User::factory()->platformAdmin()->create();
+        $batch = app(StageHistoricalDataMigration::class)->handle($submitter, $this->csv($validRows), 'acpa_reconstruction', 'Complete ACPA archive', 'ACPA-COMPLETE', '2018-01-01', '2018-12-31');
+        $batch = app(ReviewHistoricalDataMigration::class)->handle($batch, $reviewer, 'approve', 'Complete archive reconciled.');
+        app(ApplyHistoricalDataMigration::class)->handle($batch, $applier);
+
+        $append = app(StageHistoricalDataMigration::class)->handle(User::factory()->platformAdmin()->create(), $this->csv([$validRows[3]]), 'acpa_reconstruction', 'Late finding append', 'ACPA-LATE-APPEND', '2018-01-01', '2018-12-31');
+        $this->assertContains('missing_assessment_header', $append->rows->sole()->validation_errors);
     }
 
     public function test_three_person_control_and_exact_template_are_enforced_for_reconstruction(): void
@@ -141,7 +171,7 @@ class LegacyAcpaReconstructionTest extends TestCase
 
         return [
             ['001', 'ACPA-001-2018', '2018', 'assessment', 'ACPA-001-2018', '', '2018 Annual County Performance Assessment', '67.5', '100', 'final', '', '', '', 'Signed final assessment register.', '', '', '', '', 'ACPA-2018-FINAL'],
-            ['001', 'ACPA-001-2018', '2018', 'criterion_result', 'PFM-01', 'PFM-01', 'Approved budget and financial statements', '14.5', '20', 'met', '', '', '', 'Criterion verified against signed county records.', '', '', '', '', 'ACPA-2018-SCORECARD'],
+            ['001', 'ACPA-001-2018', '2018', 'criterion_result', 'PFM-01', 'PFM-01', 'Approved budget and financial statements', '67.5', '100', 'met', '', '', '', 'Criterion verified against signed county records.', '', '', '', '', 'ACPA-2018-SCORECARD'],
             ['001', 'ACPA-001-2018', '2018', 'evidence_manifest', 'EVID-PFM-01', 'PFM-01', 'Audited financial statements', '', '', 'verified', '', '', '', 'Checksum manifest for the retained signed evidence.', '', 'county-001-audited-statements.pdf', 'application/pdf', $checksum, 'ACPA-2018-EVIDENCE-MANIFEST'],
             ['001', 'ACPA-001-2018', '2018', 'finding', 'FIND-PFM-01', 'PFM-01', 'Procurement plan publication delay', '', '', 'closed', '', '', '', 'The procurement plan was published after the prescribed date.', '', '', '', '', 'ACPA-2018-FINDINGS'],
             ['001', 'ACPA-001-2018', '2018', 'assessor_assignment', 'ASSIGN-0042', '', 'Independent verification assessor', '', '', 'completed', 'lead_assessor', 'IVA-2018-0042', 'Grace Wanjiku', 'Independent verification assessor assigned to County 001.', '', '', '', '', 'ACPA-2018-ASSIGNMENTS'],

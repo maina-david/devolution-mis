@@ -245,13 +245,13 @@ class StageHistoricalDataMigration
                     $errors[] = "invalid_{$numericField}";
                 }
             }
-            if ($recordType === 'assessment' && ($payload['title'] === '' || $payload['status'] === '')) {
+            if ($recordType === 'assessment' && ($payload['title'] === '' || $payload['status'] === '' || $payload['numeric_value'] === '' || $payload['maximum_value'] === '')) {
                 $errors[] = 'incomplete_assessment_header';
             }
-            if ($recordType === 'criterion_result' && ($payload['criterion_code'] === '' || $payload['title'] === '' || $payload['maximum_value'] === '')) {
+            if ($recordType === 'criterion_result' && ($payload['criterion_code'] === '' || $payload['title'] === '' || $payload['numeric_value'] === '' || $payload['maximum_value'] === '')) {
                 $errors[] = 'incomplete_criterion_result';
             }
-            if ($recordType === 'evidence_manifest' && ($payload['title'] === '' || $payload['file_name'] === '' || ! preg_match('/^[a-f0-9]{64}$/i', $payload['file_checksum']))) {
+            if ($recordType === 'evidence_manifest' && ($payload['criterion_code'] === '' || $payload['title'] === '' || $payload['file_name'] === '' || ! preg_match('/^[a-f0-9]{64}$/i', $payload['file_checksum']))) {
                 $errors[] = 'incomplete_evidence_manifest';
             }
             if ($recordType === 'assessor_assignment' && ($payload['person_name'] === '' || $payload['person_identifier'] === '' || $payload['assignment_role'] === '')) {
@@ -262,6 +262,9 @@ class StageHistoricalDataMigration
             }
             if ($recordType === 'appeal' && ($payload['description'] === '' || $payload['status'] === '')) {
                 $errors[] = 'incomplete_appeal';
+            }
+            if ($recordType === 'appeal' && in_array($payload['status'], ['determined', 'closed'], true) && $payload['decision'] === '') {
+                $errors[] = 'missing_appeal_decision';
             }
 
             $canonicalPayload = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
@@ -287,8 +290,7 @@ class StageHistoricalDataMigration
         }
 
         $parentsInBatch = collect($rows)->filter(fn (array $row): bool => $row['source_payload']['record_type'] === 'assessment' && is_string($row['county_id']))->map(fn (array $row): string => $row['county_id'].'|'.Str::upper($row['source_payload']['assessment_reference']))->all();
-        $existingParents = LegacyAcpaAssessment::query()->get(['county_id', 'assessment_reference'])->map(fn (LegacyAcpaAssessment $assessment): string => $assessment->county_id.'|'.Str::upper($assessment->assessment_reference))->all();
-        $knownParents = array_flip([...$parentsInBatch, ...$existingParents]);
+        $knownParents = array_flip($parentsInBatch);
         $seen = [];
         foreach ($rows as $index => $row) {
             $payload = $row['source_payload'];
@@ -302,6 +304,139 @@ class StageHistoricalDataMigration
             $parentKey = ($row['county_id'] ?? '').'|'.Str::upper($payload['assessment_reference']);
             if ($payload['record_type'] !== 'assessment' && ! isset($knownParents[$parentKey])) {
                 $rows[$index] = $this->addError($rows[$index], 'missing_assessment_header');
+            }
+        }
+
+        return $this->validateLegacyAcpaRelationships($rows);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function validateLegacyAcpaRelationships(array $rows): array
+    {
+        /** @var array<string, list<int>> $groups */
+        $groups = [];
+        foreach ($rows as $index => $row) {
+            $payload = $row['source_payload'];
+            if (! is_string($row['county_id']) || $payload['assessment_reference'] === '') {
+                continue;
+            }
+
+            $groups[$row['county_id'].'|'.Str::upper($payload['assessment_reference'])][] = $index;
+        }
+
+        foreach ($groups as $indexes) {
+            $headerIndexes = array_values(array_filter($indexes, fn (int $index): bool => $rows[$index]['source_payload']['record_type'] === 'assessment'));
+            if (count($headerIndexes) !== 1) {
+                continue;
+            }
+
+            $headerIndex = $headerIndexes[0];
+            $headerPayload = $rows[$headerIndex]['source_payload'];
+            $criterionIndexes = array_values(array_filter($indexes, fn (int $index): bool => $rows[$index]['source_payload']['record_type'] === 'criterion_result'));
+            $evidenceIndexes = array_values(array_filter($indexes, fn (int $index): bool => $rows[$index]['source_payload']['record_type'] === 'evidence_manifest'));
+            $assessorIndexes = array_values(array_filter($indexes, fn (int $index): bool => $rows[$index]['source_payload']['record_type'] === 'assessor_assignment'));
+            $periods = array_values(array_unique(array_map(
+                fn (int $index): string => $rows[$index]['period'] instanceof CarbonImmutable ? $rows[$index]['period']->toDateString() : '',
+                $indexes,
+            )));
+            if (count($periods) > 1) {
+                foreach ($indexes as $index) {
+                    $rows[$index] = $this->addError($rows[$index], 'inconsistent_assessment_period');
+                }
+            }
+
+            if ($criterionIndexes === []) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'missing_criterion_results');
+            }
+            if ($evidenceIndexes === []) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'missing_evidence_manifests');
+            }
+            if ($assessorIndexes === []) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'missing_assessor_assignments');
+            }
+
+            $criterionCodes = [];
+            $criterionScore = 0.0;
+            $criterionMaximum = 0.0;
+            foreach ($criterionIndexes as $index) {
+                $payload = $rows[$index]['source_payload'];
+                $criterionCode = Str::upper($payload['criterion_code']);
+                $criterionCodes[$criterionCode] = $index;
+                if (! is_numeric($payload['numeric_value']) || ! is_numeric($payload['maximum_value'])) {
+                    continue;
+                }
+
+                $score = (float) $payload['numeric_value'];
+                $maximum = (float) $payload['maximum_value'];
+                if ($score < 0 || $maximum <= 0 || $score > $maximum) {
+                    $rows[$index] = $this->addError($rows[$index], 'criterion_score_out_of_range');
+                }
+                $criterionScore += $score;
+                $criterionMaximum += $maximum;
+            }
+
+            if (is_numeric($headerPayload['numeric_value']) && abs($criterionScore - (float) $headerPayload['numeric_value']) > 0.0001) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'criterion_score_total_mismatch');
+            }
+            if (is_numeric($headerPayload['maximum_value']) && abs($criterionMaximum - (float) $headerPayload['maximum_value']) > 0.0001) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'criterion_maximum_total_mismatch');
+            }
+
+            $evidenceCriterionCodes = [];
+            $evidenceChecksums = [];
+            foreach ($evidenceIndexes as $index) {
+                $payload = $rows[$index]['source_payload'];
+                $criterionCode = Str::upper($payload['criterion_code']);
+                $evidenceCriterionCodes[$criterionCode] = true;
+                if ($criterionCode !== '' && ! array_key_exists($criterionCode, $criterionCodes)) {
+                    $rows[$index] = $this->addError($rows[$index], 'unknown_criterion_reference');
+                }
+                $checksum = Str::lower($payload['file_checksum']);
+                if ($checksum !== '' && isset($evidenceChecksums[$checksum])) {
+                    $rows[$index] = $this->addError($rows[$index], 'duplicate_evidence_checksum');
+                    $firstIndex = $evidenceChecksums[$checksum];
+                    $rows[$firstIndex] = $this->addError($rows[$firstIndex], 'duplicate_evidence_checksum');
+                } elseif ($checksum !== '') {
+                    $evidenceChecksums[$checksum] = $index;
+                }
+            }
+            foreach ($criterionCodes as $criterionCode => $index) {
+                if (! isset($evidenceCriterionCodes[$criterionCode])) {
+                    $rows[$index] = $this->addError($rows[$index], 'missing_evidence_manifest');
+                }
+            }
+
+            foreach ($indexes as $index) {
+                $payload = $rows[$index]['source_payload'];
+                if (in_array($payload['record_type'], ['finding', 'appeal'], true)
+                    && $payload['criterion_code'] !== ''
+                    && ! array_key_exists(Str::upper($payload['criterion_code']), $criterionCodes)) {
+                    $rows[$index] = $this->addError($rows[$index], 'unknown_criterion_reference');
+                }
+            }
+
+            $leadAssessors = array_filter($assessorIndexes, fn (int $index): bool => Str::lower($rows[$index]['source_payload']['assignment_role']) === 'lead_assessor');
+            if (count($leadAssessors) === 0) {
+                $rows[$headerIndex] = $this->addError($rows[$headerIndex], 'missing_lead_assessor');
+            } elseif (count($leadAssessors) > 1) {
+                foreach ($leadAssessors as $index) {
+                    $rows[$index] = $this->addError($rows[$index], 'multiple_lead_assessors');
+                }
+            }
+
+            $personIdentifiers = [];
+            foreach ($assessorIndexes as $index) {
+                $identifier = Str::upper($rows[$index]['source_payload']['person_identifier']);
+                if ($identifier !== '' && isset($personIdentifiers[$identifier])) {
+                    $rows[$index] = $this->addError($rows[$index], 'duplicate_assessor_identifier');
+                    $firstIndex = $personIdentifiers[$identifier];
+                    $rows[$firstIndex] = $this->addError($rows[$firstIndex], 'duplicate_assessor_identifier');
+                } elseif ($identifier !== '') {
+                    $personIdentifiers[$identifier] = $index;
+                }
             }
         }
 
