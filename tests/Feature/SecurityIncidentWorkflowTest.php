@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateSecurityIncident;
 use App\Actions\TransitionSecurityIncident;
 use App\Models\AssessmentDocument;
 use App\Models\AuditEvent;
@@ -34,6 +35,13 @@ class SecurityIncidentWorkflowTest extends TestCase
         $detectedAt = now()->subMinutes(5)->startOfMinute();
 
         $this->actingAs($countyUser)->post(route('security-governance.incidents.store'), $this->exercisePayload($lead, $detectedAt))->assertForbidden();
+        try {
+            app(CreateSecurityIncident::class)->handle($countyUser, ['severity' => 'hostile']);
+            $this->fail('An unauthorized direct incident creation must be denied.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame('Vous n’êtes pas autorisé à créer des incidents ou exercices de sécurité.', $exception->getMessage());
+        }
         $this->actingAs($reporter)->post(route('security-governance.incidents.store'), $this->exercisePayload($lead, $detectedAt))->assertRedirect();
         $incident = SecurityIncident::query()->sole();
 
@@ -44,7 +52,10 @@ class SecurityIncidentWorkflowTest extends TestCase
         $this->assertSame(15, (int) $incident->detected_at->diffInMinutes($incident->acknowledgement_due_at));
         $this->assertSame(60, (int) $incident->detected_at->diffInMinutes($incident->containment_due_at));
         $this->assertStringNotContainsString('simulated privileged credential', (string) SecurityIncident::query()->toBase()->where('id', $incident->id)->value('summary'));
-        $this->assertSame('detect', $incident->events()->sole()->transition);
+        $initialEvent = $incident->events()->sole();
+        $this->assertSame('detect', $initialEvent->transition);
+        $this->assertSame('Un dossier d’exercice contrôlé a été créé ; aucun incident réel n’est affirmé.', $initialEvent->narrative);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'security.incident.detected', 'description' => "exercice de sécurité {$incident->reference} enregistré selon le guide credential_compromise."]);
 
         $this->actingAs($reporter)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('acknowledge'))->assertForbidden();
         $this->actingAs($lead)->patch(route('security-governance.incidents.transition', [$incident]), $this->transition('acknowledge'))->assertRedirect();

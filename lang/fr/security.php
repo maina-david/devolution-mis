@@ -34,6 +34,11 @@ return ['identity_lifecycle' => [
         ],
         'audit' => 'La revue d’accès :reference a été lancée pour :count identités.',
     ],
+], 'incident_create' => [
+    'errors' => ['create_unauthorized' => 'Vous n’êtes pas autorisé à créer des incidents ou exercices de sécurité.', 'sla_unconfigured' => 'La politique SLA des incidents n’est pas configurée.'],
+    'types' => ['live' => 'incident', 'exercise' => 'exercice'],
+    'event' => ['exercise' => 'Un dossier d’exercice contrôlé a été créé ; aucun incident réel n’est affirmé.', 'live' => 'L’incident de sécurité a été détecté et intégré au processus de réponse gouverné.'],
+    'audit' => ':type de sécurité :reference enregistré selon le guide :playbook.',
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'Cette transition d’incident n’est pas autorisée depuis son état actuel.',

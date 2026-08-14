@@ -34,6 +34,11 @@ return ['identity_lifecycle' => [
         ],
         'audit' => 'Tathmini ya ufikiaji :reference imeanzishwa kwa vitambulisho :count.',
     ],
+], 'incident_create' => [
+    'errors' => ['create_unauthorized' => 'Hujaruhusiwa kuunda matukio au mazoezi ya usalama.', 'sla_unconfigured' => 'Sera ya SLA ya tukio haijasanidiwa.'],
+    'types' => ['live' => 'tukio', 'exercise' => 'zoezi'],
+    'event' => ['exercise' => 'Rekodi ya zoezi linalodhibitiwa imeundwa; hakuna tukio halisi linalodaiwa.', 'live' => 'Tukio la usalama limegunduliwa na kuingizwa katika mchakato unaodhibitiwa wa mwitikio.'],
+    'audit' => ':type la usalama :reference limerekodiwa chini ya mwongozo wa :playbook.',
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'Mpito huu wa tukio hauruhusiwi kutoka hali yake ya sasa.',

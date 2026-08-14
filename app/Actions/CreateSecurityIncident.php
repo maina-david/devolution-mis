@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\SecurityIncident;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -15,10 +16,12 @@ class CreateSecurityIncident
     /** @param array<string, mixed> $attributes */
     public function handle(User $reporter, array $attributes): SecurityIncident
     {
+        abort_unless($reporter->can(ProgrammePermission::ManageSecurityGovernance->value), 403, __('security.incident_create.errors.create_unauthorized'));
+
         return DB::transaction(function () use ($reporter, $attributes): SecurityIncident {
             $severity = (string) $attributes['severity'];
             $sla = config("security-governance.incident_sla_minutes.{$severity}");
-            abort_unless(is_array($sla) && is_numeric($sla['acknowledge'] ?? null) && is_numeric($sla['contain'] ?? null), 500, 'The incident SLA policy is not configured.');
+            abort_unless(is_array($sla) && is_numeric($sla['acknowledge'] ?? null) && is_numeric($sla['contain'] ?? null), 500, __('security.incident_create.errors.sla_unconfigured'));
             $detectedAt = now()->parse((string) $attributes['detected_at']);
             $recordType = (string) $attributes['record_type'];
             $incident = SecurityIncident::create([
@@ -40,8 +43,8 @@ class CreateSecurityIncident
                 'containment_due_at' => $detectedAt->copy()->addMinutes((int) $sla['contain']),
                 'last_transition_at' => now(),
             ]);
-            $this->recordEvent->handle($incident, $reporter, 'detect', 'none', 'detected', $recordType === 'exercise' ? 'Controlled exercise record created; no live incident is asserted.' : 'Security incident detected and entered into the governed response process.', $attributes['external_reference'] ?? null);
-            $this->auditLogger->record($reporter, $incident, 'security.incident.detected', "Security {$recordType} {$incident->reference} recorded under the {$incident->playbook} playbook.");
+            $this->recordEvent->handle($incident, $reporter, 'detect', 'none', 'detected', __($recordType === 'exercise' ? 'security.incident_create.event.exercise' : 'security.incident_create.event.live'), $attributes['external_reference'] ?? null);
+            $this->auditLogger->record($reporter, $incident, 'security.incident.detected', __('security.incident_create.audit', ['type' => __('security.incident_create.types.'.$recordType), 'reference' => $incident->reference, 'playbook' => $incident->playbook]));
 
             return $incident->refresh();
         });

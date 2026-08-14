@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateExchequerRequest;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\CountyGrant;
@@ -17,6 +18,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ExchequerTrackingWorkflowTest extends TestCase
@@ -123,6 +125,25 @@ class ExchequerTrackingWorkflowTest extends TestCase
         $this->assertDatabaseCount('exchequer_requests', 0);
     }
 
+    public function test_direct_request_creation_is_permission_first_and_does_not_parse_hostile_payloads(): void
+    {
+        $county = County::factory()->create();
+        $countyUser = User::factory()->countyOfficial($county)->create();
+        app()->setLocale('fr');
+
+        try {
+            app(CreateExchequerRequest::class)->handle($countyUser, ['county_grant_id' => 'hostile']);
+            $this->fail('An unauthorized direct exchequer request must be denied.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame('Vous n’êtes pas autorisé à créer des demandes de décaissement.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('exchequer_requests', 0);
+        $this->assertDatabaseCount('audit_events', 0);
+        app()->setLocale('en');
+    }
+
     public function test_exchequer_event_outcomes_and_rejections_follow_the_active_locale(): void
     {
         $county = County::factory()->create();
@@ -138,6 +159,11 @@ class ExchequerTrackingWorkflowTest extends TestCase
             ->assertSessionHas('success', fn (string $message): bool => str_starts_with($message, 'Demande de décaissement '));
 
         $request = ExchequerRequest::query()->sole();
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $request->id,
+            'action' => 'exchequer.request.created',
+            'description' => "Demande de décaissement {$request->request_reference} créée.",
+        ]);
 
         $this->withSession(['locale' => 'fr'])
             ->actingAs($integrator)

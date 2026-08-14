@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Actions\ActivateIntegrationSystem;
 use App\Actions\AttemptIntegrationExchangeDelivery;
 use App\Actions\PublishIntegrationContract;
+use App\Actions\ResolveReconciliationException;
 use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DevolutionProject;
@@ -208,11 +209,23 @@ class IntegrationManagementTest extends TestCase
         $system = IntegrationSystem::create($this->systemPayload());
         $run = ReconciliationRun::create(['integration_system_id' => $system->id, 'initiated_by' => $manager->id, 'reference' => 'REC-IPPD-2026-001', 'period_from' => today()->startOfMonth(), 'period_to' => today(), 'source_count' => 10, 'target_count' => 9, 'matched_count' => 9, 'exception_count' => 1, 'status' => 'exceptions', 'started_at' => now()->subMinute()]);
         $exception = ReconciliationException::create(['reconciliation_run_id' => $run->id, 'county_id' => $county->id, 'external_reference' => 'IPPD-000999', 'local_reference' => 'IDMIS-USER-999', 'exception_type' => 'missing_target', 'field_name' => 'employee_reference', 'severity' => 'high', 'expected_value' => 'IPPD-000999', 'actual_value' => null, 'description' => 'Authoritative employee record has no corresponding active IDMIS user.', 'status' => 'open']);
+        App::setLocale('fr');
+
+        try {
+            app(ResolveReconciliationException::class)->handle($exception, $outsider, 'Tentative directe hors périmètre.');
+            $this->fail('A direct out-of-scope reconciliation decision must be denied.');
+        } catch (HttpException $httpException) {
+            $this->assertSame(403, $httpException->getStatusCode());
+            $this->assertSame('Vous ne pouvez pas résoudre les exceptions de rapprochement hors du périmètre de comté autorisé.', $httpException->getMessage());
+        }
+
         $this->actingAs($outsider)->patch(route('integrations.exceptions.resolve', [$exception]), ['resolution' => 'Out-of-scope attempt.'])->assertForbidden();
         $this->actingAs($manager)->patch(route('integrations.exceptions.resolve', [$exception]), ['resolution' => 'Identity steward verified the departure and disabled the unmatched local access record.'])->assertRedirect();
         $this->assertSame('resolved', $exception->refresh()->status);
         $this->assertSame('reconciled', $run->refresh()->status);
         $this->assertSame(64, strlen((string) $run->result_checksum));
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $exception->id, 'action' => 'integration.exception.resolved', 'description' => 'L’exception de rapprochement a été résolue.']);
+        App::setLocale('en');
     }
 
     public function test_partner_contribution_source_matching_is_idempotent_immutable_scoped_and_does_not_bypass_human_reconciliation(): void

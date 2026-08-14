@@ -34,6 +34,11 @@ return ['identity_lifecycle' => [
         ],
         'audit' => 'Access review :reference launched for :count identities.',
     ],
+], 'incident_create' => [
+    'errors' => ['create_unauthorized' => 'You are not authorized to create security incidents or exercises.', 'sla_unconfigured' => 'The incident SLA policy is not configured.'],
+    'types' => ['live' => 'incident', 'exercise' => 'exercise'],
+    'event' => ['exercise' => 'Controlled exercise record created; no live incident is asserted.', 'live' => 'Security incident detected and entered into the governed response process.'],
+    'audit' => 'Security :type :reference recorded under the :playbook playbook.',
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'This incident transition is not allowed from its current state.',
