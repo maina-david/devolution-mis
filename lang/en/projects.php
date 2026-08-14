@@ -58,4 +58,13 @@ return [
     'disaggregation_dimension' => 'Disaggregation dimension', 'disaggregation_category' => 'Disaggregation category',
     'dimension_example' => 'e.g. sex', 'category_example' => 'e.g. female', 'result_value' => 'Result value',
     'result_value_with_unit' => 'Result value (:unit)', 'submit_for_independent_verification' => 'Submit for independent verification',
+    'errors' => [
+        'schedule_milestone_required' => 'At least one milestone is required before a schedule baseline can be captured.',
+        'schedule_dependency_outside_project' => 'Milestone :code references a dependency outside the current project schedule.',
+        'schedule_dependency_missing' => 'The milestone dependency graph references a missing schedule item.',
+        'schedule_dependency_cycle' => 'The milestone dependency graph contains a cycle.',
+        'dependency_self_reference' => 'A milestone cannot depend on itself.',
+        'dependency_outside_project' => 'Every dependency must belong to this project.',
+        'dependency_cycle' => 'The selected dependencies would create a circular milestone chain.',
+    ],
 ];

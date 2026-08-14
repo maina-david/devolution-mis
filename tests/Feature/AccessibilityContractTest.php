@@ -211,11 +211,35 @@ class AccessibilityContractTest extends TestCase
         foreach (['evidence-upload-form.tsx', 'criterion-evidence-upload-form.tsx'] as $component) {
             $upload = $this->source("resources/js/components/{$component}");
             $this->assertStringContainsString('usePage().props.localization.evidence', $upload);
-            $this->assertStringContainsString('aria-describedby={', $upload);
-            $this->assertStringContainsString('<InputError', $upload);
+            $this->assertStringContainsString('<GovernedAttachmentInput', $upload);
             $this->assertStringContainsString('aria-busy={processing}', $upload);
             $this->assertStringContainsString('copy.uploading', $upload);
         }
+
+        $attachment = $this->source('resources/js/components/governed-attachment-input.tsx');
+        $this->assertStringContainsString('aria-describedby={', $attachment);
+        $this->assertStringContainsString('<InputError', $attachment);
+        $this->assertStringContainsString('<Attachment', $attachment);
+        $this->assertStringContainsString('<Marker', $attachment);
+
+        $responsivePanel = $this->source('resources/js/components/responsive-panel.tsx');
+        $this->assertStringContainsString('useIsMobile()', $responsivePanel);
+        $this->assertStringContainsString('<DrawerTitle>{title}</DrawerTitle>', $responsivePanel);
+        $this->assertStringContainsString('<SheetTitle>{title}</SheetTitle>', $responsivePanel);
+
+        $questionnaire = $this->source('resources/js/components/questionnaire.tsx');
+        $this->assertStringContainsString('window.localStorage.setItem', $questionnaire);
+        $this->assertStringContainsString('visibleWhen', $questionnaire);
+        $this->assertStringContainsString('<Progress', $questionnaire);
+
+        $previewCarousel = $this->source('resources/js/components/document-preview-carousel.tsx');
+        $this->assertStringContainsString('<Carousel', $previewCarousel);
+        $this->assertStringContainsString('<Marker', $previewCarousel);
+
+        $performanceDashboard = $this->source('resources/js/components/monitoring-results-dashboard.tsx');
+        $this->assertStringContainsString('<RadialBarChart', $performanceDashboard);
+        $this->assertStringContainsString('role="img"', $performanceDashboard);
+        $this->assertStringContainsString('aria-label={accessibleName}', $performanceDashboard);
 
         $partnerAlerts = $this->source('resources/js/components/partner-operational-alerts.tsx');
         $this->assertStringContainsString('aria-label={interpolate(copy.alert_actions', $partnerAlerts);

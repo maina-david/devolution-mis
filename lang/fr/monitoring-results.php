@@ -74,6 +74,8 @@ return [
     'targets_met' => 'Cibles atteintes',
     'off_track' => 'Hors trajectoire',
     'average_attainment' => 'Atteinte moyenne',
+    'gauge_accessible_name' => 'Jauge de remplissage :metric : :value pour cent',
+    'not_available' => 'indisponible',
     'calculation_method' => 'Méthode de calcul',
     'trend_accessible_name' => 'Tendance réelle et cible de :indicator pour :county',
     'latest_target_variance' => 'Dernier écart à la cible',

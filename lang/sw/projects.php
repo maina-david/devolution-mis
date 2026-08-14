@@ -58,4 +58,13 @@ return [
     'disaggregation_dimension' => 'Kipimo cha uchanganuzi', 'disaggregation_category' => 'Kategoria ya uchanganuzi',
     'dimension_example' => 'mf. jinsia', 'category_example' => 'mf. mwanamke', 'result_value' => 'Thamani ya matokeo',
     'result_value_with_unit' => 'Thamani ya matokeo (:unit)', 'submit_for_independent_verification' => 'Wasilisha kwa uthibitishaji huru',
+    'errors' => [
+        'schedule_milestone_required' => 'Angalau hatua moja muhimu inahitajika kabla ya msingi wa ratiba kunaswa.',
+        'schedule_dependency_outside_project' => 'Hatua muhimu :code inarejelea kitegemezi kilicho nje ya ratiba ya sasa ya mradi.',
+        'schedule_dependency_missing' => 'Grafu ya vitegemezi vya hatua muhimu inarejelea kipengele cha ratiba ambacho hakipo.',
+        'schedule_dependency_cycle' => 'Grafu ya vitegemezi vya hatua muhimu ina mzunguko.',
+        'dependency_self_reference' => 'Hatua muhimu haiwezi kujitegemea yenyewe.',
+        'dependency_outside_project' => 'Kila kitegemezi lazima kiwe cha mradi huu.',
+        'dependency_cycle' => 'Vitegemezi vilivyochaguliwa vitaunda mnyororo wa mzunguko wa hatua muhimu.',
+    ],
 ];

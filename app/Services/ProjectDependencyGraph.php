@@ -13,12 +13,12 @@ class ProjectDependencyGraph
     {
         $dependencyIds = array_values(array_unique($dependencyIds));
         if ($milestone !== null && in_array($milestone->id, $dependencyIds, true)) {
-            throw ValidationException::withMessages(['dependencies' => 'A milestone cannot depend on itself.']);
+            throw ValidationException::withMessages(['dependencies' => __('projects.errors.dependency_self_reference')]);
         }
 
         $validDependencyCount = $project->milestones()->whereKey($dependencyIds)->count();
         if ($validDependencyCount !== count($dependencyIds)) {
-            throw ValidationException::withMessages(['dependencies' => 'Every dependency must belong to this project.']);
+            throw ValidationException::withMessages(['dependencies' => __('projects.errors.dependency_outside_project')]);
         }
         if ($milestone === null) {
             return;
@@ -28,7 +28,7 @@ class ProjectDependencyGraph
             fn (ProjectMilestone $item): array => [$item->id => $item->id === $milestone->id ? $dependencyIds : $this->dependencyIds($item)]
         )->all();
         if ($this->containsCycle($graph)) {
-            throw ValidationException::withMessages(['dependencies' => 'The selected dependencies would create a circular milestone chain.']);
+            throw ValidationException::withMessages(['dependencies' => __('projects.errors.dependency_cycle')]);
         }
     }
 

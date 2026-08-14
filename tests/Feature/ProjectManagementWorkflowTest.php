@@ -22,6 +22,8 @@ use App\Models\Sector;
 use App\Models\User;
 use App\Models\WorkflowDefinition;
 use App\Models\WorkflowVersion;
+use App\Services\ProjectDependencyGraph;
+use App\Services\ProjectScheduleAnalyzer;
 use App\Support\CanonicalJson;
 use Database\Seeders\ProjectWorkflowSeeder;
 use Illuminate\Database\QueryException;
@@ -621,6 +623,86 @@ class ProjectManagementWorkflowTest extends TestCase
         $otherProject = DevolutionProject::factory()->create(['lead_county_id' => $county->id]);
         $otherProject->counties()->attach($county, ['is_lead' => true]);
         $this->actingAs($reviewer)->patch(route('projects.schedule-baselines.decide', [$otherProject, $baseline]), $decision)->assertNotFound();
+    }
+
+    public function test_schedule_dependency_failures_are_localized_in_french(): void
+    {
+        app()->setLocale('fr');
+        $analyzer = app(ProjectScheduleAnalyzer::class);
+        $dependencyGraph = app(ProjectDependencyGraph::class);
+
+        try {
+            $analyzer->analyze(collect());
+            $this->fail('An empty schedule unexpectedly passed baseline analysis.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'Au moins un jalon est requis avant de pouvoir capturer un référentiel de calendrier.',
+                $exception->errors()['baseline_reason'][0],
+            );
+        }
+
+        $project = DevolutionProject::factory()->create();
+        $first = $project->milestones()->create([
+            'code' => 'JAL-01',
+            'title' => 'Premier jalon',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-01-05',
+            'weight' => 50,
+            'dependencies' => [],
+        ]);
+        $second = $project->milestones()->create([
+            'code' => 'JAL-02',
+            'title' => 'Deuxième jalon',
+            'planned_start_date' => '2026-01-06',
+            'planned_end_date' => '2026-01-10',
+            'weight' => 50,
+            'dependencies' => [$first->id],
+        ]);
+
+        try {
+            $dependencyGraph->validate($project, $first, [$first->id]);
+            $this->fail('A self-referencing milestone unexpectedly passed dependency validation.');
+        } catch (ValidationException $exception) {
+            $this->assertSame('Un jalon ne peut pas dépendre de lui-même.', $exception->errors()['dependencies'][0]);
+        }
+
+        try {
+            $dependencyGraph->validate($project, $first, [$second->id]);
+            $this->fail('A circular milestone dependency unexpectedly passed validation.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'Les dépendances sélectionnées créeraient une chaîne circulaire de jalons.',
+                $exception->errors()['dependencies'][0],
+            );
+        }
+
+        $outsideProject = DevolutionProject::factory()->create();
+        $outside = $outsideProject->milestones()->create([
+            'code' => 'EXT-01',
+            'title' => 'Jalon externe',
+            'planned_start_date' => '2026-01-01',
+            'planned_end_date' => '2026-01-02',
+            'weight' => 100,
+            'dependencies' => [],
+        ]);
+
+        try {
+            $dependencyGraph->validate($project, $first, [$outside->id]);
+            $this->fail('A cross-project milestone dependency unexpectedly passed validation.');
+        } catch (ValidationException $exception) {
+            $this->assertSame('Chaque dépendance doit appartenir à ce projet.', $exception->errors()['dependencies'][0]);
+        }
+
+        $first->update(['dependencies' => [$second->id]]);
+        try {
+            $analyzer->analyze($project->milestones()->get());
+            $this->fail('A cyclic schedule unexpectedly passed critical-path analysis.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'Le graphe de dépendances des jalons contient un cycle.',
+                $exception->errors()['baseline_reason'][0],
+            );
+        }
     }
 
     public function test_resource_capacity_is_project_bound_costed_and_enforced_for_each_overlapping_day(): void

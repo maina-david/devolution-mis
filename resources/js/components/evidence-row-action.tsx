@@ -8,6 +8,7 @@ import {
 import { useState } from 'react';
 import CountyIdentity from '@/components/county-identity';
 import DatePickerField from '@/components/date-picker-field';
+import DocumentPreviewCarousel from '@/components/document-preview-carousel';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -461,12 +462,77 @@ export default function EvidenceRowAction({
                                 />
                             </audio>
                         ) : (
-                            <iframe
-                                title={interpolate(copy.preview_of, {
-                                    title: meta.title ?? copy.document,
-                                })}
-                                src={preview.url(args)}
-                                className="h-[72vh] w-full rounded-lg border bg-muted"
+                            <DocumentPreviewCarousel
+                                items={
+                                    versions.length > 0
+                                        ? versions
+                                              .filter(
+                                                  (version) =>
+                                                      version.scanStatus ===
+                                                          'clean' &&
+                                                      (version.mimeType ===
+                                                          'application/pdf' ||
+                                                          version.mimeType.startsWith(
+                                                              'image/',
+                                                          )),
+                                              )
+                                              .map((version) => ({
+                                                  id: version.id,
+                                                  title: interpolate(
+                                                      copy.version_number,
+                                                      {
+                                                          number: version.number,
+                                                      },
+                                                  ),
+                                                  url: previewVersion.url({
+                                                      document: documentId,
+                                                      version: version.id,
+                                                  }),
+                                                  mimeType: version.mimeType,
+                                                  checksum: version.checksum,
+                                                  version: String(
+                                                      version.number,
+                                                  ),
+                                                  source:
+                                                      meta.sourceType ===
+                                                      'scanned'
+                                                          ? copy.scanned_copy
+                                                          : copy.digital_file,
+                                                  uploadedBy: interpolate(
+                                                      copy.uploaded_by_marker,
+                                                      {
+                                                          actor: version.uploadedBy,
+                                                      },
+                                                  ),
+                                              }))
+                                        : [
+                                              {
+                                                  id: documentId,
+                                                  title:
+                                                      meta.title ??
+                                                      copy.document,
+                                                  url: preview.url(args),
+                                                  mimeType,
+                                                  checksum: meta.checksum,
+                                                  version: meta.version,
+                                                  source:
+                                                      meta.sourceType ===
+                                                      'scanned'
+                                                          ? copy.scanned_copy
+                                                          : copy.digital_file,
+                                              },
+                                          ]
+                                }
+                                pageLabel={(page, total) =>
+                                    interpolate(copy.preview_page, {
+                                        page,
+                                        total,
+                                    })
+                                }
+                                verifiedLabel={copy.sha256_verified}
+                                previousLabel={copy.previous_preview}
+                                nextLabel={copy.next_preview}
+                                separator={copy.separator}
                             />
                         )}
                         {meta.extractedTextPreview && (

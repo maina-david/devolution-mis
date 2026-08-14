@@ -1,7 +1,9 @@
 import { Form, usePage } from '@inertiajs/react';
 import { Upload } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import GovernedAttachmentInput from '@/components/governed-attachment-input';
 import InputError from '@/components/input-error';
+import SearchableSelect from '@/components/searchable-select';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -59,24 +61,17 @@ export default function CriterionEvidenceUploadForm({
                 >
                     {({ processing, errors, progress }) => (
                         <>
-                            <div className="grid gap-2 xl:col-span-2">
-                                <Label htmlFor="evidence-requirement">
-                                    {copy.evidence_requirement}
-                                </Label>
-                                <select
+                            <div className="xl:col-span-2">
+                                <SearchableSelect
                                     id="evidence-requirement"
+                                    label={copy.evidence_requirement}
+                                    options={requirements.map((item) => ({
+                                        id: item.id,
+                                        name: item.label,
+                                    }))}
                                     value={requirementId}
-                                    onChange={(event) =>
-                                        setRequirementId(event.target.value)
-                                    }
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                >
-                                    {requirements.map((item) => (
-                                        <option key={item.id} value={item.id}>
-                                            {item.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                    onValueChange={setRequirementId}
+                                />
                             </div>
                             <input
                                 type="hidden"
@@ -108,90 +103,43 @@ export default function CriterionEvidenceUploadForm({
                                     message={errors.title}
                                 />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="criterion-evidence-category">
-                                    {copy.category}
-                                </Label>
-                                <select
-                                    id="criterion-evidence-category"
-                                    name="category"
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                    required
-                                    aria-invalid={Boolean(errors.category)}
-                                    aria-describedby={
-                                        errors.category
-                                            ? 'criterion-evidence-category-error'
-                                            : undefined
-                                    }
-                                >
-                                    {selected.allowedCategories.map(
-                                        (category) => (
-                                            <option
-                                                key={category}
-                                                value={category}
-                                            >
-                                                {category}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                                <InputError
-                                    id="criterion-evidence-category-error"
-                                    message={errors.category}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="criterion-evidence-source">
-                                    {copy.source}
-                                </Label>
-                                <select
-                                    id="criterion-evidence-source"
-                                    name="source_type"
-                                    defaultValue="digital"
-                                    aria-invalid={Boolean(errors.source_type)}
-                                    aria-describedby={
-                                        errors.source_type
-                                            ? 'criterion-evidence-source-error'
-                                            : undefined
-                                    }
-                                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                                >
-                                    <option value="digital">
-                                        {copy.digital_file}
-                                    </option>
-                                    <option value="scanned">
-                                        {copy.scanned_copy}
-                                    </option>
-                                </select>
-                                <InputError
-                                    id="criterion-evidence-source-error"
-                                    message={errors.source_type}
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="criterion-evidence-file">
-                                    {copy.document}
-                                </Label>
-                                <Input
-                                    id="criterion-evidence-file"
-                                    name="document"
-                                    type="file"
-                                    accept={selected.acceptedMimeTypes.join(
-                                        ',',
-                                    )}
-                                    required
-                                    aria-invalid={Boolean(errors.document)}
-                                    aria-describedby={
-                                        errors.document
-                                            ? 'criterion-evidence-file-error'
-                                            : undefined
-                                    }
-                                />
-                                <InputError
-                                    id="criterion-evidence-file-error"
-                                    message={errors.document}
-                                />
-                            </div>
+                            <SearchableSelect
+                                id="criterion-evidence-category"
+                                name="category"
+                                label={copy.category}
+                                options={selected.allowedCategories.map(
+                                    (category) => ({
+                                        id: category,
+                                        name: category,
+                                    }),
+                                )}
+                                error={errors.category}
+                            />
+                            <SearchableSelect
+                                id="criterion-evidence-source"
+                                name="source_type"
+                                label={copy.source}
+                                options={[
+                                    { id: 'digital', name: copy.digital_file },
+                                    { id: 'scanned', name: copy.scanned_copy },
+                                ]}
+                                defaultValue="digital"
+                                error={errors.source_type}
+                            />
+                            <GovernedAttachmentInput
+                                id="criterion-evidence-file"
+                                name="document"
+                                label={copy.document}
+                                accept={selected.acceptedMimeTypes.join(',')}
+                                required
+                                error={errors.document}
+                                progress={progress?.percentage}
+                                help={copy.attachment_help}
+                                chooseLabel={copy.choose_file}
+                                removeLabel={copy.remove_file}
+                                selectedLabel={copy.selected_file}
+                                securityLabel={copy.attachment_security}
+                            />
                             <Button
                                 type="submit"
                                 disabled={processing}

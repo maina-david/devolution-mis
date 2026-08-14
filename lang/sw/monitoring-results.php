@@ -74,6 +74,8 @@ return [
     'targets_met' => 'Malengo yaliyofikiwa',
     'off_track' => 'Nje ya mwelekeo',
     'average_attainment' => 'Wastani wa ufikiaji',
+    'gauge_accessible_name' => 'Kipimo cha kujaza cha :metric: asilimia :value',
+    'not_available' => 'haipatikani',
     'calculation_method' => 'Mbinu ya hesabu',
     'trend_accessible_name' => 'Mwenendo halisi na wa lengo wa :indicator katika :county',
     'latest_target_variance' => 'Tofauti ya mwisho ya lengo',

@@ -58,4 +58,13 @@ return [
     'disaggregation_dimension' => 'Dimension de désagrégation', 'disaggregation_category' => 'Catégorie de désagrégation',
     'dimension_example' => 'p. ex. sexe', 'category_example' => 'p. ex. femme', 'result_value' => 'Valeur du résultat',
     'result_value_with_unit' => 'Valeur du résultat (:unit)', 'submit_for_independent_verification' => 'Soumettre à une vérification indépendante',
+    'errors' => [
+        'schedule_milestone_required' => 'Au moins un jalon est requis avant de pouvoir capturer un référentiel de calendrier.',
+        'schedule_dependency_outside_project' => 'Le jalon :code fait référence à une dépendance extérieure au calendrier actuel du projet.',
+        'schedule_dependency_missing' => 'Le graphe de dépendances des jalons fait référence à un élément de calendrier manquant.',
+        'schedule_dependency_cycle' => 'Le graphe de dépendances des jalons contient un cycle.',
+        'dependency_self_reference' => 'Un jalon ne peut pas dépendre de lui-même.',
+        'dependency_outside_project' => 'Chaque dépendance doit appartenir à ce projet.',
+        'dependency_cycle' => 'Les dépendances sélectionnées créeraient une chaîne circulaire de jalons.',
+    ],
 ];

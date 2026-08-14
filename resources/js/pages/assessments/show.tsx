@@ -10,6 +10,7 @@ import AssessmentCorrectivePlans from '@/components/assessment-corrective-plans'
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import CriterionEvidenceUploadForm from '@/components/criterion-evidence-upload-form';
+import Questionnaire from '@/components/questionnaire';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { interpolate } from '@/hooks/use-localization';
 import { attest, calculate, index, publish } from '@/routes/assessments';
 import { decide as decideAppeal } from '@/routes/assessments/appeals';
 import {
@@ -715,6 +717,10 @@ function CriterionPanel({
 }) {
     const copy = usePage().props.localization.assessmentRecord;
     const args = { assessment: assessmentId, criterion: criterion.id };
+    const evidenceComplete = criterion.requirements.every(
+        (requirement) =>
+            requirement.verifiedDocuments >= requirement.minimumDocuments,
+    );
 
     return (
         <article className="grid gap-4 rounded-md bg-muted/40 p-4 xl:grid-cols-[1fr_22rem]">
@@ -760,26 +766,65 @@ function CriterionPanel({
                 {capabilities.score && (
                     <Form
                         {...storeScore.form(args)}
-                        className="grid grid-cols-[6rem_1fr_auto] gap-2"
+                        className="flex flex-col gap-3"
                     >
-                        {({ processing, errors }) => (
+                        {({ processing }) => (
                             <>
-                                <Input
-                                    name="score"
-                                    type="number"
-                                    min="0"
-                                    max={criterion.maximumScore}
-                                    step="0.01"
-                                    aria-label={`Score for ${criterion.name}`}
-                                    aria-invalid={Boolean(errors.score)}
-                                    required
-                                />
-                                <Input
-                                    name="rationale"
-                                    minLength={20}
-                                    aria-label={`Scoring rationale for ${criterion.name}`}
-                                    placeholder="Evidence-based rationale"
-                                    required
+                                <Questionnaire
+                                    storageKey={[
+                                        'assessment',
+                                        assessmentId,
+                                        'criterion',
+                                        criterion.id,
+                                        'score',
+                                    ].join(':')}
+                                    questions={[
+                                        {
+                                            id: [
+                                                'criterion-score',
+                                                criterion.id,
+                                            ].join('-'),
+                                            name: 'score',
+                                            label: interpolate(copy.score_for, {
+                                                criterion: criterion.name,
+                                            }),
+                                            type: 'number',
+                                            min: 0,
+                                            max: Number(criterion.maximumScore),
+                                            step: 0.01,
+                                            required: true,
+                                        },
+                                        {
+                                            id: [
+                                                'criterion-rationale',
+                                                criterion.id,
+                                            ].join('-'),
+                                            name: 'rationale',
+                                            label: interpolate(
+                                                copy.scoring_rationale_for,
+                                                { criterion: criterion.name },
+                                            ),
+                                            type: 'textarea',
+                                            minLength: 20,
+                                            placeholder:
+                                                copy.evidence_based_rationale,
+                                            required: true,
+                                        },
+                                    ]}
+                                    evidenceComplete={evidenceComplete}
+                                    progressLabel={(complete, total) =>
+                                        interpolate(
+                                            copy.questionnaire_progress,
+                                            { complete, total },
+                                        )
+                                    }
+                                    autosavedLabel={copy.draft_autosaved}
+                                    evidenceReadyLabel={
+                                        copy.mandatory_evidence_ready
+                                    }
+                                    evidenceRequiredLabel={
+                                        copy.mandatory_evidence_required
+                                    }
                                 />
                                 <Button
                                     type="submit"
@@ -798,26 +843,66 @@ function CriterionPanel({
                             assessment: assessmentId,
                             result: criterion.resultId,
                         })}
-                        className="grid grid-cols-[6rem_1fr_auto] gap-2"
+                        className="flex flex-col gap-3"
                     >
-                        {({ processing, errors }) => (
+                        {({ processing }) => (
                             <>
-                                <Input
-                                    name="score"
-                                    type="number"
-                                    min="0"
-                                    max={criterion.maximumScore}
-                                    step="0.01"
-                                    aria-label={`Verified score for ${criterion.name}`}
-                                    aria-invalid={Boolean(errors.score)}
-                                    required
-                                />
-                                <Input
-                                    name="rationale"
-                                    minLength={20}
-                                    aria-label={`Verification rationale for ${criterion.name}`}
-                                    placeholder="Independent verification rationale"
-                                    required
+                                <Questionnaire
+                                    storageKey={[
+                                        'assessment',
+                                        assessmentId,
+                                        'criterion',
+                                        criterion.id,
+                                        'verification',
+                                    ].join(':')}
+                                    questions={[
+                                        {
+                                            id: [
+                                                'criterion-verified-score',
+                                                criterion.id,
+                                            ].join('-'),
+                                            name: 'score',
+                                            label: interpolate(
+                                                copy.verified_score_for,
+                                                { criterion: criterion.name },
+                                            ),
+                                            type: 'number',
+                                            min: 0,
+                                            max: Number(criterion.maximumScore),
+                                            step: 0.01,
+                                            required: true,
+                                        },
+                                        {
+                                            id: [
+                                                'criterion-verification-rationale',
+                                                criterion.id,
+                                            ].join('-'),
+                                            name: 'rationale',
+                                            label: interpolate(
+                                                copy.verification_rationale_for,
+                                                { criterion: criterion.name },
+                                            ),
+                                            type: 'textarea',
+                                            minLength: 20,
+                                            placeholder:
+                                                copy.independent_verification_rationale,
+                                            required: true,
+                                        },
+                                    ]}
+                                    evidenceComplete={evidenceComplete}
+                                    progressLabel={(complete, total) =>
+                                        interpolate(
+                                            copy.questionnaire_progress,
+                                            { complete, total },
+                                        )
+                                    }
+                                    autosavedLabel={copy.draft_autosaved}
+                                    evidenceReadyLabel={
+                                        copy.mandatory_evidence_ready
+                                    }
+                                    evidenceRequiredLabel={
+                                        copy.mandatory_evidence_required
+                                    }
                                 />
                                 <Button
                                     type="submit"

@@ -81,6 +81,8 @@ return [
     'targets_met' => 'Targets met',
     'off_track' => 'Off track',
     'average_attainment' => 'Average attainment',
+    'gauge_accessible_name' => ':metric fill gauge: :value percent',
+    'not_available' => 'not available',
     'calculation_method' => 'Calculation method',
     'trend_accessible_name' => ':indicator actual and target trend for :county',
     'latest_target_variance' => 'Latest target variance',

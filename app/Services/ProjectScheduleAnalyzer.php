@@ -97,7 +97,7 @@ class ProjectScheduleAnalyzer
     public function analyze(Collection $milestones): array
     {
         if ($milestones->isEmpty()) {
-            throw ValidationException::withMessages(['baseline_reason' => 'At least one milestone is required before a schedule baseline can be captured.']);
+            throw ValidationException::withMessages(['baseline_reason' => __('projects.errors.schedule_milestone_required')]);
         }
 
         $ordered = $milestones->sortBy(fn (ProjectMilestone $milestone): string => $milestone->code.'-'.$milestone->id)->values();
@@ -118,7 +118,7 @@ class ProjectScheduleAnalyzer
             $ids = $milestone->dependencies ?? [];
             foreach ($ids as $dependencyId) {
                 if (! $byId->has($dependencyId)) {
-                    throw ValidationException::withMessages(['baseline_reason' => "Milestone {$milestone->code} references a dependency outside the current project schedule."]);
+                    throw ValidationException::withMessages(['baseline_reason' => __('projects.errors.schedule_dependency_outside_project', ['code' => $milestone->code])]);
                 }
                 $successors[$dependencyId][] = $milestone->id;
             }
@@ -132,7 +132,7 @@ class ProjectScheduleAnalyzer
         foreach ($topologicalIds as $milestoneId) {
             $milestone = $byId->get($milestoneId);
             if (! $milestone instanceof ProjectMilestone) {
-                throw ValidationException::withMessages(['baseline_reason' => 'The milestone dependency graph references a missing schedule item.']);
+                throw ValidationException::withMessages(['baseline_reason' => __('projects.errors.schedule_dependency_missing')]);
             }
             $plannedOffset = (int) $projectStart->diffInDays(CarbonImmutable::parse($milestone->planned_start_date), false);
             $dependencyFinish = 0;
@@ -161,7 +161,7 @@ class ProjectScheduleAnalyzer
         foreach ($topologicalIds as $milestoneId) {
             $milestone = $byId->get($milestoneId);
             if (! $milestone instanceof ProjectMilestone) {
-                throw ValidationException::withMessages(['baseline_reason' => 'The milestone dependency graph references a missing schedule item.']);
+                throw ValidationException::withMessages(['baseline_reason' => __('projects.errors.schedule_dependency_missing')]);
             }
             $float = $backward[$milestoneId]['latest_start'] - $forward[$milestoneId]['earliest_start'];
             $isCritical = $float === 0;
@@ -203,7 +203,7 @@ class ProjectScheduleAnalyzer
         while ($pending !== []) {
             $available = collect(array_keys($pending))->filter(fn (string $id): bool => collect($dependencies[$id])->every(fn (string $dependencyId): bool => in_array($dependencyId, $resolved, true)))->sort()->values()->all();
             if ($available === []) {
-                throw ValidationException::withMessages(['baseline_reason' => 'The milestone dependency graph contains a cycle.']);
+                throw ValidationException::withMessages(['baseline_reason' => __('projects.errors.schedule_dependency_cycle')]);
             }
             foreach ($available as $id) {
                 $resolved[] = $id;

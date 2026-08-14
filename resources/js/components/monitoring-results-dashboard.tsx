@@ -5,7 +5,16 @@ import {
     FolderKanban,
     ShieldCheck,
 } from 'lucide-react';
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import {
+    CartesianGrid,
+    Line,
+    LineChart,
+    PolarAngleAxis,
+    RadialBar,
+    RadialBarChart,
+    XAxis,
+    YAxis,
+} from 'recharts';
 import CountyIdentity from '@/components/county-identity';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -475,6 +484,41 @@ function TargetPerformance({
                     }
                 />
             </div>
+            <div className="grid gap-5 lg:grid-cols-2">
+                <FillGauge
+                    label={copy.average_attainment}
+                    value={performance.summary.averageAttainment}
+                    accessibleName={interpolate(copy.gauge_accessible_name, {
+                        metric: copy.average_attainment,
+                        value:
+                            performance.summary.averageAttainment ??
+                            copy.not_available,
+                    })}
+                />
+                <FillGauge
+                    label={copy.targets_met}
+                    value={
+                        performance.summary.withTarget === 0
+                            ? null
+                            : Math.round(
+                                  (performance.summary.met /
+                                      performance.summary.withTarget) *
+                                      100,
+                              )
+                    }
+                    accessibleName={interpolate(copy.gauge_accessible_name, {
+                        metric: copy.targets_met,
+                        value:
+                            performance.summary.withTarget === 0
+                                ? copy.not_available
+                                : Math.round(
+                                      (performance.summary.met /
+                                          performance.summary.withTarget) *
+                                          100,
+                                  ),
+                    })}
+                />
+            </div>
             <Alert>
                 <ChartNoAxesCombined aria-hidden="true" />
                 <AlertTitle>{copy.calculation_method}</AlertTitle>
@@ -676,6 +720,66 @@ function TargetPerformance({
                 </CardContent>
             </Card>
         </section>
+    );
+}
+
+function FillGauge({
+    label,
+    value,
+    accessibleName,
+}: {
+    label: string;
+    value: number | null;
+    accessibleName: string;
+}) {
+    const boundedValue = Math.max(0, Math.min(value ?? 0, 100));
+    const config = {
+        value: { label, color: 'var(--chart-1)' },
+    } satisfies ChartConfig;
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{label}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center">
+                <ChartContainer
+                    config={config}
+                    className="h-52 w-full max-w-sm"
+                    role="img"
+                    aria-label={accessibleName}
+                >
+                    <RadialBarChart
+                        data={[{ name: label, value: boundedValue }]}
+                        startAngle={210}
+                        endAngle={-30}
+                        innerRadius="72%"
+                        outerRadius="100%"
+                    >
+                        <PolarAngleAxis
+                            type="number"
+                            domain={[0, 100]}
+                            tick={false}
+                        />
+                        <RadialBar
+                            dataKey="value"
+                            fill="var(--color-value)"
+                            background
+                            cornerRadius={8}
+                        />
+                        <text
+                            x="50%"
+                            y="50%"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                            className="fill-foreground text-3xl font-bold"
+                        >
+                            {value === null ? '—' : `${value}%`}
+                        </text>
+                    </RadialBarChart>
+                </ChartContainer>
+            </CardContent>
+        </Card>
     );
 }
 
