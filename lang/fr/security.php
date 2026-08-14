@@ -16,6 +16,15 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Approbation : :approval_reference',
         'audit' => 'L’accès a été rétabli indépendamment pour l’identité du rôle :role.',
     ],
+], 'incident_transition' => [
+    'errors' => [
+        'invalid_state' => 'Cette transition d’incident n’est pas autorisée depuis son état actuel.',
+        'assigned_lead_required' => 'Seul le responsable d’incident désigné peut accuser réception de la responsabilité.',
+        'independent_closer_required' => 'La clôture exige un acteur indépendant du signalement et de la direction de l’incident.',
+        'privacy_reference_required' => 'Une exposition de données confirmée exige une référence liée à l’incident de confidentialité ou juridique avant la clôture.',
+        'clean_closure_evidence_required' => 'Un dossier privé et sain de preuves de clôture est requis avant de clôturer l’incident.',
+    ],
+    'audit' => 'L’incident de sécurité :reference est passé de :from à :to.',
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Les utilisateurs ne peuvent pas demander un accès délégué pour eux-mêmes.',

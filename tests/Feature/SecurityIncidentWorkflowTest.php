@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\TransitionSecurityIncident;
 use App\Models\AssessmentDocument;
+use App\Models\AuditEvent;
 use App\Models\SecurityIncident;
 use App\Models\SecurityIncidentEvent;
 use App\Models\User;
@@ -14,6 +16,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class SecurityIncidentWorkflowTest extends TestCase
@@ -22,6 +25,7 @@ class SecurityIncidentWorkflowTest extends TestCase
 
     public function test_exercise_follows_response_playbook_with_independent_evidence_gated_closure(): void
     {
+        app()->setLocale('fr');
         Storage::fake(config('filesystems.default'));
         $reporter = User::factory()->devolutionAdmin()->create();
         $lead = User::factory()->platformAdmin()->create();
@@ -64,6 +68,10 @@ class SecurityIncidentWorkflowTest extends TestCase
         $this->assertSame('partially_effective', $incident->exercise_outcome);
         $this->assertCount(6, $incident->events);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'security.incident.close']);
+        $this->assertSame(
+            "L’incident de sécurité {$incident->reference} est passé de recovered à closed.",
+            AuditEvent::query()->where('subject_id', $incident->id)->where('action', 'security.incident.close')->sole()->description,
+        );
         $this->actingAs($reporter)->get(route('security-governance.index'))->assertOk()->assertInertia(fn ($page) => $page->where('securityIncidents.total', 1)->where('securityIncidents.data.0.documents.0.id', $document->id)->where('securityIncidents.data.0.events.5.transition', 'close'));
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($reporter)->get(route('workspace.export', ['security-incidents', $format]))->assertDownload();
@@ -87,6 +95,68 @@ class SecurityIncidentWorkflowTest extends TestCase
         $this->assertSame(0, Artisan::call('security:escalate-incidents'));
         $this->assertSame(1, $incident->events()->where('transition', 'sla_escalated')->count());
         Notification::assertSentToTimes($lead, ProgrammeAlert::class, 1);
+    }
+
+    public function test_incident_transition_authorization_and_closure_guards_follow_the_active_locale(): void
+    {
+        $reporter = User::factory()->devolutionAdmin()->create();
+        $lead = User::factory()->platformAdmin()->create();
+        $closer = User::factory()->devolutionAdmin()->create();
+        app()->setLocale('fr');
+
+        $transition = function (SecurityIncident $incident, User $actor, array $attributes, string $translationKey): void {
+            try {
+                app(TransitionSecurityIncident::class)->handle($incident, $actor, $attributes);
+                $this->fail("The incident guard {$translationKey} must reject the transition.");
+            } catch (HttpException $exception) {
+                $this->assertSame((string) __($translationKey), $exception->getMessage());
+            }
+        };
+        $closure = [
+            'transition' => 'close',
+            'narrative' => 'La réponse a été examinée indépendamment avec des preuves conservées.',
+            'root_cause' => 'La cause première a été confirmée par l’analyse indépendante des preuves.',
+            'corrective_actions' => 'Les contrôles affectés ont été corrigés et validés par les propriétaires responsables.',
+            'lessons_learned' => 'Le guide doit déclencher plus tôt la conservation des preuves et l’examen juridique.',
+        ];
+
+        $invalidState = SecurityIncident::factory()->create([
+            'reported_by' => $reporter->id,
+            'incident_lead_id' => $lead->id,
+        ]);
+        $transition($invalidState, $lead, [
+            'transition' => 'contain',
+            'narrative' => 'La limitation prématurée doit être refusée.',
+        ], 'security.incident_transition.errors.invalid_state');
+
+        $transition($invalidState, $reporter, [
+            'transition' => 'acknowledge',
+            'narrative' => 'Seul le responsable désigné peut accuser réception.',
+        ], 'security.incident_transition.errors.assigned_lead_required');
+
+        $dependentClosure = SecurityIncident::factory()->create([
+            'reported_by' => $reporter->id,
+            'incident_lead_id' => $lead->id,
+            'status' => 'recovered',
+        ]);
+        $transition($dependentClosure, $reporter, $closure, 'security.incident_transition.errors.independent_closer_required');
+
+        $unlinkedExposure = SecurityIncident::factory()->create([
+            'reported_by' => $reporter->id,
+            'incident_lead_id' => $lead->id,
+            'status' => 'recovered',
+            'data_exposure' => 'confirmed',
+            'external_reference' => null,
+        ]);
+        $transition($unlinkedExposure, $closer, $closure, 'security.incident_transition.errors.privacy_reference_required');
+
+        $missingEvidence = SecurityIncident::factory()->create([
+            'reported_by' => $reporter->id,
+            'incident_lead_id' => $lead->id,
+            'status' => 'recovered',
+            'data_exposure' => 'none',
+        ]);
+        $transition($missingEvidence, $closer, $closure, 'security.incident_transition.errors.clean_closure_evidence_required');
     }
 
     /** @return array<string, mixed> */

@@ -16,6 +16,15 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Idhini: :approval_reference',
         'audit' => 'Ufikiaji wa utambulisho wa jukumu :role umerejeshwa kwa uhuru.',
     ],
+], 'incident_transition' => [
+    'errors' => [
+        'invalid_state' => 'Mpito huu wa tukio hauruhusiwi kutoka hali yake ya sasa.',
+        'assigned_lead_required' => 'Kiongozi wa tukio aliyeteuliwa pekee ndiye anayeweza kukubali wajibu.',
+        'independent_closer_required' => 'Kufunga kunahitaji mhusika aliye huru dhidi ya mtoa taarifa na uongozi wa tukio.',
+        'privacy_reference_required' => 'Ufichuzi wa data uliothibitishwa unahitaji rejeleo lililounganishwa la tukio la faragha au kisheria kabla ya kufungwa.',
+        'clean_closure_evidence_required' => 'Rekodi safi ya faragha ya ushahidi wa kufunga inahitajika kabla ya kufunga tukio.',
+    ],
+    'audit' => 'Tukio la usalama :reference limehamishwa kutoka :from hadi :to.',
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Watumiaji hawawezi kujiombea ufikiaji uliokabidhiwa.',

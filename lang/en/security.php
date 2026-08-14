@@ -16,6 +16,15 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Approval: :approval_reference',
         'audit' => 'Access independently reinstated for :role identity.',
     ],
+], 'incident_transition' => [
+    'errors' => [
+        'invalid_state' => 'This incident transition is not allowed from its current state.',
+        'assigned_lead_required' => 'Only the assigned incident lead may acknowledge responsibility.',
+        'independent_closer_required' => 'Closure requires an actor independent of reporting and incident leadership.',
+        'privacy_reference_required' => 'Confirmed data exposure requires a linked privacy/legal incident reference before closure.',
+        'clean_closure_evidence_required' => 'A clean private closure-evidence record is required before incident closure.',
+    ],
+    'audit' => 'Security incident :reference advanced from :from to :to.',
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Users cannot request delegated access for themselves.',
