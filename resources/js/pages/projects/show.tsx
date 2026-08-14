@@ -294,32 +294,32 @@ export default function ProjectShow({
                     </p>
                     <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <Metric
-                            label="Physical progress"
+                            label={copy.physical_progress}
                             value={`${Number(project.physical_progress)}%`}
                         />
                         <Metric
-                            label="Approved budget"
+                            label={copy.approved_budget}
                             value={formatCurrency(
                                 Number(project.approved_budget),
                                 project.currency,
                             )}
                         />
                         <Metric
-                            label="Expenditure"
+                            label={copy.expenditure}
                             value={formatCurrency(
                                 Number(project.actual_expenditure),
                                 project.currency,
                             )}
                         />
                         <Metric
-                            label="Scope"
+                            label={copy.scope}
                             value={`${project.counties.length} county${project.counties.length === 1 ? '' : 'ies'}`}
                         />
                     </div>
                 </section>
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Info
-                        title="Delivery scope"
+                        title={copy.delivery_scope}
                         values={[
                             project.lead_county.name,
                             project.sector.name,
@@ -330,7 +330,7 @@ export default function ProjectShow({
                         ]}
                     />
                     <Info
-                        title="Results links"
+                        title={copy.results_links}
                         values={
                             project.indicators.length
                                 ? project.indicators.map(
@@ -340,7 +340,7 @@ export default function ProjectShow({
                         }
                     />
                     <Info
-                        title="Control status"
+                        title={copy.control_status}
                         values={[
                             `Lifecycle: ${project.lifecycle_stage}`,
                             `Record status: ${project.status}`,
@@ -366,7 +366,7 @@ export default function ProjectShow({
                             project.lifecycle_stage !== 'closed' && (
                                 <Panel
                                     icon={Upload}
-                                    title="Upload project record"
+                                    title={copy.upload_project_record}
                                 >
                                     <Form
                                         {...storeProjectDocument.form(args)}
@@ -378,13 +378,13 @@ export default function ProjectShow({
                                                 <Field
                                                     id="project-document-title"
                                                     name="title"
-                                                    label="Document title"
+                                                    label={copy.document_title}
                                                     error={errors.title}
                                                 />
                                                 <SearchableSelect
                                                     id="project-document-purpose"
                                                     name="record_purpose"
-                                                    label="Record purpose"
+                                                    label={copy.record_purpose}
                                                     options={[
                                                         {
                                                             id: 'lifecycle_record',
@@ -408,7 +408,7 @@ export default function ProjectShow({
                                                 <Field
                                                     id="project-document-category"
                                                     name="category"
-                                                    label="Record category"
+                                                    label={copy.record_category}
                                                     error={errors.category}
                                                 />
                                                 <div className="grid gap-2">
@@ -626,7 +626,7 @@ export default function ProjectShow({
                 </Sheet>
                 {capabilities.manage && (
                     <div className="grid gap-5 xl:grid-cols-2">
-                        <Panel icon={CalendarCheck2} title="Add milestone">
+                        <Panel icon={CalendarCheck2} title={copy.add_milestone}>
                             <Form
                                 {...storeMilestone.form(args)}
                                 className="grid gap-3 sm:grid-cols-2"
@@ -635,21 +635,21 @@ export default function ProjectShow({
                                 <Input
                                     name="code"
                                     required
-                                    placeholder="MS-01"
+                                    placeholder={copy.ms_01}
                                 />
                                 <Input
                                     name="title"
                                     required
-                                    placeholder="Milestone title"
+                                    placeholder={copy.milestone_title}
                                 />
                                 <DatePickerField
                                     name="planned_start_date"
-                                    label="Planned start"
+                                    label={copy.planned_start}
                                     required
                                 />
                                 <DatePickerField
                                     name="planned_end_date"
-                                    label="Planned end"
+                                    label={copy.planned_end}
                                     required
                                 />
                                 <Input
@@ -659,12 +659,12 @@ export default function ProjectShow({
                                     max="100"
                                     step="0.01"
                                     required
-                                    placeholder="Weight %"
+                                    placeholder={copy.weight}
                                 />
                                 <div className="sm:col-span-2">
                                     <SearchableMultiSelect
                                         name="dependencies"
-                                        label="Dependencies"
+                                        label={copy.dependencies}
                                         optional
                                         options={project.milestones.map(
                                             (milestone) => ({
@@ -679,7 +679,7 @@ export default function ProjectShow({
                                 </Button>
                             </Form>
                         </Panel>
-                        <Panel icon={Banknote} title="Add budget line">
+                        <Panel icon={Banknote} title={copy.add_budget_line}>
                             <Form
                                 {...storeBudget.form(args)}
                                 className="grid gap-3 sm:grid-cols-2"
@@ -688,17 +688,17 @@ export default function ProjectShow({
                                 <Input
                                     name="code"
                                     required
-                                    placeholder="BL-01"
+                                    placeholder={copy.bl_01}
                                 />
                                 <Input
                                     name="category"
                                     required
-                                    placeholder="Category"
+                                    placeholder={copy.category}
                                 />
                                 <Input
                                     name="description"
                                     required
-                                    placeholder="Description"
+                                    placeholder={copy.description_label}
                                 />
                                 <Input
                                     name="approved_amount"
@@ -706,12 +706,12 @@ export default function ProjectShow({
                                     min="0"
                                     step="0.01"
                                     required
-                                    placeholder="Approved amount"
+                                    placeholder={copy.approved_amount}
                                 />
                                 <ReferenceCatalogSelect
                                     id={`budget-currency-${project.id}`}
                                     name="currency"
-                                    label="Currency"
+                                    label={copy.currency}
                                     catalog="currency"
                                 />
                                 <Input
@@ -724,7 +724,7 @@ export default function ProjectShow({
                                 </Button>
                             </Form>
                         </Panel>
-                        <Panel icon={CircleAlert} title="Register risk">
+                        <Panel icon={CircleAlert} title={copy.register_risk}>
                             <Form
                                 {...storeRisk.form(args)}
                                 className="grid gap-3 sm:grid-cols-2"
@@ -733,17 +733,17 @@ export default function ProjectShow({
                                 <Input
                                     name="code"
                                     required
-                                    placeholder="RSK-01"
+                                    placeholder={copy.rsk_01}
                                 />
                                 <Input
                                     name="category"
                                     required
-                                    placeholder="Category"
+                                    placeholder={copy.category}
                                 />
                                 <Input
                                     name="description"
                                     required
-                                    placeholder="Risk description"
+                                    placeholder={copy.risk_description}
                                 />
                                 <Input
                                     name="probability"
@@ -751,7 +751,7 @@ export default function ProjectShow({
                                     min="1"
                                     max="5"
                                     required
-                                    placeholder="Probability 1–5"
+                                    placeholder={copy.probability_1_5}
                                 />
                                 <Input
                                     name="impact"
@@ -759,19 +759,19 @@ export default function ProjectShow({
                                     min="1"
                                     max="5"
                                     required
-                                    placeholder="Impact 1–5"
+                                    placeholder={copy.impact_1_5}
                                 />
                                 <Input
                                     name="mitigation"
                                     required
-                                    placeholder="Mitigation"
+                                    placeholder={copy.mitigation}
                                 />
                                 <Button type="submit">
                                     {copy.register_risk}
                                 </Button>
                             </Form>
                         </Panel>
-                        <Panel icon={ShoppingCart} title="Add procurement">
+                        <Panel icon={ShoppingCart} title={copy.add_procurement}>
                             <Form
                                 {...storeProcurement.form(args)}
                                 className="grid gap-3 sm:grid-cols-2"
@@ -780,17 +780,17 @@ export default function ProjectShow({
                                 <Input
                                     name="reference"
                                     required
-                                    placeholder="Tender reference"
+                                    placeholder={copy.tender_reference}
                                 />
                                 <Input
                                     name="title"
                                     required
-                                    placeholder="Procurement title"
+                                    placeholder={copy.procurement_title}
                                 />
                                 <Input
                                     name="method"
                                     required
-                                    placeholder="Method"
+                                    placeholder={copy.method}
                                 />
                                 <Input
                                     name="estimated_value"
@@ -798,17 +798,17 @@ export default function ProjectShow({
                                     min="0"
                                     step="0.01"
                                     required
-                                    placeholder="Estimated value"
+                                    placeholder={copy.estimated_value}
                                 />
                                 <ReferenceCatalogSelect
                                     id={`procurement-currency-${project.id}`}
                                     name="currency"
-                                    label="Currency"
+                                    label={copy.currency}
                                     catalog="currency"
                                 />
                                 <DatePickerField
                                     name="planned_notice_date"
-                                    label="Planned notice date"
+                                    label={copy.planned_notice_date}
                                 />
                                 <Button type="submit">
                                     {copy.add_procurement}
@@ -856,7 +856,9 @@ export default function ProjectShow({
                                         name="comment"
                                         required
                                         minLength={10}
-                                        placeholder="Record the evidence-based lifecycle decision"
+                                        placeholder={
+                                            copy.record_the_evidence_based_lifecycle_decision
+                                        }
                                     />
                                 </div>
                                 <Button type="submit">
@@ -880,7 +882,7 @@ export default function ProjectShow({
                                 .map((item) => (
                                     <FormSheet
                                         key={item.id}
-                                        title="Verify progress update"
+                                        title={copy.verify_progress_update}
                                         triggerLabel={`Review ${String(item.reporting_date)}`}
                                         description={`Independently verify the ${String(item.physical_progress)}% physical-progress submission.`}
                                     >
@@ -909,7 +911,9 @@ export default function ProjectShow({
                                             <Input
                                                 name="rationale"
                                                 required
-                                                placeholder="Independent verification rationale"
+                                                placeholder={
+                                                    copy.independent_verification_rationale
+                                                }
                                             />
                                             <Button type="submit">
                                                 {copy.record}
@@ -940,7 +944,7 @@ export default function ProjectShow({
                 />
                 <div className="grid gap-5 xl:grid-cols-2">
                     <Register
-                        title="Milestones"
+                        title={copy.milestones}
                         items={project.milestones}
                         primary="title"
                         secondary="status"
@@ -951,7 +955,7 @@ export default function ProjectShow({
                         milestoneOptions={project.milestones}
                     />
                     <Register
-                        title="Budget lines"
+                        title={copy.budget_lines}
                         items={project.budget_lines}
                         primary="description"
                         secondary="approved_amount"
@@ -961,7 +965,7 @@ export default function ProjectShow({
                         locked={project.status === 'closed'}
                     />
                     <Register
-                        title="Risks"
+                        title={copy.risks}
                         items={project.risks}
                         primary="description"
                         secondary="status"
@@ -971,7 +975,7 @@ export default function ProjectShow({
                         locked={project.status === 'closed'}
                     />
                     <Register
-                        title="Procurements"
+                        title={copy.procurements}
                         items={project.procurements}
                         primary="title"
                         secondary="status"
@@ -981,7 +985,7 @@ export default function ProjectShow({
                         locked={project.status === 'closed'}
                     />
                     <Register
-                        title="Progress history"
+                        title={copy.progress_history}
                         items={project.progress_updates}
                         primary="narrative"
                         secondary="verification_status"
@@ -1166,7 +1170,7 @@ function ProjectSchedule({
                 </div>
                 {canManage && !locked && !pendingBaseline && (
                     <FormSheet
-                        title="Capture schedule baseline"
+                        title={copy.capture_schedule_baseline}
                         triggerLabel="Capture baseline"
                         icon={GitBranch}
                         description="Freeze the complete current milestone plan for independent approval and future variance measurement."
@@ -1190,7 +1194,9 @@ function ProjectSchedule({
                                             aria-invalid={Boolean(
                                                 errors.baseline_reason,
                                             )}
-                                            placeholder="Record the planning evidence and authority supporting this proposed baseline."
+                                            placeholder={
+                                                copy.record_the_planning_evidence_and_authority_supporting_this_proposed_baseline
+                                            }
                                         />
                                         {errors.baseline_reason && (
                                             <p
@@ -1214,7 +1220,7 @@ function ProjectSchedule({
                 {analysis && (
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                         <ScheduleMetric
-                            label="Approved baseline"
+                            label={copy.approved_baseline}
                             value={
                                 analysis.baseline_version === null
                                     ? 'Not approved'
@@ -1222,17 +1228,17 @@ function ProjectSchedule({
                             }
                         />
                         <ScheduleMetric
-                            label="Critical path"
+                            label={copy.critical_path}
                             value={
                                 analysis.critical_path_codes.join(' → ') || '—'
                             }
                         />
                         <ScheduleMetric
-                            label="Forecast finish"
+                            label={copy.forecast_finish}
                             value={analysis.forecast_finish}
                         />
                         <ScheduleMetric
-                            label="Forecast variance"
+                            label={copy.forecast_variance}
                             value={formatVariance(
                                 analysis.forecast_variance_days,
                             )}
@@ -1275,7 +1281,9 @@ function ProjectSchedule({
                                             aria-invalid={Boolean(
                                                 errors.decision_rationale,
                                             )}
-                                            placeholder="Record the independent schedule review evidence and decision rationale."
+                                            placeholder={
+                                                copy.record_the_independent_schedule_review_evidence_and_decision_rationale
+                                            }
                                         />
                                         {(errors.decision ||
                                             errors.decision_rationale) && (
@@ -1492,7 +1500,7 @@ function ProjectResourcePlan({
                     {canManage && !locked && (
                         <div className="flex flex-wrap gap-2">
                             <FormSheet
-                                title="Register project resource"
+                                title={copy.register_project_resource}
                                 triggerLabel="Add resource"
                                 icon={UsersRound}
                                 description={`Capacity and rates are recorded in ${projectCurrency}, inherited from the project.`}
@@ -1507,19 +1515,19 @@ function ProjectResourcePlan({
                                             <Field
                                                 id="resource-code"
                                                 name="code"
-                                                label="Resource code"
+                                                label={copy.resource_code}
                                                 error={errors.code}
                                             />
                                             <Field
                                                 id="resource-name"
                                                 name="name"
-                                                label="Resource name"
+                                                label={copy.resource_name}
                                                 error={errors.name}
                                             />
                                             <SearchableSelect
                                                 id="resource-type"
                                                 name="resource_type"
-                                                label="Resource type"
+                                                label={copy.resource_type}
                                                 options={[
                                                     {
                                                         id: 'human',
@@ -1543,7 +1551,7 @@ function ProjectResourcePlan({
                                             <SearchableSelect
                                                 id="resource-capacity-unit"
                                                 name="capacity_unit"
-                                                label="Capacity unit"
+                                                label={copy.capacity_unit}
                                                 options={[
                                                     {
                                                         id: 'hours',
@@ -1597,13 +1605,13 @@ function ProjectResourcePlan({
                                             </div>
                                             <DatePickerField
                                                 name="available_from"
-                                                label="Available from"
+                                                label={copy.available_from}
                                                 required
                                                 error={errors.available_from}
                                             />
                                             <DatePickerField
                                                 name="available_to"
-                                                label="Available to"
+                                                label={copy.available_to}
                                                 required
                                                 error={errors.available_to}
                                             />
@@ -1619,7 +1627,7 @@ function ProjectResourcePlan({
                             </FormSheet>
                             {resources.length > 0 && milestones.length > 0 && (
                                 <FormSheet
-                                    title="Allocate project resource"
+                                    title={copy.allocate_project_resource}
                                     triggerLabel="Add allocation"
                                     icon={CalendarCheck2}
                                     description="Allocate uniform daily capacity within both the resource and milestone periods."
@@ -1634,7 +1642,7 @@ function ProjectResourcePlan({
                                                 <SearchableSelect
                                                     id="allocation-resource"
                                                     name="project_resource_id"
-                                                    label="Resource"
+                                                    label={copy.resource}
                                                     options={resources
                                                         .filter(
                                                             (resource) =>
@@ -1652,7 +1660,7 @@ function ProjectResourcePlan({
                                                 <SearchableSelect
                                                     id="allocation-milestone"
                                                     name="project_milestone_id"
-                                                    label="Milestone"
+                                                    label={copy.milestone}
                                                     options={milestones.map(
                                                         (milestone) => ({
                                                             id: milestone.id,
@@ -1665,13 +1673,15 @@ function ProjectResourcePlan({
                                                 />
                                                 <DatePickerField
                                                     name="starts_on"
-                                                    label="Allocation start"
+                                                    label={
+                                                        copy.allocation_start
+                                                    }
                                                     required
                                                     error={errors.starts_on}
                                                 />
                                                 <DatePickerField
                                                     name="ends_on"
-                                                    label="Allocation end"
+                                                    label={copy.allocation_end}
                                                     required
                                                     error={errors.ends_on}
                                                 />
@@ -1838,28 +1848,28 @@ function ProjectResourcePlan({
                     ) : (
                         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
                             <ScheduleMetric
-                                label="Planned value"
+                                label={copy.planned_value}
                                 value={formatCurrency(
                                     analysis.planned_value ?? 0,
                                     projectCurrency,
                                 )}
                             />
                             <ScheduleMetric
-                                label="Earned value"
+                                label={copy.earned_value}
                                 value={formatCurrency(
                                     analysis.earned_value,
                                     projectCurrency,
                                 )}
                             />
                             <ScheduleMetric
-                                label="Actual cost"
+                                label={copy.actual_cost}
                                 value={formatCurrency(
                                     analysis.actual_cost,
                                     projectCurrency,
                                 )}
                             />
                             <ScheduleMetric
-                                label="Estimate at completion"
+                                label={copy.estimate_at_completion}
                                 value={
                                     analysis.estimate_at_completion === null
                                         ? 'Unavailable'
@@ -1870,7 +1880,7 @@ function ProjectResourcePlan({
                                 }
                             />
                             <ScheduleMetric
-                                label="Cost performance index"
+                                label={copy.cost_performance_index}
                                 value={
                                     analysis.cost_performance_index?.toFixed(
                                         4,
@@ -1878,7 +1888,7 @@ function ProjectResourcePlan({
                                 }
                             />
                             <ScheduleMetric
-                                label="Schedule performance index"
+                                label={copy.schedule_performance_index}
                                 value={
                                     analysis.schedule_performance_index?.toFixed(
                                         4,
@@ -1886,7 +1896,7 @@ function ProjectResourcePlan({
                                 }
                             />
                             <ScheduleMetric
-                                label="Variance at completion"
+                                label={copy.variance_at_completion}
                                 value={
                                     analysis.variance_at_completion === null
                                         ? 'Unavailable'
@@ -1897,7 +1907,7 @@ function ProjectResourcePlan({
                                 }
                             />
                             <ScheduleMetric
-                                label="To-complete index"
+                                label={copy.to_complete_index}
                                 value={
                                     analysis.to_complete_performance_index?.toFixed(
                                         4,
@@ -2101,15 +2111,19 @@ function RegisterEditForm({
                 <>
                     {kind === 'milestone' && (
                         <>
-                            <EditInput item={item} name="title" label="Title" />
+                            <EditInput
+                                item={item}
+                                name="title"
+                                label={copy.title_label}
+                            />
                             <EditInput
                                 item={item}
                                 name="description"
-                                label="Description"
+                                label={copy.description_label}
                             />
                             <DatePickerField
                                 name="planned_start_date"
-                                label="Planned start"
+                                label={copy.planned_start}
                                 required
                                 defaultValue={entityValue(
                                     item,
@@ -2118,7 +2132,7 @@ function RegisterEditForm({
                             />
                             <DatePickerField
                                 name="planned_end_date"
-                                label="Planned end"
+                                label={copy.planned_end}
                                 required
                                 defaultValue={entityValue(
                                     item,
@@ -2127,7 +2141,7 @@ function RegisterEditForm({
                             />
                             <DatePickerField
                                 name="actual_start_date"
-                                label="Actual start"
+                                label={copy.actual_start}
                                 defaultValue={entityValue(
                                     item,
                                     'actual_start_date',
@@ -2135,7 +2149,7 @@ function RegisterEditForm({
                             />
                             <DatePickerField
                                 name="actual_end_date"
-                                label="Actual end"
+                                label={copy.actual_end}
                                 defaultValue={entityValue(
                                     item,
                                     'actual_end_date',
@@ -2144,12 +2158,12 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="weight"
-                                label="Weight (%)"
+                                label={copy.weight}
                                 type="number"
                             />
                             <SearchableMultiSelect
                                 name="dependencies"
-                                label="Dependencies"
+                                label={copy.dependencies}
                                 optional
                                 options={milestoneOptions
                                     .filter(
@@ -2168,7 +2182,7 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="progress"
-                                label="Progress (%)"
+                                label={copy.progress}
                                 type="number"
                             />
                             <StaticSearchableSelect
@@ -2189,12 +2203,12 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="category"
-                                label="Category"
+                                label={copy.category}
                             />
                             <EditInput
                                 item={item}
                                 name="description"
-                                label="Description"
+                                label={copy.description_label}
                             />
                             {[
                                 ['approved_amount', 'Approved amount'],
@@ -2212,7 +2226,7 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="funding_source"
-                                label="Funding source"
+                                label={copy.funding_source}
                             />
                         </>
                     )}
@@ -2221,12 +2235,12 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="category"
-                                label="Category"
+                                label={copy.category}
                             />
                             <EditInput
                                 item={item}
                                 name="description"
-                                label="Description"
+                                label={copy.description_label}
                             />
                             {[
                                 ['probability', 'Probability (1–5)'],
@@ -2248,7 +2262,7 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="mitigation"
-                                label="Mitigation"
+                                label={copy.mitigation}
                             />
                             <StaticSearchableSelect
                                 id={`risk-status-${item.id}`}
@@ -2263,7 +2277,7 @@ function RegisterEditForm({
                             />
                             <DatePickerField
                                 name="review_due_date"
-                                label="Review due"
+                                label={copy.review_due}
                                 defaultValue={entityValue(
                                     item,
                                     'review_due_date',
@@ -2273,11 +2287,15 @@ function RegisterEditForm({
                     )}
                     {kind === 'procurement' && (
                         <>
-                            <EditInput item={item} name="title" label="Title" />
+                            <EditInput
+                                item={item}
+                                name="title"
+                                label={copy.title_label}
+                            />
                             <EditInput
                                 item={item}
                                 name="method"
-                                label="Method"
+                                label={copy.method}
                             />
                             <StaticSearchableSelect
                                 id={`procurement-status-${item.id}`}
@@ -2296,18 +2314,18 @@ function RegisterEditForm({
                             <EditInput
                                 item={item}
                                 name="estimated_value"
-                                label="Estimated value"
+                                label={copy.estimated_value}
                                 type="number"
                             />
                             <EditInput
                                 item={item}
                                 name="contract_value"
-                                label="Contract value"
+                                label={copy.contract_value}
                                 type="number"
                             />
                             <DatePickerField
                                 name="planned_notice_date"
-                                label="Planned notice date"
+                                label={copy.planned_notice_date}
                                 defaultValue={entityValue(
                                     item,
                                     'planned_notice_date',
@@ -2315,18 +2333,18 @@ function RegisterEditForm({
                             />
                             <DatePickerField
                                 name="award_date"
-                                label="Award date"
+                                label={copy.award_date}
                                 defaultValue={entityValue(item, 'award_date')}
                             />
                             <EditInput
                                 item={item}
                                 name="supplier_name"
-                                label="Supplier name"
+                                label={copy.supplier_name}
                             />
                             <EditInput
                                 item={item}
                                 name="contract_reference"
-                                label="Contract reference"
+                                label={copy.contract_reference}
                             />
                         </>
                     )}

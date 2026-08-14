@@ -171,7 +171,7 @@ class HandleInertiaRequests extends Middleware
                 'settingsSecurity' => __('settings-security'),
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
-                'projects' => __('projects'),
+                'projects' => array_merge(__('projects'), __('project-details-forms')),
                 'security' => __('security'),
                 'referenceData' => __('reference-data'),
                 'welcome' => __('welcome'),
