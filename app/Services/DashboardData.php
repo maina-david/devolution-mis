@@ -90,7 +90,7 @@ class DashboardData
         return [
             'dashboardProfile' => [
                 'role' => $role->name,
-                'roleLabel' => $role->label(),
+                'roleLabel' => (string) __("dashboard.profiles.{$role->value}.role_label"),
                 'mapScope' => $this->mapScope($role),
                 ...$this->profileCopy($role),
             ],
@@ -127,28 +127,24 @@ class DashboardData
     /** @return array{eyebrow: string, title: string, description: string} */
     private function profileCopy(UserRole $role): array
     {
-        return match ($role) {
-            UserRole::CountyOfficial => ['eyebrow' => 'County workspace', 'title' => 'Evidence and assessment readiness', 'description' => 'Prepare county evidence, monitor completeness, and follow the latest assessment outcome.'],
-            UserRole::CountyAdmin => ['eyebrow' => 'County administration', 'title' => 'County performance control', 'description' => 'Coordinate officials, evidence collection, submissions, grants, and county readiness.'],
-            UserRole::Assessor => ['eyebrow' => 'Independent verification', 'title' => 'Assigned county assessments', 'description' => 'Review evidence and assessment progress only for counties assigned to you.'],
-            UserRole::DevelopmentPartner => ['eyebrow' => 'Partner portfolio', 'title' => 'Programme results and grants', 'description' => 'Track assessment results, evidence, and grant delivery across your partner portfolio.'],
-            UserRole::TopManagement => ['eyebrow' => 'Executive oversight', 'title' => 'County performance overview', 'description' => 'Monitor the counties in your oversight portfolio and focus attention where delivery is behind.'],
-            UserRole::DevolutionAdmin => ['eyebrow' => 'National coordination', 'title' => 'All-county delivery command', 'description' => 'Coordinate assessment cycles, evidence readiness, grants, and performance across all 47 counties.'],
-            UserRole::PlatformAdmin => ['eyebrow' => 'Platform operations', 'title' => 'National platform control', 'description' => 'Monitor platform coverage and administer governed access across the national service.'],
-        };
+        $key = "dashboard.profiles.{$role->value}";
+
+        return [
+            'eyebrow' => (string) __("{$key}.eyebrow"),
+            'title' => (string) __("{$key}.title"),
+            'description' => (string) __("{$key}.description"),
+        ];
     }
 
     /** @return list<string> */
     private function roleFocus(UserRole $role): array
     {
-        return match ($role) {
-            UserRole::CountyOfficial => ['Complete outstanding evidence', 'Respond to county service cases', 'Track corrective actions'],
-            UserRole::CountyAdmin => ['Remove submission blockers', 'Coordinate county delivery owners', 'Escalate overdue obligations'],
-            UserRole::Assessor => ['Prioritize submitted assessments', 'Clear evidence review queues', 'Record independent findings'],
-            UserRole::DevelopmentPartner => ['Review grant absorption', 'Resolve partner delivery alerts', 'Validate programme results'],
-            UserRole::TopManagement => ['Intervene on overdue commitments', 'Review low-performing counties', 'Authorize pending decisions'],
-            UserRole::DevolutionAdmin => ['Drive national cycle completion', 'Resolve cross-county bottlenecks', 'Protect evidence and reporting integrity'],
-            UserRole::PlatformAdmin => ['Maintain service operability', 'Govern access and integrations', 'Review assurance exceptions'],
-        };
+        $key = "dashboard.profiles.{$role->value}.focus";
+
+        return [
+            (string) __("{$key}.first"),
+            (string) __("{$key}.second"),
+            (string) __("{$key}.third"),
+        ];
     }
 }

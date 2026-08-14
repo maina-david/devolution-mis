@@ -8,4 +8,15 @@ return [
     'update_grant' => 'Update grant', 'update_grant_description' => 'Record the approved allocation, cumulative disbursement and current processing status.',
     'allocated_amount' => 'Allocated amount', 'disbursed_amount' => 'Disbursed amount', 'status' => 'Status', 'save_grant' => 'Save grant',
     'status_planned' => 'Planned', 'status_processing' => 'Processing', 'status_approved' => 'Approved', 'status_disbursed' => 'Disbursed', 'status_received' => 'Received',
+    'heroes' => [
+        'county_performance' => ['title' => 'County performance', 'description' => 'Authorized county records, assessment coverage, evidence readiness, and grant activity.'],
+        'acpa_assessments' => ['title' => 'ACPA assessments', 'description' => 'Track preparation, submission, independent verification, scoring, and approval by assessment cycle.'],
+        'evidence_library' => ['title' => 'Evidence library', 'description' => 'Secure evidence register for plans, audit opinions, public participation reports, legislation, and supporting records.'],
+        'exchequer_and_grants' => ['title' => 'Exchequer and grants', 'description' => 'Monitor allocation, processing, disbursement, and county receipt across programme funding streams.'],
+        'user_access' => ['title' => 'User access', 'description' => 'Administrator-granted identities, programme roles, county assignments, and access status.'],
+        'national_reports' => ['title' => 'National reports', 'description' => 'Portfolio-ready county coverage and evidence indicators for programme oversight and decision support.'],
+        'audit_trail' => ['title' => 'Audit trail', 'description' => 'Immutable workflow and access events within your authorized county scope.'],
+        'audit_integrity_assurance' => ['title' => 'Audit integrity assurance', 'description' => 'Retained verification of predecessor continuity, reproducible event hashes, legacy coverage, private anchor artifacts, and detached signatures.'],
+        'platform_controls' => ['title' => 'Platform controls', 'description' => 'Governed configuration surface for integrations, document retention, access controls, and operational readiness.'],
+    ],
 ];

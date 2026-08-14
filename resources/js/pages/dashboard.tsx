@@ -44,6 +44,7 @@ import {
 import type { ChartConfig } from '@/components/ui/chart';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { interpolate } from '@/hooks/use-localization';
 import { preserveDrilldownFilters } from '@/lib/preserve-drilldown-filters';
 import { formatCurrency } from '@/lib/reference-catalog';
 import { dashboard } from '@/routes';
@@ -274,7 +275,11 @@ export default function Dashboard({
 
     return (
         <>
-            <Head title={`${dashboardProfile.roleLabel} dashboard`} />
+            <Head
+                title={interpolate(copy.dashboard_title, {
+                    role: dashboardProfile.roleLabel,
+                })}
+            />
             <div className="flex min-w-0 flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="max-w-3xl">
@@ -326,7 +331,7 @@ export default function Dashboard({
                         className="flex flex-col gap-5"
                     >
                         <section
-                            aria-label="Portfolio statistics"
+                            aria-label={copy.portfolio_statistics}
                             className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
                         >
                             {cards.map(
@@ -376,8 +381,13 @@ export default function Dashboard({
                                             }
                                         >
                                             {exceptionCount > 0
-                                                ? `${exceptionCount} require attention`
-                                                : 'No active exceptions'}
+                                                ? interpolate(
+                                                      copy.require_attention,
+                                                      {
+                                                          count: exceptionCount,
+                                                      },
+                                                  )
+                                                : copy.no_active_exceptions}
                                         </Badge>
                                     </div>
                                 </CardHeader>
@@ -395,9 +405,12 @@ export default function Dashboard({
                                 <CardHeader>
                                     <CardTitle>{copy.role_brief}</CardTitle>
                                     <CardDescription>
-                                        {copy.priority_decisions_for}{' '}
-                                        {dashboardProfile.roleLabel.toLowerCase()}
-                                        {copy.full_stop}
+                                        {interpolate(
+                                            copy.priority_decisions_for_role,
+                                            {
+                                                role: dashboardProfile.roleLabel,
+                                            },
+                                        )}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -638,7 +651,12 @@ export default function Dashboard({
                                                                 }),
                                                                 page.url,
                                                             )}
-                                                            aria-label={`Open ${county.name} county record`}
+                                                            aria-label={interpolate(
+                                                                copy.open_county_record_label,
+                                                                {
+                                                                    county: county.name,
+                                                                },
+                                                            )}
                                                         >
                                                             <ArrowRight />
                                                         </Link>

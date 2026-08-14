@@ -244,4 +244,34 @@ class RoleDashboardTest extends TestCase
             });
         }
     }
+
+    public function test_dashboard_hero_and_role_focus_follow_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $user = User::factory()->countyOfficial($county)->create();
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('dashboardProfile.roleLabel', 'Afisa wa kaunti')
+                ->where('dashboardProfile.eyebrow', 'Eneo la kazi la kaunti')
+                ->where('dashboardProfile.title', 'Utayari wa ushahidi na tathmini')
+                ->where('dashboardProfile.description', 'Andaa ushahidi wa kaunti, fuatilia ukamilifu na ufuate matokeo ya hivi karibuni ya tathmini.')
+                ->where('roleFocus.0', 'Kamilisha ushahidi uliosalia')
+            );
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('dashboardProfile.roleLabel', 'Agent du comté')
+                ->where('dashboardProfile.eyebrow', 'Espace de travail du comté')
+                ->where('dashboardProfile.title', 'Préparation des preuves et de l’évaluation')
+                ->where('dashboardProfile.description', 'Préparez les preuves du comté, suivez leur exhaustivité et consultez le dernier résultat d’évaluation.')
+                ->where('roleFocus.0', 'Compléter les preuves manquantes')
+            );
+    }
 }

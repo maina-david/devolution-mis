@@ -78,6 +78,30 @@ class ProgrammeWorkspaceTest extends TestCase
             ->where('workspace.accessOptions.counties.0.logoVerifiedAt', '2026-08-10'));
     }
 
+    public function test_shared_authenticated_workspace_heroes_follow_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $user = User::factory()->countyOfficial($county)->create();
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'sw'])
+            ->get(route('counties.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('workspace.title', 'Utendaji wa kaunti')
+                ->where('workspace.description', 'Rekodi za kaunti zilizoidhinishwa, ueneaji wa tathmini, utayari wa ushahidi na shughuli za ruzuku.')
+            );
+
+        $this->actingAs($user)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('evidence.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('workspace.title', 'Bibliothèque de preuves')
+                ->where('workspace.description', 'Registre sécurisé des plans, avis d’audit, rapports de participation publique, textes législatifs et pièces justificatives.')
+            );
+    }
+
     private function userForRole(UserRole $role, County $county): User
     {
         $factory = match ($role) {

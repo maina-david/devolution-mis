@@ -8,4 +8,15 @@ return [
     'update_grant' => 'Sasisha ruzuku', 'update_grant_description' => 'Rekodi mgao ulioidhinishwa, malipo yaliyokusanywa na hali ya sasa ya uchakataji.',
     'allocated_amount' => 'Kiasi kilichotengwa', 'disbursed_amount' => 'Kiasi kilicholipwa', 'status' => 'Hali', 'save_grant' => 'Hifadhi ruzuku',
     'status_planned' => 'Imepangwa', 'status_processing' => 'Inachakatwa', 'status_approved' => 'Imeidhinishwa', 'status_disbursed' => 'Imelipwa', 'status_received' => 'Imepokelewa',
+    'heroes' => [
+        'county_performance' => ['title' => 'Utendaji wa kaunti', 'description' => 'Rekodi za kaunti zilizoidhinishwa, ueneaji wa tathmini, utayari wa ushahidi na shughuli za ruzuku.'],
+        'acpa_assessments' => ['title' => 'Tathmini za ACPA', 'description' => 'Fuatilia maandalizi, uwasilishaji, uthibitishaji huru, uwekaji alama na idhini kwa kila mzunguko wa tathmini.'],
+        'evidence_library' => ['title' => 'Maktaba ya ushahidi', 'description' => 'Rejista salama ya ushahidi kwa mipango, maoni ya ukaguzi, ripoti za ushiriki wa umma, sheria na rekodi saidizi.'],
+        'exchequer_and_grants' => ['title' => 'Hazina na ruzuku', 'description' => 'Fuatilia mgao, uchakataji, utoaji na upokeaji wa kaunti katika mikondo ya ufadhili wa programu.'],
+        'user_access' => ['title' => 'Ufikiaji wa watumiaji', 'description' => 'Vitambulisho vinavyotolewa na msimamizi, majukumu ya programu, upangaji wa kaunti na hali ya ufikiaji.'],
+        'national_reports' => ['title' => 'Ripoti za kitaifa', 'description' => 'Ueneaji wa kaunti na viashiria vya ushahidi vilivyo tayari kwa usimamizi wa programu na usaidizi wa maamuzi.'],
+        'audit_trail' => ['title' => 'Njia ya ukaguzi', 'description' => 'Matukio yasiyobadilika ya mtiririko wa kazi na ufikiaji ndani ya wigo wa kaunti ulioidhinishwa.'],
+        'audit_integrity_assurance' => ['title' => 'Uhakikisho wa uadilifu wa ukaguzi', 'description' => 'Uthibitishaji uliohifadhiwa wa mwendelezo wa watangulizi, hash zinazoweza kurudiwa, ueneaji wa kihistoria, mabaki ya nanga binafsi na sahihi zilizotenganishwa.'],
+        'platform_controls' => ['title' => 'Udhibiti wa jukwaa', 'description' => 'Eneo linalodhibitiwa la usanidi wa miunganisho, uhifadhi wa nyaraka, udhibiti wa ufikiaji na utayari wa uendeshaji.'],
+    ],
 ];

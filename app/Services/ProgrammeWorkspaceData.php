@@ -63,6 +63,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Str;
 
 class ProgrammeWorkspaceData
@@ -1363,6 +1364,13 @@ class ProgrammeWorkspaceData
      */
     private function workspace(string $title, string $description, array $columns, LengthAwarePaginator $rows): array
     {
+        $heroKey = 'programme-workspace.heroes.'.Str::slug($title, '_');
+
+        if (Lang::has("{$heroKey}.title") && Lang::has("{$heroKey}.description")) {
+            $title = (string) __("{$heroKey}.title");
+            $description = (string) __("{$heroKey}.description");
+        }
+
         return [
             'title' => $title,
             'description' => $description,
