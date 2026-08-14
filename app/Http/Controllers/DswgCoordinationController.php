@@ -166,7 +166,7 @@ class DswgCoordinationController extends Controller
         $user = $this->user($request);
         $createWorkingGroup->handle($user, $request->validated());
 
-        return $this->success('Sector working group established.');
+        return $this->success(__('dswg.outcome_group_created'));
     }
 
     public function storeMeeting(StoreDswgMeetingRequest $request, StartWorkflow $startWorkflow, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
@@ -174,8 +174,8 @@ class DswgCoordinationController extends Controller
         $user = $this->user($request);
         $group = $this->visibleGroups($user, $countyScope)->whereKey($request->validated('dswg_working_group_id'))->firstOrFail();
         $inviteeIds = collect($request->array('invitee_ids'));
-        abort_unless($group->members()->whereIn('users.id', $inviteeIds)->count() === $inviteeIds->count(), 422, 'Every invitee must be a working-group member.');
-        abort_if((int) $request->validated('quorum_required') > $inviteeIds->count(), 422, 'Quorum cannot exceed the number of invitees.');
+        abort_unless($group->members()->whereIn('users.id', $inviteeIds)->count() === $inviteeIds->count(), 422, __('dswg.invitee_member_required'));
+        abort_if((int) $request->validated('quorum_required') > $inviteeIds->count(), 422, __('dswg.quorum_exceeded'));
 
         $meeting = DB::transaction(function () use ($request, $user, $group, $inviteeIds, $startWorkflow): DswgMeeting {
             $meeting = $group->meetings()->create([...$request->safe()->except(['dswg_working_group_id', 'invitee_ids']), 'organized_by' => $user->id]);
@@ -187,10 +187,10 @@ class DswgCoordinationController extends Controller
 
             return $meeting->refresh();
         });
-        $meeting->invitees()->each(fn (User $invitee) => $invitee->notifyNow(new ProgrammeAlert('DSWG meeting invitation', "You are invited to {$meeting->title} on {$meeting->starts_at->toDayDateTimeString()}.", 'dswg')));
-        $auditLogger->record($user, $meeting, 'dswg.meeting.scheduled', "DSWG meeting {$meeting->reference} scheduled.", metadata: ['invitees' => $inviteeIds->all()]);
+        $meeting->invitees()->each(fn (User $invitee) => $invitee->notifyNow(ProgrammeAlert::translated('dswg.notification_meeting_title', 'dswg.notification_meeting_message', 'dswg', messageParameters: ['title' => $meeting->title, 'date' => $meeting->starts_at->toDayDateTimeString()])));
+        $auditLogger->record($user, $meeting, 'dswg.meeting.scheduled', __('dswg.audit_meeting_scheduled', ['reference' => $meeting->reference]), metadata: ['invitees' => $inviteeIds->all()]);
 
-        return $this->success('Meeting scheduled and invitations sent.');
+        return $this->success(__('dswg.outcome_meeting_scheduled'));
     }
 
     public function storeCollaborationThread(StoreDswgCollaborationThreadRequest $request, CreateDswgCollaborationThread $createThread, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
@@ -203,9 +203,9 @@ class DswgCoordinationController extends Controller
             'title' => (string) $request->validated('title'),
             'topic' => (string) $request->validated('topic'),
         ]);
-        $auditLogger->record($user, $thread, 'dswg.collaboration_thread.created', "DSWG collaboration thread {$thread->title} created.");
+        $auditLogger->record($user, $thread, 'dswg.collaboration_thread.created', __('dswg.audit_thread_created', ['title' => $thread->title]));
 
-        return $this->success('Collaboration thread created.');
+        return $this->success(__('dswg.outcome_thread_created'));
     }
 
     public function storeCollaborationMessage(StoreDswgCollaborationMessageRequest $request, DswgCollaborationThread $thread, CreateDswgCollaborationThread $checksum, ProgrammeCountyScope $countyScope, AuditLogger $auditLogger): RedirectResponse
@@ -227,9 +227,9 @@ class DswgCoordinationController extends Controller
 
             return $message;
         });
-        $auditLogger->record($user, $message, 'dswg.collaboration_message.posted', "Contribution posted to DSWG thread {$thread->title}.");
+        $auditLogger->record($user, $message, 'dswg.collaboration_message.posted', __('dswg.audit_contribution_posted', ['title' => $thread->title]));
 
-        return $this->success('Contribution posted.');
+        return $this->success(__('dswg.outcome_contribution_posted'));
     }
 
     public function storeMeetingSeries(StoreDswgMeetingSeriesRequest $request, CreateDswgMeetingSeries $createSeries, ProgrammeCountyScope $countyScope): RedirectResponse
@@ -238,7 +238,7 @@ class DswgCoordinationController extends Controller
         $group = $this->visibleGroups($user, $countyScope)->whereKey($request->validated('dswg_working_group_id'))->firstOrFail();
         $series = $createSeries->handle($group, $user, $request->validated());
 
-        return $this->success("Recurring meeting series {$series->reference_prefix} created and its rolling schedule generated.");
+        return $this->success(__('dswg.outcome_meeting_series_created', ['reference' => $series->reference_prefix]));
     }
 
     public function respondInvitation(RespondDswgInvitationRequest $request, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
@@ -247,9 +247,9 @@ class DswgCoordinationController extends Controller
         $this->authorizeMeeting($user, $meeting);
         abort_unless($meeting->invitees()->whereKey($user)->exists(), 403);
         $meeting->invitees()->updateExistingPivot($user->id, ['invitation_status' => $request->validated('invitation_status'), 'responded_at' => now()]);
-        $auditLogger->record($user, $meeting, 'dswg.invitation.responded', "Meeting invitation marked {$request->validated('invitation_status')}.");
+        $auditLogger->record($user, $meeting, 'dswg.invitation.responded', __('dswg.audit_invitation_responded', ['status' => $request->validated('invitation_status')]));
 
-        return $this->success('Invitation response recorded.');
+        return $this->success(__('dswg.outcome_invitation_recorded'));
     }
 
     public function recordOutcomes(RecordDswgMeetingOutcomesRequest $request, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
@@ -257,18 +257,18 @@ class DswgCoordinationController extends Controller
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
         $instance = $meeting->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'Meeting workflow is unavailable.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('dswg.meeting_workflow_unavailable'));
         $presentIds = collect($request->array('present_user_ids'));
-        abort_unless($meeting->invitees()->whereIn('users.id', $presentIds)->count() === $presentIds->count(), 422, 'Attendance can include invited participants only.');
+        abort_unless($meeting->invitees()->whereIn('users.id', $presentIds)->count() === $presentIds->count(), 422, __('dswg.attendance_invitees_only'));
         $quorumMet = $presentIds->count() >= $meeting->quorum_required;
-        $transitioned = $transition->handle($instance, 'record_outcomes', $user, ['minutes_present' => true, 'quorum_met' => $quorumMet], 'Meeting outcomes and draft minutes recorded.');
+        $transitioned = $transition->handle($instance, 'record_outcomes', $user, ['minutes_present' => true, 'quorum_met' => $quorumMet], __('dswg.workflow_outcomes_recorded'));
         foreach ($meeting->invitees()->pluck('users.id') as $inviteeId) {
             $meeting->invitees()->updateExistingPivot($inviteeId, ['attendance_status' => $presentIds->contains($inviteeId) ? 'present' : 'absent']);
         }
         $meeting->update(['minutes' => $request->validated('minutes'), 'minutes_recorded_by' => $user->id, 'minutes_recorded_at' => now(), 'status' => $transitioned->current_state]);
-        $auditLogger->record($user, $meeting, 'dswg.meeting.outcomes_recorded', "Draft minutes recorded for {$meeting->reference}.", metadata: ['present' => $presentIds->count(), 'quorum_met' => $quorumMet]);
+        $auditLogger->record($user, $meeting, 'dswg.meeting.outcomes_recorded', __('dswg.audit_outcomes_recorded', ['reference' => $meeting->reference]), metadata: ['present' => $presentIds->count(), 'quorum_met' => $quorumMet]);
 
-        return $this->success('Meeting outcomes recorded for independent minutes approval.');
+        return $this->success(__('dswg.outcome_meeting_outcomes_recorded'));
     }
 
     public function approveMinutes(ApproveDswgMinutesRequest $request, DswgMeeting $meeting, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
@@ -276,35 +276,35 @@ class DswgCoordinationController extends Controller
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
         $instance = $meeting->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'Meeting workflow is unavailable.');
-        abort_unless($meeting->documentLinks()->where('purpose', 'dswg-minutes-record')->whereHas('document', fn (Builder $query) => $query->whereNull('deleted_at')->where('scan_status', 'clean')->where('record_status', 'active'))->exists(), 409, 'A clean repository-linked minutes record is required before approval.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('dswg.meeting_workflow_unavailable'));
+        abort_unless($meeting->documentLinks()->where('purpose', 'dswg-minutes-record')->whereHas('document', fn (Builder $query) => $query->whereNull('deleted_at')->where('scan_status', 'clean')->where('record_status', 'active'))->exists(), 409, __('dswg.clean_minutes_required'));
         $transitioned = $transition->handle($instance, 'approve_minutes', $user, [], $request->validated('approval_comment'));
         $meeting->update(['minutes_approved_by' => $user->id, 'minutes_approved_at' => now(), 'status' => $transitioned->current_state]);
-        $auditLogger->record($user, $meeting, 'dswg.minutes.approved', "Minutes approved for {$meeting->reference}.");
+        $auditLogger->record($user, $meeting, 'dswg.minutes.approved', __('dswg.audit_minutes_approved', ['reference' => $meeting->reference]));
 
-        return $this->success('Minutes approved and meeting closed.');
+        return $this->success(__('dswg.outcome_minutes_approved'));
     }
 
     public function storeDecision(StoreDswgDecisionRequest $request, DswgMeeting $meeting, AuditLogger $auditLogger): RedirectResponse
     {
         $this->authorizeMeeting($this->user($request), $meeting);
-        abort_unless(in_array($meeting->status, ['minutes_pending', 'closed'], true), 409, 'Decisions may be registered only after outcomes are recorded.');
+        abort_unless(in_array($meeting->status, ['minutes_pending', 'closed'], true), 409, __('dswg.decision_after_outcomes'));
         $user = $this->user($request);
         $decision = $meeting->decisions()->create([...$request->validated(), 'created_by' => $user->id, 'status' => 'adopted']);
-        $auditLogger->record($user, $decision, 'dswg.decision.adopted', "DSWG decision {$decision->code} adopted.");
+        $auditLogger->record($user, $decision, 'dswg.decision.adopted', __('dswg.audit_decision_adopted', ['code' => $decision->code]));
 
-        return $this->success('Meeting decision registered.');
+        return $this->success(__('dswg.outcome_decision_registered'));
     }
 
     public function storeAction(StoreDswgActionRequest $request, DswgMeeting $meeting, CreateDswgAction $createAction): RedirectResponse
     {
         $user = $this->user($request);
         $this->authorizeMeeting($user, $meeting);
-        abort_unless(in_array($meeting->status, ['minutes_pending', 'closed'], true), 409, 'Actions may be assigned only after meeting outcomes are recorded.');
+        abort_unless(in_array($meeting->status, ['minutes_pending', 'closed'], true), 409, __('dswg.action_after_outcomes'));
         $action = $createAction->handle($meeting, $user, $request->validated());
-        $action->accountableUser->notifyNow(new ProgrammeAlert('New DSWG action assigned', "{$action->code}: {$action->title} is due {$action->due_on->toFormattedDateString()}.", 'dswg'));
+        $action->accountableUser->notifyNow(ProgrammeAlert::translated('dswg.notification_action_title', 'dswg.notification_action_message', 'dswg', messageParameters: ['code' => $action->code, 'title' => $action->title, 'date' => $action->due_on->toFormattedDateString()]));
 
-        return $this->success('Accountable action created and assignee notified.');
+        return $this->success(__('dswg.outcome_action_created'));
     }
 
     public function transitionAction(TransitionDswgActionRequest $request, DswgAction $action, TransitionWorkflow $transition, AuditLogger $auditLogger): RedirectResponse
@@ -318,7 +318,7 @@ class DswgCoordinationController extends Controller
             abort_unless($user->can(ProgrammePermission::ManageDswg->value) || $action->accountable_user_id === $user->id, 403);
         }
         $instance = $action->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'Action workflow is unavailable.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('dswg.action_workflow_unavailable'));
         $hasCleanEvidence = $action->documentLinks()->where('purpose', 'dswg-action-evidence')->whereHas('document', fn (Builder $query) => $query->whereNull('deleted_at')->where('scan_status', 'clean')->where('record_status', 'active'))->exists();
         $context = [
             'progress_percentage' => $request->validated('progress_percentage', $action->progress_percentage),
@@ -339,9 +339,9 @@ class DswgCoordinationController extends Controller
             $attributes = [...$attributes, 'completed_by' => null, 'completed_at' => null];
         }
         $action->update($attributes);
-        $auditLogger->record($user, $action, 'dswg.action.transitioned', "DSWG action {$action->code} transitioned via {$transitionName}.", $action->county_id, ['comment' => $request->validated('comment')]);
+        $auditLogger->record($user, $action, 'dswg.action.transitioned', __('dswg.audit_action_transitioned', ['code' => $action->code, 'transition' => $transitionName]), $action->county_id, ['comment' => $request->validated('comment')]);
 
-        return $this->success('Action workflow updated.');
+        return $this->success(__('dswg.outcome_action_updated'));
     }
 
     /** @return Builder<DswgWorkingGroup> */
