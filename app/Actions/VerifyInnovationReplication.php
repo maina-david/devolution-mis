@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\InnovationReplication;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -15,9 +16,11 @@ class VerifyInnovationReplication
     /** @param array<string, mixed> $attributes */
     public function handle(InnovationReplication $replication, User $actor, array $attributes): InnovationReplication
     {
+        abort_unless($actor->can(ProgrammePermission::CurateKnowledge->value), 403, __('innovation-replications.errors.verify_unauthorized'));
+
         return DB::transaction(function () use ($replication, $actor, $attributes): InnovationReplication {
             $replication = InnovationReplication::query()->with('targetCounty')->lockForUpdate()->findOrFail($replication->id);
-            abort_unless($actor->canAccessCounty($replication->targetCounty), 403);
+            abort_unless($actor->canAccessCounty($replication->targetCounty), 403, __('innovation-replications.errors.county_outside_scope'));
             if (in_array($actor->id, [$replication->created_by, $replication->accountable_user_id, $replication->submitted_by], true)) {
                 throw ValidationException::withMessages(['decision' => __('innovation-replications.errors.independent_verifier_required')]);
             }

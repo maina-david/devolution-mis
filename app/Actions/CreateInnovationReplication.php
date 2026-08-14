@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DevolutionInnovation;
 use App\Models\InnovationReplication;
@@ -20,6 +21,8 @@ class CreateInnovationReplication
     /** @param array<string, mixed> $attributes */
     public function handle(User $actor, array $attributes): InnovationReplication
     {
+        abort_unless($actor->can(ProgrammePermission::ManageKnowledge->value), 403, __('innovation-replications.errors.create_unauthorized'));
+
         return DB::transaction(function () use ($actor, $attributes): InnovationReplication {
             $innovation = DevolutionInnovation::query()->with('county')->lockForUpdate()->whereKey((string) $attributes['devolution_innovation_id'])->firstOrFail();
             if ($innovation->status !== 'scaling') {
@@ -35,7 +38,7 @@ class CreateInnovationReplication
                 throw ValidationException::withMessages(['target_county_id' => __('innovation-replications.errors.different_target_required')]);
             }
             $targetCounty = County::query()->whereKey((string) $attributes['target_county_id'])->firstOrFail();
-            abort_unless($actor->canAccessCounty($targetCounty), 403);
+            abort_unless($actor->canAccessCounty($targetCounty), 403, __('innovation-replications.errors.county_outside_scope'));
             $accountable = User::query()->whereKey((string) $attributes['accountable_user_id'])->firstOrFail();
             if (! $accountable->canAccessCounty($targetCounty)) {
                 throw ValidationException::withMessages(['accountable_user_id' => __('innovation-replications.errors.accountable_scope_required')]);

@@ -67,21 +67,21 @@ class InnovationReplicationController extends Controller
     {
         $replication = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Replication {$replication->reference} created.");
+        return back()->with('success', __('innovation-replications.outcomes.created', ['reference' => $replication->reference]));
     }
 
     public function update(UpdateInnovationReplicationRequest $request, InnovationReplication $replication, UpdateInnovationReplication $action): RedirectResponse
     {
         $action->handle($replication, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Replication workflow updated.');
+        return back()->with('success', __('innovation-replications.outcomes.updated'));
     }
 
     public function verify(VerifyInnovationReplicationRequest $request, InnovationReplication $replication, VerifyInnovationReplication $action): RedirectResponse
     {
         $action->handle($replication, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Independent adoption decision recorded.');
+        return back()->with('success', __('innovation-replications.outcomes.verified'));
     }
 
     public function export(WorkspaceIndexRequest $request, string $format): Response
@@ -92,7 +92,7 @@ class InnovationReplicationController extends Controller
         $filters = $request->safe()->only(['from', 'to', 'county_id', 'status', 'search']);
         $countyIds = $this->countyScope->query($user)->pluck('id');
         $rows = array_values($this->query($countyIds, $filters)->orderBy('reference')->get()->map(fn (InnovationReplication $replication): array => $this->payload($replication))->values()->all());
-        $this->auditLogger->record($user, $user, 'knowledge.innovation_replication.exported', 'Innovation replication portfolio exported as '.mb_strtoupper($format).'.', $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
+        $this->auditLogger->record($user, $user, 'knowledge.innovation_replication.exported', __('innovation-replications.audit.exported', ['format' => mb_strtoupper($format)]), $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
         $filename = 'innovation-replication-portfolio-'.now()->format('Ymd-His');
 
         return match ($format) {
@@ -150,7 +150,7 @@ class InnovationReplicationController extends Controller
     private function xlsx(array $rows, string $filename): BinaryFileResponse
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-replication-');
-        abort_if($path === false, 500, 'Export file could not be created.');
+        abort_if($path === false, 500, __('innovation-replications.errors.export_file_create_failed'));
         $writer = new Writer;
         $writer->openToFile($path);
         $writer->addRow(Row::fromValues($this->headings()));
@@ -175,10 +175,12 @@ class InnovationReplicationController extends Controller
                 }
             }
 
-            return '<tr><td>'.e($row['reference']).'</td><td>'.e($row['innovation']['title']).'</td><td>'.$logo.e($county['name']).'</td><td>'.e($row['referenceData']['version'] ?? 'Legacy unpinned').'</td><td>'.e($row['referenceData']['checksum'] ?? 'Legacy unpinned').'</td><td>'.e($row['accountableAdopter']).'</td><td>'.e($row['successMeasure']).'</td><td>'.e($row['actualValue'] ?? '—').'</td><td>'.e($row['status']).'</td></tr>';
+            return '<tr><td>'.e($row['reference']).'</td><td>'.e($row['innovation']['title']).'</td><td>'.$logo.e($county['name']).'</td><td>'.e($row['referenceData']['version'] ?? __('innovation-replications.legacy_unpinned')).'</td><td>'.e($row['referenceData']['checksum'] ?? __('innovation-replications.legacy_unpinned')).'</td><td>'.e($row['accountableAdopter']).'</td><td>'.e($row['successMeasure']).'</td><td>'.e($row['actualValue'] ?? __('innovation-replications.not_available')).'</td><td>'.e(__('innovation-replications.'.$row['status'])).'</td></tr>';
         })->implode('');
         $dompdf = new Dompdf;
-        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>IDMIS innovation replication portfolio</h1><p>Generated '.e(now()->toDayDateTimeString()).'</p><table><thead><tr><th>Reference</th><th>Source innovation</th><th>Target county</th><th>Catalogue</th><th>Catalogue checksum</th><th>Accountable adopter</th><th>Success measure</th><th>Actual</th><th>Status</th></tr></thead><tbody>'.$body.'</tbody></table>');
+        $headings = $this->headings();
+        $header = collect([$headings[0], $headings[1], $headings[3], $headings[4], $headings[5], $headings[6], $headings[7], $headings[10], $headings[11]])->map(fn (string $heading): string => '<th>'.e($heading).'</th>')->implode('');
+        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}</style><h1>'.e(__('innovation-replications.page_title')).'</h1><p>'.e(__('innovation-replications.generated_at', ['date' => now()->toDayDateTimeString()])).'</p><table><thead><tr>'.$header.'</tr></thead><tbody>'.$body.'</tbody></table>');
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
@@ -188,7 +190,7 @@ class InnovationReplicationController extends Controller
     /** @return list<string> */
     private function headings(): array
     {
-        return ['Reference', 'Innovation', 'Source county', 'Target county', 'Catalogue', 'Catalogue checksum', 'Accountable adopter', 'Success measure', 'Baseline', 'Target', 'Actual', 'Status', 'Verification decision', 'Target completion'];
+        return [__('innovation-replications.reference'), __('innovation-replications.source_innovation'), __('innovation-replications.source_county'), __('innovation-replications.target_county'), __('innovation-replications.catalogue'), __('innovation-replications.catalogue_checksum'), __('innovation-replications.accountable_adopter'), __('innovation-replications.success_measure'), __('innovation-replications.baseline_value'), __('innovation-replications.target_value'), __('innovation-replications.actual'), __('innovation-replications.status'), __('innovation-replications.independent_decision'), __('innovation-replications.target_completion')];
     }
 
     /** @param array<string, mixed> $row
@@ -196,7 +198,7 @@ class InnovationReplicationController extends Controller
      */
     private function values(array $row): array
     {
-        return [$row['reference'], $row['innovation']['title'], $row['sourceCounty']['name'], $row['targetCounty']['name'], $row['referenceData']['version'] ?? 'Legacy unpinned', $row['referenceData']['checksum'] ?? 'Legacy unpinned', $row['accountableAdopter'], $row['successMeasure'], $row['baselineValue'], $row['targetValue'], $row['actualValue'], $row['status'], $row['verificationDecision'], $row['targetCompletionOn']];
+        return [$row['reference'], $row['innovation']['title'], $row['sourceCounty']['name'], $row['targetCounty']['name'], $row['referenceData']['version'] ?? __('innovation-replications.legacy_unpinned'), $row['referenceData']['checksum'] ?? __('innovation-replications.legacy_unpinned'), $row['accountableAdopter'], $row['successMeasure'], $row['baselineValue'], $row['targetValue'], $row['actualValue'], __('innovation-replications.'.$row['status']), __('innovation-replications.'.$row['verificationDecision']), $row['targetCompletionOn']];
     }
 
     private function user(WorkspaceIndexRequest|StoreInnovationReplicationRequest|UpdateInnovationReplicationRequest|VerifyInnovationReplicationRequest $request): User

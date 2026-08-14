@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateInnovationReplication;
+use App\Actions\UpdateInnovationReplication;
+use App\Actions\VerifyInnovationReplication;
 use App\Models\County;
 use App\Models\DevolutionInnovation;
 use App\Models\InnovationReplication;
@@ -17,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class InnovationReplicationWorkflowTest extends TestCase
@@ -142,6 +146,33 @@ class InnovationReplicationWorkflowTest extends TestCase
                 'devolution_innovation_id' => 'Seules les innovations vérifiées indépendamment et approuvées pour le déploiement peuvent être répliquées.',
             ]);
 
+        $release = $this->publishedReferenceRelease([$source, $target], $creator);
+        $draft->update(['status' => 'scaling', 'stage' => 'scale', 'reference_data_release_id' => $release->id]);
+        $this->seed(KnowledgeWorkflowSeeder::class);
+        $this->actingAs($creator)
+            ->withSession(['locale' => 'fr'])
+            ->post(route('knowledge.innovation-replications.store'), $this->payload($draft, $target, $adopter))
+            ->assertRedirect()
+            ->assertSessionHas('success', fn (string $message): bool => str_starts_with($message, 'Réplication REP-') && str_ends_with($message, ' créée.'));
+        $replication = InnovationReplication::query()->sole();
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $replication->id,
+            'action' => 'knowledge.innovation_replication.created',
+            'description' => "Réplication {$replication->reference} créée pour {$target->name}.",
+        ]);
+        $csv = $this->actingAs($creator)
+            ->withSession(['locale' => 'fr'])
+            ->get(route('knowledge.innovation-replications.export', ['csv']))
+            ->assertOk()
+            ->assertDownload();
+        $this->assertStringContainsString('Référence', $csv->streamedContent());
+        $this->assertStringContainsString('Comté cible', $csv->streamedContent());
+        $this->assertDatabaseHas('audit_events', [
+            'actor_id' => $creator->id,
+            'action' => 'knowledge.innovation_replication.exported',
+            'description' => 'Portefeuille de réplication des innovations exporté au format CSV.',
+        ]);
+
         $englishKeys = array_keys(Arr::dot(require lang_path('en/innovation-replications.php')));
         sort($englishKeys);
         foreach (['sw', 'fr'] as $locale) {
@@ -149,6 +180,30 @@ class InnovationReplicationWorkflowTest extends TestCase
             sort($localizedKeys);
             $this->assertSame($englishKeys, $localizedKeys, "Innovation replication catalog keys differ for {$locale}.");
         }
+    }
+
+    public function test_replication_actions_enforce_localized_permissions_before_target_or_payload_processing(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $replication = InnovationReplication::factory()->create();
+
+        app()->setLocale('fr');
+        $this->assertForbiddenAction(
+            fn () => app(CreateInnovationReplication::class)->handle($unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à créer des réplications d’innovation.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(UpdateInnovationReplication::class)->handle($replication, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à mettre à jour les réplications d’innovation.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(VerifyInnovationReplication::class)->handle($replication, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à vérifier les réplications d’innovation.',
+        );
+
+        $this->assertDatabaseCount('innovation_replications', 1);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     /** @return array<string, mixed> */
@@ -163,5 +218,17 @@ class InnovationReplicationWorkflowTest extends TestCase
         $snapshot = ['counties' => collect($counties)->map(fn (County $county): array => ['id' => $county->id])->all(), 'organizations' => [], 'sectors' => [], 'programmes' => []];
 
         return ReferenceDataRelease::factory()->create(['approved_by' => $approver->id, 'status' => 'published', 'snapshot' => $snapshot, 'checksum' => app(CanonicalJson::class)->checksum($snapshot), 'effective_from' => now()->subMinute(), 'published_at' => now()]);
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertForbiddenAction(callable $action, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The innovation-replication action did not enforce its permission boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

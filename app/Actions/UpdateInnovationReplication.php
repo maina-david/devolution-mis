@@ -16,10 +16,12 @@ class UpdateInnovationReplication
     /** @param array<string, mixed> $attributes */
     public function handle(InnovationReplication $replication, User $actor, array $attributes): InnovationReplication
     {
+        abort_unless($actor->canAny([ProgrammePermission::ContributeKnowledge->value, ProgrammePermission::ManageKnowledge->value]), 403, __('innovation-replications.errors.update_unauthorized'));
+
         return DB::transaction(function () use ($replication, $actor, $attributes): InnovationReplication {
             $replication = InnovationReplication::query()->with(['targetCounty', 'documentLinks.document'])->lockForUpdate()->findOrFail($replication->id);
-            abort_unless($actor->canAccessCounty($replication->targetCounty), 403);
-            abort_unless($actor->id === $replication->accountable_user_id || $actor->can(ProgrammePermission::ManageKnowledge->value), 403);
+            abort_unless($actor->canAccessCounty($replication->targetCounty), 403, __('innovation-replications.errors.county_outside_scope'));
+            abort_unless($actor->id === $replication->accountable_user_id || $actor->can(ProgrammePermission::ManageKnowledge->value), 403, __('innovation-replications.errors.accountable_or_manager_required'));
             $transition = (string) $attributes['transition'];
             $updates = collect($attributes)->only(['adaptation_plan', 'success_measure', 'baseline_value', 'target_value', 'actual_value', 'outcome_summary'])->filter(fn (mixed $value): bool => $value !== null)->all();
             $actualValue = $updates['actual_value'] ?? $replication->actual_value;
