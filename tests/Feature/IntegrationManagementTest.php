@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ActivateIntegrationSystem;
+use App\Actions\AttemptIntegrationExchangeDelivery;
+use App\Actions\PublishIntegrationContract;
 use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DevolutionProject;
@@ -19,12 +22,14 @@ use App\Services\EffectiveReferenceDataReleaseResolver;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class IntegrationManagementTest extends TestCase
@@ -56,8 +61,10 @@ class IntegrationManagementTest extends TestCase
         $this->assertTrue(Str::isUuid($contract->id));
         $this->assertSame(64, strlen($contract->content_checksum));
         $this->actingAs($author)->patch(route('integrations.contracts.publish', [$contract]), ['effective_from' => now()->subMinute()->toIso8601String()])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('integrations.contracts.publish', [$contract]), ['effective_from' => now()->subMinute()->toIso8601String()])->assertRedirect();
+        App::setLocale('sw');
+        $this->actingAs($reviewer)->withSession(['locale' => 'sw'])->patch(route('integrations.contracts.publish', [$contract]), ['effective_from' => now()->subMinute()->toIso8601String()])->assertRedirect();
         $this->assertSame('published', $contract->refresh()->status);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $contract->id, 'action' => 'integration.contract.published', 'description' => "Mkataba wa kiolesura {$contract->name} t{$contract->version} umechapishwa."]);
 
         $payload = ['employee_reference' => 'IPPD-000123', 'full_name' => 'Protected Person', 'employment_status' => 'active'];
         $request = ['idempotency_key' => 'IPPD-EMPLOYEE-000123-v1', 'external_reference' => 'IPPD-000123', 'payload' => $payload, 'source_occurred_at' => now()->subHour()->toIso8601String()];
@@ -78,6 +85,7 @@ class IntegrationManagementTest extends TestCase
             $this->actingAs($author)->get(route('workspace.export', ['integrations', $format]))->assertOk()->assertDownload();
         }
         $this->assertDatabaseHas('audit_events', ['subject_id' => $exchange->id, 'action' => 'integration.exchange.delivery_attempted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $exchange->id, 'action' => 'integration.exchange.delivery_attempted', 'description' => "Jaribio la 1 la ubadilishanaji {$exchange->correlation_id} limekamilika kwa hali succeeded."]);
         $this->assertDatabaseHas('integration_exchange_attempts', ['integration_exchange_id' => $exchange->id, 'attempt_number' => 1, 'trigger_source' => 'initial_dispatch', 'outcome' => 'succeeded']);
     }
 
@@ -99,8 +107,10 @@ class IntegrationManagementTest extends TestCase
         $this->assertStringContainsString('source-owner activation approval', (string) $exchange->error_detail);
         $this->assertNull($system->refresh()->production_approved_at);
         $this->actingAs($author)->patch(route('integrations.systems.activate', [$system]), ['production_approval_reference' => 'TREASURY-ACTIVATION-001', 'production_approved_at' => now()->subMinute()->toIso8601String()])->assertForbidden();
-        $this->actingAs($reviewer)->patch(route('integrations.systems.activate', [$system]), ['production_approval_reference' => 'TREASURY-ACTIVATION-001', 'production_approved_at' => now()->subMinute()->toIso8601String()])->assertRedirect();
+        App::setLocale('fr');
+        $this->actingAs($reviewer)->withSession(['locale' => 'fr'])->patch(route('integrations.systems.activate', [$system]), ['production_approval_reference' => 'TREASURY-ACTIVATION-001', 'production_approved_at' => now()->subMinute()->toIso8601String()])->assertRedirect();
         $this->assertSame('TREASURY-ACTIVATION-001', $system->refresh()->production_approval_reference);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $system->id, 'action' => 'integration.system.activated', 'description' => "L’intégration de production {$system->code} a été activée avec l’approbation consignée du propriétaire de la source."]);
         config(['integrations.allowed_hosts' => ['ifmis.example.go.ke'], 'integrations.credentials.ifmis' => 'vault-test-token']);
         Http::fake(['https://ifmis.example.go.ke/*' => Http::response(['accepted' => true, 'remote_reference' => 'IFMIS-ACK-001'], 202)]);
         $this->actingAs($author)->post(route('integrations.exchanges.dispatch', [$contract]), ['idempotency_key' => 'IFMIS-ACTIVE-001', 'payload' => ['employee_reference' => 'IPPD-000126', 'full_name' => 'Test User Two', 'employment_status' => 'active']])->assertRedirect();
@@ -129,6 +139,62 @@ class IntegrationManagementTest extends TestCase
             $this->assertArrayHasKey('owner_organization_id', $exception->errors());
         }
         $this->assertDatabaseCount('integration_systems', 0);
+    }
+
+    public function test_direct_integration_actions_authorize_before_record_or_payload_processing_and_localize_invalid_states(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $manager = User::factory()->platformAdmin()->create();
+        $system = IntegrationSystem::factory()->create(['registered_by' => $unauthorizedActor->id, 'environment' => 'sandbox', 'transport' => 'fixture']);
+        $contract = IntegrationContract::factory()->create(['integration_system_id' => $system->id, 'submitted_by' => $manager->id, 'status' => 'published']);
+        $exchange = IntegrationExchange::factory()->create(['integration_contract_id' => $contract->id, 'direction' => 'inbound', 'status' => 'accepted']);
+
+        App::setLocale('fr');
+        $this->assertHttpAction(
+            fn () => app(AttemptIntegrationExchangeDelivery::class)->handle($exchange, $unauthorizedActor, 'untrusted-trigger'),
+            403,
+            'Vous n’êtes pas autorisé à livrer des échanges d’intégration.',
+        );
+        $this->assertHttpAction(
+            fn () => app(PublishIntegrationContract::class)->handle($contract, $unauthorizedActor, []),
+            403,
+            'Vous n’êtes pas autorisé à publier des contrats d’intégration.',
+        );
+        $this->assertHttpAction(
+            fn () => app(ActivateIntegrationSystem::class)->handle($system, $unauthorizedActor, []),
+            403,
+            'Vous n’êtes pas autorisé à activer des systèmes d’intégration.',
+        );
+        $this->assertHttpAction(
+            fn () => app(AttemptIntegrationExchangeDelivery::class)->handle($exchange, $manager, 'untrusted-trigger'),
+            422,
+            'Le déclencheur de nouvelle tentative d’intégration n’est pas pris en charge.',
+        );
+        $this->assertHttpAction(
+            fn () => app(PublishIntegrationContract::class)->handle($contract, $manager, []),
+            409,
+            'Seuls les contrats en cours de revue peuvent être publiés.',
+        );
+        $this->assertHttpAction(
+            fn () => app(ActivateIntegrationSystem::class)->handle($system, $manager, []),
+            409,
+            'Seule une intégration HTTPS de production entièrement configurée peut être activée.',
+        );
+
+        $this->assertSame('accepted', $exchange->refresh()->status);
+        $this->assertSame('published', $contract->refresh()->status);
+        $this->assertSame('sandbox', $system->refresh()->environment);
+        $this->assertDatabaseCount('integration_exchange_attempts', 0);
+        $this->assertDatabaseCount('audit_events', 0);
+
+        $englishKeys = array_keys(Arr::dot(require lang_path('en/integrations.php')));
+        sort($englishKeys);
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedKeys = array_keys(Arr::dot(require lang_path("{$locale}/integrations.php")));
+            sort($localizedKeys);
+            $this->assertSame($englishKeys, $localizedKeys, "Integration catalog keys differ for {$locale}.");
+        }
     }
 
     public function test_reconciliation_exception_resolution_is_county_scoped_and_closes_run_with_checksum(): void
@@ -276,5 +342,17 @@ class IntegrationManagementTest extends TestCase
         $payload = ['partner_contribution_id' => $contributionId, 'external_reference' => $externalReference, 'committed_amount' => $committedAmount, 'disbursed_amount' => $disbursedAmount, 'in_kind_value' => '0.00', 'currency' => 'KES'];
 
         return IntegrationExchange::factory()->create(['integration_contract_id' => $contract->id, 'county_id' => $county->id, 'created_by' => $sourceOperator->id, 'direction' => 'inbound', 'external_reference' => $externalReference, 'idempotency_key' => $externalReference.'-v1', 'request_payload' => $payload, 'payload_checksum' => hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR)), 'source_occurred_at' => now()->subHour(), 'accepted_at' => now()->subHour()]);
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertHttpAction(callable $action, int $status, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The integration action did not enforce the expected control boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame($status, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

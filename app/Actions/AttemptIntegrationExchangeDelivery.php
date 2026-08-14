@@ -19,21 +19,21 @@ class AttemptIntegrationExchangeDelivery
 
     public function handle(IntegrationExchange $exchange, User $actor, string $triggerSource): IntegrationExchange
     {
-        abort_unless($actor->can(ProgrammePermission::ManageIntegrations->value), 403);
-        abort_unless(in_array($triggerSource, ['initial_dispatch', 'scheduled_retry', 'manual_retry'], true), 422, 'Unsupported retry trigger.');
+        abort_unless($actor->can(ProgrammePermission::ManageIntegrations->value), 403, __('integrations.exchange.errors.delivery_unauthorized'));
+        abort_unless(in_array($triggerSource, ['initial_dispatch', 'scheduled_retry', 'manual_retry'], true), 422, __('integrations.exchange.errors.unsupported_retry_trigger'));
 
         $claim = DB::transaction(function () use ($exchange, $triggerSource): array {
             $current = IntegrationExchange::query()->with('contract.system')->lockForUpdate()->findOrFail($exchange->id);
-            abort_unless($current->direction === 'outbound', 409, 'Only outbound exchanges can be delivered.');
+            abort_unless($current->direction === 'outbound', 409, __('integrations.exchange.errors.outbound_delivery_only'));
 
             $allowedStatuses = match ($triggerSource) {
                 'initial_dispatch' => ['accepted'],
                 'scheduled_retry' => ['retry_scheduled'],
                 'manual_retry' => ['retry_scheduled', 'dead_lettered'],
             };
-            abort_unless(in_array($current->status, $allowedStatuses, true), 409, 'The exchange is not eligible for this delivery action.');
+            abort_unless(in_array($current->status, $allowedStatuses, true), 409, __('integrations.exchange.errors.delivery_ineligible'));
             if ($triggerSource === 'scheduled_retry') {
-                abort_unless($current->next_attempt_at === null || $current->next_attempt_at->isPast(), 409, 'The scheduled retry is not due yet.');
+                abort_unless($current->next_attempt_at === null || $current->next_attempt_at->isPast(), 409, __('integrations.exchange.errors.retry_not_due'));
             }
 
             $attemptNumber = $current->attempt_count + 1;
@@ -62,7 +62,7 @@ class AttemptIntegrationExchangeDelivery
             $retryable = in_array($httpStatus, [408, 425, 429], true) || $httpStatus >= 500;
             if ($httpStatus < 200 || $httpStatus >= 300) {
                 $errorCategory = 'remote_rejection';
-                $errorDetail = "Remote endpoint returned HTTP {$httpStatus}.";
+                $errorDetail = __('integrations.exchange.errors.remote_http_status', ['status' => $httpStatus]);
             }
         } catch (Throwable $exception) {
             $retryable = $exception instanceof ConnectionException;
@@ -80,7 +80,7 @@ class AttemptIntegrationExchangeDelivery
 
         DB::transaction(function () use ($current, $actor, $triggerSource, $attemptNumber, $startedAt, $completedAt, $durationMs, $response, $httpStatus, $responseChecksum, $errorCategory, $errorDetail, $retryable, $retryAfterSeconds, $outcome): void {
             $locked = IntegrationExchange::query()->lockForUpdate()->findOrFail($current->id);
-            abort_unless($locked->status === 'processing' && $locked->attempt_count === $attemptNumber, 409, 'The exchange delivery claim changed before completion.');
+            abort_unless($locked->status === 'processing' && $locked->attempt_count === $attemptNumber, 409, __('integrations.exchange.errors.delivery_claim_changed'));
 
             IntegrationExchangeAttempt::create([
                 'integration_exchange_id' => $locked->id,
@@ -112,7 +112,7 @@ class AttemptIntegrationExchangeDelivery
         });
 
         $fresh = $current->refresh();
-        $this->auditLogger->record($actor, $fresh, 'integration.exchange.delivery_attempted', "Exchange {$fresh->correlation_id} attempt {$attemptNumber} completed as {$outcome}.", $fresh->county_id, ['attempt_number' => $attemptNumber, 'trigger_source' => $triggerSource, 'outcome' => $outcome, 'http_status' => $httpStatus, 'retry_after_seconds' => $retryAfterSeconds]);
+        $this->auditLogger->record($actor, $fresh, 'integration.exchange.delivery_attempted', __('integrations.exchange.audit.delivery_attempted', ['correlation' => $fresh->correlation_id, 'attempt' => $attemptNumber, 'outcome' => $outcome]), $fresh->county_id, ['attempt_number' => $attemptNumber, 'trigger_source' => $triggerSource, 'outcome' => $outcome, 'http_status' => $httpStatus, 'retry_after_seconds' => $retryAfterSeconds]);
 
         return $fresh;
     }
