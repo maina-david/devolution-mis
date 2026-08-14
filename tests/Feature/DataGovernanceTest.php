@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Actions\AdvanceDataSubjectRequest;
+use App\Actions\AdvancePrivacyIncident;
 use App\Models\DataAsset;
 use App\Models\DataSubjectRequest;
+use App\Models\PrivacyIncident;
 use App\Models\ProcessingActivity;
 use App\Models\RetentionSchedule;
 use App\Models\RetentionScheduleApproval;
@@ -13,6 +16,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class DataGovernanceTest extends TestCase
@@ -149,11 +153,17 @@ class DataGovernanceTest extends TestCase
         $identityVerifier = User::factory()->devolutionAdmin()->create();
         $decisionMaker = User::factory()->platformAdmin()->create();
         $viewer = User::factory()->topManagement()->create();
+        $this->withSession(['locale' => 'fr']);
 
         $this->actingAs($identityVerifier)->post(route('data-governance.data-subject-requests.store'), ['assigned_to' => $decisionMaker->id, 'request_type' => 'access', 'requester_name' => 'Protected Citizen', 'requester_contact' => 'citizen@example.test', 'contact_channel' => 'email', 'scope' => 'All personal information connected to citizen feedback reference CFM-2026-001.', 'received_at' => now()->subHour()->toIso8601String()])->assertRedirect();
         $privacyRequest = DataSubjectRequest::query()->sole();
         $this->assertTrue(Str::isUuid($privacyRequest->id));
         $this->assertSame('Protected Citizen', $privacyRequest->requester_name);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $privacyRequest->id,
+            'action' => 'privacy.data-subject-request.received',
+            'description' => "Demande de confidentialité {$privacyRequest->reference} reçue.",
+        ]);
         $raw = DataSubjectRequest::query()->toBase()->where('id', $privacyRequest->id)->first();
         $this->assertStringNotContainsString('Protected Citizen', (string) $raw?->requester_name);
         $this->assertStringNotContainsString('citizen@example.test', (string) $raw?->requester_contact);
@@ -165,6 +175,11 @@ class DataGovernanceTest extends TestCase
         $this->actingAs($decisionMaker)->patch(route('data-governance.data-subject-requests.advance', [$privacyRequest]), $decision)->assertRedirect();
         $this->assertSame('completed', $privacyRequest->refresh()->status);
         $this->assertSame($decisionMaker->id, $privacyRequest->decided_by);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $privacyRequest->id,
+            'action' => 'privacy.data-subject-request.complete',
+            'description' => "Demande de confidentialité {$privacyRequest->reference} passée à l’état terminée.",
+        ]);
 
         ProcessingActivity::factory()->create();
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
@@ -174,7 +189,42 @@ class DataGovernanceTest extends TestCase
                 $this->assertStringNotContainsString('Protected Citizen', $response->streamedContent());
             }
         }
-        $this->actingAs($viewer)->get(route('data-governance.index'))->assertOk()->assertInertia(fn ($page) => $page->where('capabilities.manage', false)->where('dataSubjectRequests.data.0.requesterContact', 'Restricted'));
+        $this->actingAs($viewer)->get(route('data-governance.index'))->assertOk()->assertInertia(fn ($page) => $page->where('capabilities.manage', false)->where('dataSubjectRequests.data.0.requesterContact', 'Restreint'));
+    }
+
+    public function test_privacy_actions_enforce_permissions_and_reject_unknown_transitions_before_mutation(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $manager = User::factory()->platformAdmin()->create();
+        $privacyRequest = DataSubjectRequest::factory()->create(['status' => 'received']);
+        $incident = PrivacyIncident::factory()->create(['status' => 'reported']);
+
+        app()->setLocale('fr');
+        $this->assertHttpAction(
+            fn () => app(AdvanceDataSubjectRequest::class)->handle($privacyRequest, $unauthorizedActor, []),
+            403,
+            'Vous n’êtes pas autorisé à faire progresser les demandes des personnes concernées.',
+        );
+        $this->assertHttpAction(
+            fn () => app(AdvancePrivacyIncident::class)->handle($incident, $unauthorizedActor, []),
+            403,
+            'Vous n’êtes pas autorisé à faire progresser les incidents de confidentialité.',
+        );
+        $this->assertHttpAction(
+            fn () => app(AdvanceDataSubjectRequest::class)->handle($privacyRequest, $manager, ['transition' => 'invalid']),
+            422,
+            'Transition de demande de personne concernée inconnue.',
+        );
+        $this->assertHttpAction(
+            fn () => app(AdvancePrivacyIncident::class)->handle($incident, $manager, ['transition' => 'invalid']),
+            422,
+            'Transition d’incident de confidentialité inconnue.',
+        );
+
+        $this->assertSame('received', $privacyRequest->refresh()->status);
+        $this->assertSame('reported', $incident->refresh()->status);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     /** @return array<string, mixed> */
@@ -193,5 +243,17 @@ class DataGovernanceTest extends TestCase
     private function processingPayload(DataAsset $asset, RetentionSchedule $schedule): array
     {
         return ['data_asset_id' => $asset->id, 'retention_schedule_id' => $schedule->id, 'reference' => 'ROPA-IDMIS-CFM-001', 'name' => 'Citizen case intake and resolution', 'purpose' => 'Receive, route, investigate and resolve citizen feedback and grievances about devolution services.', 'lawful_basis' => 'public_task', 'lawful_basis_reference' => 'Official-authority assessment reference LEG-IDMIS-001 pending DPO validation.', 'controller_name' => 'State Department for Devolution', 'processor_names' => 'Approved Konza hosting operator', 'recipient_categories' => 'authorized case officers, independent resolution approvers', 'processing_operations' => 'collect, store, classify, route, investigate, respond', 'automated_decision_making' => false, 'cross_border_transfer' => false, 'dpia_status' => 'required', 'risk_summary' => 'Citizen narratives may include sensitive data and require strict purpose limitation and access controls.', 'security_measures' => 'Encryption, county-scoped RBAC, private files, malware quarantine and immutable audit.', 'next_review_at' => now()->addYear()->toDateString()];
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertHttpAction(callable $action, int $status, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The privacy action did not enforce its guarded boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame($status, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

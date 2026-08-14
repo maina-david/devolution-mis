@@ -43,6 +43,22 @@ return [
         'statuses' => ['approved' => 'approved', 'rejected' => 'rejected'],
         'audit' => ['submitted' => 'Processing activity :reference submitted for independent review.', 'reviewed' => 'Processing activity :reference :decision.'],
     ],
+    'privacy' => [
+        'labels' => ['restricted' => 'Restricted', 'restricted_incident_narrative' => 'Restricted incident narrative'],
+        'statuses' => ['reported' => 'reported', 'contained' => 'contained', 'notification_required' => 'notification required', 'remediation' => 'remediation', 'closed' => 'closed', 'received' => 'received', 'identity_verified' => 'identity verified', 'in_progress' => 'in progress', 'completed' => 'completed', 'rejected' => 'rejected'],
+        'errors' => [
+            'incident_advance_unauthorized' => 'You are not authorized to advance privacy incidents.', 'incident_unknown_transition' => 'Unknown privacy-incident transition.', 'incident_invalid_state' => 'This incident transition is not allowed from its current state.',
+            'incident_reporter_assessment' => 'The incident reporter cannot independently assess risk of harm.', 'incident_notification_evidence' => 'A clean private notification-evidence record is required before recording statutory notification.',
+            'incident_notification_delay_reason' => 'A reason is required when the regulator notification was recorded after the statutory target.', 'incident_closure_independence' => 'Incident closure requires an actor independent of reporting and risk assessment.',
+            'incident_closure_evidence' => 'A clean private closure-evidence record is required before incident closure.', 'request_advance_unauthorized' => 'You are not authorized to advance data-subject requests.',
+            'request_unknown_transition' => 'Unknown data-subject-request transition.', 'request_invalid_state' => 'This privacy request transition is not allowed from its current state.',
+            'request_decision_independence' => 'The identity verifier cannot make the final privacy-request decision.',
+        ],
+        'audit' => [
+            'asset_registered' => 'Data asset :code registered.', 'request_received' => 'Privacy request :reference received.', 'request_advanced' => 'Privacy request :reference advanced to :status.',
+            'incident_reported' => 'Privacy incident :reference reported.', 'incident_advanced' => 'Privacy incident :reference advanced to :status.',
+        ],
+    ],
     'outcomes' => [
         'asset_registered' => 'Data asset registered.', 'activity_submitted' => 'Processing activity submitted for independent review.', 'activity_reviewed' => 'Processing activity review recorded.', 'request_recorded' => 'Privacy request recorded with a controlled due date.', 'request_advanced' => 'Privacy request workflow advanced.', 'incident_recorded' => 'Privacy incident recorded with controlled notification deadlines.', 'incident_advanced' => 'Privacy incident workflow advanced.',
     ],

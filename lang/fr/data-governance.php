@@ -43,6 +43,22 @@ return [
         'statuses' => ['approved' => 'approuvée', 'rejected' => 'rejetée'],
         'audit' => ['submitted' => 'Activité de traitement :reference soumise à un examen indépendant.', 'reviewed' => 'Activité de traitement :reference :decision.'],
     ],
+    'privacy' => [
+        'labels' => ['restricted' => 'Restreint', 'restricted_incident_narrative' => 'Récit de l’incident restreint'],
+        'statuses' => ['reported' => 'signalé', 'contained' => 'contenu', 'notification_required' => 'notification requise', 'remediation' => 'remédiation', 'closed' => 'clos', 'received' => 'reçue', 'identity_verified' => 'identité vérifiée', 'in_progress' => 'en cours', 'completed' => 'terminée', 'rejected' => 'rejetée'],
+        'errors' => [
+            'incident_advance_unauthorized' => 'Vous n’êtes pas autorisé à faire progresser les incidents de confidentialité.', 'incident_unknown_transition' => 'Transition d’incident de confidentialité inconnue.', 'incident_invalid_state' => 'Cette transition d’incident n’est pas autorisée depuis son état actuel.',
+            'incident_reporter_assessment' => 'Le déclarant de l’incident ne peut pas évaluer indépendamment le risque de préjudice.', 'incident_notification_evidence' => 'Une preuve de notification privée et saine est requise avant d’enregistrer la notification réglementaire.',
+            'incident_notification_delay_reason' => 'Un motif est requis lorsque la notification au régulateur est enregistrée après l’échéance réglementaire.', 'incident_closure_independence' => 'La clôture de l’incident exige un acteur indépendant de la déclaration et de l’évaluation du risque.',
+            'incident_closure_evidence' => 'Une preuve de clôture privée et saine est requise avant la clôture de l’incident.', 'request_advance_unauthorized' => 'Vous n’êtes pas autorisé à faire progresser les demandes des personnes concernées.',
+            'request_unknown_transition' => 'Transition de demande de personne concernée inconnue.', 'request_invalid_state' => 'Cette transition de demande de confidentialité n’est pas autorisée depuis son état actuel.',
+            'request_decision_independence' => 'Le vérificateur d’identité ne peut pas prendre la décision finale sur la demande de confidentialité.',
+        ],
+        'audit' => [
+            'asset_registered' => 'Actif de données :code enregistré.', 'request_received' => 'Demande de confidentialité :reference reçue.', 'request_advanced' => 'Demande de confidentialité :reference passée à l’état :status.',
+            'incident_reported' => 'Incident de confidentialité :reference signalé.', 'incident_advanced' => 'Incident de confidentialité :reference passé à l’état :status.',
+        ],
+    ],
     'outcomes' => [
         'asset_registered' => 'L’actif de données a été enregistré.', 'activity_submitted' => 'L’activité de traitement a été soumise à une revue indépendante.', 'activity_reviewed' => 'La revue de l’activité de traitement a été enregistrée.', 'request_recorded' => 'La demande de confidentialité a été enregistrée avec une échéance contrôlée.', 'request_advanced' => 'Le flux de la demande de confidentialité a progressé.', 'incident_recorded' => 'L’incident de confidentialité a été enregistré avec des délais de notification contrôlés.', 'incident_advanced' => 'Le flux de l’incident de confidentialité a progressé.',
     ],

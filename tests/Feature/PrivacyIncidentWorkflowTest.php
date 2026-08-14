@@ -26,6 +26,7 @@ class PrivacyIncidentWorkflowTest extends TestCase
         $reporter = User::factory()->devolutionAdmin()->create();
         $assessor = User::factory()->platformAdmin()->create();
         $closer = User::factory()->devolutionAdmin()->create();
+        $this->withSession(['locale' => 'sw']);
         $county = County::factory()->create();
         $asset = DataAsset::factory()->create(['contains_sensitive_personal_data' => true]);
         $discoveredAt = now()->subHours(2)->startOfMinute();
@@ -75,8 +76,8 @@ class PrivacyIncidentWorkflowTest extends TestCase
 
         $this->assertSame('closed', $incident->refresh()->status);
         $this->assertSame($closer->id, $incident->closed_by);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'privacy.incident.reported']);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'privacy.incident.close']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'privacy.incident.reported', 'description' => "Tukio la faragha {$incident->reference} limeripotiwa."]);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $incident->id, 'action' => 'privacy.incident.close', 'description' => "Tukio la faragha {$incident->reference} limehamishwa hadi imefungwa."]);
     }
 
     public function test_processor_deadline_non_notifiable_path_escalation_scope_and_exports_are_controlled(): void

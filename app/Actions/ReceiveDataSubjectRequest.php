@@ -36,7 +36,7 @@ class ReceiveDataSubjectRequest
                 $actor,
                 $privacyRequest,
                 'privacy.data-subject-request.received',
-                "Privacy request {$privacyRequest->reference} received.",
+                __('data-governance.privacy.audit.request_received', ['reference' => $privacyRequest->reference]),
                 metadata: ['intake_channel' => $metadata['intake_channel'] ?? 'internal'],
             );
 

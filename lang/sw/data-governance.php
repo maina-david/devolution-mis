@@ -43,6 +43,22 @@ return [
         'statuses' => ['approved' => 'imeidhinishwa', 'rejected' => 'imekataliwa'],
         'audit' => ['submitted' => 'Shughuli ya uchakataji :reference imewasilishwa kwa ukaguzi huru.', 'reviewed' => 'Shughuli ya uchakataji :reference :decision.'],
     ],
+    'privacy' => [
+        'labels' => ['restricted' => 'Imezuiwa', 'restricted_incident_narrative' => 'Simulizi ya tukio imezuiwa'],
+        'statuses' => ['reported' => 'imeripotiwa', 'contained' => 'imedhibitiwa', 'notification_required' => 'arifa inahitajika', 'remediation' => 'marekebisho', 'closed' => 'imefungwa', 'received' => 'limepokelewa', 'identity_verified' => 'utambulisho umethibitishwa', 'in_progress' => 'linaendelea', 'completed' => 'limekamilika', 'rejected' => 'limekataliwa'],
+        'errors' => [
+            'incident_advance_unauthorized' => 'Hujaidhinishwa kuendeleza matukio ya faragha.', 'incident_unknown_transition' => 'Mpito wa tukio la faragha haujulikani.', 'incident_invalid_state' => 'Mpito huu wa tukio hauruhusiwi kutoka hali yake ya sasa.',
+            'incident_reporter_assessment' => 'Mtoa taarifa wa tukio hawezi kutathmini kwa uhuru hatari ya madhara.', 'incident_notification_evidence' => 'Rekodi safi na ya faragha ya ushahidi wa arifa inahitajika kabla ya kurekodi arifa ya kisheria.',
+            'incident_notification_delay_reason' => 'Sababu inahitajika arifa kwa mdhibiti inaporekodiwa baada ya muda wa kisheria.', 'incident_closure_independence' => 'Kufunga tukio kunahitaji mhusika huru na kuripoti na kutathmini hatari.',
+            'incident_closure_evidence' => 'Rekodi safi na ya faragha ya ushahidi wa kufunga inahitajika kabla ya kufunga tukio.', 'request_advance_unauthorized' => 'Hujaidhinishwa kuendeleza maombi ya wahusika wa data.',
+            'request_unknown_transition' => 'Mpito wa ombi la mhusika wa data haujulikani.', 'request_invalid_state' => 'Mpito huu wa ombi la faragha hauruhusiwi kutoka hali yake ya sasa.',
+            'request_decision_independence' => 'Mthibitishaji wa utambulisho hawezi kufanya uamuzi wa mwisho wa ombi la faragha.',
+        ],
+        'audit' => [
+            'asset_registered' => 'Rasilimali ya data :code imesajiliwa.', 'request_received' => 'Ombi la faragha :reference limepokelewa.', 'request_advanced' => 'Ombi la faragha :reference limehamishwa hadi :status.',
+            'incident_reported' => 'Tukio la faragha :reference limeripotiwa.', 'incident_advanced' => 'Tukio la faragha :reference limehamishwa hadi :status.',
+        ],
+    ],
     'outcomes' => [
         'asset_registered' => 'Rasilimali ya data imesajiliwa.', 'activity_submitted' => 'Shughuli ya uchakataji imewasilishwa kwa tathmini huru.', 'activity_reviewed' => 'Tathmini ya shughuli ya uchakataji imerekodiwa.', 'request_recorded' => 'Ombi la faragha limerekodiwa na tarehe ya kukamilisha iliyodhibitiwa.', 'request_advanced' => 'Mtiririko wa ombi la faragha umeendelezwa.', 'incident_recorded' => 'Tukio la faragha limerekodiwa na muda wa arifa uliodhibitiwa.', 'incident_advanced' => 'Mtiririko wa tukio la faragha umeendelezwa.',
     ],
