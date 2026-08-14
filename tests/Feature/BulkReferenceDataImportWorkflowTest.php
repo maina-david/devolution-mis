@@ -183,7 +183,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('data-migrations/index')
                 ->where('batches.data', function (mixed $batches) use ($programmeBatch, $releases): bool {
-                    if (! is_array($batches)) {
+                    if (! is_iterable($batches)) {
                         return false;
                     }
 
