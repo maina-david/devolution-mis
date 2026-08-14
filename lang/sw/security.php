@@ -16,6 +16,16 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Idhini: :approval_reference',
         'audit' => 'Ufikiaji wa utambulisho wa jukumu :role umerejeshwa kwa uhuru.',
     ],
+    'campaign' => [
+        'errors' => [
+            'independent_reviewer_required' => 'Mwanzilishi wa kampeni hawezi kuwa mkaguzi wake huru.',
+            'reviewer_not_authorized' => 'Mkaguzi aliyechaguliwa hajaidhinishwa kuthibitisha ufikiaji.',
+            'launcher_strong_authentication_required' => 'Mwanzilishi wa kampeni lazima atumie MFA au passkey iliyosajiliwa.',
+            'reviewer_strong_authentication_required' => 'Mkaguzi huru lazima atumie MFA au passkey iliyosajiliwa.',
+            'no_matching_identities' => 'Hakuna watumiaji hai wanaolingana na wigo wa majukumu uliochaguliwa.',
+        ],
+        'audit' => 'Tathmini ya ufikiaji :reference imeanzishwa kwa vitambulisho :count.',
+    ],
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'Mpito huu wa tukio hauruhusiwi kutoka hali yake ya sasa.',

@@ -16,6 +16,16 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Approbation : :approval_reference',
         'audit' => 'L’accès a été rétabli indépendamment pour l’identité du rôle :role.',
     ],
+    'campaign' => [
+        'errors' => [
+            'independent_reviewer_required' => 'Le lanceur de la campagne ne peut pas en être le réviseur indépendant.',
+            'reviewer_not_authorized' => 'Le réviseur sélectionné n’est pas autorisé à certifier les accès.',
+            'launcher_strong_authentication_required' => 'Le lanceur de la campagne doit utiliser une MFA ou une clé d’accès enregistrée.',
+            'reviewer_strong_authentication_required' => 'Le réviseur indépendant doit utiliser une MFA ou une clé d’accès enregistrée.',
+            'no_matching_identities' => 'Aucun utilisateur actif ne correspond au périmètre de rôles sélectionné.',
+        ],
+        'audit' => 'La revue d’accès :reference a été lancée pour :count identités.',
+    ],
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'Cette transition d’incident n’est pas autorisée depuis son état actuel.',

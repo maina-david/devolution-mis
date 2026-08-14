@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\DecideAccessReviewItem;
+use App\Actions\LaunchAccessReviewCampaign;
 use App\Actions\ReinstateUserAccess;
 use App\Actions\ReviewSecurityThreat;
 use App\Models\AccessReviewCampaign;
@@ -84,7 +85,8 @@ class SecurityGovernanceTest extends TestCase
 
     public function test_access_campaign_snapshots_scope_and_blocks_privileged_retention_without_strong_authentication(): void
     {
-        $launcher = User::factory()->devolutionAdmin()->create();
+        app()->setLocale('sw');
+        $launcher = User::factory()->devolutionAdmin()->withTwoFactor()->create();
         $reviewer = User::factory()->platformAdmin()->withTwoFactor()->create();
         $target = User::factory()->countyAdmin()->create();
         $this->actingAs($launcher)->post(route('security-governance.access-reviews.store'), $this->campaignPayload($reviewer, ['county-admin']))->assertRedirect();
@@ -101,6 +103,51 @@ class SecurityGovernanceTest extends TestCase
         $this->assertSame('retain', $item->refresh()->decision);
         $this->assertSame('completed', $campaign->refresh()->status);
         $this->assertSame(64, strlen((string) $campaign->evidence_checksum));
+        $this->assertSame(
+            "Tathmini ya ufikiaji {$campaign->reference} imeanzishwa kwa vitambulisho 1.",
+            AuditEvent::query()->where('subject_id', $campaign->id)->where('action', 'security.access-review.launched')->sole()->description,
+        );
+    }
+
+    public function test_access_campaign_launch_authorization_and_strong_authentication_guards_follow_the_active_locale(): void
+    {
+        app()->setLocale('fr');
+        $strongLauncher = User::factory()->devolutionAdmin()->withTwoFactor()->create();
+        $strongReviewer = User::factory()->platformAdmin()->withTwoFactor()->create();
+        User::factory()->countyAdmin()->withTwoFactor()->create();
+
+        $this->assertCampaignLaunchRejected(
+            $strongLauncher,
+            [...$this->campaignPayload($strongLauncher, ['county-admin']), 'reference' => 'ACR-GUARD-SELF'],
+            'security.access_review.campaign.errors.independent_reviewer_required',
+        );
+
+        $unauthorizedReviewer = User::factory()->countyOfficial()->withTwoFactor()->create();
+        $this->assertCampaignLaunchRejected(
+            $strongLauncher,
+            [...$this->campaignPayload($unauthorizedReviewer, ['county-admin']), 'reference' => 'ACR-GUARD-PERMISSION'],
+            'security.access_review.campaign.errors.reviewer_not_authorized',
+        );
+
+        $weakLauncher = User::factory()->devolutionAdmin()->create();
+        $this->assertCampaignLaunchRejected(
+            $weakLauncher,
+            [...$this->campaignPayload($strongReviewer, ['county-admin']), 'reference' => 'ACR-GUARD-LAUNCHER-MFA'],
+            'security.access_review.campaign.errors.launcher_strong_authentication_required',
+        );
+
+        $weakReviewer = User::factory()->platformAdmin()->create();
+        $this->assertCampaignLaunchRejected(
+            $strongLauncher,
+            [...$this->campaignPayload($weakReviewer, ['county-admin']), 'reference' => 'ACR-GUARD-REVIEWER-MFA'],
+            'security.access_review.campaign.errors.reviewer_strong_authentication_required',
+        );
+
+        $this->assertCampaignLaunchRejected(
+            $strongLauncher,
+            [...$this->campaignPayload($strongReviewer, ['development-partner']), 'reference' => 'ACR-GUARD-EMPTY'],
+            'security.access_review.campaign.errors.no_matching_identities',
+        );
     }
 
     public function test_revocation_invalidates_sessions_and_role_scope_then_independent_reinstatement_restores_snapshot(): void
@@ -254,7 +301,7 @@ class SecurityGovernanceTest extends TestCase
     }
 
     /** @param list<string> $roles
-     * @return array<string, mixed>
+     * @return array{reviewer_id: string, reference: string, name: string, scope: string, role_scope: list<string>, period_from: string, period_to: string, due_at: string}
      */
     private function campaignPayload(User $reviewer, array $roles): array
     {
@@ -267,6 +314,17 @@ class SecurityGovernanceTest extends TestCase
         try {
             app(ReviewSecurityThreat::class)->handle($threat, $actor, $attributes);
             $this->fail("The threat review guard {$translationKey} must reject the decision.");
+        } catch (HttpException $exception) {
+            $this->assertSame((string) __($translationKey), $exception->getMessage());
+        }
+    }
+
+    /** @param array{reviewer_id: string, reference: string, name: string, scope: string, role_scope: list<string>, period_from: string, period_to: string, due_at: string} $attributes */
+    private function assertCampaignLaunchRejected(User $launcher, array $attributes, string $translationKey): void
+    {
+        try {
+            app(LaunchAccessReviewCampaign::class)->handle($launcher, $attributes);
+            $this->fail("The campaign launch guard {$translationKey} must reject the operation.");
         } catch (HttpException $exception) {
             $this->assertSame((string) __($translationKey), $exception->getMessage());
         }

@@ -16,6 +16,16 @@ return ['outcomes' => [
         'rationale_with_approval' => ':rationale Approval: :approval_reference',
         'audit' => 'Access independently reinstated for :role identity.',
     ],
+    'campaign' => [
+        'errors' => [
+            'independent_reviewer_required' => 'The campaign launcher cannot be its independent reviewer.',
+            'reviewer_not_authorized' => 'The selected reviewer is not authorized to certify access.',
+            'launcher_strong_authentication_required' => 'The campaign launcher must use MFA or a registered passkey.',
+            'reviewer_strong_authentication_required' => 'The independent reviewer must use MFA or a registered passkey.',
+            'no_matching_identities' => 'No active users match the selected role scope.',
+        ],
+        'audit' => 'Access review :reference launched for :count identities.',
+    ],
 ], 'incident_transition' => [
     'errors' => [
         'invalid_state' => 'This incident transition is not allowed from its current state.',
