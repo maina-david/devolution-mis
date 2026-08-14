@@ -37,6 +37,12 @@ return [
     'retention_only_submitted' => 'Only a submitted retention schedule can be reviewed.',
     'retention_submitter_cannot_review' => 'The schedule submitter cannot approve or reject their own retention schedule.',
     'retention_changed_after_submission' => 'The retention schedule changed after submission and cannot be reviewed.',
+    'processing' => [
+        'errors' => ['only_submitted' => 'Only submitted processing activities can be reviewed.', 'submitter_cannot_review' => 'The submitter cannot independently review this processing activity.', 'approved_retention_required' => 'An approved retention schedule is required.', 'completed_dpia_required' => 'A completed DPIA is required for sensitive personal data processing.', 'transfer_safeguards_required' => 'Documented transfer safeguards are required.'],
+        'review_note' => 'Independent review: :note',
+        'statuses' => ['approved' => 'approved', 'rejected' => 'rejected'],
+        'audit' => ['submitted' => 'Processing activity :reference submitted for independent review.', 'reviewed' => 'Processing activity :reference :decision.'],
+    ],
     'outcomes' => [
         'asset_registered' => 'Data asset registered.', 'activity_submitted' => 'Processing activity submitted for independent review.', 'activity_reviewed' => 'Processing activity review recorded.', 'request_recorded' => 'Privacy request recorded with a controlled due date.', 'request_advanced' => 'Privacy request workflow advanced.', 'incident_recorded' => 'Privacy incident recorded with controlled notification deadlines.', 'incident_advanced' => 'Privacy incident workflow advanced.',
     ],

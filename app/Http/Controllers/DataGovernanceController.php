@@ -91,7 +91,7 @@ class DataGovernanceController extends Controller
         $user = $this->user($request);
         $attributes = $request->validated();
         $activity = ProcessingActivity::create([...$attributes, 'processor_names' => $this->csv($attributes['processor_names'] ?? null), 'recipient_categories' => $this->csv($attributes['recipient_categories'] ?? null), 'processing_operations' => $this->csv($attributes['processing_operations']), 'transfer_countries' => $this->csv($attributes['transfer_countries'] ?? null), 'submitted_by' => $user->id, 'status' => 'submitted', 'submitted_at' => now()]);
-        $this->auditLogger->record($user, $activity, 'privacy.processing-activity.submitted', "Processing activity {$activity->reference} submitted for independent review.");
+        $this->auditLogger->record($user, $activity, 'privacy.processing-activity.submitted', __('data-governance.processing.audit.submitted', ['reference' => $activity->reference]));
 
         return back()->with('success', __('data-governance.outcomes.activity_submitted'));
     }

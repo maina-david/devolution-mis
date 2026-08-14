@@ -120,17 +120,28 @@ class DataGovernanceTest extends TestCase
         $asset = DataAsset::factory()->create(['contains_sensitive_personal_data' => true]);
         $schedule = RetentionSchedule::factory()->create(['status' => 'approved']);
 
+        $this->withSession(['locale' => 'fr']);
         $this->actingAs($submitter)->post(route('data-governance.processing-activities.store'), $this->processingPayload($asset, $schedule))->assertRedirect();
         $activity = ProcessingActivity::query()->sole();
         $this->assertSame('submitted', $activity->status);
         $this->assertTrue(Str::isUuid($activity->id));
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $activity->id,
+            'action' => 'privacy.processing-activity.submitted',
+            'description' => "Activité de traitement {$activity->reference} soumise à un examen indépendant.",
+        ]);
         $this->actingAs($submitter)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'The submitter must not approve this processing activity.'])->assertForbidden();
         $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'Sensitive processing has not completed the mandatory DPIA review.'])->assertStatus(409);
         $activity->update(['dpia_status' => 'completed', 'dpia_reference' => 'DPIA-IDMIS-2026-001']);
         $this->actingAs($reviewer)->patch(route('data-governance.processing-activities.review', [$activity]), ['decision' => 'approved', 'review_note' => 'DPIA, retention, transfer and technical safeguards have been independently reviewed.'])->assertRedirect();
         $this->assertSame('approved', $activity->refresh()->status);
         $this->assertSame($reviewer->id, $activity->reviewed_by);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $activity->id, 'action' => 'privacy.processing-activity.reviewed']);
+        $this->assertStringContainsString('Examen indépendant : DPIA, retention, transfer and technical safeguards have been independently reviewed.', (string) $activity->risk_summary);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $activity->id,
+            'action' => 'privacy.processing-activity.reviewed',
+            'description' => "Activité de traitement {$activity->reference} approuvée.",
+        ]);
     }
 
     public function test_data_subject_request_identity_and_decision_are_separated_encrypted_and_exports_exclude_identifiers(): void
