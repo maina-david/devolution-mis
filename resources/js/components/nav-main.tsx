@@ -208,7 +208,7 @@ function NavMainRow({
                 </DropdownMenuContent>
             </DropdownMenu>
             {!!item.badge && (
-                <SidebarMenuBadge className="right-2 bg-sidebar-foreground/12 text-sidebar-foreground">
+                <SidebarMenuBadge className="inset-y-0 top-auto right-2 my-auto translate-y-0 bg-sidebar-foreground/12 text-sidebar-foreground">
                     {item.badge}
                 </SidebarMenuBadge>
             )}

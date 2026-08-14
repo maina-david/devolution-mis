@@ -53,6 +53,7 @@ class AuthenticatedNavigationContractTest extends TestCase
 
         $this->assertStringContainsString('<SidebarMenuBadge', $navMain);
         $this->assertStringContainsString('bg-sidebar-foreground/10', $navMain);
+        $this->assertStringContainsString('inset-y-0 top-auto right-2 my-auto translate-y-0', $navMain);
         $this->assertStringContainsString('pr-10', $navMain);
         $this->assertStringContainsString('[&>span:last-child]:line-clamp-2', $navMain);
         $sidebarPrimitive = $this->source('resources/js/components/ui/sidebar.tsx');
