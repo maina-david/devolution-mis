@@ -35,7 +35,7 @@ class CreateReferenceDataRelease
                     'checksum' => $this->canonicalJson->checksum($snapshot),
                     'submitted_at' => now(),
                 ]);
-                $this->auditLogger->record($actor, $release, 'reference.release.submitted', "Reference-data release v{$release->version} submitted for independent publication.", metadata: [
+                $this->auditLogger->record($actor, $release, 'reference.release.submitted', __('reference-data.governance.audit.release_submitted', ['version' => $release->version]), metadata: [
                     'checksum' => $release->checksum,
                     ...$auditMetadata,
                 ]);

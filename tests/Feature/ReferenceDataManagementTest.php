@@ -2,21 +2,85 @@
 
 namespace Tests\Feature;
 
+use App\Actions\BulkArchiveCounties;
+use App\Actions\CreateReferenceDataRelease;
+use App\Actions\PublishReferenceDataRelease;
 use App\Models\County;
 use App\Models\Organization;
 use App\Models\Programme;
 use App\Models\ReferenceDataRelease;
 use App\Models\Sector;
 use App\Models\User;
+use App\Services\EffectiveReferenceDataReleaseResolver;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class ReferenceDataManagementTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_reference_release_resolution_and_county_archive_guards_use_the_active_locale(): void
+    {
+        App::setLocale('fr');
+        $administrator = User::factory()->platformAdmin()->create();
+        $constitutionalCounty = County::factory()->create(['code' => 1, 'name' => 'Mombasa']);
+
+        try {
+            app(BulkArchiveCounties::class)->handle($administrator, [$constitutionalCounty->id]);
+            $this->fail('The constitutional county registry must remain protected.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('Mombasa fait partie du registre constitutionnel des 47 comtés du Kenya et ne peut pas être archivé.', $exception->getMessage());
+        }
+
+        try {
+            app(EffectiveReferenceDataReleaseResolver::class)->forProject(['sector_id' => Str::uuid()], [], now());
+            $this->fail('Reference-bound creation must require an effective published catalogue.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('Aucune version publiée des données de référence n’est actuellement en vigueur. Publiez un catalogue approuvé avant de lancer un projet.', $exception->getMessage());
+        }
+
+        $this->assertNotSoftDeleted($constitutionalCounty);
+        $this->assertDatabaseMissing('audit_events', ['subject_id' => $constitutionalCounty->id, 'action' => 'reference.county.archived']);
+    }
+
+    public function test_reference_release_separation_and_audit_evidence_use_the_active_locale(): void
+    {
+        App::setLocale('fr');
+        $submitter = User::factory()->platformAdmin()->create();
+        $publisher = User::factory()->platformAdmin()->create();
+        $release = app(CreateReferenceDataRelease::class)->handle($submitter, 'Publication contrôlée du catalogue de référence.');
+        $attributes = ['approval_reference' => 'SDD-REF-2026-001', 'effective_from' => now()->addDay()->toDateString()];
+
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $release->id,
+            'action' => 'reference.release.submitted',
+            'description' => 'La version v1 des données de référence a été soumise pour publication indépendante.',
+        ]);
+
+        try {
+            app(PublishReferenceDataRelease::class)->handle($release, $submitter, $attributes);
+            $this->fail('The release submitter must not publish the same snapshot.');
+        } catch (AuthorizationException $exception) {
+            $this->assertSame('L’auteur de la soumission ne peut pas publier indépendamment le même instantané des données de référence.', $exception->getMessage());
+        }
+
+        $published = app(PublishReferenceDataRelease::class)->handle($release, $publisher, $attributes);
+
+        $this->assertSame('published', $published->status);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $release->id,
+            'action' => 'reference.release.published',
+            'description' => 'La version v1 des données de référence a été publiée de manière indépendante.',
+        ]);
+    }
 
     public function test_reference_governance_outcomes_and_audit_descriptions_use_the_active_locale(): void
     {

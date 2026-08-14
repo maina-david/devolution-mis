@@ -17,10 +17,10 @@ class EffectiveReferenceDataReleaseResolver
      */
     public function forProject(array $attributes, array $countyIds, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'initiating a project');
+        $release = $this->effectiveRelease($effectiveAt, 'project');
 
         $sectorId = $attributes['sector_id'] ?? null;
-        abort_unless(is_string($sectorId), 422, 'A valid governed sector is required.');
+        abort_unless(is_string($sectorId), 422, __('reference-data.resolver.errors.governed_sector_required'));
 
         $this->assertContains($release, 'counties', $countyIds, 'county_ids');
         $this->assertContains($release, 'sectors', [$sectorId], 'sector_id');
@@ -42,7 +42,7 @@ class EffectiveReferenceDataReleaseResolver
      */
     public function forPartnerProfile(string $organizationId, array $countyIds, array $sectorIds, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'registering a partner profile');
+        $release = $this->effectiveRelease($effectiveAt, 'partner_profile');
 
         $this->assertContains($release, 'organizations', [$organizationId], 'organization_id');
         $this->assertContains($release, 'counties', $countyIds, 'county_ids');
@@ -53,7 +53,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forPartnerCollaborationAction(string $countyId, ?string $organizationId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'assigning a partner collaboration action');
+        $release = $this->effectiveRelease($effectiveAt, 'partner_collaboration_action');
 
         $this->assertContains($release, 'counties', [$countyId], 'county_id');
         if ($organizationId !== null) {
@@ -69,7 +69,7 @@ class EffectiveReferenceDataReleaseResolver
      */
     public function forDswgWorkingGroup(?string $leadOrganizationId, array $countyIds, array $sectorIds, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'establishing a sector working group');
+        $release = $this->effectiveRelease($effectiveAt, 'sector_working_group');
 
         if ($leadOrganizationId !== null) {
             $this->assertContains($release, 'organizations', [$leadOrganizationId], 'lead_organization_id');
@@ -82,7 +82,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forDswgAction(?string $countyId, ?string $organizationId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'assigning a DSWG action');
+        $release = $this->effectiveRelease($effectiveAt, 'dswg_action');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -96,7 +96,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forAnalyticsDashboard(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'creating an analytics dashboard');
+        $release = $this->effectiveRelease($effectiveAt, 'analytics_dashboard');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -107,7 +107,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forReportSchedule(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'creating a scheduled report');
+        $release = $this->effectiveRelease($effectiveAt, 'scheduled_report');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -118,7 +118,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forSupportTicket(?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'submitting a service-desk ticket');
+        $release = $this->effectiveRelease($effectiveAt, 'service_desk_ticket');
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
         }
@@ -128,7 +128,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forIndicatorDefinition(?string $sectorId, ?string $programmeId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'defining an M&E indicator');
+        $release = $this->effectiveRelease($effectiveAt, 'indicator_definition');
         if ($sectorId !== null) {
             $this->assertContains($release, 'sectors', [$sectorId], 'sector_id');
         }
@@ -141,7 +141,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forInnovationReplication(string $sourceCountyId, string $targetCountyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'planning an innovation replication');
+        $release = $this->effectiveRelease($effectiveAt, 'innovation_replication');
         $this->assertContains($release, 'counties', [$sourceCountyId, $targetCountyId], 'county_ids');
 
         return $release;
@@ -149,7 +149,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forExchequerRequest(string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'creating an exchequer request');
+        $release = $this->effectiveRelease($effectiveAt, 'exchequer_request');
         $this->assertContains($release, 'counties', [$countyId], 'county_id');
 
         return $release;
@@ -158,7 +158,7 @@ class EffectiveReferenceDataReleaseResolver
     /** @param list<string> $countyIds */
     public function forAccessDelegation(array $countyIds, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'requesting temporary access');
+        $release = $this->effectiveRelease($effectiveAt, 'temporary_access');
         $this->assertContains($release, 'counties', $countyIds, 'county_ids');
 
         return $release;
@@ -166,7 +166,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forTravelRequest(?string $organizationId, ?string $countyId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'submitting a travel-clearance request');
+        $release = $this->effectiveRelease($effectiveAt, 'travel_clearance');
 
         if ($organizationId !== null) {
             $this->assertContains($release, 'organizations', [$organizationId], 'organization_id');
@@ -183,7 +183,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forProgrammeEvaluation(?string $programmeId, ?string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'registering a programme evaluation');
+        $release = $this->effectiveRelease($effectiveAt, 'programme_evaluation');
 
         if ($programmeId !== null) {
             $this->assertContains($release, 'programmes', [$programmeId], 'programme_id');
@@ -201,7 +201,7 @@ class EffectiveReferenceDataReleaseResolver
      */
     public function forIgrResolution(array $countyIds, array $organizationIds, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'registering an intergovernmental resolution');
+        $release = $this->effectiveRelease($effectiveAt, 'intergovernmental_resolution');
 
         $this->assertContains($release, 'counties', $countyIds, 'assignments');
         $this->assertContains($release, 'organizations', $organizationIds, 'assignments');
@@ -211,7 +211,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forAssessment(string $countyId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'initiating a county performance assessment');
+        $release = $this->effectiveRelease($effectiveAt, 'county_performance_assessment');
 
         $this->assertContains($release, 'counties', [$countyId], 'county_id');
 
@@ -220,7 +220,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forCitizenCase(string $countyId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'submitting citizen feedback or a grievance');
+        $release = $this->effectiveRelease($effectiveAt, 'citizen_case');
 
         $this->assertContains($release, 'counties', [$countyId], 'county_id');
         if ($sectorId !== null) {
@@ -232,7 +232,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forCitizenCaseTriage(?string $organizationId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'triaging a citizen case');
+        $release = $this->effectiveRelease($effectiveAt, 'citizen_case_triage');
 
         if ($organizationId !== null) {
             $this->assertContains($release, 'organizations', [$organizationId], 'assigned_organization_id');
@@ -246,7 +246,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forLearningCourse(?string $countyId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'creating an E-Learning course');
+        $release = $this->effectiveRelease($effectiveAt, 'learning_course');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -260,7 +260,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forKnowledgeItem(?string $countyId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'contributing a knowledge resource');
+        $release = $this->effectiveRelease($effectiveAt, 'knowledge_resource');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -274,7 +274,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forDevolutionInnovation(?string $countyId, ?string $sectorId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'submitting a devolution innovation');
+        $release = $this->effectiveRelease($effectiveAt, 'devolution_innovation');
 
         if ($countyId !== null) {
             $this->assertContains($release, 'counties', [$countyId], 'county_id');
@@ -288,7 +288,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forPerformancePlan(?string $organizationId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'creating a departmental performance plan');
+        $release = $this->effectiveRelease($effectiveAt, 'performance_plan');
 
         if ($organizationId !== null) {
             $this->assertContains($release, 'organizations', [$organizationId], 'organization_id');
@@ -299,7 +299,7 @@ class EffectiveReferenceDataReleaseResolver
 
     public function forIntegrationSystem(?string $ownerOrganizationId, CarbonInterface $effectiveAt): ReferenceDataRelease
     {
-        $release = $this->effectiveRelease($effectiveAt, 'registering an integration system');
+        $release = $this->effectiveRelease($effectiveAt, 'integration_system');
 
         if ($ownerOrganizationId !== null) {
             $this->assertContains($release, 'organizations', [$ownerOrganizationId], 'owner_organization_id');
@@ -329,12 +329,14 @@ class EffectiveReferenceDataReleaseResolver
         $release = $this->findEffectiveRelease($effectiveAt);
 
         if ($release === null) {
-            abort(409, "No published reference-data release is currently effective. Publish an approved catalogue before {$operation}.");
+            abort(409, __('reference-data.resolver.errors.no_effective_release', [
+                'operation' => __("reference-data.resolver.operations.{$operation}"),
+            ]));
         }
         abort_unless(
             hash_equals($release->checksum, $this->canonicalJson->checksum($release->snapshot)),
             409,
-            'The effective reference-data release failed checksum verification.',
+            __('reference-data.resolver.errors.checksum_failed'),
         );
 
         return $release;
@@ -363,7 +365,7 @@ class EffectiveReferenceDataReleaseResolver
 
         if ($missingIds !== []) {
             throw ValidationException::withMessages([
-                $attribute => "One or more selected records are not present in effective reference-data release v{$release->version}.",
+                $attribute => __('reference-data.resolver.errors.records_missing', ['version' => $release->version]),
             ]);
         }
     }
