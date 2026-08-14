@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\ReferenceDataRelease;
 use App\Models\ReferenceLineageDisposition;
 use App\Models\User;
@@ -24,6 +25,8 @@ class CreateReferenceLineageDisposition
     /** @param array<string, mixed> $attributes */
     public function handle(User $actor, array $attributes): ReferenceLineageDisposition
     {
+        abort_unless($actor->can(ProgrammePermission::ManageReferenceData->value), 403, __('migration.lineage_errors.create_unauthorized'));
+
         return DB::transaction(function () use ($actor, $attributes): ReferenceLineageDisposition {
             $recordType = (string) $attributes['record_type'];
             $recordId = (string) $attributes['record_id'];

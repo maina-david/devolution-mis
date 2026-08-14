@@ -15,6 +15,7 @@ use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -108,6 +109,36 @@ class ReferenceLineageDispositionTest extends TestCase
         $this->actingAs($assessor)->post(route('data-migrations.lineage-dispositions.apply', $disposition))->assertForbidden();
         $this->assertNull($assessment->refresh()->reference_data_release_id);
         $this->assertSame('approved', $disposition->refresh()->status);
+    }
+
+    public function test_direct_lineage_actions_enforce_permissions_before_payload_or_state_processing(): void
+    {
+        [$assessment, $release, $proposer] = $this->scenario();
+        $assessor = User::factory()->assessor()->create();
+        $disposition = app(CreateReferenceLineageDisposition::class)->handle($proposer, $this->payload($assessment, $release));
+        $auditCount = DB::table('audit_events')->count();
+        App::setLocale('fr');
+
+        $attempts = [
+            'Vous n’êtes pas autorisé à proposer des décisions de traçabilité des référentiels.' => fn () => app(CreateReferenceLineageDisposition::class)->handle($assessor, ['record_type' => 'hostile']),
+            'Vous n’êtes pas autorisé à examiner les décisions de traçabilité des référentiels.' => fn () => app(ReviewReferenceLineageDisposition::class)->handle($disposition, $assessor, 'hostile', ''),
+            'Vous n’êtes pas autorisé à appliquer les décisions de traçabilité des référentiels.' => fn () => app(ApplyReferenceLineageDisposition::class)->handle($disposition, $assessor),
+        ];
+
+        foreach ($attempts as $expectedMessage => $attempt) {
+            try {
+                $attempt();
+                $this->fail('An unauthorized direct lineage action must be denied.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+                $this->assertSame($expectedMessage, $exception->getMessage());
+            }
+        }
+
+        $this->assertSame('proposed', $disposition->fresh()->status);
+        $this->assertNull($assessment->fresh()->reference_data_release_id);
+        $this->assertSame($auditCount, DB::table('audit_events')->count());
+        App::setLocale('en');
     }
 
     public function test_reconciliation_failures_and_audit_descriptions_follow_the_active_locale(): void

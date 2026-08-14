@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\ReferenceLineageDisposition;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -19,6 +20,8 @@ class ApplyReferenceLineageDisposition
 
     public function handle(ReferenceLineageDisposition $disposition, User $actor): ReferenceLineageDisposition
     {
+        abort_unless($actor->can(ProgrammePermission::ManageOperations->value), 403, __('migration.lineage_errors.apply_unauthorized'));
+
         return DB::transaction(function () use ($actor, $disposition): ReferenceLineageDisposition {
             $locked = ReferenceLineageDisposition::query()->with('referenceDataRelease')->lockForUpdate()->findOrFail($disposition->id);
             abort_unless($locked->status === 'approved', 409, __('migration.lineage_errors.approved_only'));
