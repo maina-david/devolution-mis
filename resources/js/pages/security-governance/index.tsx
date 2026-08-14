@@ -912,7 +912,7 @@ function IdentityLifecycleForm({
 
     return (
         <FormSheet
-            title="Stage identity lifecycle change"
+            title={copy.forms.stage_identity_lifecycle_change}
             description="Capture an already verified HR or IAM source event. A different access certifier must decide it before IDMIS access changes."
             triggerLabel="Identity lifecycle"
             icon={RefreshCw}
@@ -923,7 +923,7 @@ function IdentityLifecycleForm({
                     <SearchableSelect
                         id="identity-event-type"
                         name="event_type"
-                        label="Lifecycle event"
+                        label={copy.forms.lifecycle_event}
                         options={['joiner', 'mover', 'leaver'].map(option)}
                         value={eventType}
                         onValueChange={setEventType}
@@ -931,24 +931,24 @@ function IdentityLifecycleForm({
                     <SearchableSelect
                         id="identity-target-user"
                         name="user_id"
-                        label="Target identity"
+                        label={copy.forms.target_identity}
                         options={users.map(toSearchOption)}
                     />
                     <Field
                         name="source_system"
-                        label="Authoritative source system"
+                        label={copy.forms.authoritative_source_system}
                     />
                     <Field
                         name="source_event_id"
-                        label="Unique source event ID"
+                        label={copy.forms.unique_source_event_id}
                     />
                     <Field
                         name="source_evidence_reference"
-                        label="Source evidence reference"
+                        label={copy.forms.source_evidence_reference}
                     />
                     <DatePickerField
                         name="effective_at"
-                        label="Effective at"
+                        label={copy.forms.effective_at}
                         includeTime
                         required
                         defaultValue={new Date().toISOString()}
@@ -965,7 +965,7 @@ function IdentityLifecycleForm({
                         <SearchableSelect
                             id="identity-home-county"
                             name="proposed_home_county_id"
-                            label="Proposed home county"
+                            label={copy.forms.proposed_home_county}
                             options={counties.map((county) => ({
                                 id: county.id,
                                 name: county.name,
@@ -978,7 +978,7 @@ function IdentityLifecycleForm({
                 {eventType !== 'leaver' && (
                     <SearchableMultiSelect
                         name="proposed_assigned_county_ids[]"
-                        label="Proposed assigned counties"
+                        label={copy.forms.proposed_assigned_counties}
                         options={counties.map((county) => ({
                             id: county.id,
                             name: county.name,
@@ -989,7 +989,10 @@ function IdentityLifecycleForm({
                 )}
                 <TextField
                     name="business_reason"
-                    label="Business reason and source reconciliation note"
+                    label={
+                        copy.forms
+                            .business_reason_and_source_reconciliation_note
+                    }
                 />
                 <Button type="submit">
                     <RefreshCw aria-hidden="true" /> {copy.ui.stage_decision}
@@ -1133,12 +1136,12 @@ function IdentityLifecycleAction({
                                 <SearchableSelect
                                     id={`identity-decision-${change.id}`}
                                     name="decision"
-                                    label="Independent decision"
+                                    label={copy.forms.independent_decision}
                                     options={['approve', 'reject'].map(option)}
                                 />
                                 <TextField
                                     name="rationale"
-                                    label="Decision rationale"
+                                    label={copy.forms.decision_rationale}
                                 />
                                 <Button type="submit">
                                     <ShieldCheck aria-hidden="true" />{' '}
@@ -1159,7 +1162,7 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
 
     return (
         <FormSheet
-            title="Record security response"
+            title={copy.forms.record_security_response}
             description="Create a live incident or an explicitly labelled exercise. Severity snapshots the acknowledgement and containment targets."
             triggerLabel="Security response"
             icon={RadioTower}
@@ -1178,13 +1181,13 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="security-incident-lead"
                         name="incident_lead_id"
-                        label="Assigned incident lead"
+                        label={copy.forms.assigned_incident_lead}
                         options={users.map(toSearchOption)}
                     />
                     <SearchableSelect
                         id="security-incident-playbook"
                         name="playbook"
-                        label="Response playbook"
+                        label={copy.forms.response_playbook}
                         options={[
                             'credential_compromise',
                             'ransomware',
@@ -1198,7 +1201,7 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="security-incident-severity"
                         name="severity"
-                        label="Initial severity"
+                        label={copy.forms.initial_severity}
                         options={['sev1', 'sev2', 'sev3', 'sev4'].map(option)}
                     />
                     <SearchableSelect
@@ -1223,26 +1226,34 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                         required
                     />
                 </div>
-                <Field name="title" label="Incident or exercise title" />
-                <TextField name="summary" label="Controlled incident summary" />
+                <Field
+                    name="title"
+                    label={copy.forms.incident_or_exercise_title}
+                />
+                <TextField
+                    name="summary"
+                    label={copy.forms.controlled_incident_summary}
+                />
                 <Field
                     name="affected_services"
-                    label="Affected services (comma-separated)"
+                    label={copy.forms.affected_services_comma_separated}
                 />
                 <TextField
                     name="business_impact"
-                    label="Observed or simulated business impact"
+                    label={copy.forms.observed_or_simulated_business_impact}
                     optional
                 />
                 <Field
                     name="external_reference"
-                    label="SOC, service desk, privacy or legal reference"
+                    label={
+                        copy.forms.soc_service_desk_privacy_or_legal_reference
+                    }
                     optional
                 />
                 {recordType === 'exercise' && (
                     <TextField
                         name="exercise_objectives"
-                        label="Exercise objectives (comma-separated)"
+                        label={copy.forms.exercise_objectives_comma_separated}
                     />
                 )}
                 <Button type="submit">
@@ -1366,12 +1377,15 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                     value={humanize(incident.playbook)}
                 />
                 <EvidenceDetail
-                    label="Incident lead"
+                    label={copy.forms.incident_lead}
                     value={incident.incidentLead.name}
                 />
-                <EvidenceDetail label="Summary" value={incident.summary} />
                 <EvidenceDetail
-                    label="Affected services"
+                    label={copy.forms.summary}
+                    value={incident.summary}
+                />
+                <EvidenceDetail
+                    label={copy.forms.affected_services}
                     value={incident.affectedServices.join(', ')}
                 />
                 <EvidenceDetail
@@ -1379,31 +1393,31 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                     value={humanize(incident.dataExposure)}
                 />
                 <EvidenceDetail
-                    label="Business impact"
+                    label={copy.forms.business_impact}
                     value={incident.businessImpact ?? 'Not recorded'}
                 />
                 <EvidenceDetail
-                    label="Acknowledgement target"
+                    label={copy.forms.acknowledgement_target}
                     value={formatDate(incident.acknowledgementDueAt)}
                 />
                 <EvidenceDetail
-                    label="Containment target"
+                    label={copy.forms.containment_target}
                     value={formatDate(incident.containmentDueAt)}
                 />
                 <EvidenceDetail
-                    label="External reference"
+                    label={copy.forms.external_reference}
                     value={incident.externalReference ?? 'Not linked'}
                 />
                 <EvidenceDetail
-                    label="Exercise outcome"
+                    label={copy.forms.exercise_outcome}
                     value={humanize(incident.exerciseOutcome)}
                 />
                 <EvidenceDetail
-                    label="Root cause"
+                    label={copy.forms.root_cause}
                     value={incident.rootCause ?? 'Open'}
                 />
                 <EvidenceDetail
-                    label="Corrective actions"
+                    label={copy.forms.corrective_actions}
                     value={incident.correctiveActions ?? 'Open'}
                 />
             </dl>
@@ -1527,26 +1541,31 @@ function SecurityIncidentTransitionForm({
             {['eradicate', 'recover'].includes(transition) && (
                 <Field
                     name="evidence_reference"
-                    label="Controlled evidence reference"
+                    label={copy.forms.controlled_evidence_reference}
                 />
             )}
             {transition === 'close' && (
                 <>
-                    <TextField name="root_cause" label="Verified root cause" />
+                    <TextField
+                        name="root_cause"
+                        label={copy.forms.verified_root_cause}
+                    />
                     <TextField
                         name="corrective_actions"
-                        label="Completed and tracked corrective actions"
+                        label={
+                            copy.forms.completed_and_tracked_corrective_actions
+                        }
                     />
                     <TextField
                         name="lessons_learned"
-                        label="Lessons and playbook improvements"
+                        label={copy.forms.lessons_and_playbook_improvements}
                     />
                     {incident.recordType === 'exercise' && (
                         <>
                             <SearchableSelect
                                 id={`exercise-outcome-${incident.id}`}
                                 name="exercise_outcome"
-                                label="Exercise outcome"
+                                label={copy.forms.exercise_outcome}
                                 options={[
                                     'effective',
                                     'partially_effective',
@@ -1555,7 +1574,7 @@ function SecurityIncidentTransitionForm({
                             />
                             <DatePickerField
                                 name="next_exercise_due_at"
-                                label="Next exercise due"
+                                label={copy.forms.next_exercise_due}
                                 required
                             />
                         </>
@@ -1584,18 +1603,18 @@ function SecurityIncidentDocumentForm({
             })}
             className="grid gap-4"
         >
-            <Field name="title" label="Record title" />
-            <Field name="category" label="Records category" />
+            <Field name="title" label={copy.forms.record_title} />
+            <Field name="category" label={copy.forms.records_category} />
             <SearchableSelect
                 id={`incident-document-source-${incident.id}`}
                 name="source_type"
-                label="Source type"
+                label={copy.forms.source_type}
                 options={['scanned', 'digital'].map(option)}
             />
             <SearchableSelect
                 id={`incident-document-purpose-${incident.id}`}
                 name="record_purpose"
-                label="Evidence purpose"
+                label={copy.forms.evidence_purpose}
                 options={[
                     'investigation',
                     'containment',
@@ -1677,11 +1696,11 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 value={`${scan.sourceRevision ?? 'unversioned'} (${humanize(scan.sourceState)})`}
                             />
                             <EvidenceDetail
-                                label="Composer components"
+                                label={copy.forms.composer_components}
                                 value={String(scan.composerComponentCount)}
                             />
                             <EvidenceDetail
-                                label="JavaScript components"
+                                label={copy.forms.javascript_components}
                                 value={String(scan.javascriptComponentCount)}
                             />
                             <EvidenceDetail
@@ -1689,7 +1708,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 value={String(scan.composerAdvisoryCount)}
                             />
                             <EvidenceDetail
-                                label="NPM vulnerabilities"
+                                label={copy.forms.npm_vulnerabilities}
                                 value={`${scan.npmInfoCount} info · ${scan.npmLowCount} low · ${scan.npmModerateCount} moderate · ${scan.npmHighCount} high · ${scan.npmCriticalCount} critical`}
                             />
                         </dl>
@@ -1713,7 +1732,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                         </div>
                         <div className="grid gap-3 rounded-xl bg-muted/50 p-4 font-mono text-xs break-all">
                             <EvidenceDetail
-                                label="Composer lock SHA-256"
+                                label={copy.forms.composer_lock_sha256}
                                 value={scan.composerLockChecksum}
                             />
                             <EvidenceDetail
@@ -1721,11 +1740,11 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 value={scan.javascriptLockChecksum}
                             />
                             <EvidenceDetail
-                                label="Artifact SHA-256"
+                                label={copy.forms.artifact_sha256}
                                 value={scan.artifactChecksum ?? 'Unavailable'}
                             />
                             <EvidenceDetail
-                                label="Evidence SHA-256"
+                                label={copy.forms.evidence_sha256}
                                 value={scan.evidenceChecksum}
                             />
                         </div>
@@ -1776,7 +1795,7 @@ function DelegationForm({
 
     return (
         <FormSheet
-            title="Request temporary access"
+            title={copy.forms.request_temporary_access}
             description="Request a time-bound, least-privilege grant for independent approval. Emergency grants are limited to four hours and require post-use review."
             triggerLabel="Temporary access"
             icon={KeyRound}
@@ -1793,7 +1812,9 @@ function DelegationForm({
                     <SearchableSelect
                         id="delegation-beneficiary"
                         name="beneficiary_id"
-                        label="Beneficiary with strong authentication"
+                        label={
+                            copy.forms.beneficiary_with_strong_authentication
+                        }
                         options={users
                             .filter((user) => user.strongAuth)
                             .map(toSearchOption)}
@@ -1801,7 +1822,7 @@ function DelegationForm({
                     <SearchableSelect
                         id="delegation-type"
                         name="access_type"
-                        label="Access type"
+                        label={copy.forms.access_type}
                         options={['delegated', 'emergency'].map(option)}
                         value={accessType}
                         onValueChange={setAccessType}
@@ -1809,20 +1830,20 @@ function DelegationForm({
                     <SearchableSelect
                         id="delegation-scope"
                         name="scope_type"
-                        label="Geographic scope"
+                        label={copy.forms.geographic_scope}
                         options={['county_portfolio', 'national'].map(option)}
                         value={scopeType}
                         onValueChange={setScopeType}
                     />
                     <SearchableMultiSelect
                         name="permission_scope"
-                        label="Least-privilege permissions"
+                        label={copy.forms.least_privilege_permissions}
                         options={permissions.map(toSearchOption)}
                     />
                     {scopeType === 'county_portfolio' && (
                         <SearchableMultiSelect
                             name="county_ids"
-                            label="Counties in scope"
+                            label={copy.forms.counties_in_scope}
                             options={counties.map((county) => ({
                                 id: county.id,
                                 name: county.name,
@@ -1831,31 +1852,33 @@ function DelegationForm({
                     )}
                     <DatePickerField
                         name="starts_at"
-                        label="Access starts"
+                        label={copy.forms.access_starts}
                         includeTime
                         required
                     />
                     <DatePickerField
                         name="expires_at"
-                        label="Access expires"
+                        label={copy.forms.access_expires}
                         includeTime
                         required
                     />
                     {accessType === 'emergency' && (
                         <Field
                             name="incident_reference"
-                            label="Security incident reference"
+                            label={copy.forms.security_incident_reference}
                         />
                     )}
                 </div>
                 <TextField
                     name="business_justification"
-                    label="Business justification and expected outcome"
+                    label={
+                        copy.forms.business_justification_and_expected_outcome
+                    }
                 />
                 {accessType === 'emergency' && (
                     <TextField
                         name="compensating_controls"
-                        label="Compensating controls and monitoring"
+                        label={copy.forms.compensating_controls_and_monitoring}
                     />
                 )}
                 <Button type="submit">
@@ -1965,7 +1988,10 @@ function DelegationAction({
                                 />
                                 <TextField
                                     name="decision_rationale"
-                                    label="Independent evidence-based rationale"
+                                    label={
+                                        copy.forms
+                                            .independent_evidence_based_rationale
+                                    }
                                 />
                                 <Button type="submit">
                                     <ShieldCheck /> {copy.ui.record_decision}
@@ -1980,7 +2006,9 @@ function DelegationAction({
                             >
                                 <TextField
                                     name="revocation_reason"
-                                    label="Immediate revocation reason"
+                                    label={
+                                        copy.forms.immediate_revocation_reason
+                                    }
                                 />
                                 <Button type="submit" variant="destructive">
                                     <UserX /> {copy.ui.revoke_access}
@@ -1996,7 +2024,7 @@ function DelegationAction({
                                 <SearchableSelect
                                     id={`post-use-outcome-${delegation.id}`}
                                     name="post_use_outcome"
-                                    label="Post-use outcome"
+                                    label={copy.forms.post_use_outcome}
                                     options={[
                                         'appropriate',
                                         'exception_noted',
@@ -2005,7 +2033,9 @@ function DelegationAction({
                                 />
                                 <TextField
                                     name="post_use_findings"
-                                    label="Audit findings and follow-up"
+                                    label={
+                                        copy.forms.audit_findings_and_follow_up
+                                    }
                                 />
                                 <Button type="submit">
                                     <Fingerprint /> {copy.ui.complete_review}
@@ -2207,13 +2237,13 @@ function ThreatReviewForm({ threat }: { threat: Threat }) {
                 <SearchableSelect
                     id={`threat-decision-${threat.id}`}
                     name="decision"
-                    label="Review decision"
+                    label={copy.forms.review_decision}
                     options={['accepted', 'rejected'].map(option)}
                 />
                 <SearchableSelect
                     id={`treatment-status-${threat.id}`}
                     name="treatment_status"
-                    label="Treatment status"
+                    label={copy.forms.treatment_status}
                     options={[
                         'planned',
                         'in_progress',
@@ -2223,26 +2253,29 @@ function ThreatReviewForm({ threat }: { threat: Threat }) {
                 />
                 <Field
                     name="residual_likelihood"
-                    label="Residual likelihood (1–5)"
+                    label={copy.forms.residual_likelihood_1_5}
                     type="number"
                 />
                 <Field
                     name="residual_impact"
-                    label="Residual impact (1–5)"
+                    label={copy.forms.residual_impact_1_5}
                     type="number"
                 />
                 <Field
                     name="risk_acceptance_reference"
-                    label="Risk-acceptance reference"
+                    label={copy.forms.risk_acceptance_reference}
                     optional
                 />
                 <Field
                     name="evidence_references"
-                    label="Evidence references (comma separated)"
+                    label={copy.forms.evidence_references_comma_separated}
                     optional
                 />
             </div>
-            <TextField name="review_note" label="Independent findings" />
+            <TextField
+                name="review_note"
+                label={copy.forms.independent_findings}
+            />
             <Button type="submit">
                 <ShieldCheck /> {copy.ui.record_threat_review}
             </Button>
@@ -2536,21 +2569,24 @@ function AccessDecisionForm({ item }: { item: AccessItem }) {
             <SearchableSelect
                 id={`access-decision-${item.id}`}
                 name="decision"
-                label="Certification decision"
+                label={copy.forms.certification_decision}
                 options={['retain', 'revoke', 'remediate'].map(option)}
                 value={decision}
                 onValueChange={setDecision}
             />
-            <TextField name="rationale" label="Evidence-based rationale" />
+            <TextField
+                name="rationale"
+                label={copy.forms.evidence_based_rationale}
+            />
             {decision === 'remediate' && (
                 <>
                     <TextField
                         name="remediation_action"
-                        label="Required remediation"
+                        label={copy.forms.required_remediation}
                     />
                     <DatePickerField
                         name="remediation_due_at"
-                        label="Remediation due date"
+                        label={copy.forms.remediation_due_date}
                         required
                     />
                 </>
@@ -2567,7 +2603,7 @@ function ThreatForm({ users }: { users: Option[] }) {
 
     return (
         <FormSheet
-            title="Register threat scenario"
+            title={copy.forms.register_threat_scenario}
             description="Capture the affected asset, STRIDE category, entry points, inherent risk and treatment before independent review."
             triggerLabel="Threat"
             icon={Plus}
@@ -2575,12 +2611,15 @@ function ThreatForm({ users }: { users: Option[] }) {
         >
             <Form action={storeThreat()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Field name="reference" label="Threat reference" />
-                    <Field name="title" label="Threat title" />
+                    <Field
+                        name="reference"
+                        label={copy.forms.threat_reference}
+                    />
+                    <Field name="title" label={copy.forms.threat_title} />
                     <SearchableSelect
                         id="threat-category"
                         name="stride_category"
-                        label="Threat category"
+                        label={copy.forms.threat_category}
                         options={[
                             'spoofing',
                             'tampering',
@@ -2595,39 +2634,53 @@ function ThreatForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="threat-owner"
                         name="owner_id"
-                        label="Risk owner"
+                        label={copy.forms.risk_owner}
                         options={users.map(toSearchOption)}
                     />
-                    <Field name="asset" label="Affected asset or service" />
-                    <Field name="threat_actor" label="Threat actor" optional />
+                    <Field
+                        name="asset"
+                        label={copy.forms.affected_asset_or_service}
+                    />
+                    <Field
+                        name="threat_actor"
+                        label={copy.forms.threat_actor}
+                        optional
+                    />
                     <Field
                         name="likelihood"
-                        label="Likelihood (1–5)"
+                        label={copy.forms.likelihood_1_5}
                         type="number"
                     />
-                    <Field name="impact" label="Impact (1–5)" type="number" />
+                    <Field
+                        name="impact"
+                        label={copy.forms.impact_1_5}
+                        type="number"
+                    />
                     <DatePickerField
                         name="review_due_at"
-                        label="Review due date"
+                        label={copy.forms.review_due_date}
                         required
                     />
                 </div>
-                <TextField name="scenario" label="Abuse or failure scenario" />
+                <TextField
+                    name="scenario"
+                    label={copy.forms.abuse_or_failure_scenario}
+                />
                 <TextField
                     name="entry_points"
-                    label="Entry points (comma separated)"
+                    label={copy.forms.entry_points_comma_separated}
                 />
                 <TextField
                     name="existing_controls"
-                    label="Existing controls (comma separated)"
+                    label={copy.forms.existing_controls_comma_separated}
                 />
                 <TextField
                     name="treatment_plan"
-                    label="Treatment plan and accountable outcome"
+                    label={copy.forms.treatment_plan_and_accountable_outcome}
                 />
                 <TextField
                     name="evidence_references"
-                    label="Evidence references (comma separated)"
+                    label={copy.forms.evidence_references_comma_separated}
                     optional
                 />
                 <Button type="submit">{copy.ui.submit_threat}</Button>
@@ -2641,7 +2694,7 @@ function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
 
     return (
         <FormSheet
-            title="Launch access certification"
+            title={copy.forms.launch_access_certification}
             description="Create immutable access snapshots for selected programme roles and assign an independent reviewer."
             triggerLabel="Access review"
             icon={Fingerprint}
@@ -2649,39 +2702,42 @@ function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
         >
             <Form action={launchCampaign()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Field name="reference" label="Campaign reference" />
-                    <Field name="name" label="Campaign name" />
+                    <Field
+                        name="reference"
+                        label={copy.forms.campaign_reference}
+                    />
+                    <Field name="name" label={copy.forms.campaign_name} />
                     <SearchableSelect
                         id="campaign-reviewer"
                         name="reviewer_id"
-                        label="Independent reviewer"
+                        label={copy.forms.independent_reviewer}
                         options={users.map(toSearchOption)}
                     />
                     <SearchableMultiSelect
                         name="role_scope"
-                        label="Roles in scope"
+                        label={copy.forms.roles_in_scope}
                         options={roles.map(toSearchOption)}
                     />
                     <DatePickerField
                         name="period_from"
-                        label="Review period from"
+                        label={copy.forms.review_period_from}
                         required
                     />
                     <DatePickerField
                         name="period_to"
-                        label="Review period to"
+                        label={copy.forms.review_period_to}
                         required
                     />
                     <DatePickerField
                         name="due_at"
-                        label="Certification due"
+                        label={copy.forms.certification_due}
                         includeTime
                         required
                     />
                 </div>
                 <TextField
                     name="scope"
-                    label="Scope, criteria and exclusions"
+                    label={copy.forms.scope_criteria_and_exclusions}
                 />
                 <Button type="submit">{copy.ui.launch_campaign}</Button>
             </Form>

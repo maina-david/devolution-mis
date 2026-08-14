@@ -172,7 +172,11 @@ class HandleInertiaRequests extends Middleware
                 'monitoringResults' => __('monitoring-results'),
                 'analytics' => __('analytics'),
                 'projects' => array_merge(__('projects'), __('project-details-forms')),
-                'security' => __('security'),
+                'security' => array_replace_recursive(__('security'), [
+                    'workspace' => array_merge(__('security.workspace'), [
+                        'forms' => __('security-forms'),
+                    ]),
+                ]),
                 'referenceData' => __('reference-data'),
                 'welcome' => __('welcome'),
                 'support' => __('support'),

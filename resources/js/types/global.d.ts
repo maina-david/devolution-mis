@@ -156,6 +156,7 @@ declare module '@inertiajs/core' {
                         filters: { status: string; county: string };
                         metrics: Record<string, string>;
                         ui: Record<string, string>;
+                        forms: Record<string, string>;
                         identity: {
                             title: string;
                             description: string;

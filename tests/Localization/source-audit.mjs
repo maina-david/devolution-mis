@@ -6,7 +6,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 0,
-    authenticatedSemanticLiterals: 192,
+    authenticatedSemanticLiterals: 94,
     backendMessages: 0,
 };
 
