@@ -99,4 +99,9 @@ return [
         'errors' => ['author_cannot_approve' => 'The author cannot approve their own indicator definition.', 'draft_required' => 'Only a draft indicator definition can be approved.', 'supersession_lineage_invalid' => 'The supersession lineage is no longer valid.', 'successor_effective_after_prior' => 'The successor must take effect after the prior version.'],
         'audit' => ['approved' => 'Indicator :code version :version approved.'],
     ],
+    'observation' => [
+        'outcomes' => ['submitted' => 'Indicator observation submitted for verification.', 'verified' => 'Verification decision recorded.'],
+        'errors' => ['submit_unauthorized' => 'You are not authorized to submit indicator observations.', 'verify_unauthorized' => 'You are not authorized to verify indicator observations.', 'county_scope' => 'The indicator observation is outside your authorized county portfolio.', 'current_approved_indicator_required' => 'Only the current approved indicator version can receive new observations.', 'value_type_required' => 'A value matching the indicator value type is required.', 'submitter_cannot_verify' => 'The submitter cannot verify their own observation.', 'project_verifier_separation' => 'The project verifier cannot also perform the M&E data-quality verification.', 'verified_immutable' => 'A verified observation cannot be changed.'],
+        'audit' => ['submitted' => ':code :measure observation submitted.', 'verified' => 'Indicator observation verification decision recorded.'],
+    ],
 ];

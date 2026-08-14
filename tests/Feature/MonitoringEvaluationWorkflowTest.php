@@ -6,12 +6,14 @@ use App\Actions\CreateProgrammeEvaluation;
 use App\Actions\RecordIndicatorObservation;
 use App\Actions\SupersedeIndicatorDefinition;
 use App\Actions\VerifyIndicatorObservation;
+use App\Enums\ProgrammePermission;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\DevolutionProject;
 use App\Models\DocumentLink;
 use App\Models\IndicatorDefinition;
 use App\Models\IndicatorObservation;
+use App\Models\Permission;
 use App\Models\Programme;
 use App\Models\ProgrammeEvaluation;
 use App\Models\ReferenceDataRelease;
@@ -44,12 +46,13 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $indicator = IndicatorDefinition::factory()->create();
         $programme = Programme::factory()->create();
 
+        app()->setLocale('sw');
         $observation = app(RecordIndicatorObservation::class)->handle($user, $this->observationPayload($indicator, $county, $programme));
 
         $this->assertTrue(Str::isUuid($observation->id));
         $this->assertSame('county-mis', $observation->provenance['source_system']);
         $this->assertSame('submitted', $observation->verification_status);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $observation->id, 'action' => 'indicator.observation.submitted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $observation->id, 'action' => 'indicator.observation.submitted', 'description' => "Uchunguzi wa actual wa {$indicator->code} umewasilishwa."]);
 
         $observation->delete();
         $this->assertSoftDeleted($observation);
@@ -68,6 +71,30 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         );
     }
 
+    public function test_observation_actions_enforce_localized_permissions_before_record_or_payload_processing(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $observation = IndicatorObservation::factory()->create();
+
+        app()->setLocale('fr');
+        $this->assertHttpAction(
+            fn () => app(RecordIndicatorObservation::class)->handle($unauthorizedActor, []),
+            403,
+            'Vous n’êtes pas autorisé à soumettre des observations d’indicateurs.',
+        );
+        $this->assertHttpAction(
+            fn () => app(VerifyIndicatorObservation::class)->handle($unauthorizedActor, $observation, []),
+            403,
+            'Vous n’êtes pas autorisé à vérifier des observations d’indicateurs.',
+        );
+
+        $this->assertSame('submitted', $observation->refresh()->verification_status);
+        $this->assertNull($observation->verified_by);
+        $this->assertDatabaseCount('indicator_observations', 1);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
     public function test_observation_requires_an_approved_indicator(): void
     {
         $county = County::factory()->create();
@@ -84,6 +111,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
     {
         $county = County::factory()->create();
         $submitter = User::factory()->countyAdmin($county)->create();
+        $submitter->givePermissionTo(Permission::findOrCreate(ProgrammePermission::VerifyIndicatorData->value, 'web'));
         $verifier = User::factory()->assessor()->create();
         $verifier->assignedCounties()->attach($county);
         $observation = app(RecordIndicatorObservation::class)->handle(
@@ -98,9 +126,11 @@ class MonitoringEvaluationWorkflowTest extends TestCase
             $this->assertArrayHasKey('verification_status', $exception->errors());
         }
 
+        app()->setLocale('fr');
         $verified = app(VerifyIndicatorObservation::class)->handle($verifier, $observation, $this->verificationPayload());
         $this->assertSame('verified', $verified->verification_status);
         $this->assertSame($verifier->id, $verified->verified_by);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $observation->id, 'action' => 'indicator.observation.verified', 'description' => 'La décision de vérification de l’observation de l’indicateur a été enregistrée.']);
 
         $this->expectException(ValidationException::class);
         app(VerifyIndicatorObservation::class)->handle($verifier, $verified, $this->verificationPayload());
@@ -534,5 +564,17 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         }
 
         $this->fail("Target-performance row {$indicatorId} was not returned.");
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertHttpAction(callable $action, int $status, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The indicator-observation action did not enforce the expected control boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame($status, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

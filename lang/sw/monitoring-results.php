@@ -89,4 +89,9 @@ return [
         'errors' => ['author_cannot_approve' => 'Mwandishi hawezi kuidhinisha ufafanuzi wake mwenyewe wa kiashiria.', 'draft_required' => 'Ufafanuzi wa kiashiria ulio rasimu pekee ndio unaweza kuidhinishwa.', 'supersession_lineage_invalid' => 'Mfuatano wa kubadilisha toleo si halali tena.', 'successor_effective_after_prior' => 'Toleo linalofuata lazima lianze kutumika baada ya toleo la awali.'],
         'audit' => ['approved' => 'Kiashiria :code toleo :version kimeidhinishwa.'],
     ],
+    'observation' => [
+        'outcomes' => ['submitted' => 'Uchunguzi wa kiashiria umewasilishwa kwa uthibitishaji.', 'verified' => 'Uamuzi wa uthibitishaji umerekodiwa.'],
+        'errors' => ['submit_unauthorized' => 'Huna ruhusa ya kuwasilisha uchunguzi wa viashiria.', 'verify_unauthorized' => 'Huna ruhusa ya kuthibitisha uchunguzi wa viashiria.', 'county_scope' => 'Uchunguzi wa kiashiria uko nje ya jalada lako la kaunti lililoidhinishwa.', 'current_approved_indicator_required' => 'Toleo la sasa la kiashiria lililoidhinishwa pekee ndilo linaweza kupokea uchunguzi mpya.', 'value_type_required' => 'Thamani inayolingana na aina ya thamani ya kiashiria inahitajika.', 'submitter_cannot_verify' => 'Mwasilishaji hawezi kuthibitisha uchunguzi wake mwenyewe.', 'project_verifier_separation' => 'Mthibitishaji wa mradi hawezi pia kufanya uthibitishaji wa ubora wa data wa Ufuatiliaji na Tathmini.', 'verified_immutable' => 'Uchunguzi uliothibitishwa hauwezi kubadilishwa.'],
+        'audit' => ['submitted' => 'Uchunguzi wa :measure wa :code umewasilishwa.', 'verified' => 'Uamuzi wa uthibitishaji wa uchunguzi wa kiashiria umerekodiwa.'],
+    ],
 ];

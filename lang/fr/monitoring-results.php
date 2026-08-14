@@ -89,4 +89,9 @@ return [
         'errors' => ['author_cannot_approve' => 'L’auteur ne peut pas approuver sa propre définition d’indicateur.', 'draft_required' => 'Seule une définition d’indicateur à l’état de brouillon peut être approuvée.', 'supersession_lineage_invalid' => 'La filiation de remplacement n’est plus valide.', 'successor_effective_after_prior' => 'La version suivante doit prendre effet après la version précédente.'],
         'audit' => ['approved' => 'Indicateur :code version :version approuvé.'],
     ],
+    'observation' => [
+        'outcomes' => ['submitted' => 'L’observation de l’indicateur a été soumise pour vérification.', 'verified' => 'La décision de vérification a été enregistrée.'],
+        'errors' => ['submit_unauthorized' => 'Vous n’êtes pas autorisé à soumettre des observations d’indicateurs.', 'verify_unauthorized' => 'Vous n’êtes pas autorisé à vérifier des observations d’indicateurs.', 'county_scope' => 'L’observation de l’indicateur se situe hors de votre portefeuille de comtés autorisé.', 'current_approved_indicator_required' => 'Seule la version approuvée actuelle de l’indicateur peut recevoir de nouvelles observations.', 'value_type_required' => 'Une valeur correspondant au type de valeur de l’indicateur est requise.', 'submitter_cannot_verify' => 'Le soumissionnaire ne peut pas vérifier sa propre observation.', 'project_verifier_separation' => 'Le vérificateur du projet ne peut pas également effectuer la vérification de la qualité des données S&E.', 'verified_immutable' => 'Une observation vérifiée ne peut pas être modifiée.'],
+        'audit' => ['submitted' => 'L’observation :measure de :code a été soumise.', 'verified' => 'La décision de vérification de l’observation de l’indicateur a été enregistrée.'],
+    ],
 ];

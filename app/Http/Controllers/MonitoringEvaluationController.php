@@ -182,14 +182,14 @@ class MonitoringEvaluationController extends Controller
     {
         $record->handle($this->user($request), $request->validated());
 
-        return $this->success('Indicator observation submitted for verification.');
+        return $this->success(__('monitoring-results.observation.outcomes.submitted'));
     }
 
     public function verifyObservation(VerifyIndicatorObservationRequest $request, IndicatorObservation $observation, VerifyIndicatorObservation $verify): RedirectResponse
     {
         $verify->handle($this->user($request), $observation, $request->validated());
 
-        return $this->success('Verification decision recorded.');
+        return $this->success(__('monitoring-results.observation.outcomes.verified'));
     }
 
     public function storeEvaluation(StoreProgrammeEvaluationRequest $request, CreateProgrammeEvaluation $createEvaluation): RedirectResponse
