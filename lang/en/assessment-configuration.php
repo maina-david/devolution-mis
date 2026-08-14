@@ -8,4 +8,5 @@ return [
     'pagination' => 'pagination', 'page' => 'Page', 'of' => 'of', 'separator' => '·', 'total' => 'total', 'previous' => 'Previous', 'next' => 'Next', 'search_scorecards' => 'Search scorecards', 'search' => 'Search', 'no_description' => 'No description', 'version_prefix' => 'v', 'functions' => 'functions', 'publish' => 'Publish', 'scorecards' => 'Scorecards',
     'assessment_cycles' => 'Assessment cycles', 'assessment_cycles_description' => 'Reporting periods pinned to immutable scorecard releases.', 'to' => 'to', 'no_scorecard' => 'No scorecard',
     'value_active' => 'Active', 'value_inactive' => 'Inactive', 'value_draft' => 'Draft', 'value_published' => 'Published', 'value_retired' => 'Retired', 'value_planned' => 'Planned', 'value_open' => 'Open', 'value_closed' => 'Closed',
+    'errors' => ['draft_only' => 'Only draft scorecard versions can be published.', 'fourteen_functions' => 'Published scorecards require exactly fourteen devolved functions.', 'mandatory_evidence' => 'Mandatory criteria under :standard require at least one mandatory evidence requirement.', 'weight_total' => 'Weights for :scope must total 100; configured total is :weight.'],
 ];

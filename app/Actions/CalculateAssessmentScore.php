@@ -19,7 +19,7 @@ class CalculateAssessmentScore
         $assessment = DB::transaction(function () use ($assessment, $actor): Assessment {
             $locked = Assessment::query()->lockForUpdate()->with('scorecardVersion.functions.thematicAreas.standards.criteria.evidenceRequirements')->findOrFail($assessment->id);
             if ($locked->scorecardVersion === null) {
-                throw ValidationException::withMessages(['assessment' => 'A governed scorecard version is required before calculation.']);
+                throw ValidationException::withMessages(['assessment' => __('assessment-record.errors.calculation_scorecard_required')]);
             }
 
             $required = 0;
@@ -34,7 +34,7 @@ class CalculateAssessmentScore
                             $satisfied += $criterionSatisfied;
                             $result = $locked->criterionResults()->where('assessment_criterion_id', $criterion->id)->first();
                             if ($result === null || ($result->verified_score === null && $result->override_score === null)) {
-                                throw ValidationException::withMessages(['score' => "Criterion {$criterion->code} requires a verified score."]);
+                                throw ValidationException::withMessages(['score' => __('assessment-record.errors.criterion_verified_score', ['criterion' => $criterion->code])]);
                             }
 
                             $effective = (float) ($result->override_score ?? $result->verified_score);
@@ -52,14 +52,14 @@ class CalculateAssessmentScore
 
             $completeness = $required === 0 ? 100.0 : ($satisfied / $required) * 100;
             if ($completeness < 100) {
-                throw ValidationException::withMessages(['evidence' => "Mandatory evidence is {$completeness}% complete."]);
+                throw ValidationException::withMessages(['evidence' => __('assessment-record.errors.mandatory_evidence_completeness', ['percentage' => round($completeness, 2)])]);
             }
             $locked->update(['status' => AssessmentStatus::Assessed, 'score' => round($total, 2), 'completeness_percentage' => 100, 'assessor_id' => $actor->id, 'assessed_at' => now()]);
 
             return $locked;
         }, attempts: 3);
 
-        $this->auditLogger->record($actor, $assessment, 'assessment.score_calculated', 'Assessment score calculated from the released scorecard.', $assessment->county_id, ['score' => $assessment->score]);
+        $this->auditLogger->record($actor, $assessment, 'assessment.score_calculated', __('assessment-record.audit.score_calculated'), $assessment->county_id, ['score' => $assessment->score]);
 
         return $assessment;
     }

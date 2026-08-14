@@ -29,7 +29,7 @@ class PublishAssessmentResult
             return $publication;
         }, attempts: 3);
 
-        $this->auditLogger->record($actor, $publication, 'assessment.result_published', 'Assessment result published as an immutable snapshot.', $publication->county_id, ['checksum' => $publication->checksum, 'score' => $publication->score]);
+        $this->auditLogger->record($actor, $publication, 'assessment.result_published', __('assessment-record.audit.result_published'), $publication->county_id, ['checksum' => $publication->checksum, 'score' => $publication->score]);
 
         return $publication;
     }
@@ -37,19 +37,19 @@ class PublishAssessmentResult
     private function validatePublication(Assessment $assessment): void
     {
         if ($assessment->status !== AssessmentStatus::Approved || $assessment->assessment_cycle_id === null || $assessment->assessment_scorecard_version_id === null || $assessment->score === null) {
-            throw ValidationException::withMessages(['publication' => 'Only a scored, approved governed assessment may be published.']);
+            throw ValidationException::withMessages(['publication' => __('assessment-record.errors.publication_approved_only')]);
         }
         if ($assessment->completeness_percentage < 100 || $assessment->attestation_status !== 'attested' || $assessment->attestations->whereNull('revoked_at')->isEmpty()) {
-            throw ValidationException::withMessages(['publication' => 'Complete verified evidence and an active county attestation are required.']);
+            throw ValidationException::withMessages(['publication' => __('assessment-record.errors.publication_evidence_attestation')]);
         }
         if ($assessment->findings->where('status', '!=', 'resolved')->isNotEmpty()) {
-            throw ValidationException::withMessages(['publication' => 'All findings must be resolved before publication.']);
+            throw ValidationException::withMessages(['publication' => __('assessment-record.errors.publication_findings')]);
         }
         if ($assessment->appeals->whereIn('status', ['submitted', 'under_review'])->isNotEmpty()) {
-            throw ValidationException::withMessages(['publication' => 'All appeals must be decided before publication.']);
+            throw ValidationException::withMessages(['publication' => __('assessment-record.errors.publication_appeals')]);
         }
         if ($assessment->criterionResults->contains(fn ($result) => $result->weighted_score === null || $result->calculation_snapshot === null)) {
-            throw ValidationException::withMessages(['publication' => 'Every criterion must have a reproducible calculated result.']);
+            throw ValidationException::withMessages(['publication' => __('assessment-record.errors.publication_reproducible_results')]);
         }
     }
 

@@ -19,11 +19,13 @@ use App\Models\AssessmentFunction;
 use App\Models\AssessmentScorecardVersion;
 use App\Models\AssessmentStandard;
 use App\Models\AssessmentThematicArea;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\CriterionEvidenceRequirement;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -122,6 +124,27 @@ class AssessmentRuntimeGovernanceTest extends TestCase
         $this->assertDatabaseHas('audit_events', ['action' => 'assessment.attested']);
         $this->assertDatabaseHas('audit_events', ['action' => 'assessment.finding_raised']);
         $this->assertDatabaseHas('audit_events', ['action' => 'assessment.appeal_submitted']);
+    }
+
+    public function test_assessment_calculation_and_override_boundaries_follow_the_active_locale(): void
+    {
+        [$assessment, $criterion, , $actor] = $this->governedAssessment();
+        $result = AssessmentCriterionResult::factory()->create(['assessment_id' => $assessment->id, 'assessment_criterion_id' => $criterion->id]);
+        App::setLocale('fr');
+
+        try {
+            app(OverrideCriterionScore::class)->handle($result, $actor, 50, 'Justification documentée pour la correction du score.');
+            $this->fail('Expected an unverified score override to fail.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(trans('assessment-record.errors.override_verified_only', locale: 'fr'), $exception->errors()['score'][0]);
+        }
+
+        $result->update(['verified_score' => 72, 'verified_by' => $actor->id, 'verified_at' => now()]);
+        App::setLocale('sw');
+        app(OverrideCriterionScore::class)->handle($result->refresh(), $actor, 74, 'Marekebisho yameidhinishwa baada ya ukaguzi huru wa ushahidi.');
+
+        $event = AuditEvent::query()->where('subject_id', $result->id)->where('action', 'assessment.criterion_overridden')->sole();
+        $this->assertSame(trans('assessment-record.audit.criterion_overridden', ['criterion' => $criterion->code], 'sw'), $event->description);
     }
 
     /** @return array{Assessment, AssessmentCriterion, CriterionEvidenceRequirement, User} */

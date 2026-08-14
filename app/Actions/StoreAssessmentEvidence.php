@@ -30,7 +30,7 @@ class StoreAssessmentEvidence
         $path = $file->store("assessment-evidence/{$assessment->county_id}/{$assessment->id}");
 
         if ($path === false) {
-            throw new RuntimeException('The evidence file could not be stored.');
+            throw new RuntimeException(__('assessment-record.errors.evidence_store_failed'));
         }
 
         try {
@@ -64,7 +64,7 @@ class StoreAssessmentEvidence
                 'scan_details' => $inspection['details'],
                 'scanned_at' => now(),
                 'ocr_status' => $ocrStatus,
-                'change_summary' => 'Initial upload',
+                'change_summary' => __('document-repository.version.initial_upload'),
                 'uploaded_by' => $uploader->id,
             ]);
             $document->update(['current_version_id' => $version->id]);
@@ -79,8 +79,8 @@ class StoreAssessmentEvidence
         }
 
         $assessors = User::query()->whereHas('roles', fn ($query) => $query->where('name', UserRole::Assessor->value))->whereHas('assignedCounties', fn ($query) => $query->whereKey($assessment->county_id))->get();
-        Notification::send($assessors, new ProgrammeAlert('New evidence uploaded', "{$data['title']} was added to {$assessment->county->name}'s {$assessment->cycle} assessment.", 'evidence'));
-        $this->auditLogger->record($uploader, $document, 'evidence.uploaded', "Evidence uploaded: {$data['title']}.", $assessment->county_id, ['category' => $data['category'], 'source_type' => $data['source_type'], 'checksum' => $inspection['checksum'], 'scan_status' => $inspection['status']]);
+        Notification::send($assessors, new ProgrammeAlert(__('assessment-record.notifications.evidence_uploaded_title'), __('assessment-record.notifications.evidence_uploaded_message', ['title' => $data['title'], 'county' => $assessment->county->name, 'cycle' => $assessment->cycle]), 'evidence'));
+        $this->auditLogger->record($uploader, $document, 'evidence.uploaded', __('assessment-record.audit.evidence_uploaded', ['title' => $data['title']]), $assessment->county_id, ['category' => $data['category'], 'source_type' => $data['source_type'], 'checksum' => $inspection['checksum'], 'scan_status' => $inspection['status']]);
 
         return $document;
     }
@@ -95,9 +95,9 @@ class StoreAssessmentEvidence
 
         $requirement = CriterionEvidenceRequirement::query()->with('criterion.standard.thematicArea.function')->findOrFail($requirementId);
         $criterion = $requirement->criterion;
-        abort_unless($criterion->id === ($data['assessment_criterion_id'] ?? null), 422, 'The evidence requirement does not belong to the selected criterion.');
-        abort_unless($criterion->standard->thematicArea->function->assessment_scorecard_version_id === $assessment->assessment_scorecard_version_id, 422, 'The evidence requirement is not part of this assessment scorecard.');
-        abort_unless(in_array($data['category'], $requirement->allowed_categories, true), 422, 'The evidence category is not accepted for this requirement.');
-        abort_unless(in_array((string) $file->getMimeType(), $requirement->accepted_mime_types, true), 422, 'The evidence file type is not accepted for this requirement.');
+        abort_unless($criterion->id === ($data['assessment_criterion_id'] ?? null), 422, __('assessment-record.errors.evidence_criterion_mismatch'));
+        abort_unless($criterion->standard->thematicArea->function->assessment_scorecard_version_id === $assessment->assessment_scorecard_version_id, 422, __('assessment-record.errors.evidence_scorecard_mismatch'));
+        abort_unless(in_array($data['category'], $requirement->allowed_categories, true), 422, __('assessment-record.errors.evidence_category'));
+        abort_unless(in_array((string) $file->getMimeType(), $requirement->accepted_mime_types, true), 422, __('assessment-record.errors.evidence_mime'));
     }
 }

@@ -29,16 +29,16 @@ class CreateAssessment
 
         return DB::transaction(function () use ($actor, $county, $assessmentCycleId): Assessment {
             $cycle = AssessmentCycle::query()->lockForUpdate()->findOrFail($assessmentCycleId);
-            abort_unless(in_array($cycle->status, ['planned', 'open'], true), 409, 'Assessments can only be initiated for planned or open cycles.');
-            abort_unless($cycle->assessment_scorecard_version_id !== null, 409, 'The assessment cycle must pin a released scorecard version.');
+            abort_unless(in_array($cycle->status, ['planned', 'open'], true), 409, __('assessment-record.errors.cycle_not_open'));
+            abort_unless($cycle->assessment_scorecard_version_id !== null, 409, __('assessment-record.errors.cycle_scorecard_required'));
 
             $scorecardVersion = AssessmentScorecardVersion::query()->findOrFail($cycle->assessment_scorecard_version_id);
-            abort_unless(in_array($scorecardVersion->status, ['published', 'retired'], true), 409, 'The assessment cycle scorecard has not been released.');
-            abort_unless(is_string($scorecardVersion->checksum) && mb_strlen($scorecardVersion->checksum) === 64, 409, 'The assessment cycle scorecard has no valid integrity checksum.');
+            abort_unless(in_array($scorecardVersion->status, ['published', 'retired'], true), 409, __('assessment-record.errors.scorecard_not_released'));
+            abort_unless(is_string($scorecardVersion->checksum) && mb_strlen($scorecardVersion->checksum) === 64, 409, __('assessment-record.errors.scorecard_checksum'));
 
             if (Assessment::query()->withTrashed()->where('county_id', $county->id)->where('assessment_cycle_id', $cycle->id)->exists()) {
                 throw ValidationException::withMessages([
-                    'county_id' => 'An assessment already exists for this county and cycle.',
+                    'county_id' => __('assessment-record.errors.duplicate_county_cycle'),
                 ]);
             }
 
@@ -53,7 +53,7 @@ class CreateAssessment
                 'status' => AssessmentStatus::Draft,
             ]);
 
-            $this->auditLogger->record($actor, $assessment, 'assessment.created', "Assessment {$cycle->code} initiated for {$county->name} County.", $county->id, [
+            $this->auditLogger->record($actor, $assessment, 'assessment.created', __('assessment-record.audit.assessment_created', ['cycle' => $cycle->code, 'county' => $county->name]), $county->id, [
                 'assessment_cycle_id' => $cycle->id,
                 'assessment_scorecard_version_id' => $scorecardVersion->id,
                 'assessment_scorecard_checksum' => $scorecardVersion->checksum,

@@ -24,7 +24,7 @@ class PublishAssessmentScorecardVersion
             $version = AssessmentScorecardVersion::query()
                 ->with('functions.thematicAreas.standards.criteria.evidenceRequirements')
                 ->findOrFail($scorecardVersion->id);
-            abort_unless($version->status === 'draft', 409, 'Only draft scorecard versions can be published.');
+            abort_unless($version->status === 'draft', 409, __('assessment-configuration.errors.draft_only'));
             $this->validateStructure($version);
 
             $publishedAt = now();
@@ -44,7 +44,7 @@ class PublishAssessmentScorecardVersion
     private function validateStructure(AssessmentScorecardVersion $version): void
     {
         if ($version->functions->where('function_type', 'devolved')->count() !== 14) {
-            throw ValidationException::withMessages(['functions' => 'Published scorecards require exactly fourteen devolved functions.']);
+            throw ValidationException::withMessages(['functions' => __('assessment-configuration.errors.fourteen_functions')]);
         }
 
         $this->assertWeight($version->functions->sum(fn ($function) => (float) $function->weight), 'functions');
@@ -55,7 +55,7 @@ class PublishAssessmentScorecardVersion
                 foreach ($theme->standards as $standard) {
                     $this->assertWeight($standard->criteria->sum(fn ($criterion) => (float) $criterion->weight), "standard {$standard->code} criteria");
                     if ($standard->criteria->contains(fn ($criterion) => $criterion->is_mandatory && $criterion->evidenceRequirements->where('is_mandatory', true)->isEmpty())) {
-                        throw ValidationException::withMessages(['functions' => "Mandatory criteria under {$standard->code} require at least one mandatory evidence requirement."]);
+                        throw ValidationException::withMessages(['functions' => __('assessment-configuration.errors.mandatory_evidence', ['standard' => $standard->code])]);
                     }
                 }
             }
@@ -65,7 +65,7 @@ class PublishAssessmentScorecardVersion
     private function assertWeight(float $weight, string $scope): void
     {
         if (abs($weight - 100.0) > 0.0001) {
-            throw ValidationException::withMessages(['functions' => "Weights for {$scope} must total 100; configured total is {$weight}."]);
+            throw ValidationException::withMessages(['functions' => __('assessment-configuration.errors.weight_total', ['scope' => $scope, 'weight' => $weight])]);
         }
     }
 
