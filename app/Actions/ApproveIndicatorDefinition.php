@@ -18,20 +18,20 @@ class ApproveIndicatorDefinition
             $draft = IndicatorDefinition::query()->lockForUpdate()->findOrFail($indicator->id);
 
             if ($draft->created_by === $actor->id) {
-                throw ValidationException::withMessages(['indicator' => 'The author cannot approve their own indicator definition.']);
+                throw ValidationException::withMessages(['indicator' => __('monitoring-results.indicator_approval.errors.author_cannot_approve')]);
             }
 
             if ($draft->status !== 'draft') {
-                throw ValidationException::withMessages(['indicator' => 'Only a draft indicator definition can be approved.']);
+                throw ValidationException::withMessages(['indicator' => __('monitoring-results.indicator_approval.errors.draft_required')]);
             }
 
             if ($draft->supersedes_id !== null) {
                 $prior = IndicatorDefinition::query()->lockForUpdate()->find($draft->supersedes_id);
                 if (! $prior instanceof IndicatorDefinition || ! $prior->isCurrentApprovedVersion() || $draft->version !== $prior->version + 1) {
-                    throw ValidationException::withMessages(['indicator' => 'The supersession lineage is no longer valid.']);
+                    throw ValidationException::withMessages(['indicator' => __('monitoring-results.indicator_approval.errors.supersession_lineage_invalid')]);
                 }
                 if ($draft->effective_from === null || ($prior->effective_from !== null && $draft->effective_from->lessThanOrEqualTo($prior->effective_from))) {
-                    throw ValidationException::withMessages(['effective_from' => 'The successor must take effect after the prior version.']);
+                    throw ValidationException::withMessages(['effective_from' => __('monitoring-results.indicator_approval.errors.successor_effective_after_prior')]);
                 }
             }
 
@@ -51,7 +51,7 @@ class ApproveIndicatorDefinition
                     ]));
             }
 
-            $this->auditLogger->record($actor, $draft, 'indicator.definition.approved', "Indicator {$draft->code} version {$draft->version} approved.", metadata: ['supersedes_id' => $draft->supersedes_id]);
+            $this->auditLogger->record($actor, $draft, 'indicator.definition.approved', __('monitoring-results.indicator_approval.audit.approved', ['code' => $draft->code, 'version' => $draft->version]), metadata: ['supersedes_id' => $draft->supersedes_id]);
 
             return $draft;
         });

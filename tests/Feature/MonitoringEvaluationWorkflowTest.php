@@ -112,9 +112,10 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $approver = User::factory()->devolutionAdmin()->create();
         $indicator = IndicatorDefinition::factory()->draft()->create(['created_by' => $author->id]);
 
+        $this->withSession(['locale' => 'fr']);
         $this->actingAs($author)
             ->patch(route('monitoring-evaluation.indicators.approve', [$indicator]))
-            ->assertSessionHasErrors('indicator');
+            ->assertSessionHasErrors(['indicator' => 'L’auteur ne peut pas approuver sa propre définition d’indicateur.']);
 
         $this->actingAs($approver)
             ->patch(route('monitoring-evaluation.indicators.approve', [$indicator]))
@@ -124,6 +125,11 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->assertSame('approved', $indicator->status);
         $this->assertSame($approver->id, $indicator->approved_by);
         $this->assertNotNull($indicator->approved_at);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $indicator->id,
+            'action' => 'indicator.definition.approved',
+            'description' => "Indicateur {$indicator->code} version {$indicator->version} approuvé.",
+        ]);
     }
 
     public function test_approved_indicator_definition_is_database_immutable(): void
@@ -462,6 +468,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
     /**
      * @param  list<County>  $counties
      * @param  list<Programme>  $programmes
+     * @param  list<Sector>  $sectors
      */
     private function publishedReferenceRelease(array $counties, array $programmes, User $approver, array $sectors = []): ReferenceDataRelease
     {

@@ -85,4 +85,8 @@ return [
     'target_missing' => 'Lengo halipo',
     'no_verified_actuals' => 'Hakuna matokeo halisi yaliyothibitishwa',
     'no_verified_actuals_description' => 'Wasilisha na uthibitishe kwa uhuru matokeo halisi ya nambari ili kukokotoa utendaji wa malengo.',
+    'indicator_approval' => [
+        'errors' => ['author_cannot_approve' => 'Mwandishi hawezi kuidhinisha ufafanuzi wake mwenyewe wa kiashiria.', 'draft_required' => 'Ufafanuzi wa kiashiria ulio rasimu pekee ndio unaweza kuidhinishwa.', 'supersession_lineage_invalid' => 'Mfuatano wa kubadilisha toleo si halali tena.', 'successor_effective_after_prior' => 'Toleo linalofuata lazima lianze kutumika baada ya toleo la awali.'],
+        'audit' => ['approved' => 'Kiashiria :code toleo :version kimeidhinishwa.'],
+    ],
 ];

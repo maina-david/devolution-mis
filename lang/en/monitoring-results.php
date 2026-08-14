@@ -95,4 +95,8 @@ return [
     'target_missing' => 'Target missing',
     'no_verified_actuals' => 'No verified actuals',
     'no_verified_actuals_description' => 'Submit and independently verify numeric actuals to calculate target performance.',
+    'indicator_approval' => [
+        'errors' => ['author_cannot_approve' => 'The author cannot approve their own indicator definition.', 'draft_required' => 'Only a draft indicator definition can be approved.', 'supersession_lineage_invalid' => 'The supersession lineage is no longer valid.', 'successor_effective_after_prior' => 'The successor must take effect after the prior version.'],
+        'audit' => ['approved' => 'Indicator :code version :version approved.'],
+    ],
 ];

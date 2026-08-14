@@ -85,4 +85,8 @@ return [
     'target_missing' => 'Cible absente',
     'no_verified_actuals' => 'Aucune valeur réelle vérifiée',
     'no_verified_actuals_description' => 'Soumettez et faites vérifier indépendamment des valeurs réelles numériques afin de calculer la performance des cibles.',
+    'indicator_approval' => [
+        'errors' => ['author_cannot_approve' => 'L’auteur ne peut pas approuver sa propre définition d’indicateur.', 'draft_required' => 'Seule une définition d’indicateur à l’état de brouillon peut être approuvée.', 'supersession_lineage_invalid' => 'La filiation de remplacement n’est plus valide.', 'successor_effective_after_prior' => 'La version suivante doit prendre effet après la version précédente.'],
+        'audit' => ['approved' => 'Indicateur :code version :version approuvé.'],
+    ],
 ];
