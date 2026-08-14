@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Actions\ApplyReferenceLineageDisposition;
 use App\Actions\CreateReferenceLineageDisposition;
 use App\Actions\ReviewReferenceLineageDisposition;
+use App\Models\AccessDelegation;
 use App\Models\Assessment;
 use App\Models\County;
 use App\Models\ReferenceDataRelease;
@@ -85,10 +86,28 @@ class ReferenceLineageDispositionTest extends TestCase
     public function test_unprivileged_user_cannot_propose_a_lineage_disposition(): void
     {
         [$assessment, $release] = $this->scenario();
-        $assessor = User::factory()->assessor($assessment->county)->create();
+        $assessor = User::factory()->assessor()->create();
 
         $this->actingAs($assessor)->post(route('data-migrations.lineage-dispositions.store'), $this->payload($assessment, $release))->assertForbidden();
         $this->assertSame(0, ReferenceLineageDisposition::query()->count());
+    }
+
+    public function test_unprivileged_user_cannot_review_or_apply_a_lineage_disposition(): void
+    {
+        [$assessment, $release, $proposer, $reviewer] = $this->scenario();
+        $assessor = User::factory()->assessor()->create();
+        $disposition = app(CreateReferenceLineageDisposition::class)->handle($proposer, $this->payload($assessment, $release));
+
+        $this->actingAs($assessor)->patch(route('data-migrations.lineage-dispositions.review', $disposition), [
+            'decision' => 'approve',
+            'notes' => 'An unauthorized assessor attempted to approve this controlled reconciliation decision.',
+        ])->assertForbidden();
+
+        app(ReviewReferenceLineageDisposition::class)->handle($disposition, $reviewer, 'approve', 'The authorized reviewer independently verified the catalogue and retained source evidence.');
+
+        $this->actingAs($assessor)->post(route('data-migrations.lineage-dispositions.apply', $disposition))->assertForbidden();
+        $this->assertNull($assessment->refresh()->reference_data_release_id);
+        $this->assertSame('approved', $disposition->refresh()->status);
     }
 
     public function test_reconciliation_failures_and_audit_descriptions_follow_the_active_locale(): void
@@ -110,6 +129,45 @@ class ReferenceLineageDispositionTest extends TestCase
             'subject_id' => $disposition->id,
             'description' => trans('migration.lineage_audit.proposed', ['reference' => $disposition->reference], 'sw'),
         ]);
+    }
+
+    public function test_access_delegation_cannot_be_pinned_to_a_release_missing_a_scoped_county(): void
+    {
+        [$assessment, $release, $proposer] = $this->scenario();
+        $delegation = AccessDelegation::factory()->create(['reference_data_release_id' => null]);
+        $payload = $this->payload($assessment, $release);
+        $payload['record_type'] = 'access_delegation';
+        $payload['record_id'] = $delegation->id;
+
+        $this->expectHttpFailure(409, fn () => app(CreateReferenceLineageDisposition::class)->handle($proposer, $payload));
+
+        $this->assertNull($delegation->refresh()->reference_data_release_id);
+        $this->assertSame(0, ReferenceLineageDisposition::query()->count());
+    }
+
+    public function test_three_independent_operators_can_pin_an_access_delegation_when_every_scoped_county_is_in_the_release(): void
+    {
+        [, , $proposer, $reviewer, $applier] = $this->scenario();
+        $delegation = AccessDelegation::factory()->create(['reference_data_release_id' => null]);
+        $snapshot = ['counties' => $delegation->county_scope_snapshot, 'organizations' => [], 'sectors' => [], 'programmes' => []];
+        $release = ReferenceDataRelease::factory()->create(['approved_by' => $reviewer->id, 'status' => 'published', 'snapshot' => $snapshot, 'checksum' => app(CanonicalJson::class)->checksum($snapshot), 'effective_from' => now()->subMinute(), 'published_at' => now()->subMinute()]);
+        $payload = [
+            'record_type' => 'access_delegation',
+            'record_id' => $delegation->id,
+            'decision' => 'pin_release',
+            'reference_data_release_id' => $release->id,
+            'successor_record_type' => null,
+            'successor_record_id' => null,
+            'business_reason' => 'The historical emergency access scope was reconciled against the approved county catalogue.',
+            'source_reference' => 'IAM-LEGACY-APPROVAL-2025-07',
+        ];
+
+        $disposition = app(CreateReferenceLineageDisposition::class)->handle($proposer, $payload);
+        app(ReviewReferenceLineageDisposition::class)->handle($disposition, $reviewer, 'approve', 'Every delegated county and the retained approval source were independently verified.');
+        app(ApplyReferenceLineageDisposition::class)->handle($disposition, $applier);
+
+        $this->assertSame($release->id, $delegation->refresh()->reference_data_release_id);
+        $this->assertSame('applied', $disposition->refresh()->status);
     }
 
     /** @return array{Assessment, ReferenceDataRelease, User, User, User} */

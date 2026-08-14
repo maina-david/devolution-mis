@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AccessDelegation;
 use App\Models\Assessment;
 use App\Models\County;
 use App\Models\DevolutionProject;
@@ -70,5 +71,19 @@ class LegacyReferenceInventoryTest extends TestCase
         $this->assertSame(1, $assessments['pending']);
         $this->assertSame(2, $assessments['applied']);
         $this->assertEqualsCanonicalizing([$unassigned->id, $rejected->id], collect($inventory->candidates('assessment'))->pluck('id')->all());
+    }
+
+    public function test_it_includes_unpinned_access_delegations_in_the_controlled_inventory(): void
+    {
+        $delegation = AccessDelegation::factory()->create(['reference_data_release_id' => null]);
+
+        $inventory = app(LegacyReferenceInventory::class);
+        $record = collect($inventory->report()['records'])->firstWhere('key', 'access_delegation');
+
+        $this->assertIsArray($record);
+        $this->assertSame(trans('migration.lineage_types.access_delegation'), $record['type']);
+        $this->assertSame(1, $record['count']);
+        $this->assertSame($delegation->id, $inventory->candidates('access_delegation')[0]['id']);
+        $this->assertEquals($delegation->county_scope_snapshot, $inventory->candidates('access_delegation')[0]['snapshot']['county_scope_snapshot']);
     }
 }

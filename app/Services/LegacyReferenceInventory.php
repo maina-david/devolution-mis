@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AccessDelegation;
 use App\Models\AnalyticsDashboard;
 use App\Models\Assessment;
 use App\Models\CitizenCase;
@@ -29,34 +30,43 @@ use Illuminate\Support\Carbon;
 
 class LegacyReferenceInventory
 {
-    public const TYPE_KEYS = ['analytics_dashboard', 'assessment', 'citizen_case', 'innovation', 'project', 'dswg_action', 'dswg_working_group', 'exchequer_request', 'igr_resolution', 'indicator_definition', 'innovation_replication', 'integration_system', 'knowledge_item', 'learning_course', 'partner_action', 'partner_profile', 'performance_plan', 'programme_evaluation', 'report_schedule', 'support_ticket', 'travel_request'];
+    public const TYPE_KEYS = ['access_delegation', 'analytics_dashboard', 'assessment', 'citizen_case', 'innovation', 'project', 'dswg_action', 'dswg_working_group', 'exchequer_request', 'igr_resolution', 'indicator_definition', 'innovation_replication', 'integration_system', 'knowledge_item', 'learning_course', 'partner_action', 'partner_profile', 'performance_plan', 'programme_evaluation', 'report_schedule', 'support_ticket', 'travel_request'];
 
     /** @return array<string, array{label: string, model: class-string<Model>, releaseColumn: string}> */
     public function types(): array
     {
         return [
-            'analytics_dashboard' => ['label' => 'Analytics dashboards', 'model' => AnalyticsDashboard::class, 'releaseColumn' => 'reference_data_release_id'],
-            'assessment' => ['label' => 'Assessments', 'model' => Assessment::class, 'releaseColumn' => 'reference_data_release_id'],
-            'citizen_case' => ['label' => 'Citizen cases', 'model' => CitizenCase::class, 'releaseColumn' => 'intake_reference_data_release_id'],
-            'innovation' => ['label' => 'Innovations', 'model' => DevolutionInnovation::class, 'releaseColumn' => 'reference_data_release_id'],
-            'project' => ['label' => 'Projects', 'model' => DevolutionProject::class, 'releaseColumn' => 'reference_data_release_id'],
-            'dswg_action' => ['label' => 'DSWG actions', 'model' => DswgAction::class, 'releaseColumn' => 'reference_data_release_id'],
-            'dswg_working_group' => ['label' => 'DSWG working groups', 'model' => DswgWorkingGroup::class, 'releaseColumn' => 'reference_data_release_id'],
-            'exchequer_request' => ['label' => 'Exchequer requests', 'model' => ExchequerRequest::class, 'releaseColumn' => 'reference_data_release_id'],
-            'igr_resolution' => ['label' => 'IGR resolutions', 'model' => IgrResolution::class, 'releaseColumn' => 'reference_data_release_id'],
-            'indicator_definition' => ['label' => 'Indicator definitions', 'model' => IndicatorDefinition::class, 'releaseColumn' => 'reference_data_release_id'],
-            'innovation_replication' => ['label' => 'Innovation replications', 'model' => InnovationReplication::class, 'releaseColumn' => 'reference_data_release_id'],
-            'integration_system' => ['label' => 'Integration systems', 'model' => IntegrationSystem::class, 'releaseColumn' => 'reference_data_release_id'],
-            'knowledge_item' => ['label' => 'Knowledge items', 'model' => KnowledgeItem::class, 'releaseColumn' => 'reference_data_release_id'],
-            'learning_course' => ['label' => 'Learning courses', 'model' => LearningCourse::class, 'releaseColumn' => 'reference_data_release_id'],
-            'partner_action' => ['label' => 'Partner actions', 'model' => PartnerCollaborationAction::class, 'releaseColumn' => 'reference_data_release_id'],
-            'partner_profile' => ['label' => 'Partner profiles', 'model' => PartnerProfile::class, 'releaseColumn' => 'reference_data_release_id'],
-            'performance_plan' => ['label' => 'Performance plans', 'model' => PerformancePlan::class, 'releaseColumn' => 'reference_data_release_id'],
-            'programme_evaluation' => ['label' => 'Programme evaluations', 'model' => ProgrammeEvaluation::class, 'releaseColumn' => 'reference_data_release_id'],
-            'report_schedule' => ['label' => 'Report schedules', 'model' => ReportSchedule::class, 'releaseColumn' => 'reference_data_release_id'],
-            'support_ticket' => ['label' => 'Support tickets', 'model' => SupportTicket::class, 'releaseColumn' => 'reference_data_release_id'],
-            'travel_request' => ['label' => 'Travel requests', 'model' => TravelRequest::class, 'releaseColumn' => 'reference_data_release_id'],
+            'access_delegation' => $this->definition('access_delegation', AccessDelegation::class),
+            'analytics_dashboard' => $this->definition('analytics_dashboard', AnalyticsDashboard::class),
+            'assessment' => $this->definition('assessment', Assessment::class),
+            'citizen_case' => $this->definition('citizen_case', CitizenCase::class, 'intake_reference_data_release_id'),
+            'innovation' => $this->definition('innovation', DevolutionInnovation::class),
+            'project' => $this->definition('project', DevolutionProject::class),
+            'dswg_action' => $this->definition('dswg_action', DswgAction::class),
+            'dswg_working_group' => $this->definition('dswg_working_group', DswgWorkingGroup::class),
+            'exchequer_request' => $this->definition('exchequer_request', ExchequerRequest::class),
+            'igr_resolution' => $this->definition('igr_resolution', IgrResolution::class),
+            'indicator_definition' => $this->definition('indicator_definition', IndicatorDefinition::class),
+            'innovation_replication' => $this->definition('innovation_replication', InnovationReplication::class),
+            'integration_system' => $this->definition('integration_system', IntegrationSystem::class),
+            'knowledge_item' => $this->definition('knowledge_item', KnowledgeItem::class),
+            'learning_course' => $this->definition('learning_course', LearningCourse::class),
+            'partner_action' => $this->definition('partner_action', PartnerCollaborationAction::class),
+            'partner_profile' => $this->definition('partner_profile', PartnerProfile::class),
+            'performance_plan' => $this->definition('performance_plan', PerformancePlan::class),
+            'programme_evaluation' => $this->definition('programme_evaluation', ProgrammeEvaluation::class),
+            'report_schedule' => $this->definition('report_schedule', ReportSchedule::class),
+            'support_ticket' => $this->definition('support_ticket', SupportTicket::class),
+            'travel_request' => $this->definition('travel_request', TravelRequest::class),
         ];
+    }
+
+    /** @param class-string<Model> $model
+     * @return array{label: string, model: class-string<Model>, releaseColumn: string}
+     */
+    private function definition(string $key, string $model, string $releaseColumn = 'reference_data_release_id'): array
+    {
+        return ['label' => __('migration.lineage_types.'.$key), 'model' => $model, 'releaseColumn' => $releaseColumn];
     }
 
     public function record(string $type, string $id, bool $requireUnpinned = false): Model
@@ -82,11 +92,17 @@ class LegacyReferenceInventory
     /** @return array<string, mixed> */
     public function safeSnapshot(Model $record): array
     {
-        return collect($record->getAttributes())->only([
+        $attributes = [
             'id', 'reference', 'code', 'title', 'name', 'county_id', 'target_county_id', 'source_county_id',
             'organization_id', 'partner_organization_id', 'owner_organization_id', 'accountable_organization_id',
             'lead_organization_id', 'sector_id', 'programme_id', 'created_at',
-        ])->all();
+            'access_type', 'scope_type', 'permission_scope', 'county_scope_snapshot',
+        ];
+
+        return collect($attributes)
+            ->filter(fn (string $attribute): bool => array_key_exists($attribute, $record->getAttributes()))
+            ->mapWithKeys(fn (string $attribute): array => [$attribute => $record->getAttribute($attribute)])
+            ->all();
     }
 
     /** @return list<array{id: string, label: string, snapshot: array<string, mixed>}> */

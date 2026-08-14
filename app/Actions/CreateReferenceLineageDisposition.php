@@ -88,5 +88,11 @@ class CreateReferenceLineageDisposition
             }
             abort_unless(collect($release->snapshot[$catalogue] ?? [])->contains(fn (array $entry): bool => ($entry['id'] ?? null) === $id), 409, __('migration.lineage_errors.reference_missing', ['column' => $column]));
         }
+
+        $releaseCountyIds = collect($release->snapshot['counties'] ?? [])->pluck('id');
+        foreach ($record->getAttribute('county_scope_snapshot') ?? [] as $county) {
+            $countyId = is_array($county) ? ($county['id'] ?? null) : null;
+            abort_unless(is_string($countyId) && $releaseCountyIds->contains($countyId), 409, __('migration.lineage_errors.reference_missing', ['column' => 'county_scope_snapshot']));
+        }
     }
 }
