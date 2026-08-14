@@ -61,12 +61,17 @@ class AssessmentPublicationGovernanceTest extends TestCase
             $this->assertArrayHasKey('publication', $exception->errors());
         }
 
-        app(RespondToAssessmentFinding::class)->handle($finding, $actor, 'The county supplied the signed source register and reconciliation.');
-        app(ResolveAssessmentFinding::class)->handle($finding->refresh(), $actor, 'The additional primary record resolves the finding completely.');
-        app(DecideAssessmentAppeal::class)->handle($appeal, $actor, 'rejected', 'The verified evidence and calculation were correctly applied; no adjustment is warranted.');
+        $countyResponder = User::factory()->countyAdmin($assessment->county)->create();
+        $independentReviewer = User::factory()->assessor()->create();
+        $appealDecisionMaker = User::factory()->topManagement()->create();
+        $independentReviewer->assignedCounties()->attach($assessment->county_id);
+        $appealDecisionMaker->assignedCounties()->attach($assessment->county_id);
+        app(RespondToAssessmentFinding::class)->handle($finding, $countyResponder, 'The county supplied the signed source register and reconciliation.');
+        app(ResolveAssessmentFinding::class)->handle($finding->refresh(), $independentReviewer, 'The additional primary record resolves the finding completely.');
+        app(DecideAssessmentAppeal::class)->handle($appeal, $appealDecisionMaker, 'rejected', 'The verified evidence and calculation were correctly applied; no adjustment is warranted.');
 
         $publication = app(PublishAssessmentResult::class)->handle($assessment->refresh(), $actor);
-        $this->assertNotNull($publication->id);
+        $this->assertModelExists($publication);
         $this->assertSame('resolved', $finding->fresh()?->status);
         $this->assertSame('rejected', $appeal->fresh()?->status);
     }

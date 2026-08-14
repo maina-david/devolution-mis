@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\Assessment;
 use App\Models\AssessmentAttestation;
 use App\Models\User;
@@ -16,8 +17,10 @@ class AttestAssessment
 
     public function handle(Assessment $assessment, User $actor, string $title, string $statement): AssessmentAttestation
     {
+        abort_unless($actor->can(ProgrammePermission::SubmitAssessment->value) && $actor->canAccessCounty($assessment->county), 403, __('assessment-record.errors.attestation_unauthorized'));
+
         if ($assessment->completeness_percentage < 100.0) {
-            throw ValidationException::withMessages(['attestation' => 'All mandatory evidence must be complete before county attestation.']);
+            throw ValidationException::withMessages(['attestation' => __('assessment-record.errors.attestation_evidence_incomplete')]);
         }
 
         $attestation = DB::transaction(function () use ($assessment, $actor, $title, $statement): AssessmentAttestation {
@@ -27,7 +30,7 @@ class AttestAssessment
 
             return $attestation;
         }, attempts: 3);
-        $this->auditLogger->record($actor, $attestation, 'assessment.attested', 'County assessment attested.', $assessment->county_id, ['checksum' => $attestation->content_checksum]);
+        $this->auditLogger->record($actor, $attestation, 'assessment.attested', __('assessment-record.audit.assessment_attested'), $assessment->county_id, ['checksum' => $attestation->content_checksum]);
 
         return $attestation;
     }

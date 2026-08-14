@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $county_id
  * @property string $score
  * @property string $performance_band
- * @property array<string, mixed> $function_profile
+ * @property list<array{function_id: string, code: string, name: string, weight: float, score: float, weighted_contribution: float}> $function_profile
  * @property array<string, mixed> $calculation_snapshot
  * @property string $checksum
  * @property Carbon $published_at

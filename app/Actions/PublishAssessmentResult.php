@@ -53,7 +53,7 @@ class PublishAssessmentResult
         }
     }
 
-    /** @return list<array<string, mixed>> */
+    /** @return list<array{function_id: string, code: string, name: string, weight: float, score: float, weighted_contribution: float}> */
     private function functionProfile(Assessment $assessment): array
     {
         $profile = [];

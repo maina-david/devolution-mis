@@ -4,17 +4,23 @@ namespace Tests\Feature;
 
 use App\Actions\AttestAssessment;
 use App\Actions\CalculateAssessmentScore;
+use App\Actions\DecideAssessmentAppeal;
 use App\Actions\OverrideCriterionScore;
 use App\Actions\RecordAssessmentFinding;
+use App\Actions\ResolveAssessmentFinding;
+use App\Actions\RespondToAssessmentFinding;
 use App\Actions\SubmitAssessmentAppeal;
 use App\Actions\SubmitCriterionScore;
+use App\Actions\VerifyAssessmentEvidence;
 use App\Actions\VerifyCriterionScore;
 use App\Enums\AssessmentStatus;
 use App\Models\Assessment;
+use App\Models\AssessmentAppeal;
 use App\Models\AssessmentCriterion;
 use App\Models\AssessmentCriterionResult;
 use App\Models\AssessmentCycle;
 use App\Models\AssessmentDocument;
+use App\Models\AssessmentFinding;
 use App\Models\AssessmentFunction;
 use App\Models\AssessmentScorecardVersion;
 use App\Models\AssessmentStandard;
@@ -29,6 +35,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class AssessmentRuntimeGovernanceTest extends TestCase
@@ -59,7 +66,8 @@ class AssessmentRuntimeGovernanceTest extends TestCase
 
     public function test_county_attestation_requires_complete_evidence(): void
     {
-        [$assessment, , , $actor] = $this->governedAssessment();
+        [$assessment] = $this->governedAssessment();
+        $actor = User::factory()->countyAdmin($assessment->county)->create();
 
         $this->expectException(ValidationException::class);
         app(AttestAssessment::class)->handle($assessment, $actor, 'County Secretary', 'I attest this submission.');
@@ -87,8 +95,11 @@ class AssessmentRuntimeGovernanceTest extends TestCase
 
     public function test_criterion_scoring_enforces_independent_verification_and_reasoned_override(): void
     {
-        [$assessment, $criterion, , $submitter] = $this->governedAssessment();
+        [$assessment, $criterion] = $this->governedAssessment();
+        $submitter = User::factory()->assessor()->create();
         $verifier = User::factory()->assessor()->create();
+        $submitter->assignedCounties()->attach($assessment->county_id);
+        $verifier->assignedCounties()->attach($assessment->county_id);
         $approver = User::factory()->topManagement()->create();
         $result = app(SubmitCriterionScore::class)->handle($assessment, $criterion, $submitter, 72, 'Score supported by the submitted primary records.');
 
@@ -110,12 +121,15 @@ class AssessmentRuntimeGovernanceTest extends TestCase
 
     public function test_complete_assessment_can_be_attested_and_supports_findings_and_appeals(): void
     {
-        [$assessment, $criterion, , $actor] = $this->governedAssessment();
+        [$assessment, $criterion] = $this->governedAssessment();
+        $attestor = User::factory()->countyAdmin($assessment->county)->create();
+        $reviewer = User::factory()->assessor()->create();
+        $reviewer->assignedCounties()->attach($assessment->county_id);
         $assessment->update(['completeness_percentage' => 100, 'score' => 75, 'status' => AssessmentStatus::Assessed]);
 
-        $attestation = app(AttestAssessment::class)->handle($assessment->refresh(), $actor, 'County Secretary', 'I attest this submission.');
-        $finding = app(RecordAssessmentFinding::class)->handle($assessment, $actor, ['assessment_criterion_id' => $criterion->id, 'code' => 'FIND-001', 'severity' => 'major', 'title' => 'Clarification required', 'description' => 'Provide the signed source register.']);
-        $appeal = app(SubmitAssessmentAppeal::class)->handle($assessment->refresh(), $actor, 'The verified record was omitted.', 'Reconsider criterion score.', $criterion->id);
+        $attestation = app(AttestAssessment::class)->handle($assessment->refresh(), $attestor, 'County Secretary', 'I attest this submission.');
+        $finding = app(RecordAssessmentFinding::class)->handle($assessment, $reviewer, ['assessment_criterion_id' => $criterion->id, 'code' => 'FIND-001', 'severity' => 'major', 'title' => 'Clarification required', 'description' => 'Provide the signed source register.']);
+        $appeal = app(SubmitAssessmentAppeal::class)->handle($assessment->refresh(), $attestor, 'The verified record was omitted.', 'Reconsider criterion score.', $criterion->id);
 
         $this->assertSame(64, strlen($attestation->content_checksum));
         $this->assertSame('attested', $assessment->fresh()?->attestation_status);
@@ -145,6 +159,66 @@ class AssessmentRuntimeGovernanceTest extends TestCase
 
         $event = AuditEvent::query()->where('subject_id', $result->id)->where('action', 'assessment.criterion_overridden')->sole();
         $this->assertSame(trans('assessment-record.audit.criterion_overridden', ['criterion' => $criterion->code], 'sw'), $event->description);
+
+        $verifier = User::factory()->assessor()->create();
+        $verifier->assignedCounties()->attach($assessment->county_id);
+        App::setLocale('fr');
+
+        try {
+            app(VerifyCriterionScore::class)->handle($result->refresh(), $verifier, 101, 'Vérification indépendante fondée sur les pièces justificatives.');
+            $this->fail('Expected an out-of-range verified score to fail.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(trans('assessment-record.errors.criterion_score_range', ['maximum' => $criterion->maximum_score], 'fr'), $exception->errors()['score'][0]);
+        }
+
+        App::setLocale('sw');
+        app(VerifyCriterionScore::class)->handle($result->refresh(), $verifier, 75, 'Uhakiki huru umefanywa kwa kutumia nyaraka halisi zilizowasilishwa.');
+        $verificationEvent = AuditEvent::query()->where('subject_id', $result->id)->where('action', 'assessment.criterion_verified')->sole();
+        $this->assertSame(trans('assessment-record.audit.criterion_verified', ['criterion' => $criterion->code], 'sw'), $verificationEvent->description);
+    }
+
+    public function test_assessment_action_boundary_denies_wrong_roles_and_out_of_scope_users_without_side_effects(): void
+    {
+        [$assessment, $criterion, $requirement, $administrator] = $this->governedAssessment();
+        $assessment->update(['status' => AssessmentStatus::Assessed, 'score' => 75, 'completeness_percentage' => 100]);
+        $result = AssessmentCriterionResult::factory()->create(['assessment_id' => $assessment->id, 'assessment_criterion_id' => $criterion->id, 'scored_by' => $administrator->id]);
+        $finding = AssessmentFinding::factory()->create(['assessment_id' => $assessment->id, 'raised_by' => $administrator->id, 'county_response' => 'A governed county response is present.']);
+        $appeal = AssessmentAppeal::factory()->create(['assessment_id' => $assessment->id, 'appellant_id' => $administrator->id]);
+        $document = AssessmentDocument::factory()->create(['assessment_id' => $assessment->id, 'county_id' => $assessment->county_id, 'assessment_criterion_id' => $criterion->id, 'criterion_evidence_requirement_id' => $requirement->id, 'scan_status' => 'clean', 'verification_status' => 'pending']);
+        $wrongRole = User::factory()->developmentPartner()->create();
+        $outOfScopeAssessor = User::factory()->assessor()->create();
+        $outOfScopeCountyAdmin = User::factory()->countyAdmin()->create();
+        $outOfScopeApprover = User::factory()->topManagement()->create();
+        $auditCount = AuditEvent::query()->count();
+
+        $actions = [
+            fn () => app(AttestAssessment::class)->handle($assessment, $wrongRole, 'Partner representative', 'This actor must never be able to attest a county assessment.'),
+            fn () => app(SubmitCriterionScore::class)->handle($assessment, $criterion, $wrongRole, 70, 'This actor must never be able to score a governed criterion.'),
+            fn () => app(RecordAssessmentFinding::class)->handle($assessment, $wrongRole, ['code' => 'DENIED-001', 'severity' => 'major', 'title' => 'Unauthorized finding', 'description' => 'This finding must not be persisted by an unauthorized actor.']),
+            fn () => app(SubmitAssessmentAppeal::class)->handle($assessment, $wrongRole, 'Unauthorized appeal grounds must not be stored.', 'No remedy may be requested.'),
+            fn () => app(RespondToAssessmentFinding::class)->handle($finding, $outOfScopeCountyAdmin, 'An out-of-scope county response must not be stored.'),
+            fn () => app(ResolveAssessmentFinding::class)->handle($finding, $outOfScopeAssessor, 'An out-of-scope assessor must not resolve this finding.'),
+            fn () => app(VerifyCriterionScore::class)->handle($result, $outOfScopeAssessor, 72, 'An out-of-scope assessor must not verify this result.'),
+            fn () => app(VerifyAssessmentEvidence::class)->handle($document, 'verified', $outOfScopeAssessor),
+            fn () => app(DecideAssessmentAppeal::class)->handle($appeal, $outOfScopeApprover, 'rejected', 'An out-of-scope approver must not decide this appeal.'),
+        ];
+
+        foreach ($actions as $action) {
+            try {
+                $action();
+                $this->fail('The assessment action should have been denied.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertSame($auditCount, AuditEvent::query()->count());
+        $this->assertDatabaseMissing('assessment_findings', ['code' => 'DENIED-001']);
+        $this->assertDatabaseCount('assessment_attestations', 0);
+        $this->assertSame('pending', $document->fresh()?->verification_status);
+        $this->assertSame('open', $finding->fresh()?->status);
+        $this->assertSame('submitted', $appeal->fresh()?->status);
+        $this->assertNull($result->fresh()?->verified_score);
     }
 
     /** @return array{Assessment, AssessmentCriterion, CriterionEvidenceRequirement, User} */
