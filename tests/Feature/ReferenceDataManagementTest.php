@@ -18,6 +18,35 @@ class ReferenceDataManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_reference_governance_outcomes_and_audit_descriptions_use_the_active_locale(): void
+    {
+        $admin = User::factory()->platformAdmin()->create();
+
+        $this->withSession(['locale' => 'fr'])
+            ->actingAs($admin)
+            ->post(route('reference-data.organizations.store'), [
+                'code' => 'KSG',
+                'name' => 'Kenya School of Government',
+                'type' => 'national',
+                'status' => 'active',
+            ])
+            ->assertRedirect()
+            ->assertInertiaFlash('toast.message', 'Organisation créée.');
+
+        $organization = Organization::query()->sole();
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $organization->id,
+            'action' => 'reference.organization.created',
+            'description' => 'Les données de référence de Kenya School of Government ont été modifiées.',
+        ]);
+
+        $this->actingAs($admin)
+            ->withSession(['locale' => 'fr'])
+            ->delete(route('reference-data.organizations.destroy', [$organization]))
+            ->assertRedirect()
+            ->assertInertiaFlash('toast.message', 'Organisation archivée.');
+    }
+
     public function test_authorized_administrator_can_manage_canonical_reference_data(): void
     {
         $admin = User::factory()->devolutionAdmin()->create();

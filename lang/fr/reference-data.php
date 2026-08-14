@@ -24,6 +24,11 @@ return [
         'outcomes' => ['created' => 'La couverture du programme par comté a été créée.', 'archived' => 'La couverture du programme par comté a été archivée.'],
         'audit' => ['created' => 'Couverture du programme par comté créée.', 'archived' => 'Couverture du programme par comté archivée.'],
     ],
+    'governance' => [
+        'errors' => ['organization_has_programmes' => 'Réaffectez les programmes liés avant d’archiver cette organisation.', 'sector_has_programmes' => 'Réaffectez les programmes liés avant d’archiver ce secteur.', 'sector_has_children' => 'Réaffectez les secteurs enfants avant d’archiver ce secteur.', 'programme_has_coverage' => 'Archivez la couverture du programme par comté avant d’archiver ce programme.'],
+        'outcomes' => ['county_created' => 'Comté créé. Vérifiez et joignez ses éléments d’identité officiels avant publication.', 'county_updated' => 'Comté mis à jour. Soumettez une nouvelle version des données de référence pour publication indépendante.', 'county_archived' => 'Comté archivé.', 'counties_archived' => '{1} Un comté archivé.|[2,*] :count comtés archivés.', 'release_submitted' => 'Instantané canonique des données de référence soumis pour publication indépendante.', 'release_published' => 'Version des données de référence publiée de manière indépendante.', 'organization_created' => 'Organisation créée.', 'organization_updated' => 'Organisation mise à jour.', 'organization_archived' => 'Organisation archivée.', 'sector_created' => 'Secteur créé.', 'sector_updated' => 'Secteur mis à jour.', 'sector_archived' => 'Secteur archivé.', 'programme_created' => 'Programme créé.', 'programme_updated' => 'Programme mis à jour.', 'programme_archived' => 'Programme archivé.'],
+        'audit' => ['reference_changed' => 'Les données de référence de :name ont été modifiées.', 'county_changed' => 'Les données de référence du comté :name ont été modifiées.'],
+    ],
     'canonical_releases_description' => 'Instantanés immuables et contrôlés par somme pour une consommation maîtrisée par les modules et intégrations.',
     'submit_snapshot' => 'Soumettre l’instantané', 'version' => 'Version', 'status' => 'État', 'contents' => 'Contenu', 'submitted_by' => 'Soumis par',
     'effective' => 'Prise d’effet', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Examiner et publier',

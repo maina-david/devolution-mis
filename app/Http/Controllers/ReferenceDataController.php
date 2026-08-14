@@ -145,7 +145,7 @@ class ReferenceDataController extends Controller
         $county = County::create([...$attributes, 'slug' => Str::slug($attributes['name'])]);
         $this->auditCounty($request, $auditLogger, $county, 'reference.county.created');
 
-        return $this->success('County created. Verify and attach its official identity assets before publication.');
+        return $this->success(__('reference-data.governance.outcomes.county_created'));
     }
 
     public function updateCounty(UpdateCountyRequest $request, County $county, AuditLogger $auditLogger): RedirectResponse
@@ -154,7 +154,7 @@ class ReferenceDataController extends Controller
         $county->update([...$attributes, 'slug' => Str::slug($attributes['name'])]);
         $this->auditCounty($request, $auditLogger, $county, 'reference.county.updated');
 
-        return $this->success('County updated. Submit a new reference-data release for independent publication.');
+        return $this->success(__('reference-data.governance.outcomes.county_updated'));
     }
 
     public function destroyCounty(BulkArchiveCountiesRequest $request, County $county, BulkArchiveCounties $archive): RedirectResponse
@@ -163,7 +163,7 @@ class ReferenceDataController extends Controller
         $user = $request->user();
         $archive->handle($user, [$county->id]);
 
-        return $this->success('County archived.');
+        return $this->success(__('reference-data.governance.outcomes.county_archived'));
     }
 
     public function bulkArchiveCounties(BulkArchiveCountiesRequest $request, BulkArchiveCounties $archive): RedirectResponse
@@ -172,7 +172,7 @@ class ReferenceDataController extends Controller
         $user = $request->user();
         $count = $archive->handle($user, $request->ids());
 
-        return $this->success("{$count} counties archived.");
+        return $this->success(trans_choice('reference-data.governance.outcomes.counties_archived', $count));
     }
 
     public function storeRelease(StoreReferenceDataReleaseRequest $request, CreateReferenceDataRelease $create): RedirectResponse
@@ -181,7 +181,7 @@ class ReferenceDataController extends Controller
         $user = $request->user();
         $create->handle($user, $request->string('change_summary')->toString());
 
-        return $this->success('Canonical reference-data snapshot submitted for independent publication.');
+        return $this->success(__('reference-data.governance.outcomes.release_submitted'));
     }
 
     public function publishRelease(PublishReferenceDataReleaseRequest $request, ReferenceDataRelease $release, PublishReferenceDataRelease $publish): RedirectResponse
@@ -192,7 +192,7 @@ class ReferenceDataController extends Controller
         $attributes = $request->validated();
         $publish->handle($release, $user, $attributes);
 
-        return $this->success('Reference-data release independently published.');
+        return $this->success(__('reference-data.governance.outcomes.release_published'));
     }
 
     public function storeOrganization(StoreOrganizationRequest $request, AuditLogger $auditLogger): RedirectResponse
@@ -200,7 +200,7 @@ class ReferenceDataController extends Controller
         $organization = Organization::create($request->validated());
         $this->audit($request, $auditLogger, $organization, 'reference.organization.created');
 
-        return $this->success('Organization created.');
+        return $this->success(__('reference-data.governance.outcomes.organization_created'));
     }
 
     public function updateOrganization(UpdateOrganizationRequest $request, Organization $organization, AuditLogger $auditLogger): RedirectResponse
@@ -208,17 +208,17 @@ class ReferenceDataController extends Controller
         $organization->update($request->validated());
         $this->audit($request, $auditLogger, $organization, 'reference.organization.updated');
 
-        return $this->success('Organization updated.');
+        return $this->success(__('reference-data.governance.outcomes.organization_updated'));
     }
 
     public function destroyOrganization(Request $request, Organization $organization, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
-        abort_if($organization->programmes()->exists(), 409, 'Reassign linked programmes before archiving this organization.');
+        abort_if($organization->programmes()->exists(), 409, __('reference-data.governance.errors.organization_has_programmes'));
         $this->audit($request, $auditLogger, $organization, 'reference.organization.archived');
         $organization->delete();
 
-        return $this->success('Organization archived.');
+        return $this->success(__('reference-data.governance.outcomes.organization_archived'));
     }
 
     public function storeSector(StoreSectorRequest $request, AuditLogger $auditLogger): RedirectResponse
@@ -226,7 +226,7 @@ class ReferenceDataController extends Controller
         $sector = Sector::create($request->validated());
         $this->audit($request, $auditLogger, $sector, 'reference.sector.created');
 
-        return $this->success('Sector created.');
+        return $this->success(__('reference-data.governance.outcomes.sector_created'));
     }
 
     public function updateSector(UpdateSectorRequest $request, Sector $sector, AuditLogger $auditLogger): RedirectResponse
@@ -234,18 +234,18 @@ class ReferenceDataController extends Controller
         $sector->update($request->validated());
         $this->audit($request, $auditLogger, $sector, 'reference.sector.updated');
 
-        return $this->success('Sector updated.');
+        return $this->success(__('reference-data.governance.outcomes.sector_updated'));
     }
 
     public function destroySector(Request $request, Sector $sector, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
-        abort_if($sector->programmes()->exists(), 409, 'Reassign linked programmes before archiving this sector.');
-        abort_if($sector->children()->exists(), 409, 'Reassign child sectors before archiving this sector.');
+        abort_if($sector->programmes()->exists(), 409, __('reference-data.governance.errors.sector_has_programmes'));
+        abort_if($sector->children()->exists(), 409, __('reference-data.governance.errors.sector_has_children'));
         $this->audit($request, $auditLogger, $sector, 'reference.sector.archived');
         $sector->delete();
 
-        return $this->success('Sector archived.');
+        return $this->success(__('reference-data.governance.outcomes.sector_archived'));
     }
 
     public function storeProgramme(StoreProgrammeRequest $request, AuditLogger $auditLogger): RedirectResponse
@@ -253,7 +253,7 @@ class ReferenceDataController extends Controller
         $programme = Programme::create($request->validated());
         $this->audit($request, $auditLogger, $programme, 'reference.programme.created');
 
-        return $this->success('Programme created.');
+        return $this->success(__('reference-data.governance.outcomes.programme_created'));
     }
 
     public function updateProgramme(UpdateProgrammeRequest $request, Programme $programme, AuditLogger $auditLogger): RedirectResponse
@@ -261,17 +261,17 @@ class ReferenceDataController extends Controller
         $programme->update($request->validated());
         $this->audit($request, $auditLogger, $programme, 'reference.programme.updated');
 
-        return $this->success('Programme updated.');
+        return $this->success(__('reference-data.governance.outcomes.programme_updated'));
     }
 
     public function destroyProgramme(Request $request, Programme $programme, AuditLogger $auditLogger): RedirectResponse
     {
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
-        abort_if($programme->countyCoverages()->exists(), 409, 'Archive programme county coverage before archiving this programme.');
+        abort_if($programme->countyCoverages()->exists(), 409, __('reference-data.governance.errors.programme_has_coverage'));
         $this->audit($request, $auditLogger, $programme, 'reference.programme.archived');
         $programme->delete();
 
-        return $this->success('Programme archived.');
+        return $this->success(__('reference-data.governance.outcomes.programme_archived'));
     }
 
     public function storeProgrammeCountyCoverage(StoreProgrammeCountyCoverageRequest $request, CreateProgrammeCountyCoverage $create): RedirectResponse
@@ -304,14 +304,14 @@ class ReferenceDataController extends Controller
     {
         /** @var User $user */
         $user = $request->user();
-        $auditLogger->record($user, $subject, $action, "{$subject->name} reference data changed.");
+        $auditLogger->record($user, $subject, $action, __('reference-data.governance.audit.reference_changed', ['name' => $subject->name]));
     }
 
     private function auditCounty(Request $request, AuditLogger $auditLogger, County $county, string $action): void
     {
         /** @var User $user */
         $user = $request->user();
-        $auditLogger->record($user, $county, $action, "{$county->name} county reference data changed.", $county->id, ['code' => $county->code]);
+        $auditLogger->record($user, $county, $action, __('reference-data.governance.audit.county_changed', ['name' => $county->name]), $county->id, ['code' => $county->code]);
     }
 
     private function success(string $message): RedirectResponse

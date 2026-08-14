@@ -24,6 +24,11 @@ return [
         'outcomes' => ['created' => 'Programme county coverage created.', 'archived' => 'Programme county coverage archived.'],
         'audit' => ['created' => 'Programme county coverage created.', 'archived' => 'Programme county coverage archived.'],
     ],
+    'governance' => [
+        'errors' => ['organization_has_programmes' => 'Reassign linked programmes before archiving this organization.', 'sector_has_programmes' => 'Reassign linked programmes before archiving this sector.', 'sector_has_children' => 'Reassign child sectors before archiving this sector.', 'programme_has_coverage' => 'Archive programme county coverage before archiving this programme.'],
+        'outcomes' => ['county_created' => 'County created. Verify and attach its official identity assets before publication.', 'county_updated' => 'County updated. Submit a new reference-data release for independent publication.', 'county_archived' => 'County archived.', 'counties_archived' => '{1} One county archived.|[2,*] :count counties archived.', 'release_submitted' => 'Canonical reference-data snapshot submitted for independent publication.', 'release_published' => 'Reference-data release independently published.', 'organization_created' => 'Organization created.', 'organization_updated' => 'Organization updated.', 'organization_archived' => 'Organization archived.', 'sector_created' => 'Sector created.', 'sector_updated' => 'Sector updated.', 'sector_archived' => 'Sector archived.', 'programme_created' => 'Programme created.', 'programme_updated' => 'Programme updated.', 'programme_archived' => 'Programme archived.'],
+        'audit' => ['reference_changed' => ':name reference data changed.', 'county_changed' => ':name county reference data changed.'],
+    ],
     'canonical_releases_description' => 'Immutable, checksummed catalogue snapshots for controlled module and integration consumption.',
     'submit_snapshot' => 'Submit snapshot', 'version' => 'Version', 'status' => 'Status', 'contents' => 'Contents', 'submitted_by' => 'Submitted by',
     'effective' => 'Effective', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Review and publish',

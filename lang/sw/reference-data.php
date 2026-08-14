@@ -24,6 +24,11 @@ return [
         'outcomes' => ['created' => 'Ufikaji wa programu kwa kaunti umeundwa.', 'archived' => 'Ufikaji wa programu kwa kaunti umehifadhiwa.'],
         'audit' => ['created' => 'Ufikaji wa programu kwa kaunti umeundwa.', 'archived' => 'Ufikaji wa programu kwa kaunti umehifadhiwa.'],
     ],
+    'governance' => [
+        'errors' => ['organization_has_programmes' => 'Hamishia programu zilizounganishwa kabla ya kuhifadhi shirika hili.', 'sector_has_programmes' => 'Hamishia programu zilizounganishwa kabla ya kuhifadhi sekta hii.', 'sector_has_children' => 'Hamishia sekta ndogo kabla ya kuhifadhi sekta hii.', 'programme_has_coverage' => 'Hifadhi ufikaji wa programu kwa kaunti kabla ya kuhifadhi programu hii.'],
+        'outcomes' => ['county_created' => 'Kaunti imeundwa. Thibitisha na uambatishe rasilimali zake rasmi za utambulisho kabla ya kuchapishwa.', 'county_updated' => 'Kaunti imesasishwa. Wasilisha toleo jipya la data rejea kwa uchapishaji huru.', 'county_archived' => 'Kaunti imehifadhiwa.', 'counties_archived' => '{1} Kaunti moja imehifadhiwa.|[2,*] Kaunti :count zimehifadhiwa.', 'release_submitted' => 'Picha ya kanuni ya data rejea imewasilishwa kwa uchapishaji huru.', 'release_published' => 'Toleo la data rejea limechapishwa kwa uhuru.', 'organization_created' => 'Shirika limeundwa.', 'organization_updated' => 'Shirika limesasishwa.', 'organization_archived' => 'Shirika limehifadhiwa.', 'sector_created' => 'Sekta imeundwa.', 'sector_updated' => 'Sekta imesasishwa.', 'sector_archived' => 'Sekta imehifadhiwa.', 'programme_created' => 'Programu imeundwa.', 'programme_updated' => 'Programu imesasishwa.', 'programme_archived' => 'Programu imehifadhiwa.'],
+        'audit' => ['reference_changed' => 'Data rejea ya :name imebadilishwa.', 'county_changed' => 'Data rejea ya kaunti ya :name imebadilishwa.'],
+    ],
     'canonical_releases_description' => 'Picha za katalogi zisizobadilika zenye checksum kwa matumizi yanayodhibitiwa.',
     'submit_snapshot' => 'Wasilisha picha', 'version' => 'Toleo', 'status' => 'Hali', 'contents' => 'Yaliyomo', 'submitted_by' => 'Aliyewasilisha',
     'effective' => 'Kuanza kutumika', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Kagua na uchapishe',
