@@ -491,6 +491,24 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertDatabaseCount('performance_test_runs', 0);
     }
 
+    public function test_concurrent_resilience_harness_measures_real_load_and_transient_recovery(): void
+    {
+        $mixedLoad = file_get_contents(base_path('tests/Browser/resilience.mjs'));
+        $failureRecovery = file_get_contents(base_path('tests/Browser/failure-recovery.mjs'));
+        $this->assertIsString($mixedLoad);
+        $this->assertIsString($failureRecovery);
+
+        foreach (['maximumObservedConcurrency', 'warmupFailures', 'routeSummary', 'p95LatencyMs', 'evidenceChecksum'] as $control) {
+            $this->assertStringContainsString($control, $mixedLoad);
+        }
+
+        foreach (['http.createServer', 'outgoing.writeHead(503', "'retry-after': '1'", 'observedInjectedFailures', 'postRecoveryFailures', 'steadyStateSuccesses', 'recoveryTimeMs', 'evidenceChecksum'] as $control) {
+            $this->assertStringContainsString($control, $failureRecovery);
+        }
+
+        $this->assertStringNotContainsString('/__idmis-controlled-unavailable', $failureRecovery);
+    }
+
     private function apacheBenchOutput(): string
     {
         return <<<'OUTPUT'
