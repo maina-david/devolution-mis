@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -88,6 +89,27 @@ class ReferenceLineageDispositionTest extends TestCase
 
         $this->actingAs($assessor)->post(route('data-migrations.lineage-dispositions.store'), $this->payload($assessment, $release))->assertForbidden();
         $this->assertSame(0, ReferenceLineageDisposition::query()->count());
+    }
+
+    public function test_reconciliation_failures_and_audit_descriptions_follow_the_active_locale(): void
+    {
+        [$assessment, $release, $proposer] = $this->scenario();
+        App::setLocale('sw');
+
+        $disposition = app(CreateReferenceLineageDisposition::class)->handle($proposer, $this->payload($assessment, $release));
+
+        try {
+            app(CreateReferenceLineageDisposition::class)->handle($proposer, $this->payload($assessment, $release));
+            $this->fail('Expected the duplicate lineage decision to fail.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(trans('migration.lineage_errors.active_disposition', locale: 'sw'), $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $disposition->id,
+            'description' => trans('migration.lineage_audit.proposed', ['reference' => $disposition->reference], 'sw'),
+        ]);
     }
 
     /** @return array{Assessment, ReferenceDataRelease, User, User, User} */

@@ -349,8 +349,8 @@ export default function HistoricalDataMigrations({
                     <CardContent>
                         {legacyInventory.total === 0 ? (
                             <WorkspaceEmptyState
-                                title="No unpinned records detected"
-                                description="All inventoried product records carry governed reference-release lineage."
+                                title={t.inventory_empty_title}
+                                description={t.inventory_empty_description}
                             />
                         ) : (
                             <div className="grid gap-4 lg:grid-cols-[12rem_1fr]">

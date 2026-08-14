@@ -62,10 +62,10 @@ class LegacyReferenceInventory
     public function record(string $type, string $id, bool $requireUnpinned = false): Model
     {
         $definition = $this->types()[$type] ?? null;
-        abort_unless($definition !== null, 422, 'The selected legacy record type is unsupported.');
+        abort_unless($definition !== null, 422, __('migration.lineage_errors.unsupported_record_type'));
         $record = $definition['model']::query()->findOrFail($id);
         if ($requireUnpinned) {
-            abort_unless($record->getAttribute($definition['releaseColumn']) === null, 409, 'The selected record already carries reference-data lineage.');
+            abort_unless($record->getAttribute($definition['releaseColumn']) === null, 409, __('migration.lineage_errors.already_pinned'));
         }
 
         return $record;
@@ -74,7 +74,7 @@ class LegacyReferenceInventory
     public function releaseColumn(string $type): string
     {
         $definition = $this->types()[$type] ?? null;
-        abort_unless($definition !== null, 422, 'The selected legacy record type is unsupported.');
+        abort_unless($definition !== null, 422, __('migration.lineage_errors.unsupported_record_type'));
 
         return $definition['releaseColumn'];
     }
@@ -93,7 +93,7 @@ class LegacyReferenceInventory
     public function candidates(string $type, int $limit = 50): array
     {
         $definition = $this->types()[$type] ?? null;
-        abort_unless($definition !== null, 422, 'The selected legacy record type is unsupported.');
+        abort_unless($definition !== null, 422, __('migration.lineage_errors.unsupported_record_type'));
 
         $candidates = $definition['model']::query()
             ->whereNull($definition['releaseColumn'])

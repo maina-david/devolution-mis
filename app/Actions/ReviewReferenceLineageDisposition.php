@@ -15,11 +15,11 @@ class ReviewReferenceLineageDisposition
     {
         return DB::transaction(function () use ($actor, $decision, $disposition, $notes): ReferenceLineageDisposition {
             $locked = ReferenceLineageDisposition::query()->lockForUpdate()->findOrFail($disposition->id);
-            abort_unless($locked->status === 'proposed', 409, 'Only a proposed lineage disposition can be reviewed.');
-            abort_if($locked->proposed_by === $actor->id, 403, 'The disposition proposer cannot review the same decision.');
+            abort_unless($locked->status === 'proposed', 409, __('migration.lineage_errors.proposed_only'));
+            abort_if($locked->proposed_by === $actor->id, 403, __('migration.lineage_errors.proposer_review'));
             $status = $decision === 'approve' ? 'approved' : 'rejected';
             $locked->update(['status' => $status, 'reviewed_by' => $actor->id, 'review_notes' => $notes, 'reviewed_at' => now()]);
-            $this->auditLogger->record($actor, $locked, "reference_lineage.{$status}", "Reference lineage disposition {$locked->reference} {$status}.", metadata: ['decision_checksum' => $locked->decision_checksum, 'review_notes' => $notes]);
+            $this->auditLogger->record($actor, $locked, "reference_lineage.{$status}", __('migration.lineage_audit.reviewed', ['reference' => $locked->reference, 'status' => __('migration.lineage_status.'.$status)]), metadata: ['decision_checksum' => $locked->decision_checksum, 'review_notes' => $notes]);
 
             return $locked->refresh();
         });

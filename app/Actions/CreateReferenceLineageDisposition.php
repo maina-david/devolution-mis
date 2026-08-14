@@ -29,19 +29,19 @@ class CreateReferenceLineageDisposition
             $recordId = (string) $attributes['record_id'];
             DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', ["reference-lineage:{$recordType}:{$recordId}"]);
             $record = $this->inventory->record($recordType, $recordId, true);
-            abort_if(ReferenceLineageDisposition::query()->where('record_type', $recordType)->where('record_id', $recordId)->whereIn('status', ['proposed', 'approved', 'applied'])->exists(), 409, 'This record already has an active or applied lineage disposition.');
+            abort_if(ReferenceLineageDisposition::query()->where('record_type', $recordType)->where('record_id', $recordId)->whereIn('status', ['proposed', 'approved', 'applied'])->exists(), 409, __('migration.lineage_errors.active_disposition'));
 
             $successorType = filled($attributes['successor_record_type'] ?? null) ? (string) $attributes['successor_record_type'] : null;
             $successorId = filled($attributes['successor_record_id'] ?? null) ? (string) $attributes['successor_record_id'] : null;
             if ($successorType !== null && $successorId !== null) {
-                abort_if($successorType === $recordType && $successorId === $recordId, 422, 'A record cannot succeed itself.');
+                abort_if($successorType === $recordType && $successorId === $recordId, 422, __('migration.lineage_errors.self_successor'));
                 $this->inventory->record($successorType, $successorId);
             }
 
             $release = null;
             if ($attributes['decision'] === 'pin_release') {
                 $release = ReferenceDataRelease::query()->where('status', 'published')->where('effective_from', '<=', now())->whereKey((string) $attributes['reference_data_release_id'])->firstOrFail();
-                abort_unless($this->canonicalJson->checksum($release->snapshot) === $release->checksum, 409, 'The selected reference-data release failed its checksum verification.');
+                abort_unless($this->canonicalJson->checksum($release->snapshot) === $release->checksum, 409, __('migration.lineage_errors.release_checksum'));
                 $this->assertReferencesExistInRelease($record, $release);
             }
 
@@ -67,7 +67,7 @@ class CreateReferenceLineageDisposition
                 'status' => 'proposed',
                 'decision_checksum' => $this->canonicalJson->checksum($decisionPayload),
             ]);
-            $this->auditLogger->record($actor, $disposition, 'reference_lineage.proposed', "Reference lineage disposition {$disposition->reference} proposed.", metadata: ['record_type' => $recordType, 'record_id' => $recordId, 'decision' => $attributes['decision'], 'record_checksum' => $recordChecksum, 'decision_checksum' => $disposition->decision_checksum]);
+            $this->auditLogger->record($actor, $disposition, 'reference_lineage.proposed', __('migration.lineage_audit.proposed', ['reference' => $disposition->reference]), metadata: ['record_type' => $recordType, 'record_id' => $recordId, 'decision' => $attributes['decision'], 'record_checksum' => $recordChecksum, 'decision_checksum' => $disposition->decision_checksum]);
 
             return $disposition;
         });
@@ -86,7 +86,7 @@ class CreateReferenceLineageDisposition
             if (! is_string($id) || $id === '') {
                 continue;
             }
-            abort_unless(collect($release->snapshot[$catalogue] ?? [])->contains(fn (array $entry): bool => ($entry['id'] ?? null) === $id), 409, "The selected release does not contain the record's {$column} reference.");
+            abort_unless(collect($release->snapshot[$catalogue] ?? [])->contains(fn (array $entry): bool => ($entry['id'] ?? null) === $id), 409, __('migration.lineage_errors.reference_missing', ['column' => $column]));
         }
     }
 }
