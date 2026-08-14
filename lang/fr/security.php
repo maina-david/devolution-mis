@@ -25,6 +25,17 @@ return ['outcomes' => [
         'clean_closure_evidence_required' => 'Un dossier privé et sain de preuves de clôture est requis avant de clôturer l’incident.',
     ],
     'audit' => 'L’incident de sécurité :reference est passé de :from à :to.',
+], 'threat_review' => [
+    'errors' => [
+        'submitted_only' => 'Seules les menaces soumises peuvent être examinées.',
+        'independent_reviewer_required' => 'L’auteur de la menace ne peut pas l’examiner de manière indépendante.',
+        'residual_exceeds_inherent' => 'Le risque résiduel ne peut pas dépasser le risque inhérent sans réévaluation.',
+    ],
+    'review_note' => 'Revue indépendante : :note',
+    'audit' => [
+        'submitted' => 'La menace :reference a été soumise à une revue indépendante.',
+        'reviewed' => 'La menace :reference a reçu la décision :decision avec un score résiduel de :score.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Les utilisateurs ne peuvent pas demander un accès délégué pour eux-mêmes.',

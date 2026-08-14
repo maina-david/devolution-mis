@@ -25,6 +25,17 @@ return ['outcomes' => [
         'clean_closure_evidence_required' => 'A clean private closure-evidence record is required before incident closure.',
     ],
     'audit' => 'Security incident :reference advanced from :from to :to.',
+], 'threat_review' => [
+    'errors' => [
+        'submitted_only' => 'Only submitted threats can be reviewed.',
+        'independent_reviewer_required' => 'The threat author cannot independently review it.',
+        'residual_exceeds_inherent' => 'Residual risk cannot exceed inherent risk without reassessment.',
+    ],
+    'review_note' => 'Independent review: :note',
+    'audit' => [
+        'submitted' => 'Threat :reference submitted for independent review.',
+        'reviewed' => 'Threat :reference :decision with residual score :score.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Users cannot request delegated access for themselves.',

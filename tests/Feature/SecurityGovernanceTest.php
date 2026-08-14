@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Actions\DecideAccessReviewItem;
 use App\Actions\ReinstateUserAccess;
+use App\Actions\ReviewSecurityThreat;
 use App\Models\AccessReviewCampaign;
 use App\Models\AccessReviewItem;
 use App\Models\AuditEvent;
@@ -22,6 +23,7 @@ class SecurityGovernanceTest extends TestCase
 
     public function test_threat_register_calculates_risk_and_requires_independent_review(): void
     {
+        app()->setLocale('sw');
         $author = User::factory()->devolutionAdmin()->create();
         $reviewer = User::factory()->platformAdmin()->create();
         $countyUser = User::factory()->countyAdmin()->create();
@@ -36,9 +38,48 @@ class SecurityGovernanceTest extends TestCase
         $this->actingAs($reviewer)->patch(route('security-governance.threats.review', [$threat]), $review)->assertRedirect();
         $this->assertSame('accepted', $threat->refresh()->status);
         $this->assertSame(8, $threat->residual_risk_score);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $threat->id, 'action' => 'security.threat.reviewed']);
+        $this->assertStringContainsString('Tathmini huru:', $threat->treatment_plan);
+        $this->assertSame(
+            [
+                "Tishio {$threat->reference} limewasilishwa kwa tathmini huru.",
+                "Tishio {$threat->reference} limepata uamuzi accepted na alama ya hatari iliyobaki 8.",
+            ],
+            AuditEvent::query()->where('subject_id', $threat->id)->orderBy('occurred_at')->pluck('description')->all(),
+        );
         $threat->delete();
         $this->assertSoftDeleted($threat);
+    }
+
+    public function test_threat_review_guards_follow_the_active_locale(): void
+    {
+        $author = User::factory()->devolutionAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        app()->setLocale('fr');
+        $review = [
+            'decision' => 'accepted',
+            'treatment_status' => 'mitigated',
+            'residual_likelihood' => 2,
+            'residual_impact' => 2,
+            'review_note' => 'Les contrôles ont été vérifiés indépendamment avec des preuves conservées.',
+            'evidence_references' => 'SEC-REVIEW-001',
+        ];
+        $this->assertThreatReviewRejected(SecurityThreat::factory()->create([
+            'submitted_by' => $author->id,
+            'status' => 'accepted',
+        ]), $reviewer, $review, 'security.threat_review.errors.submitted_only');
+
+        $this->assertThreatReviewRejected(SecurityThreat::factory()->create([
+            'submitted_by' => $author->id,
+        ]), $author, $review, 'security.threat_review.errors.independent_reviewer_required');
+
+        $this->assertThreatReviewRejected(SecurityThreat::factory()->create([
+            'submitted_by' => $author->id,
+            'inherent_risk_score' => 4,
+        ]), $reviewer, [
+            ...$review,
+            'residual_likelihood' => 3,
+            'residual_impact' => 3,
+        ], 'security.threat_review.errors.residual_exceeds_inherent');
     }
 
     public function test_access_campaign_snapshots_scope_and_blocks_privileged_retention_without_strong_authentication(): void
@@ -218,5 +259,16 @@ class SecurityGovernanceTest extends TestCase
     private function campaignPayload(User $reviewer, array $roles): array
     {
         return ['reviewer_id' => $reviewer->id, 'reference' => 'ACR-2026-Q3-001', 'name' => 'Q3 privileged access certification', 'scope' => 'Review business need, county scope, permission set and strong-authentication posture for all selected programme roles.', 'role_scope' => $roles, 'period_from' => now()->subQuarter()->startOfQuarter()->toDateString(), 'period_to' => now()->subQuarter()->endOfQuarter()->toDateString(), 'due_at' => now()->addDays(21)->toIso8601String()];
+    }
+
+    /** @param array{decision: string, treatment_status: string, residual_likelihood: int, residual_impact: int, risk_acceptance_reference?: string|null, review_note: string, evidence_references?: string|null} $attributes */
+    private function assertThreatReviewRejected(SecurityThreat $threat, User $actor, array $attributes, string $translationKey): void
+    {
+        try {
+            app(ReviewSecurityThreat::class)->handle($threat, $actor, $attributes);
+            $this->fail("The threat review guard {$translationKey} must reject the decision.");
+        } catch (HttpException $exception) {
+            $this->assertSame((string) __($translationKey), $exception->getMessage());
+        }
     }
 }

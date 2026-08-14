@@ -16,13 +16,13 @@ class ReviewSecurityThreat
     {
         return DB::transaction(function () use ($threat, $reviewer, $attributes): SecurityThreat {
             $threat = SecurityThreat::query()->lockForUpdate()->findOrFail($threat->id);
-            abort_unless($threat->status === 'submitted', 409, 'Only submitted threats can be reviewed.');
-            abort_if($threat->submitted_by === $reviewer->id, 403, 'The threat author cannot independently review it.');
+            abort_unless($threat->status === 'submitted', 409, __('security.threat_review.errors.submitted_only'));
+            abort_if($threat->submitted_by === $reviewer->id, 403, __('security.threat_review.errors.independent_reviewer_required'));
             $residualScore = $attributes['residual_likelihood'] * $attributes['residual_impact'];
-            abort_if($attributes['decision'] === 'accepted' && $residualScore > $threat->inherent_risk_score, 409, 'Residual risk cannot exceed inherent risk without reassessment.');
+            abort_if($attributes['decision'] === 'accepted' && $residualScore > $threat->inherent_risk_score, 409, __('security.threat_review.errors.residual_exceeds_inherent'));
 
-            $threat->update(['reviewed_by' => $reviewer->id, 'status' => $attributes['decision'], 'treatment_status' => $attributes['treatment_status'], 'residual_likelihood' => $attributes['residual_likelihood'], 'residual_impact' => $attributes['residual_impact'], 'residual_risk_score' => $residualScore, 'risk_acceptance_reference' => $attributes['risk_acceptance_reference'] ?? null, 'reviewed_at' => now(), 'treatment_plan' => trim($threat->treatment_plan."\n\nIndependent review: ".$attributes['review_note']), 'evidence_references' => $this->csv($attributes['evidence_references'] ?? null)]);
-            $this->auditLogger->record($reviewer, $threat, 'security.threat.reviewed', "Threat {$threat->reference} {$attributes['decision']} with residual score {$residualScore}.", metadata: ['decision' => $attributes['decision'], 'residual_score' => $residualScore]);
+            $threat->update(['reviewed_by' => $reviewer->id, 'status' => $attributes['decision'], 'treatment_status' => $attributes['treatment_status'], 'residual_likelihood' => $attributes['residual_likelihood'], 'residual_impact' => $attributes['residual_impact'], 'residual_risk_score' => $residualScore, 'risk_acceptance_reference' => $attributes['risk_acceptance_reference'] ?? null, 'reviewed_at' => now(), 'treatment_plan' => trim($threat->treatment_plan."\n\n".__('security.threat_review.review_note', ['note' => $attributes['review_note']])), 'evidence_references' => $this->csv($attributes['evidence_references'] ?? null)]);
+            $this->auditLogger->record($reviewer, $threat, 'security.threat.reviewed', __('security.threat_review.audit.reviewed', ['reference' => $threat->reference, 'decision' => $attributes['decision'], 'score' => $residualScore]), metadata: ['decision' => $attributes['decision'], 'residual_score' => $residualScore]);
 
             return $threat->refresh();
         });

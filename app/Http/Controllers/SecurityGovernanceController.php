@@ -165,7 +165,7 @@ class SecurityGovernanceController extends Controller
         $user = $this->user($request);
         $attributes = $request->validated();
         $threat = SecurityThreat::create([...$attributes, 'submitted_by' => $user->id, 'entry_points' => $this->csv($attributes['entry_points']), 'existing_controls' => $this->csv($attributes['existing_controls']), 'evidence_references' => $this->csv($attributes['evidence_references'] ?? null), 'inherent_risk_score' => (int) $attributes['likelihood'] * (int) $attributes['impact'], 'status' => 'submitted', 'submitted_at' => now()]);
-        $this->auditLogger->record($user, $threat, 'security.threat.submitted', "Threat {$threat->reference} submitted for independent review.");
+        $this->auditLogger->record($user, $threat, 'security.threat.submitted', __('security.threat_review.audit.submitted', ['reference' => $threat->reference]));
 
         return back()->with('success', __('security.outcomes.threat_submitted'));
     }

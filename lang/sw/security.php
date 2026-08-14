@@ -25,6 +25,17 @@ return ['outcomes' => [
         'clean_closure_evidence_required' => 'Rekodi safi ya faragha ya ushahidi wa kufunga inahitajika kabla ya kufunga tukio.',
     ],
     'audit' => 'Tukio la usalama :reference limehamishwa kutoka :from hadi :to.',
+], 'threat_review' => [
+    'errors' => [
+        'submitted_only' => 'Vitisho vilivyowasilishwa pekee ndivyo vinaweza kukaguliwa.',
+        'independent_reviewer_required' => 'Mwandishi wa tishio hawezi kulikagua kwa uhuru.',
+        'residual_exceeds_inherent' => 'Hatari iliyobaki haiwezi kuzidi hatari asilia bila tathmini mpya.',
+    ],
+    'review_note' => 'Tathmini huru: :note',
+    'audit' => [
+        'submitted' => 'Tishio :reference limewasilishwa kwa tathmini huru.',
+        'reviewed' => 'Tishio :reference limepata uamuzi :decision na alama ya hatari iliyobaki :score.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Watumiaji hawawezi kujiombea ufikiaji uliokabidhiwa.',
