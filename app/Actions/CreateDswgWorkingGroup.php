@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DswgWorkingGroup;
 use App\Models\User;
@@ -20,6 +21,8 @@ class CreateDswgWorkingGroup
     /** @param array<string, mixed> $attributes */
     public function handle(User $actor, array $attributes): DswgWorkingGroup
     {
+        abort_unless($actor->can(ProgrammePermission::ManageDswg->value), 403, __('dswg.group_create_unauthorized'));
+
         /** @var list<string> $countyIds */
         $countyIds = array_values(array_unique($attributes['county_ids']));
         /** @var list<string> $sectorIds */
@@ -29,7 +32,7 @@ class CreateDswgWorkingGroup
         $counties = County::query()->whereKey($countyIds)->get();
 
         if ($counties->count() !== count($countyIds) || $counties->contains(fn (County $county): bool => ! $actor->canAccessCounty($county))) {
-            abort(403, 'One or more selected counties are outside your authorized scope.');
+            abort(403, __('dswg.group_county_outside_scope'));
         }
 
         return DB::transaction(function () use ($actor, $attributes, $countyIds, $sectorIds, $memberIds): DswgWorkingGroup {
@@ -50,7 +53,7 @@ class CreateDswgWorkingGroup
             $group->sectors()->sync($sectorIds);
             $group->members()->syncWithPivotValues($memberIds, ['membership_role' => 'member', 'status' => 'active']);
             $group->members()->updateExistingPivot($attributes['secretariat_user_id'], ['membership_role' => 'secretariat']);
-            $this->auditLogger->record($actor, $group, 'dswg.group.created', "DSWG {$group->code} created.", metadata: [
+            $this->auditLogger->record($actor, $group, 'dswg.group.created', __('dswg.audit_group_created', ['code' => $group->code]), metadata: [
                 'county_ids' => $countyIds,
                 'sector_ids' => $sectorIds,
                 'reference_data_release_id' => $referenceDataRelease->id,

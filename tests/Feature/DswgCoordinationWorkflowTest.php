@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateDswgAction;
+use App\Actions\CreateDswgMeetingSeries;
+use App\Actions\CreateDswgWorkingGroup;
 use App\Enums\ProgrammePermission;
 use App\Models\AuditEvent;
 use App\Models\County;
@@ -25,6 +28,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class DswgCoordinationWorkflowTest extends TestCase
@@ -42,7 +46,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $release = $this->publishedReferenceRelease([$county], [$sector], [], $administrator);
         $this->seed(DswgWorkflowSeeder::class);
 
-        $this->actingAs($administrator)->post(route('dswg.groups.store'), [
+        $this->withSession(['locale' => 'sw'])->actingAs($administrator)->post(route('dswg.groups.store'), [
             'code' => 'DSWG-WASH', 'name' => 'Water and Sanitation DSWG', 'mandate' => 'Coordinate county and national water-sector delivery.', 'scope' => 'sector',
             'secretariat_user_id' => $administrator->id, 'meeting_frequency' => 'Quarterly', 'county_ids' => [$county->id], 'sector_ids' => [$sector->id], 'member_ids' => [$member->id],
         ])->assertRedirect();
@@ -53,6 +57,7 @@ class DswgCoordinationWorkflowTest extends TestCase
         $creationEvent = AuditEvent::query()->where('subject_id', $group->id)->where('action', 'dswg.group.created')->sole();
         $this->assertSame($release->id, $creationEvent->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $creationEvent->metadata['reference_data_release_checksum']);
+        $this->assertSame('DSWG DSWG-WASH imeundwa.', $creationEvent->description);
 
         $this->actingAs($administrator)->post(route('dswg.meetings.store'), [
             'dswg_working_group_id' => $group->id, 'reference' => 'DSWG-WASH-2026-Q3', 'title' => 'Quarterly delivery review',
@@ -171,6 +176,33 @@ class DswgCoordinationWorkflowTest extends TestCase
         )->assertForbidden();
 
         $this->assertDatabaseCount('dswg_working_groups', 0);
+    }
+
+    public function test_dswg_creation_actions_enforce_permissions_before_payload_processing_without_side_effects(): void
+    {
+        $unauthorizedActor = User::factory()->assessor()->create();
+        $group = DswgWorkingGroup::factory()->create();
+        $meeting = DswgMeeting::factory()->for($group, 'workingGroup')->create();
+
+        app()->setLocale('fr');
+        $this->assertForbiddenAction(
+            fn () => app(CreateDswgWorkingGroup::class)->handle($unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à établir des groupes de travail DSWG.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateDswgMeetingSeries::class)->handle($group, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à créer des réunions DSWG récurrentes.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateDswgAction::class)->handle($meeting, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à attribuer des actions DSWG.',
+        );
+
+        $this->assertDatabaseCount('dswg_working_groups', 1);
+        $this->assertDatabaseCount('dswg_meetings', 1);
+        $this->assertDatabaseCount('dswg_meeting_series', 0);
+        $this->assertDatabaseCount('dswg_actions', 0);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_accountable_action_uses_published_workflow_and_independent_completion_verification(): void
@@ -479,5 +511,17 @@ class DswgCoordinationWorkflowTest extends TestCase
         $meeting = DswgMeeting::factory()->for($group, 'workingGroup')->create(['organized_by' => $administrator->id, 'status' => 'minutes_pending']);
 
         return [$county, $group, $meeting, $administrator];
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertForbiddenAction(callable $action, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The DSWG action did not enforce its permission boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

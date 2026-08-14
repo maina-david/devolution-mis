@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DswgAction;
 use App\Models\DswgMeeting;
@@ -19,18 +20,20 @@ class CreateDswgAction
     /** @param array<string, mixed> $attributes */
     public function handle(DswgMeeting $meeting, User $actor, array $attributes): DswgAction
     {
+        abort_unless($actor->canAny([ProgrammePermission::ManageDswgActions->value, ProgrammePermission::ManageDswg->value]), 403, __('dswg.action_create_unauthorized'));
+
         $meeting->loadMissing('workingGroup.members');
         $accountableUserId = (string) $attributes['accountable_user_id'];
         if (! $meeting->workingGroup->members->contains('id', $accountableUserId)) {
-            throw ValidationException::withMessages(['accountable_user_id' => 'The accountable person must be an active member of this working group.']);
+            throw ValidationException::withMessages(['accountable_user_id' => __('dswg.accountable_member_required')]);
         }
         if (($attributes['county_id'] ?? null) !== null) {
             $county = County::query()->whereKey($attributes['county_id'])->firstOrFail();
             abort_unless($actor->canAccessCounty($county), 403);
-            abort_unless($meeting->workingGroup->counties()->whereKey($county)->exists(), 422, 'The action county is outside the working group portfolio.');
+            abort_unless($meeting->workingGroup->counties()->whereKey($county)->exists(), 422, __('dswg.action_county_outside_portfolio'));
         }
         if (($attributes['dswg_decision_id'] ?? null) !== null) {
-            abort_unless($meeting->decisions()->whereKey($attributes['dswg_decision_id'])->exists(), 422, 'The selected decision does not belong to this meeting.');
+            abort_unless($meeting->decisions()->whereKey($attributes['dswg_decision_id'])->exists(), 422, __('dswg.action_decision_mismatch'));
         }
 
         return DB::transaction(function () use ($meeting, $actor, $attributes, $accountableUserId): DswgAction {
@@ -41,7 +44,7 @@ class CreateDswgAction
             $definition = WorkflowDefinition::query()->where('code', 'DSWG-ACTION-LIFECYCLE')->firstOrFail();
             $instance = $this->startWorkflow->handle($definition, $action, $actor, ['progress_percentage' => 0, 'completion_evidence_present' => false], $action->county_id);
             $action->update(['workflow_instance_id' => $instance->id, 'status' => $instance->current_state]);
-            $this->auditLogger->record($actor, $action, 'dswg.action.created', "DSWG action {$action->code} assigned.", $action->county_id, ['due_on' => $action->due_on->toDateString(), 'accountable_user_id' => $accountableUserId, 'accountable_organization_id' => $organizationId, 'reference_data_release_id' => $referenceDataRelease->id, 'reference_data_release_version' => $referenceDataRelease->version, 'reference_data_release_checksum' => $referenceDataRelease->checksum]);
+            $this->auditLogger->record($actor, $action, 'dswg.action.created', __('dswg.audit_action_created', ['code' => $action->code]), $action->county_id, ['due_on' => $action->due_on->toDateString(), 'accountable_user_id' => $accountableUserId, 'accountable_organization_id' => $organizationId, 'reference_data_release_id' => $referenceDataRelease->id, 'reference_data_release_version' => $referenceDataRelease->version, 'reference_data_release_checksum' => $referenceDataRelease->checksum]);
 
             return $action->refresh();
         });

@@ -6,7 +6,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 0,
-    backendMessages: 92,
+    backendMessages: 87,
 };
 
 let eslintOutput = '';

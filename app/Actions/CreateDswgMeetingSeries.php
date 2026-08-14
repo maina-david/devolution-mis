@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\DswgMeetingSeries;
 use App\Models\DswgWorkingGroup;
 use App\Models\User;
@@ -18,9 +19,11 @@ class CreateDswgMeetingSeries
     /** @param array<string, mixed> $attributes */
     public function handle(DswgWorkingGroup $group, User $actor, array $attributes): DswgMeetingSeries
     {
+        abort_unless($actor->can(ProgrammePermission::ManageDswg->value), 403, __('dswg.meeting_series_create_unauthorized'));
+
         $inviteeIds = $this->inviteeIds($attributes);
-        abort_unless($group->members()->whereIn('users.id', $inviteeIds)->count() === $inviteeIds->count(), 422, 'Every recurring invitee must be an active working-group member.');
-        abort_if((int) $attributes['quorum_required'] > $inviteeIds->count(), 422, 'Quorum cannot exceed the number of recurring invitees.');
+        abort_unless($group->members()->whereIn('users.id', $inviteeIds)->count() === $inviteeIds->count(), 422, __('dswg.recurring_invitee_member_required'));
+        abort_if((int) $attributes['quorum_required'] > $inviteeIds->count(), 422, __('dswg.recurring_quorum_exceeded'));
 
         $series = DB::transaction(function () use ($group, $actor, $attributes, $inviteeIds): DswgMeetingSeries {
             $series = $group->meetingSeries()->create([
@@ -33,7 +36,7 @@ class CreateDswgMeetingSeries
             return $series;
         });
 
-        $this->auditLogger->record($actor, $series, 'dswg.meeting_series.created', "Recurring DSWG meeting series {$series->reference_prefix} created.", metadata: ['frequency' => $series->frequency, 'invitees' => $inviteeIds->all()]);
+        $this->auditLogger->record($actor, $series, 'dswg.meeting_series.created', __('dswg.audit_meeting_series_created', ['reference' => $series->reference_prefix]), metadata: ['frequency' => $series->frequency, 'invitees' => $inviteeIds->all()]);
         $this->generateMeetings->handle($series, $actor);
 
         return $series->refresh();
