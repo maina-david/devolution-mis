@@ -2369,7 +2369,10 @@ function AccessAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${item.user.name}`}
+                        aria-label={copy.ui.actions_for.replace(
+                            ':name',
+                            item.user.name,
+                        )}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -2404,9 +2407,9 @@ function AccessAction({
                     <SheetHeader>
                         <SheetTitle>
                             {surface === 'decide'
-                                ? 'Certify access'
+                                ? copy.ui.certify_access
                                 : surface === 'reinstate'
-                                  ? 'Independently reinstate access'
+                                  ? copy.ui.independently_reinstate_access
                                   : item.user.name}
                         </SheetTitle>
                         <SheetDescription>
@@ -2430,11 +2433,16 @@ function AccessAction({
                                 </p>
                                 <Field
                                     name="approval_reference"
-                                    label="Reinstatement approval reference"
+                                    label={
+                                        copy.ui.reinstatement_approval_reference
+                                    }
                                 />
                                 <TextField
                                     name="rationale"
-                                    label="Remediation and reinstatement rationale"
+                                    label={
+                                        copy.ui
+                                            .remediation_reinstatement_rationale
+                                    }
                                 />
                                 <Button type="submit">
                                     <KeyRound />{' '}
@@ -2444,60 +2452,63 @@ function AccessAction({
                         ) : (
                             <Details
                                 entries={[
-                                    ['Email', item.user.email],
-                                    ['Role', humanize(item.role)],
+                                    [copy.ui.email, item.user.email],
+                                    [copy.ui.role, humanize(item.role)],
                                     [
-                                        'Home county',
+                                        copy.ui.home_county,
                                         item.homeCounty?.name ??
-                                            'National / portfolio',
+                                            copy.ui.national_portfolio,
                                     ],
                                     [
-                                        'Assigned counties',
+                                        copy.ui.assigned_counties,
                                         item.assignedCounties
                                             .map((county) => county.name)
-                                            .join(', ') || 'None',
+                                            .join(', ') || copy.ui.none,
                                     ],
                                     [
-                                        'MFA at snapshot',
+                                        copy.ui.mfa_at_snapshot,
                                         item.mfaEnabled
-                                            ? 'Enabled'
-                                            : 'Not enabled',
+                                            ? copy.ui.enabled
+                                            : copy.ui.not_enabled,
                                     ],
                                     [
-                                        'Passkey at snapshot',
+                                        copy.ui.passkey_at_snapshot,
                                         item.passkeyEnabled
-                                            ? 'Registered'
-                                            : 'Not registered',
+                                            ? copy.ui.registered
+                                            : copy.ui.not_registered,
                                     ],
                                     [
-                                        'Permissions',
+                                        copy.ui.permissions,
                                         item.permissions.join(', '),
                                     ],
                                     [
-                                        'Last authenticated',
+                                        copy.ui.last_authenticated,
                                         item.lastAuthenticatedAt
                                             ? formatDate(
                                                   item.lastAuthenticatedAt,
                                               )
-                                            : 'No evidence',
+                                            : copy.ui.no_evidence,
                                     ],
-                                    ['Decision', humanize(item.decision)],
-                                    ['Rationale', item.rationale],
-                                    ['Remediation', item.remediationAction],
+                                    [copy.ui.decision, humanize(item.decision)],
+                                    [copy.ui.rationale, item.rationale],
                                     [
-                                        'Sessions revoked',
+                                        copy.ui.remediation,
+                                        item.remediationAction,
+                                    ],
+                                    [
+                                        copy.ui.sessions_revoked,
                                         item.sessionsRevoked.toString(),
                                     ],
-                                    ['Reviewer', item.reviewer],
+                                    [copy.ui.reviewer, item.reviewer],
                                     [
-                                        'Reinstated',
+                                        copy.ui.reinstated,
                                         item.reinstatedAt
                                             ? formatDate(item.reinstatedAt)
                                             : null,
                                     ],
-                                    ['Reinstater', item.reinstater],
+                                    [copy.ui.reinstater, item.reinstater],
                                     [
-                                        'Reinstatement rationale',
+                                        copy.ui.reinstatement_rationale,
                                         item.reinstatementRationale,
                                     ],
                                 ]}

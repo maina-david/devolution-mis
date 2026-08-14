@@ -5,6 +5,17 @@ return ['outcomes' => [
 ], 'access_review' => [
     'errors' => ['campaign_closed' => 'Cette campagne est clôturée.', 'assigned_reviewer_required' => 'Seul le réviseur indépendant désigné peut décider cet élément.', 'self_certification' => 'Les réviseurs ne peuvent pas certifier leur propre accès.', 'already_decided' => 'Cet élément d’accès a déjà fait l’objet d’une décision.', 'identity_missing' => 'L’identité examinée n’existe plus.', 'strong_authentication_required' => 'L’accès privilégié ne peut être maintenu sans MFA ou clé d’accès enregistrée.'],
     'audit' => ['decided' => 'Décision de revue d’accès :decision enregistrée pour l’identité du rôle :role.'],
+    'reinstatement' => [
+        'errors' => [
+            'only_revoked' => 'Seul un accès révoqué peut être rétabli.',
+            'independent_reinstater' => 'L’auteur de la décision de révocation ne peut pas rétablir lui-même l’accès de manière indépendante.',
+            'already_reinstated' => 'Cet élément d’accès a déjà été rétabli.',
+            'identity_not_suspended' => 'L’identité n’est pas suspendue actuellement.',
+            'strong_authentication_required' => 'L’accès privilégié ne peut pas être rétabli sans MFA ou clé d’accès enregistrée.',
+        ],
+        'rationale_with_approval' => ':rationale Approbation : :approval_reference',
+        'audit' => 'L’accès a été rétabli indépendamment pour l’identité du rôle :role.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Les utilisateurs ne peuvent pas demander un accès délégué pour eux-mêmes.',
@@ -69,7 +80,15 @@ return ['outcomes' => [
         'record_threat_review' => 'Enregistrer la revue de menace', 'reviewer' => 'Réviseur', 'identities' => 'identités', 'revoked' => 'révoquées',
         'view_access_snapshot' => 'Voir l’instantané des accès', 'reinstate_access' => 'Rétablir l’accès',
         'reinstatement_notice' => 'Le rétablissement exige un acteur différent du révocateur, une référence d’approbation formelle et une authentification forte pour les rôles privilégiés.',
-        'reinstate_controlled_access' => 'Rétablir l’accès contrôlé',
+        'reinstate_controlled_access' => 'Rétablir l’accès contrôlé', 'actions_for' => 'Actions pour :name',
+        'certify_access' => 'Certifier l’accès', 'independently_reinstate_access' => 'Rétablir l’accès de manière indépendante',
+        'reinstatement_approval_reference' => 'Référence d’approbation du rétablissement', 'remediation_reinstatement_rationale' => 'Justification de la remédiation et du rétablissement',
+        'email' => 'Adresse e-mail', 'role' => 'Rôle', 'home_county' => 'Comté de rattachement', 'national_portfolio' => 'National / portefeuille',
+        'assigned_counties' => 'Comtés attribués', 'none' => 'Aucun', 'mfa_at_snapshot' => 'MFA dans l’instantané', 'enabled' => 'Activée', 'not_enabled' => 'Non activée',
+        'passkey_at_snapshot' => 'Clé d’accès dans l’instantané', 'registered' => 'Enregistrée', 'not_registered' => 'Non enregistrée', 'permissions' => 'Autorisations',
+        'last_authenticated' => 'Dernière authentification', 'no_evidence' => 'Aucune preuve', 'decision' => 'Décision', 'rationale' => 'Justification',
+        'remediation' => 'Remédiation', 'sessions_revoked' => 'Sessions révoquées', 'reinstated' => 'Rétabli', 'reinstater' => 'Auteur du rétablissement',
+        'reinstatement_rationale' => 'Justification du rétablissement',
         'certification_notice' => 'Le maintien d’un accès privilégié exige une MFA actuelle ou une clé d’accès. La révocation supprime les rôles et comtés attribués et invalide chaque session de base de données.',
         'record_certification' => 'Enregistrer la décision de certification', 'submit_threat' => 'Soumettre la menace à la revue',
         'launch_campaign' => 'Lancer la campagne de certification', 'access_register' => 'Registre de certification des accès',

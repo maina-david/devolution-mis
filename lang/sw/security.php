@@ -5,6 +5,17 @@ return ['outcomes' => [
 ], 'access_review' => [
     'errors' => ['campaign_closed' => 'Kampeni hii imefungwa.', 'assigned_reviewer_required' => 'Mkaguzi huru aliyeteuliwa pekee ndiye anayeweza kuamua kipengele hiki.', 'self_certification' => 'Wakaguzi hawawezi kuthibitisha ufikiaji wao wenyewe.', 'already_decided' => 'Kipengele hiki cha ufikiaji tayari kimeamuliwa.', 'identity_missing' => 'Utambulisho unaokaguliwa haupo tena.', 'strong_authentication_required' => 'Ufikiaji wenye mamlaka hauwezi kuhifadhiwa bila MFA au passkey iliyosajiliwa.'],
     'audit' => ['decided' => 'Uamuzi :decision wa tathmini ya ufikiaji umerekodiwa kwa utambulisho wa jukumu :role.'],
+    'reinstatement' => [
+        'errors' => [
+            'only_revoked' => 'Ufikiaji uliobatilishwa pekee ndio unaweza kurejeshwa.',
+            'independent_reinstater' => 'Mtoa uamuzi wa kubatilisha hawezi kurejesha ufikiaji huo kwa uhuru.',
+            'already_reinstated' => 'Kipengele hiki cha ufikiaji tayari kimerejeshwa.',
+            'identity_not_suspended' => 'Utambulisho huu haujasimamishwa kwa sasa.',
+            'strong_authentication_required' => 'Ufikiaji wenye mamlaka hauwezi kurejeshwa bila MFA au passkey iliyosajiliwa.',
+        ],
+        'rationale_with_approval' => ':rationale Idhini: :approval_reference',
+        'audit' => 'Ufikiaji wa utambulisho wa jukumu :role umerejeshwa kwa uhuru.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Watumiaji hawawezi kujiombea ufikiaji uliokabidhiwa.',
@@ -69,7 +80,15 @@ return ['outcomes' => [
         'record_threat_review' => 'Rekodi tathmini ya tishio', 'reviewer' => 'Mkaguzi', 'identities' => 'vitambulisho', 'revoked' => 'zimebatilishwa',
         'view_access_snapshot' => 'Tazama picha ya ufikiaji', 'reinstate_access' => 'Rejesha ufikiaji',
         'reinstatement_notice' => 'Urejeshaji unahitaji mhusika tofauti na aliyebatilisha, rejeleo rasmi la idhini na uthibitishaji thabiti kwa majukumu yenye mamlaka.',
-        'reinstate_controlled_access' => 'Rejesha ufikiaji unaodhibitiwa',
+        'reinstate_controlled_access' => 'Rejesha ufikiaji unaodhibitiwa', 'actions_for' => 'Vitendo vya :name',
+        'certify_access' => 'Thibitisha ufikiaji', 'independently_reinstate_access' => 'Rejesha ufikiaji kwa uhuru',
+        'reinstatement_approval_reference' => 'Rejeleo la idhini ya urejeshaji', 'remediation_reinstatement_rationale' => 'Sababu ya urekebishaji na urejeshaji',
+        'email' => 'Barua pepe', 'role' => 'Jukumu', 'home_county' => 'Kaunti ya nyumbani', 'national_portfolio' => 'Kitaifa / jalada',
+        'assigned_counties' => 'Kaunti zilizogawiwa', 'none' => 'Hakuna', 'mfa_at_snapshot' => 'MFA wakati wa picha', 'enabled' => 'Imewezeshwa', 'not_enabled' => 'Haijawezeshwa',
+        'passkey_at_snapshot' => 'Passkey wakati wa picha', 'registered' => 'Imesajiliwa', 'not_registered' => 'Haijasajiliwa', 'permissions' => 'Ruhusa',
+        'last_authenticated' => 'Uthibitishaji wa mwisho', 'no_evidence' => 'Hakuna ushahidi', 'decision' => 'Uamuzi', 'rationale' => 'Sababu',
+        'remediation' => 'Urekebishaji', 'sessions_revoked' => 'Vipindi vilivyobatilishwa', 'reinstated' => 'Imerejeshwa', 'reinstater' => 'Mrejeshaji',
+        'reinstatement_rationale' => 'Sababu ya urejeshaji',
         'certification_notice' => 'Kuhifadhi ufikiaji wenye mamlaka kunahitaji MFA ya sasa au passkey. Ubatilishaji huondoa majukumu na kaunti na kubatilisha kila kipindi cha hifadhidata.',
         'record_certification' => 'Rekodi uamuzi wa uthibitishaji', 'submit_threat' => 'Wasilisha tishio kwa tathmini',
         'launch_campaign' => 'Anzisha kampeni ya uthibitishaji', 'access_register' => 'Rejesta ya uthibitishaji wa ufikiaji',

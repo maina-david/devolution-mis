@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Actions\DecideAccessReviewItem;
+use App\Actions\ReinstateUserAccess;
 use App\Models\AccessReviewCampaign;
 use App\Models\AccessReviewItem;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\SecurityThreat;
 use App\Models\User;
@@ -128,6 +130,80 @@ class SecurityGovernanceTest extends TestCase
             $this->assertSame(409, $exception->getStatusCode());
             $this->assertSame('Cette campagne est clôturée.', $exception->getMessage());
         }
+    }
+
+    public function test_access_reinstatement_guards_and_evidence_follow_the_active_locale(): void
+    {
+        $actor = User::factory()->devolutionAdmin()->withTwoFactor()->create();
+        $reviewer = User::factory()->platformAdmin()->withTwoFactor()->create();
+        app()->setLocale('fr');
+
+        $assertReinstatementRejected = function (AccessReviewItem $item, string $translationKey) use ($actor): void {
+            try {
+                app(ReinstateUserAccess::class)->handle($item, $actor, [
+                    'rationale' => 'La remédiation indépendante a été vérifiée et l’accès peut être rétabli en toute sécurité.',
+                    'approval_reference' => 'ACCÈS-RÉTABLIR-2026-001',
+                ]);
+                $this->fail("The reinstatement guard {$translationKey} must reject the operation.");
+            } catch (HttpException $exception) {
+                $this->assertSame((string) __($translationKey), $exception->getMessage());
+            }
+        };
+
+        $pendingIdentity = User::factory()->platformAdmin()->withTwoFactor()->create(['access_revoked_at' => now()]);
+        $assertReinstatementRejected(AccessReviewItem::factory()->for($pendingIdentity, 'user')->create([
+            'reviewed_by' => $reviewer->id,
+            'decision' => 'pending',
+        ]), 'security.access_review.reinstatement.errors.only_revoked');
+
+        $independenceIdentity = User::factory()->platformAdmin()->withTwoFactor()->create(['access_revoked_at' => now()]);
+        $assertReinstatementRejected(AccessReviewItem::factory()->for($independenceIdentity, 'user')->create([
+            'reviewed_by' => $actor->id,
+            'decision' => 'revoke',
+            'revoked_at' => now(),
+        ]), 'security.access_review.reinstatement.errors.independent_reinstater');
+
+        $reinstatedIdentity = User::factory()->platformAdmin()->withTwoFactor()->create(['access_revoked_at' => now()]);
+        $assertReinstatementRejected(AccessReviewItem::factory()->for($reinstatedIdentity, 'user')->create([
+            'reviewed_by' => $reviewer->id,
+            'decision' => 'revoke',
+            'revoked_at' => now(),
+            'reinstated_at' => now(),
+        ]), 'security.access_review.reinstatement.errors.already_reinstated');
+
+        $activeIdentity = User::factory()->platformAdmin()->withTwoFactor()->create();
+        $assertReinstatementRejected(AccessReviewItem::factory()->for($activeIdentity, 'user')->create([
+            'reviewed_by' => $reviewer->id,
+            'decision' => 'revoke',
+            'revoked_at' => now(),
+        ]), 'security.access_review.reinstatement.errors.identity_not_suspended');
+
+        $weakAuthenticationIdentity = User::factory()->platformAdmin()->create(['access_revoked_at' => now()]);
+        $assertReinstatementRejected(AccessReviewItem::factory()->for($weakAuthenticationIdentity, 'user')->create([
+            'reviewed_by' => $reviewer->id,
+            'decision' => 'revoke',
+            'revoked_at' => now(),
+        ]), 'security.access_review.reinstatement.errors.strong_authentication_required');
+
+        $eligibleIdentity = User::factory()->platformAdmin()->withTwoFactor()->create(['access_revoked_at' => now()]);
+        $eligibleItem = AccessReviewItem::factory()->for($eligibleIdentity, 'user')->create([
+            'reviewed_by' => $reviewer->id,
+            'decision' => 'revoke',
+            'revoked_at' => now(),
+        ]);
+        $result = app(ReinstateUserAccess::class)->handle($eligibleItem, $actor, [
+            'rationale' => 'La remédiation indépendante a été vérifiée et l’accès peut être rétabli en toute sécurité.',
+            'approval_reference' => 'ACCÈS-RÉTABLIR-2026-002',
+        ]);
+
+        $this->assertSame(
+            'La remédiation indépendante a été vérifiée et l’accès peut être rétabli en toute sécurité. Approbation : ACCÈS-RÉTABLIR-2026-002',
+            $result->reinstatement_rationale,
+        );
+        $this->assertSame(
+            'L’accès a été rétabli indépendamment pour l’identité du rôle platform-admin.',
+            AuditEvent::query()->where('subject_id', $eligibleItem->id)->where('action', 'security.access-review.reinstated')->sole()->description,
+        );
     }
 
     /** @return array<string, mixed> */

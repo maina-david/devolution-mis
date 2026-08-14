@@ -5,6 +5,17 @@ return ['outcomes' => [
 ], 'access_review' => [
     'errors' => ['campaign_closed' => 'This campaign is closed.', 'assigned_reviewer_required' => 'Only the assigned independent reviewer can decide this item.', 'self_certification' => 'Reviewers cannot certify their own access.', 'already_decided' => 'This access item already has a decision.', 'identity_missing' => 'The reviewed identity no longer exists.', 'strong_authentication_required' => 'Privileged access cannot be retained without MFA or a registered passkey.'],
     'audit' => ['decided' => 'Access review decision :decision recorded for :role identity.'],
+    'reinstatement' => [
+        'errors' => [
+            'only_revoked' => 'Only revoked access can be reinstated.',
+            'independent_reinstater' => 'The revocation decision maker cannot independently reinstate access.',
+            'already_reinstated' => 'This access item has already been reinstated.',
+            'identity_not_suspended' => 'The identity is not currently suspended.',
+            'strong_authentication_required' => 'Privileged access cannot be reinstated without MFA or a registered passkey.',
+        ],
+        'rationale_with_approval' => ':rationale Approval: :approval_reference',
+        'audit' => 'Access independently reinstated for :role identity.',
+    ],
 ], 'delegation' => [
     'errors' => [
         'self_delegation' => 'Users cannot request delegated access for themselves.',
@@ -69,7 +80,15 @@ return ['outcomes' => [
         'record_threat_review' => 'Record threat review', 'reviewer' => 'Reviewer', 'identities' => 'identities', 'revoked' => 'revoked',
         'view_access_snapshot' => 'View access snapshot', 'reinstate_access' => 'Reinstate access',
         'reinstatement_notice' => 'Reinstatement requires a different actor from the revoker, a formal approval reference, and strong authentication for privileged roles.',
-        'reinstate_controlled_access' => 'Reinstate controlled access',
+        'reinstate_controlled_access' => 'Reinstate controlled access', 'actions_for' => 'Actions for :name',
+        'certify_access' => 'Certify access', 'independently_reinstate_access' => 'Independently reinstate access',
+        'reinstatement_approval_reference' => 'Reinstatement approval reference', 'remediation_reinstatement_rationale' => 'Remediation and reinstatement rationale',
+        'email' => 'Email', 'role' => 'Role', 'home_county' => 'Home county', 'national_portfolio' => 'National / portfolio',
+        'assigned_counties' => 'Assigned counties', 'none' => 'None', 'mfa_at_snapshot' => 'MFA at snapshot', 'enabled' => 'Enabled', 'not_enabled' => 'Not enabled',
+        'passkey_at_snapshot' => 'Passkey at snapshot', 'registered' => 'Registered', 'not_registered' => 'Not registered', 'permissions' => 'Permissions',
+        'last_authenticated' => 'Last authenticated', 'no_evidence' => 'No evidence', 'decision' => 'Decision', 'rationale' => 'Rationale',
+        'remediation' => 'Remediation', 'sessions_revoked' => 'Sessions revoked', 'reinstated' => 'Reinstated', 'reinstater' => 'Reinstater',
+        'reinstatement_rationale' => 'Reinstatement rationale',
         'certification_notice' => 'Retaining privileged access requires current MFA or a passkey. Revocation removes role and county assignments and invalidates every database session.',
         'record_certification' => 'Record certification decision', 'submit_threat' => 'Submit threat for review',
         'launch_campaign' => 'Launch certification campaign', 'access_register' => 'Access certification register',
