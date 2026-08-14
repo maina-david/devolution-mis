@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\AcknowledgeOperationalAlert;
 use App\Actions\RetryFailedQueueJob;
 use App\Jobs\CreateOperationalBackupJob;
 use App\Jobs\VerifyOperationalBackupJob;
@@ -69,6 +70,20 @@ class OperationalReadinessTest extends TestCase
         $recovered = app(OperationalReadinessCheck::class)->run();
         $this->assertTrue($recovered['ready']);
         $this->assertSame('pass', $recovered['checks']['search_indexes']['status']);
+    }
+
+    public function test_readiness_details_follow_the_active_locale(): void
+    {
+        app()->setLocale('fr');
+
+        $readiness = app(OperationalReadinessCheck::class)->run();
+
+        $this->assertTrue($readiness['ready']);
+        $this->assertSame('La requête PostgreSQL a réussi.', $readiness['checks']['database']['detail']);
+        $this->assertSame('L’écriture, la lecture et la suppression du cache ont réussi.', $readiness['checks']['cache']['detail']);
+        $this->assertSame('L’écriture, la lecture et la suppression dans le stockage privé ont réussi.', $readiness['checks']['private_storage']['detail']);
+        $this->assertStringStartsWith('La persistance de la file est disponible', $readiness['checks']['queue']['detail']);
+        app()->setLocale('en');
     }
 
     public function test_production_readiness_fails_closed_on_the_development_signature_gate(): void
@@ -154,6 +169,35 @@ class OperationalReadinessTest extends TestCase
             $this->actingAs($viewer)->get(route('workspace.export', ['operations', $format]))->assertOk()->assertDownload();
             $this->actingAs($viewer)->get(route('workspace.export', ['operational-alerts', $format]))->assertOk()->assertDownload();
         }
+    }
+
+    public function test_direct_alert_acknowledgement_is_permission_first_and_audit_copy_is_localized(): void
+    {
+        $viewer = User::factory()->topManagement()->create();
+        $operator = User::factory()->platformAdmin()->create();
+        $alert = OperationalAlert::factory()->create(['status' => 'open']);
+        $auditCount = DB::table('audit_events')->count();
+        app()->setLocale('fr');
+
+        try {
+            app(AcknowledgeOperationalAlert::class)->handle($alert, $viewer, 'Tentative hostile sans autorisation.');
+            $this->fail('An unauthorized direct acknowledgement must be denied.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame('Vous n’êtes pas autorisé à acquitter les alertes opérationnelles.', $exception->getMessage());
+        }
+
+        $this->assertSame('open', $alert->fresh()->status);
+        $this->assertSame($auditCount, DB::table('audit_events')->count());
+
+        app()->setLocale('sw');
+        app(AcknowledgeOperationalAlert::class)->handle($alert, $operator, 'Mhandisi wa zamu amepewa jukumu la kurejesha huduma.');
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $alert->id,
+            'action' => 'operations.alert.acknowledged',
+            'description' => 'Tahadhari ya uendeshaji imethibitishwa kwa dokezo la jibu lenye uwajibikaji.',
+        ]);
+        app()->setLocale('en');
     }
 
     public function test_backup_verification_failures_follow_the_active_locale(): void

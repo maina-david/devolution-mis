@@ -19,9 +19,18 @@ return [
         'record_rollback_decision' => 'Enregistrer la décision de retour', 'backup_restore_evidence' => 'Preuve de sauvegarde et restauration', 'recovery_artifacts' => 'artefacts de récupération', 'export' => 'Exporter',
     ],
     'readiness' => [
+        'database_succeeded' => 'La requête PostgreSQL a réussi.',
+        'cache_failed' => 'Le cycle d’écriture et de lecture du cache a échoué.',
+        'cache_succeeded' => 'L’écriture, la lecture et la suppression du cache ont réussi.',
+        'private_storage_write_failed' => 'L’écriture dans le stockage privé a échoué.',
+        'private_storage_read_failed' => 'La lecture du stockage privé a échoué.',
+        'private_storage_succeeded' => 'L’écriture, la lecture et la suppression dans le stockage privé ont réussi.',
+        'queue_table_unavailable' => 'La persistance de la file est indisponible.',
+        'queue_available' => '{0} La persistance de la file est disponible ; aucune tâche échouée n’est enregistrée.|{1} La persistance de la file est disponible ; une tâche échouée est enregistrée.|[2,*] La persistance de la file est disponible ; :count tâches échouées sont enregistrées.',
         'search_indexes_available' => ':count index de recherche requis sont disponibles.',
         'search_indexes_missing' => 'Les index de recherche requis sont indisponibles : :indexes',
     ],
+    'alert' => ['errors' => ['acknowledge_unauthorized' => 'Vous n’êtes pas autorisé à acquitter les alertes opérationnelles.', 'recovered' => 'Les alertes rétablies ne peuvent pas être acquittées.', 'already_acknowledged' => 'Cette alerte est déjà acquittée.'], 'audit' => ['acknowledged' => 'L’alerte opérationnelle a été acquittée avec une note de réponse responsable.']],
     'labels' => ['unknown_queued_job' => 'Tâche de file inconnue'],
     'outcomes' => [
         'release_recorded' => 'L’enregistrement du déploiement a été créé pour validation indépendante.', 'release_validated' => 'La version a été validée indépendamment.',

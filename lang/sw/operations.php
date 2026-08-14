@@ -19,9 +19,18 @@ return [
         'record_rollback_decision' => 'Rekodi uamuzi wa urejeshaji', 'backup_restore_evidence' => 'Ushahidi wa nakala rudufu na urejeshaji', 'recovery_artifacts' => 'sanaa za urejeshaji', 'export' => 'Hamisha',
     ],
     'readiness' => [
+        'database_succeeded' => 'Hoja ya PostgreSQL imefaulu.',
+        'cache_failed' => 'Mzunguko wa kuandika na kusoma akiba umeshindwa.',
+        'cache_succeeded' => 'Kuandika, kusoma na kufuta akiba kumefaulu.',
+        'private_storage_write_failed' => 'Kuandika kwenye hifadhi binafsi kumeshindwa.',
+        'private_storage_read_failed' => 'Kusoma kutoka hifadhi binafsi kumeshindwa.',
+        'private_storage_succeeded' => 'Kuandika, kusoma na kufuta kwenye hifadhi binafsi kumefaulu.',
+        'queue_table_unavailable' => 'Hifadhi ya kudumu ya foleni haipatikani.',
+        'queue_available' => '{0} Hifadhi ya kudumu ya foleni inapatikana; hakuna kazi iliyoshindwa.|{1} Hifadhi ya kudumu ya foleni inapatikana; kazi moja iliyoshindwa imerekodiwa.|[2,*] Hifadhi ya kudumu ya foleni inapatikana; kazi :count zilizoshindwa zimerekodiwa.',
         'search_indexes_available' => 'Faharasa :count zinazohitajika za utafutaji zinapatikana.',
         'search_indexes_missing' => 'Faharasa zinazohitajika za utafutaji hazipatikani: :indexes',
     ],
+    'alert' => ['errors' => ['acknowledge_unauthorized' => 'Hujaruhusiwa kuthibitisha tahadhari za uendeshaji.', 'recovered' => 'Tahadhari zilizorejea katika hali ya kawaida haziwezi kuthibitishwa.', 'already_acknowledged' => 'Tahadhari hii tayari imethibitishwa.'], 'audit' => ['acknowledged' => 'Tahadhari ya uendeshaji imethibitishwa kwa dokezo la jibu lenye uwajibikaji.']],
     'labels' => ['unknown_queued_job' => 'Kazi ya foleni isiyojulikana'],
     'outcomes' => [
         'release_recorded' => 'Rekodi ya upelekaji imeundwa kwa uthibitishaji huru.', 'release_validated' => 'Toleo limethibitishwa kwa uhuru.',

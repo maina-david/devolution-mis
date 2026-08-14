@@ -19,9 +19,18 @@ return [
         'record_rollback_decision' => 'Record rollback decision', 'backup_restore_evidence' => 'Backup and restore evidence', 'recovery_artifacts' => 'recovery artifacts', 'export' => 'Export',
     ],
     'readiness' => [
+        'database_succeeded' => 'PostgreSQL query succeeded.',
+        'cache_failed' => 'Cache round trip failed.',
+        'cache_succeeded' => 'Cache write, read and delete succeeded.',
+        'private_storage_write_failed' => 'Private storage write failed.',
+        'private_storage_read_failed' => 'Private storage read failed.',
+        'private_storage_succeeded' => 'Private storage write, read and delete succeeded.',
+        'queue_table_unavailable' => 'Queue persistence is unavailable.',
+        'queue_available' => '{0} Queue persistence is available; no failed jobs are recorded.|{1} Queue persistence is available; one failed job is recorded.|[2,*] Queue persistence is available; :count failed jobs are recorded.',
         'search_indexes_available' => ':count required discovery indexes are available.',
         'search_indexes_missing' => 'Required discovery indexes are unavailable: :indexes',
     ],
+    'alert' => ['errors' => ['acknowledge_unauthorized' => 'You are not authorized to acknowledge operational alerts.', 'recovered' => 'Recovered alerts cannot be acknowledged.', 'already_acknowledged' => 'This alert is already acknowledged.'], 'audit' => ['acknowledged' => 'Operational alert acknowledged with an accountable response note.']],
     'labels' => ['unknown_queued_job' => 'Unknown queued job'],
     'outcomes' => [
         'release_recorded' => 'Deployment record created for independent validation.', 'release_validated' => 'Release independently validated.',

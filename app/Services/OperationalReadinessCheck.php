@@ -20,29 +20,29 @@ class OperationalReadinessCheck
             'database' => $this->timed(function (): string {
                 DB::select('select 1');
 
-                return 'PostgreSQL query succeeded.';
+                return __('operations.readiness.database_succeeded');
             }),
             'cache' => $this->timed(function (): string {
                 $key = 'operations-readiness-'.Str::uuid();
                 Cache::put($key, 'ready', 30);
-                abort_unless(Cache::get($key) === 'ready', 503, 'Cache round trip failed.');
+                abort_unless(Cache::get($key) === 'ready', 503, __('operations.readiness.cache_failed'));
                 Cache::forget($key);
 
-                return 'Cache write/read/delete succeeded.';
+                return __('operations.readiness.cache_succeeded');
             }),
             'private_storage' => $this->timed(function (): string {
                 $path = 'operations/readiness/'.Str::uuid().'.probe';
-                abort_unless(Storage::disk(config('operations.backup_disk'))->put($path, 'ready') !== false, 503, 'Private storage write failed.');
-                abort_unless(Storage::disk(config('operations.backup_disk'))->get($path) === 'ready', 503, 'Private storage read failed.');
+                abort_unless(Storage::disk(config('operations.backup_disk'))->put($path, 'ready') !== false, 503, __('operations.readiness.private_storage_write_failed'));
+                abort_unless(Storage::disk(config('operations.backup_disk'))->get($path) === 'ready', 503, __('operations.readiness.private_storage_read_failed'));
                 Storage::disk(config('operations.backup_disk'))->delete($path);
 
-                return 'Private storage write/read/delete succeeded.';
+                return __('operations.readiness.private_storage_succeeded');
             }),
             'queue' => $this->timed(function (): string {
-                abort_unless(Schema::hasTable(config('queue.connections.database.table', 'jobs')), 503, 'Queue table is unavailable.');
+                abort_unless(Schema::hasTable(config('queue.connections.database.table', 'jobs')), 503, __('operations.readiness.queue_table_unavailable'));
                 $failed = Schema::hasTable(config('queue.failed.table', 'failed_jobs')) ? DB::table(config('queue.failed.table', 'failed_jobs'))->count() : 0;
 
-                return "Queue persistence is available; {$failed} failed jobs recorded.";
+                return trans_choice('operations.readiness.queue_available', $failed, ['count' => $failed]);
             }),
             'search_indexes' => $this->timed(function (): string {
                 $requiredIndexes = [

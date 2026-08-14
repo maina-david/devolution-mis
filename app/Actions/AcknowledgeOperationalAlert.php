@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\OperationalAlert;
 use App\Models\OperationalAlertEvent;
 use App\Models\User;
@@ -16,10 +17,12 @@ class AcknowledgeOperationalAlert
 
     public function handle(OperationalAlert $alert, User $actor, string $note): OperationalAlert
     {
+        abort_unless($actor->can(ProgrammePermission::ManageOperations->value), 403, __('operations.alert.errors.acknowledge_unauthorized'));
+
         $acknowledged = DB::transaction(function () use ($alert, $actor, $note): OperationalAlert {
             $locked = OperationalAlert::query()->whereKey($alert)->lockForUpdate()->firstOrFail();
-            abort_if($locked->status === 'recovered', 409, 'Recovered alerts cannot be acknowledged.');
-            abort_if($locked->status === 'acknowledged', 409, 'This alert is already acknowledged.');
+            abort_if($locked->status === 'recovered', 409, __('operations.alert.errors.recovered'));
+            abort_if($locked->status === 'acknowledged', 409, __('operations.alert.errors.already_acknowledged'));
 
             $locked->fill(['status' => 'acknowledged', 'acknowledged_by' => $actor->id, 'acknowledged_at' => now(), 'acknowledgement_note' => $note]);
             $locked->evidence_checksum = $this->alertChecksum($locked);
@@ -33,7 +36,7 @@ class AcknowledgeOperationalAlert
             return $locked;
         });
 
-        $this->auditLogger->record($actor, $acknowledged, 'operations.alert.acknowledged', 'Operational alert acknowledged with an accountable response note.');
+        $this->auditLogger->record($actor, $acknowledged, 'operations.alert.acknowledged', __('operations.alert.audit.acknowledged'));
 
         return $acknowledged;
     }
