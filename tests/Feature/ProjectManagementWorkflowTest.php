@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\CreateDevolutionProject;
+use App\Actions\CreateProjectResource;
 use App\Actions\IngestVerifiedProjectResults;
 use App\Actions\VerifyIndicatorObservation;
 use App\Actions\VerifyProjectProgress;
@@ -29,6 +30,7 @@ use Database\Seeders\ProjectWorkflowSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -40,6 +42,28 @@ use Tests\TestCase;
 class ProjectManagementWorkflowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_project_failures_and_catalogues_follow_the_active_locale(): void
+    {
+        $english = require lang_path('en/projects.php');
+        $kiswahili = require lang_path('sw/projects.php');
+        $french = require lang_path('fr/projects.php');
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($kiswahili)));
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($french)));
+
+        $county = County::factory()->create();
+        $project = DevolutionProject::factory()->create(['lead_county_id' => $county->id, 'status' => 'closed', 'lifecycle_stage' => 'closed']);
+        $actor = User::factory()->devolutionAdmin()->create();
+        app()->setLocale('sw');
+
+        try {
+            app(CreateProjectResource::class)->handle($project, $actor, []);
+            $this->fail('A closed project must not accept a resource plan.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('projects.errors.resource_planning_locked'), $exception->getMessage());
+        }
+    }
 
     public function test_project_creation_starts_published_lifecycle_and_links_counties(): void
     {

@@ -24,14 +24,14 @@ class UpdateProjectRegisterRecord
     public function handle(DevolutionProject $project, ProjectMilestone|ProjectBudgetLine|ProjectRisk|ProjectProcurement $record, User $actor, array $attributes): Model
     {
         abort_unless($record->devolution_project_id === $project->id, 404);
-        abort_if($project->status === 'closed' || $project->lifecycle_stage === 'closed', 409, 'Project control registers are locked after closure.');
+        abort_if($project->status === 'closed' || $project->lifecycle_stage === 'closed', 409, __('projects.errors.control_register_locked'));
 
         return DB::transaction(function () use ($project, $record, $actor, $attributes): Model {
             $reason = (string) $attributes['amendment_reason'];
             $changes = Arr::except($attributes, ['amendment_reason']);
             if ($record instanceof ProjectMilestone) {
                 $otherWeight = (float) $project->milestones()->whereKeyNot($record->id)->sum('weight');
-                abort_if($otherWeight + (float) $changes['weight'] > 100, 422, 'Total milestone weight cannot exceed 100%.');
+                abort_if($otherWeight + (float) $changes['weight'] > 100, 422, __('projects.errors.milestone_weight_limit'));
                 /** @var list<string> $dependencyIds */
                 $dependencyIds = $changes['dependencies'] ?? [];
                 $this->dependencyGraph->validate($project, $record, $dependencyIds);
@@ -52,7 +52,7 @@ class UpdateProjectRegisterRecord
                 $record instanceof ProjectRisk => 'risk',
                 $record instanceof ProjectProcurement => 'procurement',
             };
-            $this->auditLogger->record($actor, $record, "project.{$register}_amended", "Project {$register} amended with an attributed reason.", $project->lead_county_id, ['reason' => $reason, 'before' => $before, 'after' => $after]);
+            $this->auditLogger->record($actor, $record, "project.{$register}_amended", __('projects.audit.register_amended', ['register' => __('projects.registers.'.$register)]), $project->lead_county_id, ['reason' => $reason, 'before' => $before, 'after' => $after]);
 
             return $record;
         });

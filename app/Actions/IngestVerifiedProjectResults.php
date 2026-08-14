@@ -17,7 +17,7 @@ class IngestVerifiedProjectResults
     public function handle(ProjectProgressUpdate $update, User $verificationActor): Collection
     {
         if ($update->verification_status !== 'verified') {
-            throw ValidationException::withMessages(['status' => 'Only verified project progress can enter the M&E data-quality queue.']);
+            throw ValidationException::withMessages(['status' => __('projects.errors.verified_progress_required')]);
         }
 
         $update->loadMissing(['project:id,code,programme_id', 'indicatorResults.indicator:id,code,value_type']);
@@ -36,7 +36,7 @@ class IngestVerifiedProjectResults
                     'disaggregation' => $result->disaggregation,
                     'numeric_value' => $result->numeric_value,
                     'narrative_value' => $result->narrative_value,
-                    'source_reference' => "{$update->project->code} progress update {$update->reporting_date->toDateString()}",
+                    'source_reference' => __('projects.references.progress_update', ['project' => $update->project->code, 'date' => $update->reporting_date->toDateString()]),
                     'provenance' => [...$update->provenance, 'source_type' => 'verified_project_progress', 'project_id' => $update->devolution_project_id, 'progress_update_id' => $update->id, 'project_verification_actor_id' => $verificationActor->id, 'project_verified_at' => $update->verified_at?->toIso8601String()],
                     'quality_status' => 'unassessed',
                     'verification_status' => 'submitted',
@@ -45,7 +45,7 @@ class IngestVerifiedProjectResults
                 ],
             );
             if ($observation->wasRecentlyCreated) {
-                $this->auditLogger->record($verificationActor, $observation, 'indicator.observation.ingested_from_project', "{$result->indicator->code} result ingested from verified project {$update->project->code} for separate M&E verification.", $result->county_id, ['project_progress_update_id' => $update->id, 'project_indicator_result_id' => $result->id]);
+                $this->auditLogger->record($verificationActor, $observation, 'indicator.observation.ingested_from_project', __('projects.audit.result_ingested', ['indicator' => $result->indicator->code, 'project' => $update->project->code]), $result->county_id, ['project_progress_update_id' => $update->id, 'project_indicator_result_id' => $result->id]);
             }
             $observations->push($observation);
         }

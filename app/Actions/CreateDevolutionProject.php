@@ -25,11 +25,11 @@ class CreateDevolutionProject
     {
         $countyIds = array_values(array_unique($attributes['county_ids']));
         if (! in_array($attributes['lead_county_id'], $countyIds, true)) {
-            throw ValidationException::withMessages(['lead_county_id' => 'The lead county must be included in the participating counties.']);
+            throw ValidationException::withMessages(['lead_county_id' => __('projects.errors.lead_county_participation')]);
         }
         $counties = County::query()->whereKey($countyIds)->get();
         if ($counties->count() !== count($countyIds) || $counties->contains(fn (County $county): bool => ! $actor->canAccessCounty($county))) {
-            abort(403, 'One or more selected counties are outside your authorized scope.');
+            abort(403, __('projects.errors.county_outside_scope'));
         }
         $definition = WorkflowDefinition::query()->where('code', 'PROJECT-LIFECYCLE')->where('status', 'active')->firstOrFail();
 
@@ -44,7 +44,7 @@ class CreateDevolutionProject
             $project->indicators()->sync($attributes['indicator_ids'] ?? []);
             $workflow = $this->startWorkflow->handle($definition, $project, $actor, ['approved_budget' => $attributes['approved_budget'], 'county_count' => count($countyIds)], $project->lead_county_id);
             $project->update(['workflow_instance_id' => $workflow->id, 'lifecycle_stage' => $workflow->current_state]);
-            $this->auditLogger->record($actor, $project, 'project.created', "Project {$project->code} initiated.", $project->lead_county_id, [
+            $this->auditLogger->record($actor, $project, 'project.created', __('projects.audit.created', ['code' => $project->code]), $project->lead_county_id, [
                 'counties' => $countyIds,
                 'reference_data_release_id' => $referenceDataRelease->id,
                 'reference_data_release_version' => $referenceDataRelease->version,

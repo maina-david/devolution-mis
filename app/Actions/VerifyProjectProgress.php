@@ -17,10 +17,10 @@ class VerifyProjectProgress
         $project = $update->project;
         abort_unless($project->counties()->get()->contains(fn ($county): bool => $actor->canAccessCounty($county)), 403);
         if ($update->submitted_by === $actor->id) {
-            throw ValidationException::withMessages(['status' => 'The submitter cannot verify their own project update.']);
+            throw ValidationException::withMessages(['status' => __('projects.errors.progress_submitter_separation')]);
         }
         if ($update->verification_status === 'verified') {
-            throw ValidationException::withMessages(['status' => 'A verified progress update is immutable.']);
+            throw ValidationException::withMessages(['status' => __('projects.errors.verified_progress_immutable')]);
         }
 
         DB::transaction(function () use ($update, $project, $actor, $status, $rationale): void {
@@ -32,7 +32,7 @@ class VerifyProjectProgress
                 $this->ingestResults->handle($update->refresh(), $actor);
             }
         });
-        $this->auditLogger->record($actor, $update, 'project.progress_verified', "Project progress marked {$status}.", $project->lead_county_id, ['rationale' => $rationale]);
+        $this->auditLogger->record($actor, $update, 'project.progress_verified', __('projects.audit.progress_verified', ['status' => __('projects.statuses.'.$status)]), $project->lead_county_id, ['rationale' => $rationale]);
 
         return $update->refresh();
     }

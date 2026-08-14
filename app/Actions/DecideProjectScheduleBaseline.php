@@ -18,16 +18,16 @@ class DecideProjectScheduleBaseline
     {
         return DB::transaction(function () use ($baseline, $actor, $decision, $rationale): ProjectScheduleBaseline {
             $baseline = ProjectScheduleBaseline::query()->with('project')->lockForUpdate()->findOrFail($baseline->id);
-            abort_unless($baseline->status === 'pending', 409, 'Only pending schedule baselines can be decided.');
+            abort_unless($baseline->status === 'pending', 409, __('projects.errors.pending_baseline_required'));
             if ($baseline->requested_by === $actor->id) {
-                throw ValidationException::withMessages(['decision' => 'The baseline requester cannot approve or reject their own schedule baseline.']);
+                throw ValidationException::withMessages(['decision' => __('projects.errors.baseline_requester_separation')]);
             }
             if ($decision === 'approve') {
                 $milestones = $baseline->project->milestones()->orderBy('code')->get();
                 $analysis = $this->analyzer->analyze($milestones);
                 $snapshot = $this->analyzer->snapshot($milestones);
                 if (! hash_equals($baseline->snapshot_checksum, $this->analyzer->checksum($snapshot, $analysis))) {
-                    throw ValidationException::withMessages(['decision' => 'The live milestone schedule changed after capture. Reject this request and capture a new baseline.']);
+                    throw ValidationException::withMessages(['decision' => __('projects.errors.baseline_snapshot_stale')]);
                 }
             }
 
@@ -36,7 +36,7 @@ class DecideProjectScheduleBaseline
             $baseline->update(['status' => $status, 'decided_by' => $actor->id, 'decision_rationale' => $rationale, 'decision_checksum' => hash('sha256', json_encode($decisionEvidence, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)), 'decided_at' => now()]);
             /** @var DevolutionProject $project */
             $project = $baseline->project;
-            $this->auditLogger->record($actor, $baseline, "project.schedule_baseline_{$status}", "Project schedule baseline version {$baseline->version} {$status} after independent review.", $project->lead_county_id, ['project_id' => $project->id, 'snapshot_checksum' => $baseline->snapshot_checksum, 'decision_checksum' => $baseline->decision_checksum]);
+            $this->auditLogger->record($actor, $baseline, "project.schedule_baseline_{$status}", __('projects.audit.baseline_decided', ['version' => $baseline->version, 'status' => __('projects.statuses.'.$status)]), $project->lead_county_id, ['project_id' => $project->id, 'snapshot_checksum' => $baseline->snapshot_checksum, 'decision_checksum' => $baseline->decision_checksum]);
 
             return $baseline->refresh();
         });

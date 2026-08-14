@@ -151,7 +151,7 @@ class ProjectManagementController extends Controller
     public function store(StoreDevolutionProjectRequest $request, CreateDevolutionProject $create): RedirectResponse
     {
         $project = $create->handle($this->user($request), $request->validated());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Project initiated in the governed lifecycle.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('projects.flash.created')]);
 
         return to_route('projects.show', $project);
     }
@@ -172,14 +172,14 @@ class ProjectManagementController extends Controller
     public function storeMilestone(StoreProjectMilestoneRequest $request, DevolutionProject $project, AuditLogger $audit, ProjectDependencyGraph $dependencyGraph): RedirectResponse
     {
         $this->authorizeProject($request, $project);
-        abort_if(((float) $project->milestones()->sum('weight') + (float) $request->validated('weight')) > 100, 422, 'Total milestone weight cannot exceed 100%.');
+        abort_if(((float) $project->milestones()->sum('weight') + (float) $request->validated('weight')) > 100, 422, __('projects.errors.milestone_weight_limit'));
         /** @var list<string> $dependencyIds */
         $dependencyIds = $request->validated('dependencies', []);
         $dependencyGraph->validate($project, null, $dependencyIds);
         $milestone = $project->milestones()->create($request->validated());
-        $audit->record($this->user($request), $milestone, 'project.milestone_created', "Milestone {$milestone->code} created.", $project->lead_county_id);
+        $audit->record($this->user($request), $milestone, 'project.milestone_created', __('projects.audit.milestone_created', ['code' => $milestone->code]), $project->lead_county_id);
 
-        return $this->success('Milestone created.');
+        return $this->success(__('projects.flash.milestone_created'));
     }
 
     public function storeScheduleBaseline(StoreProjectScheduleBaselineRequest $request, DevolutionProject $project, CreateProjectScheduleBaseline $create): RedirectResponse
@@ -187,7 +187,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $create->handle($project, $this->user($request), $request->string('baseline_reason')->toString());
 
-        return $this->success('Schedule baseline submitted for independent approval.');
+        return $this->success(__('projects.flash.baseline_submitted'));
     }
 
     public function decideScheduleBaseline(DecideProjectScheduleBaselineRequest $request, DevolutionProject $project, ProjectScheduleBaseline $scheduleBaseline, DecideProjectScheduleBaseline $decide): RedirectResponse
@@ -196,7 +196,7 @@ class ProjectManagementController extends Controller
         abort_unless($scheduleBaseline->devolution_project_id === $project->id, 404);
         $decide->handle($scheduleBaseline, $this->user($request), $request->string('decision')->toString(), $request->string('decision_rationale')->toString());
 
-        return $this->success('Schedule baseline decision recorded.');
+        return $this->success(__('projects.flash.baseline_decided'));
     }
 
     public function storeBudgetLine(StoreProjectBudgetLineRequest $request, DevolutionProject $project, AuditLogger $audit): RedirectResponse
@@ -207,9 +207,9 @@ class ProjectManagementController extends Controller
             'committed_amount' => $project->budgetLines()->sum('committed_amount'),
             'actual_expenditure' => $project->budgetLines()->sum('actual_amount'),
         ]);
-        $audit->record($this->user($request), $line, 'project.budget_line_created', "Budget line {$line->code} created.", $project->lead_county_id);
+        $audit->record($this->user($request), $line, 'project.budget_line_created', __('projects.audit.budget_line_created', ['code' => $line->code]), $project->lead_county_id);
 
-        return $this->success('Budget line created.');
+        return $this->success(__('projects.flash.budget_line_created'));
     }
 
     public function storeResource(StoreProjectResourceRequest $request, DevolutionProject $project, CreateProjectResource $create): RedirectResponse
@@ -217,7 +217,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $create->handle($project, $this->user($request), $request->validated());
 
-        return $this->success('Project resource created.');
+        return $this->success(__('projects.flash.resource_created'));
     }
 
     public function storeResourceAllocation(StoreProjectResourceAllocationRequest $request, DevolutionProject $project, AllocateProjectResource $allocate): RedirectResponse
@@ -225,25 +225,25 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $allocate->handle($project, $this->user($request), $request->validated());
 
-        return $this->success('Resource allocation created within capacity.');
+        return $this->success(__('projects.flash.resource_allocated'));
     }
 
     public function storeRisk(StoreProjectRiskRequest $request, DevolutionProject $project, AuditLogger $audit): RedirectResponse
     {
         $this->authorizeProject($request, $project);
         $risk = $project->risks()->create($request->validated());
-        $audit->record($this->user($request), $risk, 'project.risk_created', "Risk {$risk->code} created.", $project->lead_county_id, ['rating' => (int) $risk->probability * (int) $risk->impact]);
+        $audit->record($this->user($request), $risk, 'project.risk_created', __('projects.audit.risk_created', ['code' => $risk->code]), $project->lead_county_id, ['rating' => (int) $risk->probability * (int) $risk->impact]);
 
-        return $this->success('Risk registered.');
+        return $this->success(__('projects.flash.risk_created'));
     }
 
     public function storeProcurement(StoreProjectProcurementRequest $request, DevolutionProject $project, AuditLogger $audit): RedirectResponse
     {
         $this->authorizeProject($request, $project);
         $procurement = $project->procurements()->create($request->validated());
-        $audit->record($this->user($request), $procurement, 'project.procurement_created', "Procurement {$procurement->reference} created.", $project->lead_county_id);
+        $audit->record($this->user($request), $procurement, 'project.procurement_created', __('projects.audit.procurement_created', ['reference' => $procurement->reference]), $project->lead_county_id);
 
-        return $this->success('Procurement item created.');
+        return $this->success(__('projects.flash.procurement_created'));
     }
 
     public function updateMilestone(UpdateProjectMilestoneRequest $request, DevolutionProject $project, ProjectMilestone $milestone, UpdateProjectRegisterRecord $update): RedirectResponse
@@ -251,7 +251,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $update->handle($project, $milestone, $this->user($request), $request->validated());
 
-        return $this->success('Milestone amendment recorded.');
+        return $this->success(__('projects.flash.milestone_amended'));
     }
 
     public function updateBudgetLine(UpdateProjectBudgetLineRequest $request, DevolutionProject $project, ProjectBudgetLine $budgetLine, UpdateProjectRegisterRecord $update): RedirectResponse
@@ -259,7 +259,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $update->handle($project, $budgetLine, $this->user($request), $request->validated());
 
-        return $this->success('Budget amendment recorded.');
+        return $this->success(__('projects.flash.budget_amended'));
     }
 
     public function updateRisk(UpdateProjectRiskRequest $request, DevolutionProject $project, ProjectRisk $risk, UpdateProjectRegisterRecord $update): RedirectResponse
@@ -267,7 +267,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $update->handle($project, $risk, $this->user($request), $request->validated());
 
-        return $this->success('Risk amendment recorded.');
+        return $this->success(__('projects.flash.risk_amended'));
     }
 
     public function updateProcurement(UpdateProjectProcurementRequest $request, DevolutionProject $project, ProjectProcurement $procurement, UpdateProjectRegisterRecord $update): RedirectResponse
@@ -275,7 +275,7 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $update->handle($project, $procurement, $this->user($request), $request->validated());
 
-        return $this->success('Procurement amendment recorded.');
+        return $this->success(__('projects.flash.procurement_amended'));
     }
 
     public function storeProgress(StoreProjectProgressUpdateRequest $request, DevolutionProject $project, RecordProjectProgress $record): RedirectResponse
@@ -283,19 +283,19 @@ class ProjectManagementController extends Controller
         $this->authorizeProject($request, $project);
         $record->handle($project, $this->user($request), $request->validated());
 
-        return $this->success('Progress update submitted for verification.');
+        return $this->success(__('projects.flash.progress_submitted'));
     }
 
     public function transition(TransitionProjectRequest $request, DevolutionProject $project, TransitionWorkflow $transition): RedirectResponse
     {
         $this->authorizeProject($request, $project);
         $workflowInstance = $project->workflowInstance;
-        abort_unless($workflowInstance instanceof WorkflowInstance, 409, 'Project lifecycle workflow is unavailable.');
+        abort_unless($workflowInstance instanceof WorkflowInstance, 409, __('projects.errors.workflow_unavailable'));
         $closureReportPresent = $project->documentLinks()->where('purpose', 'project-closure-report')->whereHas('document', fn (Builder $query) => $query->where('scan_status', 'clean')->where('record_status', 'active'))->exists();
         $instance = $transition->handle($workflowInstance, $request->string('transition')->toString(), $this->user($request), ['physical_progress' => (float) $project->physical_progress, 'closure_report_present' => $closureReportPresent], $request->string('comment')->toString());
         $project->update(['lifecycle_stage' => $instance->current_state, 'status' => $instance->status === 'completed' ? 'closed' : $project->status]);
 
-        return $this->success('Project lifecycle advanced.');
+        return $this->success(__('projects.flash.lifecycle_advanced'));
     }
 
     public function verifyProgress(VerifyProjectProgressUpdateRequest $request, DevolutionProject $project, ProjectProgressUpdate $progressUpdate, VerifyProjectProgress $verify): RedirectResponse
@@ -304,7 +304,7 @@ class ProjectManagementController extends Controller
         abort_unless($progressUpdate->devolution_project_id === $project->id, 404);
         $verify->handle($progressUpdate, $this->user($request), $request->string('status')->toString(), $request->string('rationale')->toString());
 
-        return $this->success('Progress verification decision recorded.');
+        return $this->success(__('projects.flash.progress_verified'));
     }
 
     private function authorizeProject(Request $request, DevolutionProject $project): void

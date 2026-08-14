@@ -31,7 +31,7 @@ class RecordProjectProgress
 
             return $update;
         });
-        $this->auditLogger->record($actor, $update, 'project.progress_submitted', "Progress update submitted for {$project->code}.", $project->lead_county_id, ['reporting_date' => $attributes['reporting_date'], 'provenance' => $attributes['provenance']]);
+        $this->auditLogger->record($actor, $update, 'project.progress_submitted', __('projects.audit.progress_submitted', ['code' => $project->code]), $project->lead_county_id, ['reporting_date' => $attributes['reporting_date'], 'provenance' => $attributes['provenance']]);
 
         return $update;
     }
@@ -43,7 +43,7 @@ class RecordProjectProgress
     private function validateResults(DevolutionProject $project, array $countyIds, array $results): void
     {
         if ($results !== [] && $project->programme_id === null) {
-            throw ValidationException::withMessages(['indicator_results' => 'Link the project to a programme before submitting indicator results.']);
+            throw ValidationException::withMessages(['indicator_results' => __('projects.errors.programme_required_for_results')]);
         }
         $seen = [];
         foreach ($results as $index => $result) {
@@ -51,19 +51,19 @@ class RecordProjectProgress
             $countyId = (string) $result['county_id'];
             $key = implode('|', [$result['indicator_definition_id'], $countyId, $result['dimension_key']]);
             if (isset($seen[$key])) {
-                throw ValidationException::withMessages(["indicator_results.{$index}.dimension_key" => 'This indicator, county and dimension combination is duplicated.']);
+                throw ValidationException::withMessages(["indicator_results.{$index}.dimension_key" => __('projects.errors.duplicate_indicator_dimension')]);
             }
             $seen[$key] = true;
 
             if (! $indicator instanceof IndicatorDefinition || ! $indicator->isCurrentApprovedVersion() || ! $project->indicators()->whereKey($indicator->id)->exists()) {
-                throw ValidationException::withMessages(["indicator_results.{$index}.indicator_definition_id" => 'Select a current approved indicator linked to this project.']);
+                throw ValidationException::withMessages(["indicator_results.{$index}.indicator_definition_id" => __('projects.errors.approved_linked_indicator')]);
             }
             if (! in_array($countyId, $countyIds, true)) {
-                throw ValidationException::withMessages(["indicator_results.{$index}.county_id" => 'The result county must be an authorized participating county.']);
+                throw ValidationException::withMessages(["indicator_results.{$index}.county_id" => __('projects.errors.authorized_result_county')]);
             }
             $isNarrative = $indicator->value_type === 'text';
             if (($isNarrative && blank($result['narrative_value'] ?? null)) || (! $isNarrative && ! isset($result['numeric_value']))) {
-                throw ValidationException::withMessages(["indicator_results.{$index}.".($isNarrative ? 'narrative_value' : 'numeric_value') => 'Provide a value matching the indicator definition.']);
+                throw ValidationException::withMessages(["indicator_results.{$index}.".($isNarrative ? 'narrative_value' : 'numeric_value') => __('projects.errors.indicator_value_type')]);
             }
         }
     }
