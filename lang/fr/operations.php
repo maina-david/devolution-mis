@@ -30,6 +30,10 @@ return [
         'failed_job_rejected' => 'Le fournisseur de file a rejeté la demande de récupération ; la tâche échouée reste disponible.', 'alert_acknowledged' => 'L’alerte opérationnelle a été acquittée avec une preuve de réponse immuable.',
     ],
     'audit' => ['release_recorded' => 'Version :version enregistrée pour l’environnement :environment.'],
+    'performance' => [
+        'errors' => ['base_url_required' => 'Une URL de base configurée et un chemin de route sont requis.', 'request_count_range' => 'Le nombre de requêtes est hors de la plage de sécurité configurée.', 'concurrency_range' => 'La concurrence est hors de la plage de sécurité configurée.', 'route_not_approved' => 'La route demandée n’est pas approuvée pour les sondes de performance.', 'target_not_approved' => 'La cible doit être un hôte HTTPS approuvé du même environnement.'],
+        'cli' => ['evidence' => 'Preuve', 'outcome' => 'Résultat', 'requests_per_second' => 'Requêtes/s', 'p95_ms' => 'P95 ms', 'failures' => 'Échecs', 'checksum' => 'Somme de contrôle', 'unavailable' => 'indisponible'],
+    ],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Impossible d’allouer un chemin temporaire pour la sauvegarde.', 'persist_backup' => 'Impossible de conserver la sauvegarde de la base de données sur le disque configuré.',
         'completed_required' => 'Seules les sauvegardes terminées peuvent être vérifiées.', 'temporary_restore_path' => 'Impossible d’allouer un chemin temporaire pour la restauration.',

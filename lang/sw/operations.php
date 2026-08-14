@@ -30,6 +30,10 @@ return [
         'failed_job_rejected' => 'Mtoa huduma wa foleni amekataa ombi la urejeshaji; kazi iliyoshindwa bado inapatikana.', 'alert_acknowledged' => 'Tahadhari ya uendeshaji imethibitishwa pamoja na ushahidi wa jibu usiobadilika.',
     ],
     'audit' => ['release_recorded' => 'Toleo :version limerekodiwa kwa mazingira ya :environment.'],
+    'performance' => [
+        'errors' => ['base_url_required' => 'URL msingi iliyosanidiwa na njia ya ruti zinahitajika.', 'request_count_range' => 'Idadi ya maombi iko nje ya kiwango salama kilichosanidiwa.', 'concurrency_range' => 'Idadi ya maombi ya wakati mmoja iko nje ya kiwango salama kilichosanidiwa.', 'route_not_approved' => 'Ruti iliyoombwa haijaidhinishwa kwa kipimo cha utendaji.', 'target_not_approved' => 'Lengo lazima liwe seva ya HTTPS iliyoidhinishwa katika mazingira haya haya.'],
+        'cli' => ['evidence' => 'Ushahidi', 'outcome' => 'Matokeo', 'requests_per_second' => 'Maombi/sekunde', 'p95_ms' => 'P95 ms', 'failures' => 'Hitilafu', 'checksum' => 'Jumla hakiki', 'unavailable' => 'haipatikani'],
+    ],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Imeshindikana kutenga njia ya muda ya nakala rudufu.', 'persist_backup' => 'Imeshindikana kuhifadhi nakala rudufu ya hifadhidata kwenye diski iliyosanidiwa.',
         'completed_required' => 'Nakala rudufu zilizokamilika pekee ndizo zinaweza kuthibitishwa.', 'temporary_restore_path' => 'Imeshindikana kutenga njia ya muda ya urejeshaji.',

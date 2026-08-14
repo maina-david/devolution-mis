@@ -491,6 +491,43 @@ class PerformanceAssuranceTest extends TestCase
         $this->assertDatabaseCount('performance_test_runs', 0);
     }
 
+    public function test_http_probe_fuzz_corpus_fails_closed_before_process_execution(): void
+    {
+        config()->set('operations.performance.allowed_hosts', ['devolution-mis.test']);
+        Process::preventStrayProcesses();
+        Process::fake();
+
+        $targets = [
+            'http://devolution-mis.test',
+            'https://devolution-mis.test.evil.example',
+            'https://devolution-mis.test@evil.example',
+            'https://user:secret@devolution-mis.test',
+            'https://devolution-mis.test:444',
+            'https://devolution-mis.test/base',
+            'https://devolution-mis.test?redirect=https://evil.example',
+            'https://devolution-mis.test#fragment',
+            'https://127.0.0.1',
+            'devolution-mis.test',
+        ];
+
+        foreach ($targets as $target) {
+            $this->assertSame(2, Artisan::call('operations:performance-probe', ['--base-url' => $target, '--path' => '/up']), $target);
+        }
+
+        foreach ([0, 10001] as $requestCount) {
+            $this->assertSame(2, Artisan::call('operations:performance-probe', ['--base-url' => 'https://devolution-mis.test', '--path' => '/up', '--requests' => $requestCount]));
+        }
+        foreach ([0, 101] as $concurrency) {
+            $this->assertSame(2, Artisan::call('operations:performance-probe', ['--base-url' => 'https://devolution-mis.test', '--path' => '/up', '--requests' => 100, '--concurrency' => $concurrency]));
+        }
+
+        app()->setLocale('fr');
+        $this->assertSame(2, Artisan::call('operations:performance-probe', ['--base-url' => 'https://evil.example', '--path' => '/up']));
+        $this->assertStringContainsString('La cible doit être un hôte HTTPS approuvé du même environnement.', Artisan::output());
+        Process::assertNothingRan();
+        $this->assertDatabaseCount('performance_test_runs', 0);
+    }
+
     public function test_concurrent_resilience_harness_measures_real_load_and_transient_recovery(): void
     {
         $mixedLoad = file_get_contents(base_path('tests/Browser/resilience.mjs'));

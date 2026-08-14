@@ -21,7 +21,7 @@ class RunHttpPerformanceProbeCommand extends Command
         $user = is_string($userId) && $userId !== '' ? User::query()->find($userId) : null;
 
         if (! is_string($baseUrl) || ! is_string($path)) {
-            $this->error('A configured base URL and route path are required.');
+            $this->error((string) __('operations.performance.errors.base_url_required'));
 
             return self::INVALID;
         }
@@ -34,7 +34,21 @@ class RunHttpPerformanceProbeCommand extends Command
             return self::INVALID;
         }
 
-        $this->table(['Evidence', 'Outcome', 'Requests/sec', 'P95 ms', 'Failures', 'Checksum'], [[$run->id, $run->outcome, $run->requests_per_second ?? 'unavailable', $run->p95_latency_ms ?? 'unavailable', $run->failed_requests, $run->evidence_checksum]]);
+        $this->table([
+            __('operations.performance.cli.evidence'),
+            __('operations.performance.cli.outcome'),
+            __('operations.performance.cli.requests_per_second'),
+            __('operations.performance.cli.p95_ms'),
+            __('operations.performance.cli.failures'),
+            __('operations.performance.cli.checksum'),
+        ], [[
+            $run->id,
+            $run->outcome,
+            $run->requests_per_second ?? __('operations.performance.cli.unavailable'),
+            $run->p95_latency_ms ?? __('operations.performance.cli.unavailable'),
+            $run->failed_requests,
+            $run->evidence_checksum,
+        ]]);
 
         return $run->outcome === 'pass' ? self::SUCCESS : self::FAILURE;
     }

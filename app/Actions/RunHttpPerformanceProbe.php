@@ -62,22 +62,22 @@ class RunHttpPerformanceProbe
     private function validatedTarget(string $baseUrl, string $routePath, int $requestCount, int $concurrency): string
     {
         if ($requestCount < 1 || $requestCount > (int) config('operations.performance.maximum_requests', 10000)) {
-            throw new InvalidArgumentException('Request count is outside the configured safe range.');
+            throw new InvalidArgumentException((string) __('operations.performance.errors.request_count_range'));
         }
 
         if ($concurrency < 1 || $concurrency > min($requestCount, (int) config('operations.performance.maximum_concurrency', 100))) {
-            throw new InvalidArgumentException('Concurrency is outside the configured safe range.');
+            throw new InvalidArgumentException((string) __('operations.performance.errors.concurrency_range'));
         }
 
         $allowedPaths = config('operations.performance.allowed_paths', ['/up']);
         if (! is_array($allowedPaths) || ! in_array($routePath, $allowedPaths, true)) {
-            throw new InvalidArgumentException('The requested route is not approved for performance probing.');
+            throw new InvalidArgumentException((string) __('operations.performance.errors.route_not_approved'));
         }
 
         $parts = parse_url(rtrim($baseUrl, '/'));
         $allowedHosts = config('operations.performance.allowed_hosts', []);
         if (! is_array($parts) || ($parts['scheme'] ?? null) !== 'https' || ! isset($parts['host']) || ! is_array($allowedHosts) || ! in_array($parts['host'], $allowedHosts, true) || (isset($parts['port']) && $parts['port'] !== 443) || ! in_array($parts['path'] ?? '', ['', '/'], true) || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-            throw new InvalidArgumentException('The target must be an approved same-environment HTTPS host.');
+            throw new InvalidArgumentException((string) __('operations.performance.errors.target_not_approved'));
         }
 
         return rtrim($baseUrl, '/').$routePath;

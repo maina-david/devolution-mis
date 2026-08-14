@@ -30,6 +30,10 @@ return [
         'failed_job_rejected' => 'Queue provider rejected the recovery request; the failed job remains available.', 'alert_acknowledged' => 'Operational alert acknowledged with immutable response evidence.',
     ],
     'audit' => ['release_recorded' => 'Release :version recorded for :environment.'],
+    'performance' => [
+        'errors' => ['base_url_required' => 'A configured base URL and route path are required.', 'request_count_range' => 'Request count is outside the configured safe range.', 'concurrency_range' => 'Concurrency is outside the configured safe range.', 'route_not_approved' => 'The requested route is not approved for performance probing.', 'target_not_approved' => 'The target must be an approved same-environment HTTPS host.'],
+        'cli' => ['evidence' => 'Evidence', 'outcome' => 'Outcome', 'requests_per_second' => 'Requests/sec', 'p95_ms' => 'P95 ms', 'failures' => 'Failures', 'checksum' => 'Checksum', 'unavailable' => 'unavailable'],
+    ],
     'backup' => ['errors' => [
         'temporary_backup_path' => 'Unable to allocate a temporary backup path.', 'persist_backup' => 'Unable to persist the database backup on the configured backup disk.',
         'completed_required' => 'Only completed backups can be verified.', 'temporary_restore_path' => 'Unable to allocate a temporary restore path.',
