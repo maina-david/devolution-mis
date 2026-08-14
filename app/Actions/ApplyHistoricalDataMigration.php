@@ -286,6 +286,7 @@ class ApplyHistoricalDataMigration
                     'code' => Str::upper($payload['code']),
                     'name' => $payload['name'],
                     'slug' => Str::slug($payload['name']),
+                    'classification' => $payload['classification'],
                     'source_authority' => $batch->source_name,
                     'source_reference' => $batch->source_reference,
                     'source_checksum_sha256' => Str::lower($payload['source_checksum_sha256']),

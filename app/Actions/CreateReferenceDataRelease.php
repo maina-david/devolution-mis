@@ -75,11 +75,13 @@ class CreateReferenceDataRelease
             ])->all(),
             'sub_counties' => SubCounty::query()->orderBy('county_id')->orderBy('code')->get()->map(fn (SubCounty $subCounty): array => [
                 'id' => $subCounty->id, 'county_id' => $subCounty->county_id, 'code' => $subCounty->code, 'name' => $subCounty->name,
+                'classification' => $subCounty->classification, 'source_authority' => $subCounty->source_authority, 'source_reference' => $subCounty->source_reference,
                 'source_checksum_sha256' => $subCounty->source_checksum_sha256, 'boundary_checksum_sha256' => $subCounty->boundary_checksum_sha256,
                 'effective_from' => $subCounty->effective_from->toDateString(), 'effective_to' => $subCounty->effective_to?->toDateString(),
             ])->all(),
             'wards' => Ward::query()->orderBy('sub_county_id')->orderBy('code')->get()->map(fn (Ward $ward): array => [
                 'id' => $ward->id, 'sub_county_id' => $ward->sub_county_id, 'code' => $ward->code, 'name' => $ward->name,
+                'source_authority' => $ward->source_authority, 'source_reference' => $ward->source_reference,
                 'source_checksum_sha256' => $ward->source_checksum_sha256, 'boundary_checksum_sha256' => $ward->boundary_checksum_sha256,
                 'effective_from' => $ward->effective_from->toDateString(), 'effective_to' => $ward->effective_to?->toDateString(),
             ])->all(),

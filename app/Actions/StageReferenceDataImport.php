@@ -41,7 +41,7 @@ class StageReferenceDataImport
         'programmes' => ['code', 'name', 'description', 'lead_organization_code', 'sector_code', 'starts_on', 'ends_on', 'status', 'budget_amount', 'currency'],
         'programme_county_coverages' => ['programme_code', 'county_code', 'implementation_lead_code', 'starts_on', 'ends_on', 'status', 'funding_allocation', 'currency', 'source_reference', 'notes'],
         'users' => ['name', 'email', 'role', 'home_county_code', 'assigned_county_codes'],
-        'sub_counties' => ['county_code', 'code', 'name', 'effective_from', 'effective_to', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256'],
+        'sub_counties' => ['county_code', 'code', 'name', 'classification', 'effective_from', 'effective_to', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256'],
         'wards' => ['sub_county_code', 'code', 'name', 'effective_from', 'effective_to', 'source_checksum_sha256', 'boundary_geojson', 'boundary_checksum_sha256'],
     ];
 
@@ -289,6 +289,9 @@ class StageReferenceDataImport
             }
             if (! $this->validDate($payload['effective_from']) || ($payload['effective_to'] !== '' && (! $this->validDate($payload['effective_to']) || $payload['effective_to'] < $payload['effective_from']))) {
                 $errors[] = 'invalid_effective_period';
+            }
+            if ($datasetType === 'sub_counties' && ! in_array($payload['classification'], ['constituency', 'county_sub_county', 'national_sub_county'], true)) {
+                $errors[] = 'invalid_sub_county_classification';
             }
         }
 
