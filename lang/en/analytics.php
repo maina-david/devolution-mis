@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'dashboards_in_scope' => 'Dashboards in scope', 'independently_published' => 'independently published',
+    'governed_widgets' => 'Governed widgets', 'governed_widgets_description' => 'Allowlisted metrics with provenance',
+    'active_schedules' => 'Active schedules', 'active_schedules_description' => 'Maker-checker delivery controls',
+    'generated_artifacts' => 'Generated artifacts', 'generated_artifacts_description' => 'Private and SHA-256 verified',
+    'publication_status' => 'Publication status', 'county_scope' => 'County scope',
     'filter_saved' => 'Filter view :name saved.',
     'filter_deleted' => 'Filter view removed.',
     'dashboard_created' => 'Dashboard :code created as a governed draft.',

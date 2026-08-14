@@ -5,6 +5,10 @@ return [
     'ui' => [
         'eyebrow' => 'Service assurance and recovery', 'title' => 'Operational readiness centre',
         'description' => 'Dependency probes, SLO measurements, checksummed backups, isolated restore evidence, scheduled controls, and independently validated release and rollback history.',
+        'readiness' => 'Readiness', 'ready' => 'Ready', 'not_ready' => 'Not ready', 'dependencies_passing' => ':passing/:total dependencies passing',
+        'availability_target' => 'Availability target', 'availability_target_detail' => 'Provisional target pending service-owner approval.',
+        'recovery_point' => 'Recovery point', 'backup_age_detail' => 'Backup evidence must be newer than :minutes minutes.',
+        'recovery_time' => 'Recovery time', 'recovery_time_detail' => 'Restore exercise target pending Konza validation.', 'backup_status' => 'Backup status',
         'ms' => 'ms', 'operational_alerts' => 'Operational alerts', 'operational_alerts_description' => 'governed threshold alerts with deduplicated recurrence, acknowledgement and automatic recovery evidence. Thresholds remain provisional until service-owner approval.',
         'failed_queue_jobs' => 'Failed queue jobs', 'failed_queue_jobs_description' => 'retained failures. Payload and exception contents remain hidden; operators receive checksums and safe classifications.',
         'immutable_recovery_evidence' => 'Immutable recovery evidence', 'immutable_recovery_evidence_description' => 'Latest operator-attributed requeue outcomes; successful jobs may leave the failed register, but this evidence remains.',

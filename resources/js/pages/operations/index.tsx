@@ -41,6 +41,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { acknowledge as acknowledgeAlert } from '@/routes/operations/alerts';
 import { store as requestBackup } from '@/routes/operations/backups';
@@ -334,7 +335,7 @@ export default function Operations({
 
     return (
         <>
-            <Head title="Operational readiness" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
@@ -359,27 +360,34 @@ export default function Operations({
                 </section>
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        title="Readiness"
-                        value={readiness.ready ? 'Ready' : 'Not ready'}
-                        detail={`${Object.values(readiness.checks).filter((check) => check.status === 'pass').length}/${Object.keys(readiness.checks).length} dependencies passing`}
+                        title={copy.readiness}
+                        value={readiness.ready ? copy.ready : copy.not_ready}
+                        detail={interpolate(copy.dependencies_passing, {
+                            passing: Object.values(readiness.checks).filter(
+                                (check) => check.status === 'pass',
+                            ).length,
+                            total: Object.keys(readiness.checks).length,
+                        })}
                         status={readiness.ready ? 'pass' : 'fail'}
                     />
                     <MetricCard
-                        title="Availability target"
+                        title={copy.availability_target}
                         value={`${targets.availabilityPercent}%`}
-                        detail="Provisional target pending service-owner approval"
+                        detail={copy.availability_target_detail}
                         status="info"
                     />
                     <MetricCard
-                        title="Recovery point"
+                        title={copy.recovery_point}
                         value={`${targets.rpoMinutes} min`}
-                        detail={`Backup evidence must be newer than ${targets.backupMaxAgeMinutes} minutes`}
+                        detail={interpolate(copy.backup_age_detail, {
+                            minutes: targets.backupMaxAgeMinutes,
+                        })}
                         status="info"
                     />
                     <MetricCard
-                        title="Recovery time"
+                        title={copy.recovery_time}
                         value={`${targets.rtoMinutes} min`}
-                        detail="Restore exercise target pending Konza validation"
+                        detail={copy.recovery_time_detail}
                         status="info"
                     />
                 </section>
@@ -419,7 +427,7 @@ export default function Operations({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Backup status',
+                            label: copy.backup_status,
                             options: ['running', 'completed', 'failed'].map(
                                 option,
                             ),

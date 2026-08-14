@@ -174,7 +174,11 @@ export default function AssessmentShow({ assessment, capabilities }: Props) {
 
     return (
         <>
-            <Head title={`${assessment.county.name} assessment`} />
+            <Head
+                title={interpolate(copy.assessment_page_title, {
+                    county: assessment.county.name,
+                })}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <Button variant="ghost" asChild className="self-start">
                     <Link href={index.url()}>

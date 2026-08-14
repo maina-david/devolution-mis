@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'assessment_page_title' => ':county assessment',
     'assessments' => 'Assessments', 'governed_county_assessment' => 'Governed county assessment', 'separator' => '·', 'to' => 'to',
     'percent_complete' => '% complete', 'computed_score' => 'Computed score', 'reference_data_lineage' => 'Reference-data lineage',
     'created_by' => 'Created by', 'open_findings' => 'Open findings', 'appeals' => 'Appeals', 'calculate_verified_result' => 'Calculate verified result',

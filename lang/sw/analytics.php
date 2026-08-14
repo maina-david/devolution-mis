@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'dashboards_in_scope' => 'Dashibodi ndani ya wigo', 'independently_published' => 'zimechapishwa kwa uhuru',
+    'governed_widgets' => 'Wijeti zinazosimamiwa', 'governed_widgets_description' => 'Vipimo vilivyoidhinishwa vyenye asili inayofuatilika',
+    'active_schedules' => 'Ratiba zinazotumika', 'active_schedules_description' => 'Vidhibiti vya utekelezaji vya mtayarishaji na mhakiki',
+    'generated_artifacts' => 'Nyaraka zilizozalishwa', 'generated_artifacts_description' => 'Binafsi na zimethibitishwa kwa SHA-256',
+    'publication_status' => 'Hali ya uchapishaji', 'county_scope' => 'Wigo wa kaunti',
     'filter_saved' => 'Mwonekano wa kichujio :name umehifadhiwa.',
     'filter_deleted' => 'Mwonekano wa kichujio umeondolewa.',
     'dashboard_created' => 'Dashibodi :code imeundwa kama rasimu inayodhibitiwa.',

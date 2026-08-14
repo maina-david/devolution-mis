@@ -274,30 +274,30 @@ export default function AnalyticsReporting({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        title="Dashboards in scope"
+                        title={analyticsCopy.dashboards_in_scope}
                         value={dashboards.length}
-                        detail={`${dashboards.filter((item) => item.status === 'published').length} independently published`}
+                        detail={`${dashboards.filter((item) => item.status === 'published').length} ${analyticsCopy.independently_published}`}
                     />
                     <MetricCard
-                        title="Governed widgets"
+                        title={analyticsCopy.governed_widgets}
                         value={dashboards.reduce(
                             (sum, item) => sum + item.widgets.length,
                             0,
                         )}
-                        detail="Allowlisted metrics with provenance"
+                        detail={analyticsCopy.governed_widgets_description}
                     />
                     <MetricCard
-                        title="Active schedules"
+                        title={analyticsCopy.active_schedules}
                         value={
                             schedules.filter((item) => item.status === 'active')
                                 .length
                         }
-                        detail="Maker-checker delivery controls"
+                        detail={analyticsCopy.active_schedules_description}
                     />
                     <MetricCard
-                        title="Generated artifacts"
+                        title={analyticsCopy.generated_artifacts}
                         value={runs?.total ?? 0}
-                        detail="Private and SHA-256 verified"
+                        detail={analyticsCopy.generated_artifacts_description}
                     />
                 </section>
 
@@ -308,13 +308,13 @@ export default function AnalyticsReporting({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Publication status',
+                            label: analyticsCopy.publication_status,
                             options: ['draft', 'published'].map(option),
                             value: filters.status,
                         },
                         {
                             key: 'county_id',
-                            label: 'County scope',
+                            label: analyticsCopy.county_scope,
                             options: options.counties,
                             value: filters.county_id,
                         },

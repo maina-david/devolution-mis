@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'assessment_page_title' => 'Évaluation de :county',
     'assessments' => 'Évaluations', 'governed_county_assessment' => 'Évaluation gouvernée du comté', 'separator' => '·', 'to' => 'au',
     'percent_complete' => '% terminé', 'computed_score' => 'Score calculé', 'reference_data_lineage' => 'Traçabilité des données de référence',
     'created_by' => 'Créé par', 'open_findings' => 'Constats ouverts', 'appeals' => 'Recours', 'calculate_verified_result' => 'Calculer le résultat vérifié',

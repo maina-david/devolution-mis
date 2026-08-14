@@ -5,6 +5,10 @@ return [
     'ui' => [
         'eyebrow' => 'Assurance et reprise des services', 'title' => 'Centre de préparation opérationnelle',
         'description' => 'Sondes de dépendance, mesures des SLO, sauvegardes avec sommes de contrôle, preuves de restauration isolée, contrôles planifiés et historique des versions et retours validé indépendamment.',
+        'readiness' => 'Préparation', 'ready' => 'Prêt', 'not_ready' => 'Non prêt', 'dependencies_passing' => ':passing dépendances sur :total sont opérationnelles',
+        'availability_target' => 'Objectif de disponibilité', 'availability_target_detail' => 'Objectif provisoire en attente de l’approbation du responsable du service.',
+        'recovery_point' => 'Point de reprise', 'backup_age_detail' => 'La preuve de sauvegarde doit dater de moins de :minutes minutes.',
+        'recovery_time' => 'Temps de reprise', 'recovery_time_detail' => 'Objectif de l’exercice de restauration en attente de validation par Konza.', 'backup_status' => 'Statut de la sauvegarde',
         'ms' => 'ms', 'operational_alerts' => 'Alertes opérationnelles', 'operational_alerts_description' => 'alertes de seuil gouvernées avec déduplication des récurrences, acquittement et preuve de récupération automatique. Les seuils restent provisoires jusqu’à leur approbation par le responsable du service.',
         'failed_queue_jobs' => 'Tâches de file échouées', 'failed_queue_jobs_description' => 'échecs conservés. Le contenu des charges et exceptions reste masqué ; les opérateurs reçoivent des sommes de contrôle et des classifications sûres.',
         'immutable_recovery_evidence' => 'Preuve de récupération immuable', 'immutable_recovery_evidence_description' => 'Derniers résultats de remise en file attribués aux opérateurs ; les tâches réussies peuvent quitter le registre des échecs, mais cette preuve demeure.',

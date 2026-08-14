@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'all_authorized_tickets' => 'Tiketi zote zilizoidhinishwa', 'authorized_scope_description' => 'Ndani ya wigo wa kaunti yako au wa kitaifa',
+    'active_workload' => 'Mzigo wa kazi unaoendelea', 'active_workload_description' => 'Bado hazijatatuliwa wala kukubaliwa',
+    'awaiting_triage' => 'Zinasubiri uchambuzi wa awali', 'awaiting_triage_description' => 'Maombi wazi yasiyo na mhusika',
+    'sla_overdue' => 'SLA imepitwa na wakati', 'sla_overdue_description' => 'Lengo la utatuzi limepita', 'county' => 'Kaunti', 'ticket_status' => 'Hali ya tiketi',
     'eyebrow' => 'Usaidizi wa uendeshaji na uhakikisho wa SLA',
     'title' => 'Dawati la huduma la IDMIS',
     'description' => 'Wasilisha, chunguza awali, fanyia uchunguzi na ukubali kwa uhuru maombi ya usaidizi yenye wigo wa kaunti, historia ya shughuli isiyobadilika, rekodi zinazosimamiwa na malengo ya majibu yanayofuatiliwa.',

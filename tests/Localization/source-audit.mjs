@@ -6,6 +6,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 0,
+    authenticatedSemanticLiterals: 730,
     backendMessages: 0,
 };
 
@@ -57,10 +58,46 @@ const backendMessages = globSync('app/**/*.php').flatMap((file) => {
         })),
     );
 });
+const publicPagePatterns = [
+    '/pages/auth/',
+    '/pages/citizen-engagement/',
+    '/pages/welcome.tsx',
+    '/pages/help.tsx',
+    '/pages/faqs.tsx',
+    '/pages/privacy-notice.tsx',
+    '/pages/data-rights/',
+    '/pages/error.tsx',
+];
+const semanticAttributePattern =
+    /\b(?:aria-label|aria-description|label|placeholder|title)="([^"\n]*[A-Za-z][^"\n]*)"/gu;
+const semanticTextPattern = />\s*([A-Z][A-Za-z][^<{\n]*?)\s*</gu;
+const authenticatedSemanticMessages = globSync(
+    'resources/js/pages/**/*.tsx',
+).flatMap((file) => {
+    const normalized = file.replaceAll('\\', '/');
+
+    if (publicPagePatterns.some((pattern) => normalized.includes(pattern))) {
+        return [];
+    }
+
+    const source = readFileSync(file, 'utf8');
+
+    return [semanticAttributePattern, semanticTextPattern].flatMap((pattern) =>
+        [...source.matchAll(pattern)].map((match) => ({
+            file,
+            offset: match.index,
+            text: match[1].trim(),
+        })),
+    );
+});
 const report = {
     frontendLiterals: frontendMessages.length,
     frontendFiles: new Set(frontendMessages.map((message) => message.file))
         .size,
+    authenticatedSemanticLiterals: authenticatedSemanticMessages.length,
+    authenticatedSemanticFiles: new Set(
+        authenticatedSemanticMessages.map((message) => message.file),
+    ).size,
     backendMessages: backendMessages.length,
     limits,
 };
@@ -69,6 +106,8 @@ console.log(JSON.stringify(report, null, 2));
 
 if (
     report.frontendLiterals > limits.frontendLiterals ||
+    report.authenticatedSemanticLiterals >
+        limits.authenticatedSemanticLiterals ||
     report.backendMessages > limits.backendMessages
 ) {
     console.error(

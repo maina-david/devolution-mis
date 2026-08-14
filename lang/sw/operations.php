@@ -5,6 +5,10 @@ return [
     'ui' => [
         'eyebrow' => 'Uhakikisho na urejeshaji wa huduma', 'title' => 'Kituo cha utayari wa uendeshaji',
         'description' => 'Vipimo vya utegemezi, vipimo vya SLO, nakala rudufu zenye jumla hakiki, ushahidi wa urejeshaji uliotengwa, vidhibiti vilivyoratibiwa, na historia ya matoleo na urejeshaji iliyothibitishwa kwa uhuru.',
+        'readiness' => 'Utayari', 'ready' => 'Tayari', 'not_ready' => 'Haiko tayari', 'dependencies_passing' => 'Vitegemezi :passing/:total vinafaulu',
+        'availability_target' => 'Lengo la upatikanaji', 'availability_target_detail' => 'Lengo la muda linasubiri idhini ya mmiliki wa huduma.',
+        'recovery_point' => 'Sehemu ya urejeshaji', 'backup_age_detail' => 'Ushahidi wa nakala rudufu lazima uwe mpya kuliko dakika :minutes.',
+        'recovery_time' => 'Muda wa urejeshaji', 'recovery_time_detail' => 'Lengo la zoezi la urejeshaji linasubiri uthibitishaji wa Konza.', 'backup_status' => 'Hali ya nakala rudufu',
         'ms' => 'ms', 'operational_alerts' => 'Tahadhari za uendeshaji', 'operational_alerts_description' => 'tahadhari za viwango zinazosimamiwa zenye kuondoa marudio, uthibitisho na ushahidi wa urejeshaji otomatiki. Viwango ni vya muda hadi kuidhinishwa na mmiliki wa huduma.',
         'failed_queue_jobs' => 'Kazi za foleni zilizoshindwa', 'failed_queue_jobs_description' => 'hitilafu zilizohifadhiwa. Maudhui ya mzigo na makosa yamefichwa; waendeshaji hupokea jumla hakiki na uainishaji salama.',
         'immutable_recovery_evidence' => 'Ushahidi wa urejeshaji usiobadilika', 'immutable_recovery_evidence_description' => 'Matokeo ya hivi karibuni ya kurudisha foleni yanayohusishwa na mwendeshaji; kazi zilizofaulu zinaweza kuondoka kwenye rejesta ya hitilafu lakini ushahidi huu unabaki.',

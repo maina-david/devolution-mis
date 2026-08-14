@@ -346,7 +346,7 @@ export default function KnowledgeManagement({
 
     return (
         <>
-            <Head title="Knowledge Management" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">

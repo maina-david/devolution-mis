@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'all_authorized_tickets' => 'All authorized tickets', 'authorized_scope_description' => 'Within your county or national scope',
+    'active_workload' => 'Active workload', 'active_workload_description' => 'Not yet resolved or accepted',
+    'awaiting_triage' => 'Awaiting triage', 'awaiting_triage_description' => 'Open requests without an owner',
+    'sla_overdue' => 'SLA overdue', 'sla_overdue_description' => 'Resolution target has passed', 'county' => 'County', 'ticket_status' => 'Ticket status',
     'eyebrow' => 'Operational support and SLA assurance',
     'title' => 'IDMIS service desk',
     'description' => 'Submit, triage, investigate and independently accept support requests with county scope, immutable activity history, governed records and monitored response targets.',

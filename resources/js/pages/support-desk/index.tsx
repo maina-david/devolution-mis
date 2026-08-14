@@ -259,7 +259,7 @@ export default function SupportDesk({
 
     return (
         <>
-            <Head title="Service desk" />
+            <Head title={copy.title} />
             <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end">
@@ -296,27 +296,27 @@ export default function SupportDesk({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
-                        title="All authorized tickets"
+                        title={copy.all_authorized_tickets}
                         value={summary.total}
-                        description="Within your county or national scope"
+                        description={copy.authorized_scope_description}
                         icon={Headphones}
                     />
                     <Metric
-                        title="Active workload"
+                        title={copy.active_workload}
                         value={summary.active}
-                        description="Not yet resolved or accepted"
+                        description={copy.active_workload_description}
                         icon={ClockAlert}
                     />
                     <Metric
-                        title="Awaiting triage"
+                        title={copy.awaiting_triage}
                         value={summary.unassigned}
-                        description="Open requests without an owner"
+                        description={copy.awaiting_triage_description}
                         icon={UserRoundCheck}
                     />
                     <Metric
-                        title="SLA overdue"
+                        title={copy.sla_overdue}
                         value={summary.overdue}
-                        description="Resolution target has passed"
+                        description={copy.sla_overdue_description}
                         icon={ShieldCheck}
                     />
                 </section>
@@ -331,7 +331,7 @@ export default function SupportDesk({
                             ? [
                                   {
                                       key: 'county_id',
-                                      label: 'County',
+                                      label: copy.county,
                                       options: options.counties,
                                       value: filters.county_id,
                                   },
@@ -339,7 +339,7 @@ export default function SupportDesk({
                             : []),
                         {
                             key: 'status',
-                            label: 'Ticket status',
+                            label: copy.ticket_status,
                             options: statusOptions,
                             value: filters.status,
                         },

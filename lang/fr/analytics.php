@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'dashboards_in_scope' => 'Tableaux de bord dans le périmètre', 'independently_published' => 'publiés indépendamment',
+    'governed_widgets' => 'Widgets gouvernés', 'governed_widgets_description' => 'Indicateurs autorisés avec traçabilité',
+    'active_schedules' => 'Planifications actives', 'active_schedules_description' => 'Contrôles de livraison à double validation',
+    'generated_artifacts' => 'Artefacts générés', 'generated_artifacts_description' => 'Privés et vérifiés par SHA-256',
+    'publication_status' => 'Statut de publication', 'county_scope' => 'Périmètre du comté',
     'filter_saved' => 'La vue de filtre :name a été enregistrée.',
     'filter_deleted' => 'La vue de filtre a été supprimée.',
     'dashboard_created' => 'Le tableau de bord :code a été créé comme brouillon gouverné.',

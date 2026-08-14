@@ -246,7 +246,7 @@ export default function IgrResolutionsIndex({
 
     return (
         <>
-            <Head title="IGR resolutions" />
+            <Head title={copy.title} />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <p className="text-xs font-bold tracking-[0.16em] text-[#83d4ad] uppercase">

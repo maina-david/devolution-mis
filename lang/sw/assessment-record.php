@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'assessment_page_title' => 'Tathmini ya :county',
     'assessments' => 'Tathmini', 'governed_county_assessment' => 'Tathmini ya kaunti inayosimamiwa', 'separator' => '·', 'to' => 'hadi',
     'percent_complete' => '% imekamilika', 'computed_score' => 'Alama iliyokokotolewa', 'reference_data_lineage' => 'Asili ya data rejea',
     'created_by' => 'Imeundwa na', 'open_findings' => 'Matokeo wazi', 'appeals' => 'Rufaa', 'calculate_verified_result' => 'Kokotoa matokeo yaliyohakikiwa',

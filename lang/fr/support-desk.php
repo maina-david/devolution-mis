@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'all_authorized_tickets' => 'Tous les tickets autorisés', 'authorized_scope_description' => 'Dans votre périmètre départemental ou national',
+    'active_workload' => 'Charge de travail active', 'active_workload_description' => 'Pas encore résolus ni acceptés',
+    'awaiting_triage' => 'En attente de triage', 'awaiting_triage_description' => 'Demandes ouvertes sans responsable',
+    'sla_overdue' => 'SLA en retard', 'sla_overdue_description' => 'L’objectif de résolution est dépassé', 'county' => 'Comté', 'ticket_status' => 'Statut du ticket',
     'eyebrow' => 'Assistance opérationnelle et assurance des SLA',
     'title' => "Centre de services de l'IDMIS",
     'description' => "Soumettre, trier, examiner et accepter indépendamment les demandes d'assistance dans le périmètre du comté, avec un historique immuable, des dossiers gouvernés et des objectifs de réponse suivis.",
