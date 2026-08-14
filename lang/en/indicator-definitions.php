@@ -33,4 +33,7 @@ return [
     'unit_placeholder' => 'percent, days, count…',
     'programme' => 'Programme',
     'create_draft_indicator' => 'Create draft indicator',
+    'outcomes' => ['created' => 'Indicator definition created as a draft.', 'superseded' => 'A successor indicator version was created as a draft.', 'approved' => 'Indicator definition approved.'],
+    'errors' => ['manage_unauthorized' => 'You are not authorized to manage indicator definitions.', 'current_approved_required' => 'Only the current approved indicator version can be superseded.', 'successor_exists' => 'A successor version already exists for this indicator.'],
+    'audit' => ['created' => 'Indicator :code draft created.', 'superseded' => 'Indicator :code version :successor drafted to supersede version :prior.'],
 ];

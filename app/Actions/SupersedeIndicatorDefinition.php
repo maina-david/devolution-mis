@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\IndicatorDefinition;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -17,15 +18,17 @@ class SupersedeIndicatorDefinition
     /** @param array<string, mixed> $attributes */
     public function handle(User $actor, IndicatorDefinition $indicator, array $attributes): IndicatorDefinition
     {
+        abort_unless($actor->can(ProgrammePermission::ManageIndicators->value), 403, __('indicator-definitions.errors.manage_unauthorized'));
+
         return DB::transaction(function () use ($actor, $indicator, $attributes): IndicatorDefinition {
             $current = IndicatorDefinition::query()->lockForUpdate()->findOrFail($indicator->id);
 
             if (! $current->isCurrentApprovedVersion()) {
-                throw ValidationException::withMessages(['indicator' => 'Only the current approved indicator version can be superseded.']);
+                throw ValidationException::withMessages(['indicator' => __('indicator-definitions.errors.current_approved_required')]);
             }
 
             if (IndicatorDefinition::withTrashed()->where('supersedes_id', $current->id)->exists()) {
-                throw ValidationException::withMessages(['indicator' => 'A successor version already exists for this indicator.']);
+                throw ValidationException::withMessages(['indicator' => __('indicator-definitions.errors.successor_exists')]);
             }
             $release = $this->referenceDataReleaseResolver->forIndicatorDefinition($current->sector_id, $current->programme_id, now());
 
@@ -39,7 +42,7 @@ class SupersedeIndicatorDefinition
                 'reference_data_release_id' => $release->id,
             ]);
 
-            $this->auditLogger->record($actor, $successor, 'indicator.definition.supersession.drafted', "Indicator {$current->code} version {$successor->version} drafted to supersede version {$current->version}.", metadata: ['supersedes_id' => $current->id, 'change_summary' => $attributes['change_summary'], 'reference_data_release_id' => $release->id, 'reference_data_release_version' => $release->version, 'reference_data_release_checksum' => $release->checksum]);
+            $this->auditLogger->record($actor, $successor, 'indicator.definition.supersession.drafted', __('indicator-definitions.audit.superseded', ['code' => $current->code, 'successor' => $successor->version, 'prior' => $current->version]), metadata: ['supersedes_id' => $current->id, 'change_summary' => $attributes['change_summary'], 'reference_data_release_id' => $release->id, 'reference_data_release_version' => $release->version, 'reference_data_release_checksum' => $release->checksum]);
 
             return $successor;
         });

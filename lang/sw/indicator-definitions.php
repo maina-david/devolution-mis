@@ -33,4 +33,7 @@ return [
     'unit_placeholder' => 'asilimia, siku, idadi…',
     'programme' => 'Programu',
     'create_draft_indicator' => 'Unda rasimu ya kiashiria',
+    'outcomes' => ['created' => 'Ufafanuzi wa kiashiria umeundwa kama rasimu.', 'superseded' => 'Toleo linalofuata la kiashiria limeundwa kama rasimu.', 'approved' => 'Ufafanuzi wa kiashiria umeidhinishwa.'],
+    'errors' => ['manage_unauthorized' => 'Huna ruhusa ya kusimamia ufafanuzi wa viashiria.', 'current_approved_required' => 'Toleo la sasa la kiashiria lililoidhinishwa pekee ndilo linaweza kubadilishwa.', 'successor_exists' => 'Toleo linalofuata tayari lipo kwa kiashiria hiki.'],
+    'audit' => ['created' => 'Rasimu ya kiashiria :code imeundwa.', 'superseded' => 'Toleo :successor la kiashiria :code limeandaliwa kama rasimu kuchukua nafasi ya toleo :prior.'],
 ];

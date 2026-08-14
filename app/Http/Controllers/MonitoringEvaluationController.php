@@ -160,14 +160,14 @@ class MonitoringEvaluationController extends Controller
     {
         $create->handle($this->user($request), $request->validated());
 
-        return $this->success('Indicator definition created as a draft.');
+        return $this->success(__('indicator-definitions.outcomes.created'));
     }
 
     public function supersedeIndicator(SupersedeIndicatorDefinitionRequest $request, IndicatorDefinition $indicator, SupersedeIndicatorDefinition $supersede): RedirectResponse
     {
         $supersede->handle($this->user($request), $indicator, $request->validated());
 
-        return $this->success('A successor indicator version was created as a draft.');
+        return $this->success(__('indicator-definitions.outcomes.superseded'));
     }
 
     public function approveIndicator(Request $request, IndicatorDefinition $indicator, ApproveIndicatorDefinition $approve): RedirectResponse
@@ -175,7 +175,7 @@ class MonitoringEvaluationController extends Controller
         Gate::authorize(ProgrammePermission::ManageIndicators->value);
         $approve->handle($this->user($request), $indicator);
 
-        return $this->success('Indicator definition approved.');
+        return $this->success(__('indicator-definitions.outcomes.approved'));
     }
 
     public function storeObservation(StoreIndicatorObservationRequest $request, RecordIndicatorObservation $record): RedirectResponse

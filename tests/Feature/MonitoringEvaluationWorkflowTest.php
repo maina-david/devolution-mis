@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Actions\ApproveIndicatorDefinition;
+use App\Actions\CreateIndicatorDefinition;
 use App\Actions\CreateProgrammeEvaluation;
 use App\Actions\RecordIndicatorObservation;
 use App\Actions\SupersedeIndicatorDefinition;
@@ -177,6 +179,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $indicator = IndicatorDefinition::factory()->create(['code' => 'M07-OUT-01', 'version' => 1]);
         $observation = IndicatorObservation::factory()->create(['indicator_definition_id' => $indicator->id]);
 
+        app()->setLocale('sw');
         $successor = app(SupersedeIndicatorDefinition::class)->handle($author, $indicator, $this->supersessionPayload());
 
         $this->assertTrue(Str::isUuid($successor->id));
@@ -187,7 +190,7 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->assertSame($release->id, $successor->reference_data_release_id);
         $this->assertSame($indicator->id, $observation->refresh()->indicator_definition_id);
         $this->assertSame('approved', $indicator->refresh()->status);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $successor->id, 'action' => 'indicator.definition.supersession.drafted']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $successor->id, 'action' => 'indicator.definition.supersession.drafted', 'description' => "Toleo 2 la kiashiria {$indicator->code} limeandaliwa kama rasimu kuchukua nafasi ya toleo 1."]);
 
         $this->expectException(ValidationException::class);
         app(SupersedeIndicatorDefinition::class)->handle($author, $indicator, $this->supersessionPayload());
@@ -253,6 +256,29 @@ class MonitoringEvaluationWorkflowTest extends TestCase
         $this->actingAs($countyUser)
             ->post(route('monitoring-evaluation.indicators.supersede', [$indicator]), $this->supersessionPayload())
             ->assertForbidden();
+    }
+
+    public function test_indicator_definition_actions_authorize_before_record_or_payload_processing(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $indicator = IndicatorDefinition::factory()->create();
+
+        app()->setLocale('fr');
+        foreach ([
+            fn () => app(CreateIndicatorDefinition::class)->handle($unauthorizedActor, []),
+            fn () => app(SupersedeIndicatorDefinition::class)->handle($unauthorizedActor, $indicator, []),
+            fn () => app(ApproveIndicatorDefinition::class)->handle($unauthorizedActor, $indicator),
+        ] as $action) {
+            $this->assertHttpAction(
+                $action,
+                403,
+                'Vous n’êtes pas autorisé à gérer les définitions d’indicateurs.',
+            );
+        }
+
+        $this->assertDatabaseCount('indicator_definitions', 1);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_monitoring_page_and_export_are_limited_to_authorized_county(): void

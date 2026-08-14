@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\IndicatorDefinition;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -14,6 +15,8 @@ class ApproveIndicatorDefinition
 
     public function handle(User $actor, IndicatorDefinition $indicator): IndicatorDefinition
     {
+        abort_unless($actor->can(ProgrammePermission::ManageIndicators->value), 403, __('indicator-definitions.errors.manage_unauthorized'));
+
         return DB::transaction(function () use ($actor, $indicator): IndicatorDefinition {
             $draft = IndicatorDefinition::query()->lockForUpdate()->findOrFail($indicator->id);
 

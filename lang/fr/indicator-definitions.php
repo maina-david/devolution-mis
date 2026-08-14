@@ -33,4 +33,7 @@ return [
     'unit_placeholder' => 'pourcentage, jours, nombre…',
     'programme' => 'Programme',
     'create_draft_indicator' => 'Créer le brouillon de l’indicateur',
+    'outcomes' => ['created' => 'La définition de l’indicateur a été créée comme brouillon.', 'superseded' => 'La version suivante de l’indicateur a été créée comme brouillon.', 'approved' => 'La définition de l’indicateur a été approuvée.'],
+    'errors' => ['manage_unauthorized' => 'Vous n’êtes pas autorisé à gérer les définitions d’indicateurs.', 'current_approved_required' => 'Seule la version approuvée actuelle de l’indicateur peut être remplacée.', 'successor_exists' => 'Une version suivante existe déjà pour cet indicateur.'],
+    'audit' => ['created' => 'Le brouillon de l’indicateur :code a été créé.', 'superseded' => 'La version :successor de l’indicateur :code a été créée comme brouillon pour remplacer la version :prior.'],
 ];
