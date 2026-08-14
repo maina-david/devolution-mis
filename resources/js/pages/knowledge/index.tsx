@@ -47,6 +47,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { preview as previewEvidence } from '@/routes/evidence';
 import { transition as transitionCommunityReport } from '@/routes/knowledge/community-reports';
@@ -387,31 +388,31 @@ export default function KnowledgeManagement({
                     selectFilters={[
                         {
                             key: 'item_type',
-                            label: 'Resource type',
+                            label: copy.resource_type,
                             options: itemTypes,
                             value: filters.item_type,
                         },
                         {
                             key: 'status',
-                            label: 'Publication status',
+                            label: copy.publication_status,
                             options: itemStatuses,
                             value: filters.status,
                         },
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.county_id,
                         },
                         {
                             key: 'sector_id',
-                            label: 'Sector',
+                            label: copy.sector,
                             options: options.sectors.map(toNamed),
                             value: filters.sector_id,
                         },
                         {
                             key: 'tag',
-                            label: 'Tag',
+                            label: copy.tag,
                             options: options.tags.map((tag) => ({
                                 id: tag,
                                 name: humanize(tag),
@@ -462,7 +463,9 @@ function RepositoryTable({
         <section className="overflow-hidden rounded-xl border bg-card shadow-xs">
             <TableHeader
                 title={copy.curated_repository}
-                description={`${items.total.toLocaleString()} authorized resources`}
+                description={interpolate(copy.authorized_resources_count, {
+                    count: items.total.toLocaleString(),
+                })}
                 filters={filters}
             />
             {rows.length ? (
@@ -502,7 +505,7 @@ function RepositoryTable({
             ) : (
                 <WorkspaceEmptyState
                     title={copy.no_knowledge_resources_found}
-                    description="Adjust the filters or contribute the first evidence-backed practice, case study, research output, toolkit, or blog."
+                    description={copy.no_resources_description}
                     className="min-h-72 border-0"
                 />
             )}
@@ -600,7 +603,7 @@ function InnovationTable({
             ) : (
                 <WorkspaceEmptyState
                     title={copy.no_matching_innovations}
-                    description="Submit a locally developed solution for screening and incubation."
+                    description={copy.submit_solution_description}
                     className="min-h-64 border-0"
                 />
             )}
@@ -670,11 +673,11 @@ function ModerationQueue({
                 initialTo={filters.to}
                 initialSearch={filters.report_search}
                 searchKey="report_search"
-                searchPlaceholder="Search moderation reports"
+                searchPlaceholder={copy.search_moderation_reports}
                 selectFilters={[
                     {
                         key: 'report_status',
-                        label: 'Report status',
+                        label: copy.report_status,
                         options: [
                             'reported',
                             'investigating',
@@ -727,7 +730,7 @@ function ModerationQueue({
                 ) : (
                     <WorkspaceEmptyState
                         title={copy.no_matching_community_reports}
-                        description="Reports within your authorized scope will appear here with their SLA and decision state."
+                        description={copy.no_reports_description}
                         className="min-h-64 border-0"
                     />
                 )}
@@ -758,7 +761,9 @@ function CommunityReportActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${report.reference}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: report.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -961,8 +966,8 @@ function ItemForm({
     return (
         <FormSheet
             title={copy.contribute_knowledge_resource}
-            description="Create an evidence-backed resource and link it to secure repository evidence or e-learning."
-            triggerLabel="New resource"
+            description={copy.create_resource_description}
+            triggerLabel={copy.new_resource}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
@@ -1079,8 +1084,8 @@ function DiscussionForm({
     return (
         <FormSheet
             title={copy.open_community_discussion}
-            description="Convene a moderated community of practice around a resource or county challenge."
-            triggerLabel="New discussion"
+            description={copy.create_discussion_description}
+            triggerLabel={copy.new_discussion}
             icon={MessageSquare}
         >
             <Form action={storeDiscussion()} className="grid gap-4 pt-4">
@@ -1138,8 +1143,8 @@ function InnovationForm({
     return (
         <FormSheet
             title={copy.submit_devolution_innovation}
-            description="Register a solution for independent screening, incubation, piloting, and scale-up."
-            triggerLabel="Submit innovation"
+            description={copy.submit_innovation_description}
+            triggerLabel={copy.submit_innovation}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
@@ -1236,7 +1241,9 @@ function ItemActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${item.title}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: item.title,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1453,7 +1460,10 @@ function DiscussionSubscription({ discussion }: { discussion: Discussion }) {
     return (
         <FormSheet
             title={copy.discussion_notifications}
-            description={`Choose whether new contributions to ${discussion.title} appear in your notification centre.`}
+            description={interpolate(
+                copy.discussion_notifications_description,
+                { title: discussion.title },
+            )}
             triggerLabel={discussion.subscribed ? 'Following' : 'Follow'}
             icon={discussion.subscribed ? BellOff : Bell}
         >
@@ -1511,7 +1521,9 @@ function PostActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for contribution by ${post.author}`}
+                        aria-label={interpolate(copy.actions_for_contribution, {
+                            author: post.author,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1637,9 +1649,11 @@ function PostForm({ discussion }: { discussion: Discussion }) {
 
     return (
         <FormSheet
-            title={`Contribute to ${discussion.title}`}
-            description="Add a traceable contribution to this community of practice."
-            triggerLabel="Add contribution"
+            title={interpolate(copy.contribute_to_discussion, {
+                title: discussion.title,
+            })}
+            description={copy.add_contribution_description}
+            triggerLabel={copy.add_contribution}
             icon={MessageSquare}
         >
             <Form
@@ -1695,7 +1709,9 @@ function InnovationActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${innovation.title}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: innovation.title,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1969,7 +1985,10 @@ function InnovationActions({
                                                 <Field
                                                     key={name}
                                                     name={name}
-                                                    label={`${label} (0–100)`}
+                                                    label={interpolate(
+                                                        copy.score_out_of_one_hundred,
+                                                        { label },
+                                                    )}
                                                     type="number"
                                                     min="0"
                                                     max="100"
@@ -2215,7 +2234,10 @@ function MilestoneCard({
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    aria-label={`Actions for ${milestone.title}`}
+                                    aria-label={interpolate(
+                                        copy.actions_for_record,
+                                        { record: milestone.title },
+                                    )}
                                 >
                                     <MoreHorizontal />
                                 </Button>

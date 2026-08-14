@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'lifecycle_status' => 'État du cycle de vie', 'county' => 'Comté',
     'eyebrow' => 'Gouvernance de la confidentialité et de l’information', 'title' => 'Centre de contrôle de la gouvernance des données', 'description' => 'Inventaire gouverné, finalités de traitement, preuves de base légale, examen AIPD, calendriers de conservation et traitement contrôlé des demandes des personnes concernées.',
     'inventory_title' => 'Inventaire des données', 'inventory_description' => 'Sources officielles, propriété, classification et lieux de stockage.', 'requests_title' => 'Demandes des personnes concernées', 'requests_description' => 'Workflow avec contrôle d’identité pour l’accès, la rectification, l’effacement, la limitation et l’opposition.',
     'separator' => '·', 'label_separator' => ':', 'months' => 'mois', 'sensitive_personal_data' => 'Données personnelles sensibles', 'personal_data' => 'Données personnelles', 'activities' => 'activités', 'inventory_record_description' => 'Fiche officielle de l’inventaire des données',

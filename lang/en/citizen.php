@@ -109,4 +109,5 @@ return [
         'audit' => ['transitioned' => 'Case :reference transitioned to :status.', 'attachment_downloaded' => 'Case attachment downloaded: :title.'],
         'notifications' => ['assigned_title' => 'Citizen case assigned', 'assigned_message' => ':reference: :subject'],
     ],
+    'open_case_label' => 'Open case :reference', 'action_rationale_label' => ':action rationale',
 ];

@@ -20,4 +20,5 @@ return [
     ],
     'audit' => ['created' => 'Demande de voyage :reference créée.', 'transitioned' => 'Demande de voyage :reference passée au statut :status.', 'overdue_escalated' => 'La décision d’autorisation de voyage en retard a été transmise au niveau supérieur.', 'reminder_sent' => 'Le rappel d’échéance de l’autorisation de voyage a été envoyé.'],
     'command' => ['reminders_sent' => ':count rappel(s) d’autorisation de voyage envoyé(s).'],
+    'no_data_title' => 'Aucune donnée :title', 'actions_for_request' => 'Actions pour :reference',
 ];

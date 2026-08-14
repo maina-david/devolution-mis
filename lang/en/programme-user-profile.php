@@ -29,4 +29,5 @@ return [
     'permissions' => 'Permissions', 'field_separator' => ':', 'no_governed_records' => 'No governed records.',
     'active' => 'Active', 'inactive' => 'Inactive', 'revoked' => 'Revoked',
     'approved' => 'Approved', 'pending' => 'Pending', 'rejected' => 'Rejected',
+    'user_record_title' => ':name · User record',
 ];

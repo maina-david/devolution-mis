@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { download, preview } from '@/routes/evidence';
 import { exportMethod } from '@/routes/workspace';
 
@@ -396,15 +397,15 @@ function CreatePlan({ partners }: { partners: Option[] }) {
 
     return (
         <FormSheet
-            title="Create collaboration plan"
-            triggerLabel="Create plan"
-            description="Create a time-bound plan for independent approval."
+            title={copy.create_collaboration_plan}
+            triggerLabel={copy.create_plan}
+            description={copy.create_plan_description}
         >
             <Form {...storeCollaborationPlan.form({})} className="grid gap-4">
                 <SearchableSelect
                     id="plan-partner"
                     name="partner_profile_id"
-                    label="Partner"
+                    label={copy.partner}
                     options={partners}
                 />
                 <Label>
@@ -419,8 +420,12 @@ function CreatePlan({ partners }: { partners: Option[] }) {
                     {copy.objective}
                     <Textarea name="objective" minLength={20} required />
                 </Label>
-                <DatePickerField name="starts_on" label="Starts on" required />
-                <DatePickerField name="ends_on" label="Ends on" required />
+                <DatePickerField
+                    name="starts_on"
+                    label={copy.starts_on}
+                    required
+                />
+                <DatePickerField name="ends_on" label={copy.ends_on} required />
                 <Button type="submit">{copy.create_draft}</Button>
             </Form>
         </FormSheet>
@@ -437,9 +442,9 @@ function TransitionPlan({
 
     return (
         <FormSheet
-            title={`${transition} plan`}
+            title={interpolate(copy.transition_plan, { transition })}
             triggerLabel={transition}
-            description="Record an attributable plan lifecycle decision."
+            description={copy.plan_transition_description}
         >
             <Form
                 {...transitionCollaborationPlan.form({ plan: plan.id })}
@@ -481,9 +486,9 @@ function CreateAction({
 
     return (
         <FormSheet
-            title="Add accountable action"
-            triggerLabel="Add action"
-            description="Assign a measurable county action within the approved period."
+            title={copy.add_accountable_action}
+            triggerLabel={copy.add_action}
+            description={copy.add_action_description}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
@@ -498,7 +503,7 @@ function CreateAction({
                 <SearchableSelect
                     id={`action-county-${plan.id}`}
                     name="county_id"
-                    label="County"
+                    label={copy.county}
                     options={counties}
                 />
                 <Label>
@@ -516,19 +521,19 @@ function CreateAction({
                 <SearchableSelect
                     id={`action-owner-${plan.id}`}
                     name="accountable_user_id"
-                    label="Accountable owner"
+                    label={copy.accountable_owner}
                     options={users}
                 />
                 <SearchableSelect
                     id={`action-organization-${plan.id}`}
                     name="accountable_organization_id"
-                    label="Accountable organization"
+                    label={copy.accountable_organization}
                     options={organizations}
                     optional
                 />
                 <DatePickerField
                     name="due_on"
-                    label="Due on"
+                    label={copy.due_on}
                     required
                     min={plan.startsOn}
                 />
@@ -542,9 +547,9 @@ function UploadEvidence({ action }: { action: CollaborationAction }) {
 
     return (
         <FormSheet
-            title="Upload action evidence"
-            triggerLabel="Upload evidence"
-            description="Attach a scanned or born-digital implementation record."
+            title={copy.upload_action_evidence}
+            triggerLabel={copy.upload_evidence}
+            description={copy.upload_action_evidence_description}
         >
             <Form
                 {...storePartnerCollaborationAction.form({ action: action.id })}
@@ -565,7 +570,7 @@ function UploadEvidence({ action }: { action: CollaborationAction }) {
                 <SearchableSelect
                     id={`action-source-${action.id}`}
                     name="source_type"
-                    label="Source type"
+                    label={copy.source_type}
                     options={[
                         { id: 'scanned', name: 'Scanned original' },
                         { id: 'digital', name: 'Born digital' },
@@ -588,9 +593,9 @@ function SubmitUpdate({ action }: { action: CollaborationAction }) {
 
     return (
         <FormSheet
-            title="Submit action progress"
-            triggerLabel="Submit progress"
-            description="Completion requires clean evidence and independent verification."
+            title={copy.submit_action_progress}
+            triggerLabel={copy.submit_progress}
+            description={copy.submit_progress_description}
         >
             <Form
                 {...storeCollaborationActionUpdate.form({ action: action.id })}
@@ -621,9 +626,9 @@ function VerifyUpdate({ update }: { update: ActionUpdate }) {
 
     return (
         <FormSheet
-            title="Verify action progress"
-            triggerLabel="Verify"
-            description="Record an independent immutable verification decision."
+            title={copy.verify_action_progress}
+            triggerLabel={copy.verify}
+            description={copy.verify_progress_description}
         >
             <Form
                 {...verifyCollaborationActionUpdate.form({ update: update.id })}
@@ -632,7 +637,7 @@ function VerifyUpdate({ update }: { update: ActionUpdate }) {
                 <SearchableSelect
                     id={`verify-${update.id}`}
                     name="decision"
-                    label="Decision"
+                    label={copy.decision}
                     options={[
                         { id: 'verified', name: 'Verified' },
                         { id: 'rejected', name: 'Rejected' },

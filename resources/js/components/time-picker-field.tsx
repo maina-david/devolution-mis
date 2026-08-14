@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import SearchableSelect from '@/components/searchable-select';
 import { Label } from '@/components/ui/label';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 
 export default function TimePickerField({
     id,
@@ -21,6 +22,7 @@ export default function TimePickerField({
     error?: string;
     required?: boolean;
 }) {
+    const copy = useCommonCopy();
     const [internalValue, setInternalValue] = useState(defaultValue);
     const value = controlledValue ?? internalValue;
     const controlId = id ?? name ?? 'time';
@@ -63,14 +65,14 @@ export default function TimePickerField({
             <div className="grid grid-cols-2 gap-2">
                 <SearchableSelect
                     id={`${controlId}-hour`}
-                    label={`${label} hour`}
+                    label={interpolate(copy.hour_label, { label })}
                     options={hours.map((item) => ({ id: item, name: item }))}
                     value={hour}
                     onValueChange={(nextHour) => update(nextHour, minute)}
                 />
                 <SearchableSelect
                     id={`${controlId}-minute`}
-                    label={`${label} minute`}
+                    label={interpolate(copy.minute_label, { label })}
                     options={minutes.map((item) => ({ id: item, name: item }))}
                     value={minute}
                     onValueChange={(nextMinute) => update(hour, nextMinute)}

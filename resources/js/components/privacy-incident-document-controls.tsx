@@ -16,6 +16,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import type { WorkspaceDocument } from '@/components/workspace-data-table';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { store } from '@/routes/data-governance/privacy-incidents/documents';
 import { download, preview } from '@/routes/evidence';
 
@@ -30,6 +31,7 @@ export default function PrivacyIncidentDocumentControls({
     documents: WorkspaceDocument[];
     canUpload: boolean;
 }) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.privacyDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
@@ -142,7 +144,9 @@ export default function PrivacyIncidentDocumentControls({
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`${copy.preview} ${previewDocument.title}`}
+                            title={interpolate(commonCopy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />

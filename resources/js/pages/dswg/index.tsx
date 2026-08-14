@@ -47,6 +47,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { exportMethod } from '@/routes/workspace';
 
 type Meeting = {
@@ -604,7 +605,9 @@ function MeetingCard({
                 <FormSheet
                     title={copy.record_outcomes_title}
                     triggerLabel={copy.record_outcomes}
-                    description={`${copy.record_outcomes_description} ${meeting.reference}.`}
+                    description={interpolate(copy.record_outcomes_for_meeting, {
+                        reference: meeting.reference,
+                    })}
                 >
                     <Form
                         action={recordOutcomes({ meeting: meeting.id })}
@@ -653,7 +656,10 @@ function MeetingCard({
                     <FormSheet
                         title={copy.approve_minutes_title}
                         triggerLabel={copy.approve_minutes}
-                        description={`${copy.approve_minutes_description} ${meeting.reference}.`}
+                        description={interpolate(
+                            copy.approve_minutes_for_meeting,
+                            { reference: meeting.reference },
+                        )}
                     >
                         <Form
                             action={approveMinutes({ meeting: meeting.id })}
@@ -712,7 +718,9 @@ function DecisionForm({
             title={copy.register_decision_title}
             triggerLabel={copy.register_decision}
             icon={Gavel}
-            description={`${copy.register_decision_description} ${meeting.reference}.`}
+            description={interpolate(copy.register_decision_for_meeting, {
+                reference: meeting.reference,
+            })}
         >
             <Form
                 action={storeDecision({ meeting: meeting.id })}
@@ -779,7 +787,9 @@ function ActionForm({
             title={copy.assign_action_title}
             triggerLabel={copy.assign_action}
             icon={UsersRound}
-            description={`${copy.assign_action_description} ${meeting.reference}.`}
+            description={interpolate(copy.assign_action_for_meeting, {
+                reference: meeting.reference,
+            })}
             triggerDisabled={!catalogue.available}
             triggerTitle={
                 catalogue.available
@@ -968,9 +978,11 @@ function TransitionSheet({
 
     return (
         <FormSheet
-            title={`${label} ${copy.accountable_action}`}
+            title={interpolate(copy.action_transition_title, { label })}
             triggerLabel={label}
-            description={`${label} ${copy.transition_description}`}
+            description={interpolate(copy.action_transition_description, {
+                label,
+            })}
         >
             <Form
                 action={transitionAction({ action: actionId })}
@@ -987,7 +999,10 @@ function TransitionSheet({
                             name="comment"
                             required
                             defaultValue={`${label} ${copy.transition_comment}`}
-                            aria-label={`${label} ${copy.rationale}`}
+                            aria-label={interpolate(
+                                copy.action_rationale_label,
+                                { label },
+                            )}
                         />
                         <Button
                             type="submit"

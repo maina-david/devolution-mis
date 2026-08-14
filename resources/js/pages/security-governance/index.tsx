@@ -48,6 +48,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import {
     download as downloadEvidence,
@@ -913,8 +914,8 @@ function IdentityLifecycleForm({
     return (
         <FormSheet
             title={copy.forms.stage_identity_lifecycle_change}
-            description="Capture an already verified HR or IAM source event. A different access certifier must decide it before IDMIS access changes."
-            triggerLabel="Identity lifecycle"
+            description={copy.forms.identity_lifecycle_description}
+            triggerLabel={copy.forms.identity_lifecycle}
             icon={RefreshCw}
             size="xl"
         >
@@ -1019,7 +1020,9 @@ function IdentityLifecycleAction({
                     <Button
                         size="icon"
                         variant="ghost"
-                        aria-label={`Actions for ${change.sourceEventId}`}
+                        aria-label={interpolate(copy.forms.actions_for_record, {
+                            record: change.sourceEventId,
+                        })}
                     >
                         <MoreHorizontal aria-hidden="true" />
                     </Button>
@@ -1163,8 +1166,8 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title={copy.forms.record_security_response}
-            description="Create a live incident or an explicitly labelled exercise. Severity snapshots the acknowledgement and containment targets."
-            triggerLabel="Security response"
+            description={copy.forms.security_response_description}
+            triggerLabel={copy.forms.security_response}
             icon={RadioTower}
             size="xl"
         >
@@ -1303,7 +1306,9 @@ function SecurityIncidentAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${incident.reference}`}
+                        aria-label={interpolate(copy.forms.actions_for_record, {
+                            record: incident.reference,
+                        })}
                     >
                         <MoreHorizontal className="size-4" />
                     </Button>
@@ -1536,7 +1541,9 @@ function SecurityIncidentTransitionForm({
             <input type="hidden" name="transition" value={transition} />
             <TextField
                 name="narrative"
-                label={`${humanize(transition)} actions and outcome`}
+                label={interpolate(copy.forms.transition_actions_outcome, {
+                    transition: humanize(transition),
+                })}
             />
             {['eradicate', 'recover'].includes(transition) && (
                 <Field
@@ -1651,7 +1658,10 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for supply-chain scan ${scan.id}`}
+                        aria-label={interpolate(
+                            copy.forms.actions_for_supply_chain_scan,
+                            { id: scan.id },
+                        )}
                     >
                         <MoreHorizontal className="size-4" />
                     </Button>
@@ -1736,7 +1746,9 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 value={scan.composerLockChecksum}
                             />
                             <EvidenceDetail
-                                label={`${scan.javascriptLockfile} SHA-256`}
+                                label={interpolate(copy.forms.sha256_label, {
+                                    file: scan.javascriptLockfile,
+                                })}
                                 value={scan.javascriptLockChecksum}
                             />
                             <EvidenceDetail
@@ -1796,8 +1808,8 @@ function DelegationForm({
     return (
         <FormSheet
             title={copy.forms.request_temporary_access}
-            description="Request a time-bound, least-privilege grant for independent approval. Emergency grants are limited to four hours and require post-use review."
-            triggerLabel="Temporary access"
+            description={copy.forms.temporary_access_description}
+            triggerLabel={copy.forms.temporary_access}
             icon={KeyRound}
             size="xl"
             triggerDisabled={!catalogue.available}
@@ -1917,7 +1929,9 @@ function DelegationAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${delegation.reference}`}
+                        aria-label={interpolate(copy.forms.actions_for_record, {
+                            record: delegation.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -2134,7 +2148,9 @@ function ThreatAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${threat.reference}`}
+                        aria-label={interpolate(copy.forms.actions_for_record, {
+                            record: threat.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -2305,7 +2321,9 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`View ${campaign.reference}`}
+                        aria-label={interpolate(copy.forms.view_record, {
+                            record: campaign.reference,
+                        })}
                         onClick={() => setOpen(true)}
                     >
                         <Eye />
@@ -2604,8 +2622,8 @@ function ThreatForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title={copy.forms.register_threat_scenario}
-            description="Capture the affected asset, STRIDE category, entry points, inherent risk and treatment before independent review."
-            triggerLabel="Threat"
+            description={copy.forms.threat_description}
+            triggerLabel={copy.forms.threat}
             icon={Plus}
             size="xl"
         >
@@ -2695,8 +2713,8 @@ function CampaignForm({ users, roles }: { users: Option[]; roles: Option[] }) {
     return (
         <FormSheet
             title={copy.forms.launch_access_certification}
-            description="Create immutable access snapshots for selected programme roles and assign an independent reviewer."
-            triggerLabel="Access review"
+            description={copy.forms.access_review_description}
+            triggerLabel={copy.forms.access_review}
             icon={Fingerprint}
             size="xl"
         >

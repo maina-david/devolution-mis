@@ -6,7 +6,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 0,
-    authenticatedSemanticLiterals: 94,
+    authenticatedSemanticLiterals: 0,
     backendMessages: 0,
 };
 
@@ -70,8 +70,26 @@ const publicPagePatterns = [
     '/pages/error.tsx',
 ];
 const semanticAttributePattern =
-    /\b(?:aria-label|aria-description|label|placeholder|title)="([^"\n]*[A-Za-z][^"\n]*)"/gu;
-const semanticTextPattern = />\s*([A-Z][A-Za-z][^<{\n]*?)\s*</gu;
+    /\b(?:aria-label|aria-description|label|placeholder|title|description|triggerLabel|emptyTitle|emptyDescription|confirmLabel|cancelLabel)="([^"\n]*[A-Za-z][^"\n]*)"/gu;
+const semanticExpressionAttributePattern =
+    /\b(?:aria-label|aria-description|label|placeholder|title|description|triggerLabel|emptyTitle|emptyDescription|confirmLabel|cancelLabel)=\{\s*['"`]([^'"`\n]*[A-Za-z][^'"`\n]*)['"`]\s*\}/gu;
+const semanticObjectPropertyPattern =
+    /\b(?:ariaLabel|label|placeholder|title|description|triggerLabel|emptyTitle|emptyDescription|confirmLabel|cancelLabel)\s*:\s*['"`]([^'"`\n]*[A-Za-z][^'"`\n]*)['"`]/gu;
+const semanticTextPattern = /(?<!=)>\s*([A-Z][A-Za-z][^<{\n]*?)\s*</gu;
+const approvedTechnicalLiterals = new Set([
+    'ACT-01',
+    'CAP-2026-001',
+    'DSWG-WASH',
+    'DSWG-WASH-QTR',
+    'EVAL-2026-01',
+    '${fn.code} · ${criterion.code} · ${requirement.name}',
+    'Integrated Devolution Management Information System',
+    'IDMIS',
+    'M07-OUT-01',
+    'OpenStreetMap',
+    'PIM-2026-001',
+    'https://',
+]);
 const authenticatedSemanticMessages = [
     ...globSync('resources/js/pages/**/*.tsx'),
     ...globSync('resources/js/components/**/*.tsx'),
@@ -85,13 +103,20 @@ const authenticatedSemanticMessages = [
 
     const source = readFileSync(file, 'utf8');
 
-    return [semanticAttributePattern, semanticTextPattern].flatMap((pattern) =>
-        [...source.matchAll(pattern)].map((match) => ({
-            file,
-            offset: match.index,
-            text: match[1].trim(),
-        })),
-    );
+    return [
+        semanticAttributePattern,
+        semanticExpressionAttributePattern,
+        semanticObjectPropertyPattern,
+        semanticTextPattern,
+    ]
+        .flatMap((pattern) =>
+            [...source.matchAll(pattern)].map((match) => ({
+                file,
+                offset: match.index,
+                text: match[1].trim(),
+            })),
+        )
+        .filter((message) => !approvedTechnicalLiterals.has(message.text));
 });
 const report = {
     frontendLiterals: frontendMessages.length,
@@ -102,6 +127,14 @@ const report = {
         authenticatedSemanticMessages.map((message) => message.file),
     ).size,
     backendMessages: backendMessages.length,
+    authenticatedSemanticFilesByCount: Object.entries(
+        Object.groupBy(
+            authenticatedSemanticMessages,
+            (message) => message.file,
+        ),
+    )
+        .map(([file, messages]) => ({ file, count: messages.length }))
+        .sort((left, right) => right.count - left.count),
     limits,
 };
 

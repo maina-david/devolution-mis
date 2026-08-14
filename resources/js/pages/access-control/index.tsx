@@ -36,6 +36,7 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import { interpolate } from '@/hooks/use-localization';
 import { index } from '@/routes/access-control';
 import { update as updateRole } from '@/routes/access-control/roles';
 import { update as updateUserPermissions } from '@/routes/access-control/user-permissions';
@@ -241,7 +242,12 @@ export default function AccessControl({
                                                         <Button
                                                             variant="ghost"
                                                             size="icon"
-                                                            aria-label={`${copy.actions_for} ${user.name}`}
+                                                            aria-label={interpolate(
+                                                                copy.actions_for_user,
+                                                                {
+                                                                    user: user.name,
+                                                                },
+                                                            )}
                                                         >
                                                             <Ellipsis />
                                                         </Button>
@@ -506,11 +512,10 @@ function humanize(value: string): string {
         .replace(/\b\w/gu, (letter) => letter.toUpperCase());
 }
 
-AccessControl.layout = () => ({
-    breadcrumbs: [
-        {
-            title: 'Roles & permissions',
-            href: index(),
-        },
-    ],
-});
+function AccessControlLayout() {
+    const copy = useAccessControlCopy();
+
+    return { breadcrumbs: [{ title: copy.title, href: index() }] };
+}
+
+AccessControl.layout = AccessControlLayout;

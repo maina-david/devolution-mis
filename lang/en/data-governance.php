@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'lifecycle_status' => 'Lifecycle status', 'county' => 'County',
     'eyebrow' => 'Privacy and information governance', 'title' => 'Data governance control centre', 'description' => 'Governed inventory, processing purposes, lawful-basis evidence, DPIA screening, retention schedules and controlled data-subject request handling.',
     'inventory_title' => 'Data inventory', 'inventory_description' => 'Authoritative sources, ownership, classification and storage locations.', 'requests_title' => 'Data-subject requests', 'requests_description' => 'Identity-controlled access, correction, erasure, restriction and objection workflow.',
     'separator' => '·', 'label_separator' => ':', 'months' => 'months', 'sensitive_personal_data' => 'Sensitive personal data', 'personal_data' => 'Personal data', 'activities' => 'activities', 'inventory_record_description' => 'Authoritative data inventory record',

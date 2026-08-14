@@ -10,6 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { cn } from '@/lib/utils';
 import { update as updateLocale } from '@/routes/locale';
 
@@ -21,6 +22,7 @@ export function LocaleMenu({
     className?: string;
 }) {
     const { localization } = usePage().props;
+    const commonCopy = useCommonCopy();
     const selectedLocale = localization.supported.find(
         (locale) => locale.code === localization.current,
     );
@@ -37,7 +39,12 @@ export function LocaleMenu({
                         className,
                     )}
                     title={localization.copy.chooseLanguage}
-                    aria-label={`${localization.copy.chooseLanguage}. ${localization.copy.currentLanguage}: ${selectedLocale?.nativeLabel ?? localization.current}`}
+                    aria-label={interpolate(commonCopy.language_menu_label, {
+                        choose: localization.copy.chooseLanguage,
+                        current: localization.copy.currentLanguage,
+                        language:
+                            selectedLocale?.nativeLabel ?? localization.current,
+                    })}
                 >
                     <span aria-hidden="true">{selectedLocale?.flag}</span>
                     <span className="hidden text-sm font-medium sm:inline">

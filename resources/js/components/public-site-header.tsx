@@ -5,6 +5,7 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import KenyaFlag from '@/components/kenya-flag';
 import { LocaleMenu } from '@/components/locale-menu';
 import { Button } from '@/components/ui/button';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { dashboard, faqs, help, home, login } from '@/routes';
 import { index as citizenEngagement } from '@/routes/citizen-engagement';
 import { verify as verifyCertificate } from '@/routes/learning/certificates';
@@ -14,6 +15,7 @@ const navigationLink =
 const productName = 'IDMIS';
 
 export function PublicSiteHeader() {
+    const commonCopy = useCommonCopy();
     const { auth, localization } = usePage().props;
     const { copy } = localization;
     const dashboardUrl = auth.user ? dashboard() : login();
@@ -48,7 +50,9 @@ export function PublicSiteHeader() {
                 <Link
                     href={home()}
                     className="flex min-w-0 items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:outline-none"
-                    aria-label={`IDMIS ${copy.home}`}
+                    aria-label={interpolate(commonCopy.idmis_home, {
+                        home: copy.home,
+                    })}
                 >
                     <AppLogoIcon className="size-11 shrink-0" />
                     <span className="min-w-0">

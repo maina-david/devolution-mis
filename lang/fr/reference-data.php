@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'search_placeholder' => 'Rechercher les données de référence ou la couverture du programme', 'coverage_status' => 'État de la couverture',
     'name' => 'Nom', 'type' => 'Type', 'description' => 'Description', 'parent_sector' => 'Secteur parent', 'lead_organization' => 'Organisation responsable',
     'sector' => 'Secteur', 'currency' => 'Devise', 'create_county' => 'Créer un comté', 'select_all_counties_on_this_page' => 'Sélectionner tous les comtés de cette page',
     'county_code' => 'Code du comté', 'county_name' => 'Nom du comté', 'official_website' => 'Site web officiel', 'map_x' => 'X de la carte', 'map_y' => 'Y de la carte',
@@ -70,4 +71,5 @@ return [
     'value_constituency' => 'Circonscription',
     'value_county_sub_county' => 'Sous-comté du comté',
     'value_national_sub_county' => 'Sous-comté national',
+    'create_organization_description' => 'Ajoutez une organisation au registre canonique. Publiez une version avant tout échange en aval.', 'create_sector_description' => 'Ajoutez une classification thématique et de rapport gouvernée.', 'create_programme_description' => 'Ajoutez un dossier de portefeuille de programme faisant autorité.', 'create_county_description' => 'Ajoutez une référence de comté. Les éléments d’identité officiels exigent une vérification de provenance distincte.', 'select_record' => 'Sélectionner :record', 'actions_for_record' => 'Actions pour :record', 'add_coverage' => 'Ajouter une couverture', 'add_coverage_description' => 'Reliez un programme à un comté pour une période effective sans chevauchement avec une preuve source attribuable.', 'no_coverage_description' => 'Ajoutez la première affectation de comté datée ou ajustez les filtres actifs.', 'create_release' => 'Créer une version', 'create_release_description' => 'Capturez le catalogue actuel complet des comtés, organisations, secteurs et programmes pour publication indépendante.', 'actions_for_release' => 'Actions pour la version :version des données de référence', 'no_releases_description' => 'Aucune version gouvernée des données de référence n’a été soumise.',
 ];

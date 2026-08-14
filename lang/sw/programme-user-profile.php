@@ -29,4 +29,5 @@ return [
     'permissions' => 'Ruhusa', 'field_separator' => ':', 'no_governed_records' => 'Hakuna rekodi zinazosimamiwa.',
     'active' => 'Inatumika', 'inactive' => 'Haitumiki', 'revoked' => 'Imebatilishwa',
     'approved' => 'Imeidhinishwa', 'pending' => 'Inasubiri', 'rejected' => 'Imekataliwa',
+    'user_record_title' => ':name · Rekodi ya mtumiaji',
 ];

@@ -151,4 +151,5 @@ return [
             'published' => 'Service-desk policy independently published.',
         ],
     ],
+    'configure_policy_description' => 'Create a new immutable candidate version. An independent publication decision is required before runtime use.', 'configure_policy' => 'Configure policy', 'publish_policy' => 'Publish :code v:version', 'review_publication_description' => 'Verify the calendar, targets, roster and escalation matrix. Publication is immutable and requires an actor independent of the author.', 'review_publication' => 'Review publication', 'new_ticket_description' => 'Create a governed service request. Personally sensitive narrative is encrypted at rest.', 'new_support_ticket' => 'New support ticket', 'assignment_description' => 'Assign an authorized resolver who is separate from the requester.', 'status_change_description' => 'All status changes are scope checked and appended to the immutable activity ledger.', 'support_record_description' => 'Scanned and born-digital records are privately stored, malware scanned, checksummed and sent for OCR when supported.',
 ];

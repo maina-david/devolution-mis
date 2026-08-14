@@ -1,12 +1,15 @@
 import type { SVGAttributes } from 'react';
+import { useCommonCopy } from '@/hooks/use-localization';
 
 export default function KenyaFlag(props: SVGAttributes<SVGElement>) {
+    const copy = useCommonCopy();
+
     return (
         <svg
             {...props}
             viewBox="0 0 90 60"
             role="img"
-            aria-label="Flag of Kenya"
+            aria-label={copy.flag_of_kenya}
             xmlns="http://www.w3.org/2000/svg"
         >
             <rect width="90" height="60" rx="2" fill="#006600" />

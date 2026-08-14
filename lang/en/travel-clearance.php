@@ -20,4 +20,5 @@ return [
     ],
     'audit' => ['created' => 'Travel request :reference created.', 'transitioned' => 'Travel request :reference transitioned to :status.', 'overdue_escalated' => 'Overdue travel-clearance decision escalated.', 'reminder_sent' => 'Upcoming travel-clearance deadline reminder sent.'],
     'command' => ['reminders_sent' => 'Sent :count travel-clearance reminder(s).'],
+    'no_data_title' => 'No :title data', 'actions_for_request' => 'Actions for :reference',
 ];

@@ -59,4 +59,5 @@ return [
         'audit' => ['transitioned' => 'Kesi :reference imehamishwa hadi :status.', 'attachment_downloaded' => 'Kiambatisho cha kesi kimepakuliwa: :title.'],
         'notifications' => ['assigned_title' => 'Kesi ya mwananchi imegawiwa', 'assigned_message' => ':reference: :subject'],
     ],
+    'open_case_label' => 'Fungua kesi :reference', 'action_rationale_label' => 'Sababu ya :action',
 ];

@@ -50,6 +50,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import {
     publish,
@@ -260,7 +261,7 @@ export default function IntegrationManagement({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Operational status',
+                            label: copy.operational_status,
                             options: [
                                 'design',
                                 'contract_review',
@@ -277,7 +278,7 @@ export default function IntegrationManagement({
                         },
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.county_id,
                         },
@@ -295,7 +296,7 @@ export default function IntegrationManagement({
                     {systems.length === 0 && (
                         <WorkspaceEmptyState
                             title={copy.no_integration_systems_registered}
-                            description="Register the first source system and submit a versioned interface contract for independent approval."
+                            description={copy.no_systems_description}
                             className="min-h-56 lg:col-span-2 xl:col-span-3"
                         />
                     )}
@@ -303,7 +304,9 @@ export default function IntegrationManagement({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
                         title={copy.exchange_register}
-                        description={`${exchanges.total.toLocaleString()} payload-safe exchange records`}
+                        description={interpolate(copy.exchange_record_count, {
+                            count: exchanges.total.toLocaleString(),
+                        })}
                         filters={filters}
                     />
                     {exchangeRows.length ? (
@@ -341,7 +344,7 @@ export default function IntegrationManagement({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_matching_exchanges}
-                            description="Dispatch a schema-valid sandbox payload or adjust the filters."
+                            description={copy.no_exchanges_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -392,7 +395,7 @@ export default function IntegrationManagement({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_reconciliation_exceptions}
-                            description="No discrepancies match the current scope and filters."
+                            description={copy.no_discrepancies_description}
                             className="min-h-56 border-0"
                         />
                     )}
@@ -434,7 +437,10 @@ function SystemCard({
                             <Button
                                 size="icon"
                                 variant="ghost"
-                                aria-label={`Actions for ${system.name}`}
+                                aria-label={interpolate(
+                                    copy.actions_for_record,
+                                    { record: system.name },
+                                )}
                             >
                                 <MoreHorizontal />
                             </Button>
@@ -620,9 +626,12 @@ function PublishContractForm({
 
     return (
         <FormSheet
-            title={`Publish ${contract.name} v${contract.version}`}
-            description="Independently approve the immutable schema contract. Production interfaces require source-owner and data-sharing references."
-            triggerLabel="Review and publish"
+            title={interpolate(copy.publish_contract, {
+                name: contract.name,
+                version: contract.version,
+            })}
+            description={copy.publish_contract_description}
+            triggerLabel={copy.review_and_publish}
             icon={ShieldCheck}
         >
             <Form
@@ -670,8 +679,8 @@ function SystemForm({
     return (
         <FormSheet
             title={copy.register_integration_system}
-            description="Register endpoint metadata and a vault reference only. Never store credentials in this form."
-            triggerLabel="New system"
+            description={copy.new_system_description}
+            triggerLabel={copy.new_system}
             icon={Plus}
             size="xl"
             triggerDisabled={!catalogue.available}
@@ -829,8 +838,8 @@ function ContractForm({ systems }: { systems: System[] }) {
     return (
         <FormSheet
             title={copy.submit_interface_contract}
-            description="Define the schema, mappings, idempotency and retry policy for independent publication."
-            triggerLabel="New contract"
+            description={copy.new_contract_description}
+            triggerLabel={copy.new_contract}
             icon={FileJson}
             size="xl"
         >
@@ -1014,7 +1023,9 @@ function ExchangeAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for exchange ${exchange.correlationId}`}
+                        aria-label={interpolate(copy.actions_for_exchange, {
+                            id: exchange.correlationId,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1149,7 +1160,7 @@ function ExchangeAction({
                         ) : (
                             <WorkspaceEmptyState
                                 title={copy.no_retained_attempts}
-                                description="This exchange predates the immutable attempt ledger."
+                                description={copy.legacy_exchange_description}
                                 className="min-h-40"
                             />
                         )}
@@ -1185,7 +1196,9 @@ function ExceptionAction({
                 variant="ghost"
                 size="icon"
                 onClick={() => setOpen(true)}
-                aria-label={`View reconciliation exception ${exception.id}`}
+                aria-label={interpolate(copy.view_reconciliation_exception, {
+                    id: exception.id,
+                })}
             >
                 <MoreHorizontal />
             </Button>

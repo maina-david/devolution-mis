@@ -16,6 +16,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import type { WorkspaceDocument } from '@/components/workspace-data-table';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { store as storeActionDocument } from '@/routes/dswg/actions/documents';
 import { store as storeMeetingDocument } from '@/routes/dswg/meetings/documents';
 import { download, preview } from '@/routes/evidence';
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export default function DswgDocumentControls(props: Props) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.dswg;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
@@ -141,7 +143,9 @@ export default function DswgDocumentControls(props: Props) {
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`${copy.preview} ${previewDocument.title}`}
+                            title={interpolate(commonCopy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -153,6 +157,7 @@ export default function DswgDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.dswg;
     const meetingPurposes =
         props.meetingStatus === 'scheduled'
@@ -171,7 +176,9 @@ function UploadRecord(props: Props) {
 
     return (
         <FormSheet
-            title={`${copy.upload} ${copy[props.subjectType]} ${copy.record}`}
+            title={interpolate(commonCopy.upload_record, {
+                record: `${copy[props.subjectType]} ${copy.record}`,
+            })}
             triggerLabel={copy.upload_record}
             icon={Upload}
             description={copy.upload_record_description}

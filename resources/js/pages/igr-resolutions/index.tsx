@@ -228,11 +228,6 @@ type Props = {
     };
 };
 
-const gapTrendConfig = {
-    reported: { label: 'Reported', color: 'var(--chart-3)' },
-    accepted: { label: 'Accepted', color: 'var(--chart-1)' },
-} satisfies ChartConfig;
-
 export default function IgrResolutionsIndex({
     workspace,
     gapWorkspace,
@@ -244,6 +239,10 @@ export default function IgrResolutionsIndex({
     options,
 }: Props) {
     const copy = usePage().props.localization.igr.ui;
+    const gapTrendConfig = {
+        reported: { label: copy.reported, color: 'var(--chart-3)' },
+        accepted: { label: copy.accepted, color: 'var(--chart-1)' },
+    } satisfies ChartConfig;
 
     return (
         <>
@@ -266,7 +265,7 @@ export default function IgrResolutionsIndex({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Gap status',
+                            label: copy.gap_status,
                             value: filters.status,
                             options: [
                                 'open',
@@ -280,13 +279,13 @@ export default function IgrResolutionsIndex({
                         },
                         {
                             key: 'county_id',
-                            label: 'Affected county',
+                            label: copy.affected_county,
                             value: filters.countyId,
                             options: options.counties,
                         },
                         {
                             key: 'severity',
-                            label: 'Gap severity',
+                            label: copy.gap_severity,
                             value: filters.severity,
                             options: ['low', 'medium', 'high', 'critical'].map(
                                 (value) => ({ id: value, name: value }),
@@ -294,7 +293,7 @@ export default function IgrResolutionsIndex({
                         },
                         {
                             key: 'gap_category_id',
-                            label: 'Gap category',
+                            label: copy.gap_category,
                             value: filters.gapCategoryId,
                             options: options.gapCategories,
                         },
@@ -362,7 +361,9 @@ export default function IgrResolutionsIndex({
                             {dependencyAnalytics.criticalPaths.length === 0 ? (
                                 <WorkspaceEmptyState
                                     title={copy.no_dependency_paths_in_scope}
-                                    description="Add a blocking or informative prerequisite to expose path analysis."
+                                    description={
+                                        copy.add_dependency_path_description
+                                    }
                                 />
                             ) : (
                                 dependencyAnalytics.criticalPaths.map(
@@ -370,7 +371,10 @@ export default function IgrResolutionsIndex({
                                         <ol
                                             key={`${path.nodes.at(-1)?.id}-${pathIndex}`}
                                             className="flex flex-wrap items-center gap-2 rounded-lg border p-3"
-                                            aria-label={`Dependency path with ${path.depth} links`}
+                                            aria-label={interpolate(
+                                                copy.dependency_path_label,
+                                                { count: path.depth },
+                                            )}
                                         >
                                             {path.nodes.map((node, index) => (
                                                 <li
@@ -523,7 +527,13 @@ export default function IgrResolutionsIndex({
                                             value={
                                                 (band.total / activeTotal) * 100
                                             }
-                                            aria-label={`${band.name}: ${band.total} active gaps`}
+                                            aria-label={interpolate(
+                                                copy.active_gaps_label,
+                                                {
+                                                    name: band.name,
+                                                    count: band.total,
+                                                },
+                                            )}
                                         />
                                     </div>
                                 );
@@ -606,7 +616,9 @@ export default function IgrResolutionsIndex({
                         {resolutions.length === 0 ? (
                             <WorkspaceEmptyState
                                 title={copy.no_resolutions_available}
-                                description="Record an authorized intergovernmental forum and its first resolution to begin implementation tracking."
+                                description={
+                                    copy.record_forum_and_resolution_description
+                                }
                                 className="min-h-56 border"
                             />
                         ) : (
@@ -674,7 +686,7 @@ export default function IgrResolutionsIndex({
                         ) : (
                             <WorkspaceEmptyState
                                 title={copy.no_matching_implementation_gaps}
-                                description="No governed gaps match the selected reporting filters."
+                                description={copy.no_governed_gaps_description}
                                 className="min-h-56 border-0"
                             />
                         )}
@@ -732,7 +744,9 @@ export default function IgrResolutionsIndex({
                         ) : (
                             <WorkspaceEmptyState
                                 title={copy.no_matching_resolutions}
-                                description="Adjust the search or reporting dates, or record a resolution from an authorized forum."
+                                description={
+                                    copy.no_matching_resolutions_description
+                                }
                                 className="min-h-72 border-0"
                             />
                         )}
@@ -767,7 +781,10 @@ function AnalyticsRanking({
                         </div>
                         <Progress
                             value={(row.total / maximum) * 100}
-                            aria-label={`${row.name}: ${row.total} gaps`}
+                            aria-label={interpolate(copy.county_gaps_label, {
+                                name: row.name,
+                                count: row.total,
+                            })}
                         />
                     </div>
                 ))
@@ -789,8 +806,8 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
         <div className="flex flex-wrap gap-3">
             <FormSheet
                 title={copy.establish_igr_forum}
-                triggerLabel="Establish forum"
-                description="Create the authoritative source forum."
+                triggerLabel={copy.establish_forum}
+                description={copy.establish_forum_description}
             >
                 <Form
                     action={storeForum({})}
@@ -844,8 +861,8 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
             </FormSheet>
             <FormSheet
                 title={copy.record_formal_igr_meeting}
-                triggerLabel="Record meeting"
-                description="Capture quorum and minutes provenance before linking adopted resolutions."
+                triggerLabel={copy.record_meeting}
+                description={copy.record_meeting_description}
             >
                 <Form
                     action={storeMeeting({})}
@@ -922,8 +939,8 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
             </FormSheet>
             <FormSheet
                 title={copy.create_implementation_gap_category}
-                triggerLabel="Create gap category"
-                description="Configure a reusable classification and its default risk severity."
+                triggerLabel={copy.create_gap_category}
+                description={copy.create_gap_category_description}
             >
                 <Form
                     action={storeGapCategory({})}
@@ -971,9 +988,9 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
             </FormSheet>
             <FormSheet
                 title={copy.register_adopted_resolution}
-                triggerLabel="Register resolution"
+                triggerLabel={copy.register_resolution}
                 size="xl"
-                description="Assign exactly one lead and any supporting responsible parties."
+                description={copy.register_resolution_description}
             >
                 <Form
                     action={storeResolution({})}
@@ -1315,8 +1332,10 @@ function ResolutionCard({
                 ['open', 'in_progress'].includes(resolution.status) && (
                     <FormSheet
                         title={copy.report_implementation_gap}
-                        triggerLabel="Report gap"
-                        description={`Classify, assign and deadline a gap affecting ${resolution.number}.`}
+                        triggerLabel={copy.report_gap}
+                        description={interpolate(copy.report_gap_description, {
+                            number: resolution.number,
+                        })}
                     >
                         <Form
                             action={storeGap({ resolution: resolution.id })}
@@ -1413,8 +1432,11 @@ function ResolutionCard({
                 !['closure_review', 'closed'].includes(resolution.status) && (
                     <FormSheet
                         title={copy.add_resolution_dependency}
-                        triggerLabel="Add dependency"
-                        description={`Record the prerequisite that governs ${resolution.number}. Circular and cross-scope links are rejected.`}
+                        triggerLabel={copy.add_dependency}
+                        description={interpolate(
+                            copy.add_dependency_description,
+                            { number: resolution.number },
+                        )}
                     >
                         <Form
                             action={storeDependency({
@@ -1461,8 +1483,11 @@ function ResolutionCard({
                 ['open', 'in_progress'].includes(resolution.status) && (
                     <FormSheet
                         title={copy.record_implementation_progress}
-                        triggerLabel="Record progress"
-                        description={`Update ${resolution.number} with evidence and any implementation gap.`}
+                        triggerLabel={copy.record_progress}
+                        description={interpolate(
+                            copy.record_progress_description,
+                            { number: resolution.number },
+                        )}
                     >
                         <Form
                             action={storeUpdate({ resolution: resolution.id })}

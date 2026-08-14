@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'projects' => 'Miradi', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v',
+    'projects' => 'Miradi', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v', 'advance_lifecycle' => 'Endeleza mzunguko wa mradi', 'move_to_planning' => 'Hamisha kwenye upangaji', 'start_execution' => 'Anza utekelezaji', 'submit_closure' => 'Wasilisha kwa kufungwa', 'approve_closure' => 'Idhinisha kufungwa',
     'document_register' => 'Rejesta ya nyaraka za mradi',
     'document_register_description' => 'Rekodi za mzunguko zinazodhibitiwa zenye hifadhi ya faragha, karantini ya programu hasidi, checksum, ustahiki wa OCR, matoleo yasiyobadilika na upataji unaokaguliwa.',
     'source_type' => 'Aina ya chanzo', 'document' => 'Waraka', 'scan_label' => 'Ukaguzi:', 'ocr_label' => 'OCR:',

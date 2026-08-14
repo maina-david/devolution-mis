@@ -2,6 +2,7 @@ import type { ICity, IState } from 'country-state-city';
 import { useEffect, useMemo, useState } from 'react';
 import ReferenceCatalogSelect from '@/components/reference-catalog-select';
 import SearchableSelect from '@/components/searchable-select';
+import { useCommonCopy } from '@/hooks/use-localization';
 import {
     DEFAULT_COUNTRY_CODE,
     DEFAULT_COUNTRY_NAME,
@@ -17,6 +18,7 @@ export default function GeographyCatalogFields({
     subdivisionError?: string;
     cityError?: string;
 }) {
+    const copy = useCommonCopy();
     const [countryName, setCountryName] = useState(DEFAULT_COUNTRY_NAME);
     const [subdivisionName, setSubdivisionName] = useState('');
     const [cityName, setCityName] = useState('');
@@ -77,7 +79,7 @@ export default function GeographyCatalogFields({
             <ReferenceCatalogSelect
                 id="travel-country"
                 name="destination_country"
-                label="Destination country"
+                label={copy.destination_country}
                 catalog="country-name"
                 value={countryName}
                 onValueChange={(value) => {
@@ -90,7 +92,7 @@ export default function GeographyCatalogFields({
             <SearchableSelect
                 id="travel-subdivision"
                 name="destination_county"
-                label="Destination county / region"
+                label={copy.destination_region}
                 options={subdivisions.map((candidate) => ({
                     id: candidate.name,
                     name: `${candidate.name} (${candidate.isoCode})`,
@@ -106,7 +108,7 @@ export default function GeographyCatalogFields({
             <SearchableSelect
                 id="travel-city"
                 name="destination_city"
-                label="Destination city"
+                label={copy.destination_city}
                 options={cities.map((city) => ({
                     id: city.name,
                     name: city.name,

@@ -16,6 +16,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import type { WorkspaceDocument } from '@/components/workspace-data-table';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { download, preview } from '@/routes/evidence';
 import { store } from '@/routes/igr-resolutions/documents';
 
@@ -27,6 +28,7 @@ type Props = {
 };
 
 export default function IgrDocumentControls(props: Props) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.igrDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
@@ -137,7 +139,9 @@ export default function IgrDocumentControls(props: Props) {
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`${copy.preview} ${previewDocument.title}`}
+                            title={interpolate(commonCopy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />

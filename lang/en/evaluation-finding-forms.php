@@ -1,0 +1,8 @@
+<?php
+
+return [
+    'issue_evaluation_finding' => 'Issue evaluation finding', 'approved_evaluation' => 'Approved evaluation', 'reference' => 'Reference', 'title_label' => 'Title', 'severity' => 'Severity', 'accountable_owner' => 'Accountable owner', 'finding' => 'Finding', 'recommendation' => 'Recommendation', 'response_due_date' => 'Response due date', 'no_evaluation_findings' => 'No evaluation findings',
+    'record_title' => 'Record title', 'document' => 'Document', 'retained_evidence' => 'Retained evidence', 'verified_progress_requested' => 'Verified progress requested (%)', 'implementation_narrative' => 'Implementation narrative', 'decision_note' => 'Decision note', 'closure_decision' => 'Closure decision', 'no_recommendation_actions' => 'No recommendation actions',
+    'action_code' => 'Action code', 'weight' => 'Weight (%)', 'deadline' => 'Deadline', 'success_indicator' => 'Success indicator', 'action_description' => 'Action description', 'target' => 'Target', 'clean_action_evidence' => 'Clean action evidence', 'progress' => 'Progress (%)',
+    'issue_finding_description' => 'Bind a recommendation to an approved evaluation and assign a scoped accountable owner.', 'issue_finding' => 'Issue finding', 'no_findings_description' => 'Approved evaluation findings and recommendation follow-up will appear here.', 'finding_progress_label' => ':reference progress: :progress%', 'actions_for_record' => 'Actions for :record', 'action_weight_label' => ':reference action weight: :weight% of 100%', 'no_actions_description' => 'Add separately owned and weighted actions to create the implementation plan.', 'verified_progress_label' => ':code verified progress: :progress%',
+];

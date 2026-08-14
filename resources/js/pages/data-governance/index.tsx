@@ -47,6 +47,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { store as storeAsset } from '@/routes/data-governance/assets';
 import {
@@ -357,7 +358,7 @@ export default function DataGovernance({
                     selectFilters={[
                         {
                             key: 'status',
-                            label: 'Lifecycle status',
+                            label: governanceCopy.lifecycle_status,
                             options: [
                                 'draft',
                                 'submitted',
@@ -377,7 +378,7 @@ export default function DataGovernance({
                         },
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: governanceCopy.county,
                             options: counties.map(toSearchOption),
                             value: filters.county_id,
                         },
@@ -418,7 +419,10 @@ export default function DataGovernance({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
                         title={governanceCopy.personal_data_breach_register}
-                        description={`${privacyIncidents.total.toLocaleString()} controlled incident records`}
+                        description={interpolate(
+                            governanceCopy.controlled_incident_count,
+                            { count: privacyIncidents.total.toLocaleString() },
+                        )}
                         filters={filters}
                         workspace="privacy-incidents"
                     />
@@ -460,7 +464,9 @@ export default function DataGovernance({
                     ) : (
                         <WorkspaceEmptyState
                             title={governanceCopy.no_privacy_incidents}
-                            description="No breach incidents match the current filters. Report suspected incidents immediately when they occur."
+                            description={
+                                governanceCopy.no_breach_incidents_description
+                            }
                             className="min-h-64 border-0"
                         />
                     )}
@@ -483,7 +489,9 @@ export default function DataGovernance({
                         {assets.length === 0 && (
                             <WorkspaceEmptyState
                                 title={governanceCopy.no_data_assets_registered}
-                                description="Register the first authoritative dataset before approving personal-data processing."
+                                description={
+                                    governanceCopy.no_data_assets_description
+                                }
                                 className="min-h-56 lg:col-span-2 xl:col-span-3"
                             />
                         )}
@@ -492,7 +500,12 @@ export default function DataGovernance({
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
                         title={governanceCopy.processing_activity_register}
-                        description={`${activities.total.toLocaleString()} purpose-bound processing records`}
+                        description={interpolate(
+                            governanceCopy.processing_record_count,
+                            {
+                                count: activities.total.toLocaleString(),
+                            },
+                        )}
                         filters={filters}
                     />
                     {activityRows.length ? (
@@ -532,7 +545,9 @@ export default function DataGovernance({
                     ) : (
                         <WorkspaceEmptyState
                             title={governanceCopy.no_processing_activities}
-                            description="Submit a purpose-bound processing record or adjust the current filters."
+                            description={
+                                governanceCopy.no_processing_records_description
+                            }
                             className="min-h-64 border-0"
                         />
                     )}
@@ -580,7 +595,9 @@ export default function DataGovernance({
                         ) : (
                             <WorkspaceEmptyState
                                 title={governanceCopy.no_privacy_requests}
-                                description="No data-subject requests match the current filters."
+                                description={
+                                    governanceCopy.no_privacy_requests_description
+                                }
                                 className="min-h-64 border-0"
                             />
                         )}
@@ -715,7 +732,9 @@ function AssetCard({ asset }: { asset: Asset }) {
                         variant="ghost"
                         size="icon"
                         onClick={() => setOpen(true)}
-                        aria-label={`View ${asset.name}`}
+                        aria-label={interpolate(copy.view_record, {
+                            record: asset.name,
+                        })}
                     >
                         <Eye />
                     </Button>
@@ -805,7 +824,9 @@ function ActivityAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${activity.reference}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: activity.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -964,7 +985,9 @@ function RequestAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${request.reference}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: request.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1111,8 +1134,8 @@ function AssetForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title={copy.register_data_asset}
-            description="Record ownership, authoritative source, classification, residency and personal-data categories before use."
-            triggerLabel="Data asset"
+            description={copy.data_asset_description}
+            triggerLabel={copy.data_asset}
             icon={Plus}
             size="xl"
         >
@@ -1299,8 +1322,8 @@ function ActivityForm({
     return (
         <FormSheet
             title={copy.submit_processing_activity}
-            description="Create a ROPA-style record for independent privacy review. Comma-separate multi-value entries."
-            triggerLabel="Processing"
+            description={copy.processing_description}
+            triggerLabel={copy.processing}
             icon={Scale}
             size="xl"
         >
@@ -1430,8 +1453,8 @@ function DataRequestForm({ users }: { users: Option[] }) {
     return (
         <FormSheet
             title={copy.record_data_subject_request}
-            description="Capture only the minimum contact information needed to verify and respond. Requester fields are encrypted at rest."
-            triggerLabel="Privacy request"
+            description={copy.privacy_request_description}
+            triggerLabel={copy.privacy_request}
             icon={UserRoundSearch}
             size="xl"
         >
@@ -1503,8 +1526,8 @@ function PrivacyIncidentForm({
     return (
         <FormSheet
             title={copy.report_personal_data_breach}
-            description="Record the minimum controlled facts needed to contain, independently assess and notify. Detailed narratives are encrypted at rest."
-            triggerLabel="Report breach"
+            description={copy.report_breach_description}
+            triggerLabel={copy.report_breach}
             icon={ShieldAlert}
             size="xl"
         >
@@ -1617,7 +1640,9 @@ function PrivacyIncidentAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${incident.reference}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: incident.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>

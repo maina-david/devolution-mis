@@ -151,4 +151,5 @@ return [
             'published' => 'Sera ya dawati la huduma imechapishwa kwa uhuru.',
         ],
     ],
+    'configure_policy_description' => 'Unda toleo jipya la mgombea lisilobadilika. Uamuzi huru wa uchapishaji unahitajika kabla ya matumizi ya mfumo.', 'configure_policy' => 'Sanidi sera', 'publish_policy' => 'Chapisha :code v:version', 'review_publication_description' => 'Thibitisha kalenda, malengo, orodha ya wahudumu na matriki ya kupandisha suala. Uchapishaji haubadiliki na unahitaji mhusika tofauti na mwandishi.', 'review_publication' => 'Kagua uchapishaji', 'new_ticket_description' => 'Unda ombi la huduma linalosimamiwa. Maelezo nyeti binafsi yamesimbwa fiche yanapohifadhiwa.', 'new_support_ticket' => 'Tiketi mpya ya usaidizi', 'assignment_description' => 'Mteue mtatuzi aliyeidhinishwa ambaye ni tofauti na mwombaji.', 'status_change_description' => 'Mabadiliko yote ya hali hukaguliwa kwa wigo na kuongezwa kwenye daftari la shughuli lisilobadilika.', 'support_record_description' => 'Rekodi zilizochanganuliwa na za kidijitali huhifadhiwa kwa faragha, hukaguliwa programu hasidi, huwekewa checksum na kutumwa kwa OCR inapowezekana.',
 ];

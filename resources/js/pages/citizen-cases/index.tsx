@@ -41,6 +41,7 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import { interpolate } from '@/hooks/use-localization';
 import { formatDateTime } from '@/lib/reference-catalog';
 import { index } from '@/routes/citizen-cases';
 import { exportMethod } from '@/routes/workspace';
@@ -276,14 +277,13 @@ export default function CitizenCasesIndex({
     );
 }
 
-CitizenCasesIndex.layout = () => ({
-    breadcrumbs: [
-        {
-            title: 'Citizen cases',
-            href: index(),
-        },
-    ],
-});
+function CitizenCasesLayout() {
+    const copy = usePage().props.localization.citizen;
+
+    return { breadcrumbs: [{ title: copy.staff_page_title, href: index() }] };
+}
+
+CitizenCasesIndex.layout = CitizenCasesLayout;
 
 function Metric({ label, value }: { label: string; value: number | string }) {
     const locale = usePage().props.localization.current;
@@ -321,7 +321,9 @@ function CaseSheet({
                 <Button
                     size="sm"
                     variant="outline"
-                    aria-label={`${copy.open_case} ${citizenCase.reference}`}
+                    aria-label={interpolate(copy.open_case_label, {
+                        reference: citizenCase.reference,
+                    })}
                 >
                     <Eye aria-hidden="true" />
                     {copy.open}
@@ -719,8 +721,14 @@ function WorkflowActions({
                                 <Input
                                     name="comment"
                                     required
-                                    placeholder={`${action.label} ${copy.rationale}`}
-                                    aria-label={`${action.label} ${copy.rationale}`}
+                                    placeholder={interpolate(
+                                        copy.action_rationale_label,
+                                        { action: action.label },
+                                    )}
+                                    aria-label={interpolate(
+                                        copy.action_rationale_label,
+                                        { action: action.label },
+                                    )}
                                 />
                                 <Button
                                     type="submit"

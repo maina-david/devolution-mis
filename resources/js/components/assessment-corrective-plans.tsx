@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { formatDateTime } from '@/lib/reference-catalog';
 import { review, store } from '@/routes/assessments/corrective-plans';
 import {
@@ -409,10 +410,13 @@ function UpdateSheet({
     evidence: Option[];
 }) {
     const copy = useCorrectivePlanCopy();
+    const commonCopy = useCommonCopy();
 
     return (
         <FormSheet
-            title={`${copy.update} ${action.code}`}
+            title={interpolate(commonCopy.update_record, {
+                record: action.code,
+            })}
             description={copy.update_description}
             triggerLabel={copy.submit_progress}
             icon={FileUp}
@@ -458,10 +462,13 @@ function VerifySheet({
     update: Update;
 }) {
     const copy = useCorrectivePlanCopy();
+    const commonCopy = useCommonCopy();
 
     return (
         <DecisionSheet
-            title={`${copy.verify} ${action.code} ${copy.progress}`}
+            title={interpolate(commonCopy.verify_record_progress, {
+                record: action.code,
+            })}
             trigger={`${copy.verify} ${update.progress}% ${copy.update_lowercase}`}
             form={verifyUpdate.form({
                 ...base,

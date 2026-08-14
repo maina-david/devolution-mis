@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'publication_status' => 'Publication status', 'county' => 'County', 'sector' => 'Sector', 'tag' => 'Tag', 'report_status' => 'Report status', 'search_moderation_reports' => 'Search moderation reports',
     'curated_repository' => 'Curated repository', 'no_knowledge_resources_found' => 'No knowledge resources found', 'no_matching_innovations' => 'No matching innovations', 'no_matching_community_reports' => 'No matching community reports',
     'reported_contribution' => 'Reported contribution', 'report' => 'Report', 'reporter' => 'Reporter', 'sla_due' => 'SLA due', 'decision' => 'Decision', 'decision_rationale' => 'Decision rationale', 'contribution_action' => 'Contribution action', 'resolution_and_safeguards' => 'Resolution and safeguards',
     'contribute_knowledge_resource' => 'Contribute knowledge resource', 'resource_title' => 'Resource title', 'resource_type' => 'Resource type', 'sector' => 'Sector', 'repository_document' => 'Repository document', 'linked_e_learning_course' => 'Linked e-learning course',
@@ -14,4 +15,7 @@ return [
     'milestone_title' => 'Milestone title', 'testable_hypothesis' => 'Testable hypothesis', 'success_metric' => 'Success metric', 'baseline' => 'Baseline', 'target' => 'Target', 'due_date' => 'Due date',
     'incubation_support_and_next_steps' => 'Incubation support and next steps', 'pilot_evidence_reference' => 'Pilot evidence reference', 'result_status' => 'Result status', 'actual_value' => 'Actual value', 'outcome_summary' => 'Outcome summary',
     'clean_repository_evidence' => 'Clean repository evidence', 'verification_decision' => 'Verification decision', 'independent_verification_rationale' => 'Independent verification rationale',
+    'authorized_resources_count' => ':count authorized resources', 'no_resources_description' => 'Adjust the filters or contribute the first evidence-backed practice, case study, research output, toolkit, or blog.', 'submit_solution_description' => 'Submit a locally developed solution for screening and incubation.', 'no_reports_description' => 'Reports within your authorized scope will appear here with their SLA and decision state.', 'actions_for_record' => 'Actions for :record',
+    'create_resource_description' => 'Create an evidence-backed resource and link it to secure repository evidence or e-learning.', 'new_resource' => 'New resource', 'create_discussion_description' => 'Convene a moderated community of practice around a resource or county challenge.', 'new_discussion' => 'New discussion', 'submit_innovation_description' => 'Register a solution for independent screening, incubation, piloting, and scale-up.', 'submit_innovation' => 'Submit innovation',
+    'discussion_notifications_description' => 'Choose whether new contributions to :title appear in your notification centre.', 'actions_for_contribution' => 'Actions for contribution by :author', 'contribute_to_discussion' => 'Contribute to :title', 'add_contribution_description' => 'Add a traceable contribution to this community of practice.', 'add_contribution' => 'Add contribution', 'score_out_of_one_hundred' => ':label (0–100)',
 ];

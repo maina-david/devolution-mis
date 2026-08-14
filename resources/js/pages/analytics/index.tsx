@@ -64,6 +64,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import { index as analyticsIndex } from '@/routes/analytics';
 import {
@@ -119,12 +120,14 @@ type Dashboard = {
     widgets: Widget[];
 };
 
-const analyticsChartConfig = {
-    value: {
-        label: 'Measured value',
-        color: 'var(--primary)',
-    },
-} satisfies ChartConfig;
+function analyticsChartConfig(label: string): ChartConfig {
+    return {
+        value: {
+            label,
+            color: 'var(--primary)',
+        },
+    };
+}
 type ReportSchedule = {
     id: string;
     code: string;
@@ -372,7 +375,9 @@ export default function AnalyticsReporting({
                             title={
                                 analyticsCopy.no_analytics_dashboards_in_scope
                             }
-                            description="An authorized configurator can create a draft dashboard with governed metrics for independent publication."
+                            description={
+                                analyticsCopy.no_dashboards_description
+                            }
                         />
                     )}
                 </section>
@@ -398,7 +403,9 @@ export default function AnalyticsReporting({
                             {schedules.length === 0 && (
                                 <WorkspaceEmptyState
                                     title={analyticsCopy.no_report_schedules}
-                                    description="Create a delivery schedule against an independently published dashboard."
+                                    description={
+                                        analyticsCopy.no_schedules_description
+                                    }
                                 />
                             )}
                         </div>
@@ -445,7 +452,9 @@ export default function AnalyticsReporting({
                         ) : (
                             <WorkspaceEmptyState
                                 title={analyticsCopy.no_generated_artifacts}
-                                description="Approved schedules will create private checksummed report files when due or manually queued."
+                                description={
+                                    analyticsCopy.no_reports_description
+                                }
                                 className="min-h-64 border-0"
                             />
                         )}
@@ -476,8 +485,8 @@ function SavedFilterViews({
                 </div>
                 <FormSheet
                     title={analyticsCopy.save_current_filters}
-                    description="Name the current analytics context and optionally use it as your default view."
-                    triggerLabel="Save view"
+                    description={analyticsCopy.save_view_description}
+                    triggerLabel={analyticsCopy.save_view}
                     icon={Bookmark}
                     size="md"
                 >
@@ -558,7 +567,10 @@ function SavedFilterViews({
                                     type="button"
                                     variant="ghost"
                                     size="icon"
-                                    aria-label={`Delete saved view ${view.name}`}
+                                    aria-label={interpolate(
+                                        analyticsCopy.delete_saved_view,
+                                        { name: view.name },
+                                    )}
                                     onClick={() =>
                                         router.delete(
                                             destroyFilterView.url(view.id),
@@ -574,7 +586,7 @@ function SavedFilterViews({
                 ) : (
                     <WorkspaceEmptyState
                         title={analyticsCopy.no_saved_filter_views}
-                        description="Apply analytics filters, then save the context for quick reuse."
+                        description={analyticsCopy.no_saved_views_description}
                         className="min-h-40 border-0"
                     />
                 )}
@@ -710,7 +722,7 @@ function WidgetCard({
                 <div>
                     <p className="text-4xl font-bold tracking-tight">
                         {widget.measurement.value === null
-                            ? 'No data'
+                            ? analyticsCopy.no_data
                             : `${widget.measurement.value.toLocaleString()}${widget.measurement.unit === 'percent' ? '%' : ''}`}
                     </p>
                     <p className="mt-2 text-xs leading-5 text-muted-foreground">
@@ -728,10 +740,15 @@ function WidgetCard({
                     widget.measurement.series.length > 0 && (
                         <div className="grid gap-2">
                             <ChartContainer
-                                config={analyticsChartConfig}
+                                config={analyticsChartConfig(
+                                    analyticsCopy.measured_value,
+                                )}
                                 className="min-h-64 w-full"
                                 role="img"
-                                aria-label={`${widget.title} by county`}
+                                aria-label={interpolate(
+                                    analyticsCopy.widget_by_county,
+                                    { title: widget.title },
+                                )}
                             >
                                 <BarChart
                                     accessibilityLayer
@@ -779,6 +796,7 @@ function WidgetCard({
                             ':title',
                             widget.title,
                         )}
+                        valueLabel={analyticsCopy.measured_value}
                     />
                 )}
                 {widget.visualization === 'area' && trendData.length > 0 && (
@@ -789,6 +807,7 @@ function WidgetCard({
                             ':title',
                             widget.title,
                         )}
+                        valueLabel={analyticsCopy.measured_value}
                     />
                 )}
                 {widget.measurement.series.length > 0 && (
@@ -805,7 +824,7 @@ function WidgetCard({
                                 <CountyIdentity county={entry.county} compact />
                                 <strong>
                                     {entry.value === null
-                                        ? 'No data'
+                                        ? analyticsCopy.no_data
                                         : `${entry.value.toLocaleString()}${widget.measurement.unit === 'percent' ? '%' : ''}`}
                                 </strong>
                             </Link>
@@ -827,10 +846,12 @@ function TrendChart({
     kind,
     data,
     label,
+    valueLabel,
 }: {
     kind: 'line' | 'area';
     data: Array<{ period: string; value: number }>;
     label: string;
+    valueLabel: string;
 }) {
     const axes = (
         <>
@@ -848,7 +869,7 @@ function TrendChart({
 
     return (
         <ChartContainer
-            config={analyticsChartConfig}
+            config={analyticsChartConfig(valueLabel)}
             className="min-h-64 w-full"
             role="img"
             aria-label={label}
@@ -901,8 +922,8 @@ function DashboardForm({
     return (
         <FormSheet
             title={analyticsCopy.create_analytics_dashboard}
-            description="Start a governed draft with an allowlisted metric. A different actor must publish it."
-            triggerLabel="New dashboard"
+            description={analyticsCopy.new_dashboard_description}
+            triggerLabel={analyticsCopy.new_dashboard}
             icon={Plus}
             size="xl"
             triggerDisabled={!catalogue.available}
@@ -1026,9 +1047,11 @@ function WidgetForm({
 
     return (
         <FormSheet
-            title={`Add widget to ${dashboard.code}`}
-            description="Add an allowlisted, provenance-backed metric while the dashboard remains a draft."
-            triggerLabel="Add widget"
+            title={interpolate(analyticsCopy.add_widget_to_dashboard, {
+                code: dashboard.code,
+            })}
+            description={analyticsCopy.add_widget_description}
+            triggerLabel={analyticsCopy.add_widget}
             icon={BarChart3}
         >
             <Form
@@ -1105,8 +1128,8 @@ function ScheduleForm({
     return (
         <FormSheet
             title={analyticsCopy.create_report_schedule}
-            description="Configure delivery from a published dashboard. Activation requires an independent approver."
-            triggerLabel="New schedule"
+            description={analyticsCopy.new_schedule_description}
+            triggerLabel={analyticsCopy.new_schedule}
             icon={CalendarClock}
             size="xl"
             triggerDisabled={
@@ -1235,7 +1258,10 @@ function ScheduleCard({
                         <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={`Actions for ${schedule.code}`}
+                            aria-label={interpolate(
+                                analyticsCopy.actions_for_record,
+                                { record: schedule.code },
+                            )}
                         >
                             <MoreHorizontal />
                         </Button>
@@ -1325,7 +1351,10 @@ function RunAction({ report }: { report: ReportRun }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for report ${report.schedule.code}`}
+                        aria-label={interpolate(
+                            analyticsCopy.actions_for_report,
+                            { code: report.schedule.code },
+                        )}
                     >
                         <MoreHorizontal />
                     </Button>

@@ -57,4 +57,5 @@ return [
         'audit' => ['transitioned' => 'Le dossier :reference est passé à l’état :status.', 'attachment_downloaded' => 'Pièce jointe du dossier téléchargée : :title.'],
         'notifications' => ['assigned_title' => 'Dossier citoyen attribué', 'assigned_message' => ':reference : :subject'],
     ],
+    'open_case_label' => 'Ouvrir le dossier :reference', 'action_rationale_label' => 'Motif de :action',
 ];

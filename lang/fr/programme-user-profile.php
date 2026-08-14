@@ -29,4 +29,5 @@ return [
     'permissions' => 'Autorisations', 'field_separator' => ' :', 'no_governed_records' => 'Aucun dossier gouverné.',
     'active' => 'Actif', 'inactive' => 'Inactif', 'revoked' => 'Révoqué',
     'approved' => 'Approuvé', 'pending' => 'En attente', 'rejected' => 'Rejeté',
+    'user_record_title' => ':name · Dossier utilisateur',
 ];

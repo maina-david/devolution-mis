@@ -472,8 +472,8 @@ export default function Dashboard({
                                         <CardTitle>
                                             {selectedCounty?.name ??
                                                 (counties.length === 0
-                                                    ? 'No county assigned'
-                                                    : 'Select an authorized county')}
+                                                    ? copy.no_county_assigned
+                                                    : copy.select_authorized_county)}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
@@ -500,29 +500,29 @@ export default function Dashboard({
                                                 <dl className="divide-y divide-border">
                                                     {[
                                                         [
-                                                            'Latest cycle',
+                                                            copy.latest_cycle,
                                                             selectedCounty.latestCycle ??
-                                                                'Not started',
+                                                                copy.not_started,
                                                         ],
                                                         [
-                                                            'Assessment score',
+                                                            copy.assessment_score,
                                                             selectedCounty.latestScore ===
                                                             null
-                                                                ? 'Pending'
+                                                                ? copy.pending
                                                                 : `${selectedCounty.latestScore}%`,
                                                         ],
                                                         [
-                                                            'Documents collected',
+                                                            copy.documents_collected,
                                                             selectedCounty.documents.toLocaleString(),
                                                         ],
                                                         [
-                                                            'Grant allocated',
+                                                            copy.grant_allocated,
                                                             formatCompactCurrency(
                                                                 selectedCounty.allocatedGrant,
                                                             ),
                                                         ],
                                                         [
-                                                            'Grant disbursed',
+                                                            copy.grant_disbursed,
                                                             formatCompactCurrency(
                                                                 selectedCounty.disbursedGrant,
                                                             ),
@@ -562,8 +562,8 @@ export default function Dashboard({
                                         ) : (
                                             <p className="text-sm text-muted-foreground">
                                                 {counties.length === 0
-                                                    ? 'Contact an administrator to assign county access.'
-                                                    : 'Select an authorized county on the map to inspect its assessment, evidence and grant details.'}
+                                                    ? copy.contact_admin_for_county_access
+                                                    : copy.select_county_map_description}
                                             </p>
                                         )}
                                     </CardContent>
@@ -1021,11 +1021,10 @@ function OperationalSignal({
     );
 }
 
-Dashboard.layout = () => ({
-    breadcrumbs: [
-        {
-            title: 'Dashboard',
-            href: dashboard(),
-        },
-    ],
-});
+function DashboardLayout() {
+    const copy = usePage().props.localization.common;
+
+    return { breadcrumbs: [{ title: copy.dashboard, href: dashboard() }] };
+}
+
+Dashboard.layout = DashboardLayout;

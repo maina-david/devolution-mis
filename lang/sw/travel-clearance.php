@@ -20,4 +20,5 @@ return [
     ],
     'audit' => ['created' => 'Ombi la safari :reference limeundwa.', 'transitioned' => 'Ombi la safari :reference limehamishwa hadi :status.', 'overdue_escalated' => 'Uamuzi wa idhini ya safari uliochelewa umepelekwa ngazi ya juu.', 'reminder_sent' => 'Kikumbusho cha tarehe ya mwisho ya idhini ya safari kimetumwa.'],
     'command' => ['reminders_sent' => 'Vikumbusho :count vya idhini ya safari vimetumwa.'],
+    'no_data_title' => 'Hakuna data ya :title', 'actions_for_request' => 'Vitendo vya :reference',
 ];

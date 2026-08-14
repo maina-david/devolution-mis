@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'search_placeholder' => 'Tafuta data rejea au wigo wa programu', 'coverage_status' => 'Hali ya wigo',
     'name' => 'Jina', 'type' => 'Aina', 'description' => 'Maelezo', 'parent_sector' => 'Sekta kuu', 'lead_organization' => 'Shirika linaloongoza',
     'sector' => 'Sekta', 'currency' => 'Sarafu', 'create_county' => 'Unda kaunti', 'select_all_counties_on_this_page' => 'Chagua kaunti zote kwenye ukurasa huu',
     'county_code' => 'Msimbo wa kaunti', 'county_name' => 'Jina la kaunti', 'official_website' => 'Tovuti rasmi', 'map_x' => 'X ya ramani', 'map_y' => 'Y ya ramani',
@@ -70,4 +71,5 @@ return [
     'value_constituency' => 'Eneo bunge',
     'value_county_sub_county' => 'Kaunti ndogo ya kaunti',
     'value_national_sub_county' => 'Kaunti ndogo ya kitaifa',
+    'create_organization_description' => 'Ongeza shirika kwenye sajili kuu. Chapisha toleo kabla ya ubadilishanaji wa mifumo mingine.', 'create_sector_description' => 'Ongeza uainishaji wa mada na taarifa unaosimamiwa.', 'create_programme_description' => 'Ongeza rekodi rasmi ya jalada la programu.', 'create_county_description' => 'Ongeza rejea ya kaunti. Mali rasmi za utambulisho zinahitaji uthibitishaji tofauti wa asili.', 'select_record' => 'Chagua :record', 'actions_for_record' => 'Vitendo vya :record', 'add_coverage' => 'Ongeza ueneaji', 'add_coverage_description' => 'Unganisha programu moja na kaunti kwa kipindi kisichoingiliana chenye ushahidi wa chanzo unaowajibika.', 'no_coverage_description' => 'Ongeza mgao wa kwanza wa kaunti wenye tarehe ya kuanza kutumika au rekebisha vichujio vinavyotumika.', 'create_release' => 'Unda toleo', 'create_release_description' => 'Rekodi katalogi kamili ya sasa ya kaunti, mashirika, sekta na programu kwa uchapishaji huru.', 'actions_for_release' => 'Vitendo vya toleo la data rejea :version', 'no_releases_description' => 'Hakuna matoleo ya data rejea yanayosimamiwa yaliyowasilishwa.',
 ];

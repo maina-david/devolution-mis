@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { download, preview } from '@/routes/evidence';
 import { transition } from '@/routes/partners/agreements';
 import { store as storeDocument } from '@/routes/partners/agreements/documents';
@@ -347,7 +348,9 @@ export default function PartnerAgreementRegister({
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`Preview ${previewDocument.title}`}
+                            title={interpolate(copy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -367,9 +370,9 @@ function RequestAgreementChange({
 
     return (
         <FormSheet
-            title="Request agreement change"
-            triggerLabel="Request change"
-            description="Propose an amendment, renewal, suspension or termination without rewriting the approved agreement."
+            title={copy.request_agreement_change}
+            triggerLabel={copy.request_change}
+            description={copy.request_change_description}
         >
             <Form
                 {...storeAgreementChange.form({ agreement: agreement.id })}
@@ -381,7 +384,7 @@ function RequestAgreementChange({
                         <SearchableSelect
                             id={`change-type-${agreement.id}`}
                             name="change_type"
-                            label="Change type"
+                            label={copy.change_type}
                             options={[
                                 { id: 'amendment', name: 'Amendment' },
                                 { id: 'renewal', name: 'Renewal' },
@@ -392,7 +395,7 @@ function RequestAgreementChange({
                         />
                         <DatePickerField
                             name="effective_on"
-                            label="Effective date"
+                            label={copy.effective_date}
                             required
                             min={new Date().toISOString().slice(0, 10)}
                             error={errors.effective_on}
@@ -418,7 +421,7 @@ function RequestAgreementChange({
                         </div>
                         <DatePickerField
                             name="ends_on"
-                            label="Revised end date"
+                            label={copy.revised_end_date}
                             defaultValue={agreement.endsOn ?? ''}
                         />
                         <div className="grid gap-2">
@@ -461,9 +464,9 @@ function UploadAgreementChangeEvidence({
 
     return (
         <FormSheet
-            title="Upload change evidence"
-            triggerLabel="Upload evidence"
-            description="Attach the signed amendment, renewal, suspension or termination instrument."
+            title={copy.upload_change_evidence}
+            triggerLabel={copy.upload_evidence}
+            description={copy.upload_change_evidence_description}
         >
             <Form
                 {...storePartnerAgreementChange.form({
@@ -503,9 +506,9 @@ function DecideAgreementChange({ change }: { change: AgreementChange }) {
 
     return (
         <FormSheet
-            title="Decide agreement change"
-            triggerLabel="Record decision"
-            description="An independent approver reviews the clean evidence and records an immutable decision."
+            title={copy.decide_agreement_change}
+            triggerLabel={copy.record_decision}
+            description={copy.change_decision_description}
         >
             <Form
                 {...decideAgreementChange.form({ changeRequest: change.id })}
@@ -514,7 +517,7 @@ function DecideAgreementChange({ change }: { change: AgreementChange }) {
                 <SearchableSelect
                     id={`change-decision-${change.id}`}
                     name="decision"
-                    label="Decision"
+                    label={copy.decision}
                     options={[
                         { id: 'approved', name: 'Approve' },
                         { id: 'rejected', name: 'Reject' },
@@ -539,10 +542,10 @@ function UploadAgreementDocument({
 
     return (
         <FormSheet
-            title="Upload agreement record"
-            triggerLabel="Upload record"
+            title={copy.upload_agreement_record}
+            triggerLabel={copy.upload_record}
             icon={Upload}
-            description="Add a privately stored scanned or born-digital copy. Files are checksum-bound and security scanned."
+            description={copy.upload_record_description}
         >
             <Form
                 {...storeDocument.form({ agreement: agreement.id })}
@@ -592,7 +595,7 @@ function UploadAgreementDocument({
                         <SearchableSelect
                             id={`agreement-source-${agreement.id}`}
                             name="source_type"
-                            label="Source type"
+                            label={copy.source_type}
                             defaultValue="digital"
                             options={[
                                 { id: 'digital', name: 'Born-digital' },
@@ -647,9 +650,9 @@ function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
 
     return (
         <FormSheet
-            title="Review agreement"
-            triggerLabel="Record decision"
-            description="Approve or reject this independently submitted agreement. The submitter cannot make this decision."
+            title={copy.review_agreement}
+            triggerLabel={copy.record_decision}
+            description={copy.agreement_decision_description}
         >
             <Form
                 {...transition.form({ agreement: agreement.id })}
@@ -660,7 +663,7 @@ function AgreementDecision({ agreement }: { agreement: PartnerAgreement }) {
                         <SearchableSelect
                             id={`agreement-decision-${agreement.id}`}
                             name="transition"
-                            label="Decision"
+                            label={copy.decision}
                             defaultValue="approve"
                             options={[
                                 { id: 'approve', name: 'Approve agreement' },
@@ -708,9 +711,9 @@ function SubmitAgreement({ agreement }: { agreement: PartnerAgreement }) {
 
     return (
         <FormSheet
-            title="Submit agreement for approval"
-            triggerLabel="Submit for approval"
-            description="Confirm the repository record is complete. Submission locks further uploads and sends the agreement for an independent decision."
+            title={copy.submit_agreement_for_approval}
+            triggerLabel={copy.submit_for_approval}
+            description={copy.submit_for_approval_description}
         >
             <Form
                 {...transition.form({ agreement: agreement.id })}

@@ -67,6 +67,7 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import { interpolate } from '@/hooks/use-localization';
 import {
     DEFAULT_TIMEZONE,
     formatDateTime as formatCatalogDateTime,
@@ -580,8 +581,8 @@ function CreateServicePolicySheet({
     return (
         <FormSheet
             title={copy.draft_service_desk_policy}
-            description="Create a new immutable candidate version. An independent publication decision is required before runtime use."
-            triggerLabel="Configure policy"
+            description={copy.configure_policy_description}
+            triggerLabel={copy.configure_policy}
             icon={Settings2}
             size="xl"
             triggerDisabled={
@@ -840,9 +841,12 @@ function PublishServicePolicySheet({ policy }: { policy: ServicePolicy }) {
 
     return (
         <FormSheet
-            title={`Publish ${policy.code} v${policy.version}`}
-            description="Verify the calendar, targets, roster and escalation matrix. Publication is immutable and requires an actor independent of the author."
-            triggerLabel="Review publication"
+            title={interpolate(copy.publish_policy, {
+                code: policy.code,
+                version: policy.version,
+            })}
+            description={copy.review_publication_description}
+            triggerLabel={copy.review_publication}
             icon={ClipboardCheck}
         >
             <Form {...publishPolicy.form({ serviceDeskPolicy: policy.id })}>
@@ -963,8 +967,8 @@ function CreateTicketSheet({
     return (
         <FormSheet
             title={copy.submit_support_request}
-            description="Create a governed service request. Personally sensitive narrative is encrypted at rest."
-            triggerLabel="New support ticket"
+            description={copy.new_ticket_description}
+            triggerLabel={copy.new_support_ticket}
             icon={Plus}
             triggerDisabled={!intakeAvailable}
             triggerTitle={
@@ -1201,7 +1205,7 @@ function TicketSheet({
                         ['open', 'triaged'].includes(ticket.status) && (
                             <ActionCard
                                 title={copy.triage_and_assignment}
-                                description="Assign an authorized resolver who is separate from the requester."
+                                description={copy.assignment_description}
                             >
                                 <Form
                                     {...assign.form({
@@ -1240,7 +1244,7 @@ function TicketSheet({
                     {transitionOptions.length > 0 && (
                         <ActionCard
                             title={copy.workflow_action}
-                            description="All status changes are scope checked and appended to the immutable activity ledger."
+                            description={copy.status_change_description}
                         >
                             <TransitionForm
                                 ticket={ticket}
@@ -1252,7 +1256,7 @@ function TicketSheet({
                     {canUpload && (
                         <ActionCard
                             title={copy.upload_support_record}
-                            description="Scanned and born-digital records are privately stored, malware scanned, checksummed and sent for OCR when supported."
+                            description={copy.support_record_description}
                         >
                             <DocumentUploadForm ticket={ticket} />
                         </ActionCard>

@@ -37,4 +37,5 @@ return [
         'simulation' => ['start_permission_denied' => 'The selected starter does not hold the configured start permission.', 'terminal_state_reached' => 'No transition may run after a terminal state.', 'scenario_stopped' => 'The scenario stopped after an earlier control failure.', 'transition_permission_denied' => 'The selected actor does not hold the transition permission.', 'separation_failed' => 'The selected actor conflicts with the configured separation-of-duties rule.', 'rules_failed' => 'One or more workflow rules were not satisfied.', 'controls_passed' => 'All transition controls passed.', 'completed' => 'The scenario reached a terminal state.', 'active' => 'All supplied steps passed; the workflow remains active.'],
         'audit' => ['started' => ':workflow workflow started.', 'transitioned' => 'Workflow transitioned from :from to :to.'],
     ],
+    'edit_workflow_version' => 'Edit :workflow version :version', 'edit_draft_version' => 'Edit draft v:version', 'workflow_configuration_label' => 'Workflow :workflow configuration', 'actions_for_calendar_version' => 'Actions for :code version :version', 'remove_record' => 'Remove :record',
 ];

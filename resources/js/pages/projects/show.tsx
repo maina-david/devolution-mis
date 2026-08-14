@@ -51,6 +51,7 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { interpolate } from '@/hooks/use-localization';
 import { formatCurrency, formatNumber } from '@/lib/reference-catalog';
 import {
     download as downloadEvidence,
@@ -604,7 +605,9 @@ export default function ProjectShow({
                                     </Badge>
                                 </div>
                                 <iframe
-                                    title={`Preview of ${previewDocument.title}`}
+                                    title={interpolate(copy.preview_document, {
+                                        title: previewDocument.title,
+                                    })}
                                     src={previewEvidence.url({
                                         document: previewDocument.id,
                                     })}
@@ -825,12 +828,12 @@ export default function ProjectShow({
                     />
                 )}
                 {(capabilities.manage || capabilities.verifyUpdates) &&
-                    lifecycleTransition(project, capabilities) && (
+                    lifecycleTransition(project, capabilities, copy) && (
                         <Panel
                             icon={ClipboardList}
                             title={
-                                lifecycleTransition(project, capabilities)
-                                    ?.label ?? 'Advance lifecycle'
+                                lifecycleTransition(project, capabilities, copy)
+                                    ?.label ?? copy.advance_lifecycle
                             }
                         >
                             <Form
@@ -844,6 +847,7 @@ export default function ProjectShow({
                                         lifecycleTransition(
                                             project,
                                             capabilities,
+                                            copy,
                                         )?.id
                                     }
                                 />
@@ -862,8 +866,11 @@ export default function ProjectShow({
                                     />
                                 </div>
                                 <Button type="submit">
-                                    {lifecycleTransition(project, capabilities)
-                                        ?.label ?? 'Advance lifecycle'}
+                                    {lifecycleTransition(
+                                        project,
+                                        capabilities,
+                                        copy,
+                                    )?.label ?? copy.advance_lifecycle}
                                 </Button>
                             </Form>
                         </Panel>
@@ -883,8 +890,22 @@ export default function ProjectShow({
                                     <FormSheet
                                         key={item.id}
                                         title={copy.verify_progress_update}
-                                        triggerLabel={`Review ${String(item.reporting_date)}`}
-                                        description={`Independently verify the ${String(item.physical_progress)}% physical-progress submission.`}
+                                        triggerLabel={interpolate(
+                                            copy.review_reporting_date,
+                                            {
+                                                date: String(
+                                                    item.reporting_date,
+                                                ),
+                                            },
+                                        )}
+                                        description={interpolate(
+                                            copy.verify_physical_progress_description,
+                                            {
+                                                progress: String(
+                                                    item.physical_progress,
+                                                ),
+                                            },
+                                        )}
                                     >
                                         <Form
                                             {...verifyProgress.form({
@@ -1011,24 +1032,25 @@ function canPreview(document: ProjectDocument): boolean {
 function lifecycleTransition(
     project: Project,
     capabilities: Capabilities,
+    copy: Record<string, string>,
 ): { id: string; label: string } | null {
     if (capabilities.manage && project.lifecycle_stage === 'initiation') {
-        return { id: 'plan', label: 'Move to planning' };
+        return { id: 'plan', label: copy.move_to_planning };
     }
 
     if (capabilities.manage && project.lifecycle_stage === 'planning') {
-        return { id: 'start_execution', label: 'Start execution' };
+        return { id: 'start_execution', label: copy.start_execution };
     }
 
     if (capabilities.manage && project.lifecycle_stage === 'execution') {
-        return { id: 'submit_closure', label: 'Submit closure' };
+        return { id: 'submit_closure', label: copy.submit_closure };
     }
 
     if (
         capabilities.verifyUpdates &&
         project.lifecycle_stage === 'closure_review'
     ) {
-        return { id: 'approve_closure', label: 'Approve closure' };
+        return { id: 'approve_closure', label: copy.approve_closure };
     }
 
     return null;
@@ -1095,12 +1117,14 @@ function Panel({
     title: string;
     children: React.ReactNode;
 }) {
+    const copy = usePage().props.localization.projects;
+
     return (
         <FormSheet
             title={title}
             triggerLabel={title}
             icon={Icon}
-            description="Complete the governed project action and record it in the audit trail."
+            description={copy.project_action_description}
         >
             {children}
         </FormSheet>
@@ -1171,9 +1195,9 @@ function ProjectSchedule({
                 {canManage && !locked && !pendingBaseline && (
                     <FormSheet
                         title={copy.capture_schedule_baseline}
-                        triggerLabel="Capture baseline"
+                        triggerLabel={copy.capture_baseline}
                         icon={GitBranch}
-                        description="Freeze the complete current milestone plan for independent approval and future variance measurement."
+                        description={copy.capture_baseline_description}
                     >
                         <Form
                             {...storeScheduleBaseline.form(args)}
@@ -1247,10 +1271,15 @@ function ProjectSchedule({
                 )}
                 {pendingBaseline && canReview && (
                     <FormSheet
-                        title={`Review schedule baseline v${pendingBaseline.version}`}
-                        triggerLabel={`Review pending baseline v${pendingBaseline.version}`}
+                        title={interpolate(copy.review_schedule_baseline, {
+                            version: pendingBaseline.version,
+                        })}
+                        triggerLabel={interpolate(
+                            copy.review_pending_baseline,
+                            { version: pendingBaseline.version },
+                        )}
                         icon={GitBranch}
-                        description="Independently approve the checksum-bound milestone snapshot or reject it with evidence."
+                        description={copy.review_baseline_description}
                     >
                         <div className="flex flex-col gap-4">
                             <p className="text-sm text-muted-foreground">
@@ -1501,9 +1530,12 @@ function ProjectResourcePlan({
                         <div className="flex flex-wrap gap-2">
                             <FormSheet
                                 title={copy.register_project_resource}
-                                triggerLabel="Add resource"
+                                triggerLabel={copy.add_resource}
                                 icon={UsersRound}
-                                description={`Capacity and rates are recorded in ${projectCurrency}, inherited from the project.`}
+                                description={interpolate(
+                                    copy.resource_currency_description,
+                                    { currency: projectCurrency },
+                                )}
                             >
                                 <Form
                                     {...storeResource.form(args)}
@@ -1628,9 +1660,11 @@ function ProjectResourcePlan({
                             {resources.length > 0 && milestones.length > 0 && (
                                 <FormSheet
                                     title={copy.allocate_project_resource}
-                                    triggerLabel="Add allocation"
+                                    triggerLabel={copy.add_allocation}
                                     icon={CalendarCheck2}
-                                    description="Allocate uniform daily capacity within both the resource and milestone periods."
+                                    description={
+                                        copy.add_allocation_description
+                                    }
                                 >
                                     <Form
                                         {...storeResourceAllocation.form(args)}
@@ -2039,7 +2073,14 @@ function RegisterRow({
                                     type="button"
                                     size="icon"
                                     variant="ghost"
-                                    aria-label={`Actions for ${String(item[primary] ?? kind)}`}
+                                    aria-label={interpolate(
+                                        copy.actions_for_record,
+                                        {
+                                            record: String(
+                                                item[primary] ?? kind,
+                                            ),
+                                        },
+                                    )}
                                 >
                                     <MoreHorizontal />
                                 </Button>

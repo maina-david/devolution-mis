@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { ExternalLink, Mail, MapPin, Phone } from 'lucide-react';
 
 import AppLogoIcon from '@/components/app-logo-icon';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { faqs, help, home, login } from '@/routes';
 import { index as citizenEngagement } from '@/routes/citizen-engagement';
 import { index as dataRights } from '@/routes/data-rights';
@@ -16,6 +17,7 @@ const informationEmail = 'info@devolution.go.ke';
 const complaintsEmail = 'complaints@devolution.go.ke';
 
 export function PublicSiteFooter() {
+    const commonCopy = useCommonCopy();
     const { localization } = usePage().props;
     const { copy } = localization;
 
@@ -26,7 +28,9 @@ export function PublicSiteFooter() {
                     <Link
                         href={home()}
                         className="inline-flex items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none"
-                        aria-label={`IDMIS ${copy.home}`}
+                        aria-label={interpolate(commonCopy.idmis_home, {
+                            home: copy.home,
+                        })}
                     >
                         <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-white p-1">
                             <AppLogoIcon className="size-10" />

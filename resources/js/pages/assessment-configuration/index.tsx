@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { interpolate } from '@/hooks/use-localization';
 import { index } from '@/routes/assessment-configuration';
 import { store as storeCycle } from '@/routes/assessment-configuration/cycles';
 import { store as storeScorecard } from '@/routes/assessment-configuration/scorecards';
@@ -86,7 +87,7 @@ function useAssessmentConfigurationCopy(): Record<string, string> {
     return usePage().props.localization.assessmentConfiguration;
 }
 
-function baselineConfiguration() {
+function baselineConfiguration(copy: Record<string, string>) {
     return {
         change_notes: 'Initial fourteen-function digital scorecard baseline.',
         calculation_method: 'mcda',
@@ -97,19 +98,19 @@ function baselineConfiguration() {
         },
         performance_thresholds: [
             {
-                label: 'Exceeds standard',
+                label: copy.exceeds_standard,
                 minimum: 85,
                 maximum: 100,
                 color: 'green',
             },
             {
-                label: 'Meets standard',
+                label: copy.meets_standard,
                 minimum: 70,
                 maximum: 84.9999,
                 color: 'blue',
             },
             {
-                label: 'Needs improvement',
+                label: copy.needs_improvement,
                 minimum: 0,
                 maximum: 69.9999,
                 color: 'amber',
@@ -118,7 +119,9 @@ function baselineConfiguration() {
         functions: devolvedFunctions.map((name, index) => ({
             code: `F${String(index + 1).padStart(2, '0')}`,
             name,
-            description: `Capacity, productivity and service-delivery assessment for ${name.toLowerCase()}.`,
+            description: interpolate(copy.function_assessment_description, {
+                name: name.toLowerCase(),
+            }),
             function_type: 'devolved',
             weight: index === devolvedFunctions.length - 1 ? 7.1423 : 7.1429,
             sequence: index + 1,
@@ -126,8 +129,7 @@ function baselineConfiguration() {
                 {
                     code: `F${String(index + 1).padStart(2, '0')}-EN`,
                     name: 'Institutional capacity and service delivery',
-                    description:
-                        'Governance, capacity, productivity and results enablers.',
+                    description: copy.function_theme_description,
                     weight: 100,
                     sequence: 1,
                     standards: [
@@ -136,16 +138,14 @@ function baselineConfiguration() {
                             name: 'Approved sector standard and service-delivery norm',
                             norm_reference:
                                 'Applicable national and county sector standard; owner approval required before publication.',
-                            description:
-                                'Measures conformity, implementation and evidenced results.',
+                            description: copy.standard_description,
                             weight: 100,
                             sequence: 1,
                             criteria: [
                                 {
                                     code: `F${String(index + 1).padStart(2, '0')}-C01`,
                                     name: 'Documented compliance and demonstrated service-delivery result',
-                                    description:
-                                        'Evidence must demonstrate both institutional compliance and an attributable result.',
+                                    description: copy.criterion_description,
                                     weight: 100,
                                     maximum_score: 100,
                                     scoring_method: 'scale',
@@ -156,7 +156,7 @@ function baselineConfiguration() {
                                     },
                                     thresholds: [
                                         {
-                                            label: 'Meets standard',
+                                            label: copy.meets_standard,
                                             minimum: 70,
                                         },
                                     ],
@@ -167,7 +167,7 @@ function baselineConfiguration() {
                                             code: `F${String(index + 1).padStart(2, '0')}-E01`,
                                             name: 'Approved compliance and results evidence',
                                             description:
-                                                'Signed policy, plan, report, register, audit evidence or equivalent primary record.',
+                                                copy.evidence_requirement_description,
                                             minimum_documents: 1,
                                             allowed_categories: [
                                                 'policy',
@@ -328,7 +328,7 @@ function CycleForm({ versions }: { versions: Props['publishedVersions'] }) {
 function VersionComposer({ scorecardId }: { scorecardId: string }) {
     const copy = useAssessmentConfigurationCopy();
     const [configuration, setConfiguration] = useState(() =>
-        JSON.stringify(baselineConfiguration(), null, 2),
+        JSON.stringify(baselineConfiguration(copy), null, 2),
     );
     const [error, setError] = useState<string | null>(null);
 
@@ -390,7 +390,7 @@ function Pagination({
     return (
         <nav
             className="flex items-center justify-between gap-3"
-            aria-label={`${label} ${copy.pagination}`}
+            aria-label={interpolate(copy.pagination_label, { label })}
         >
             <p className="text-sm text-muted-foreground">
                 {copy.page} {page.current_page} {copy.of} {page.last_page}{' '}

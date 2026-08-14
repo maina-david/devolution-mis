@@ -9,4 +9,5 @@ return [
     'grant_access' => 'Toa ufikiaji', 'name' => 'Jina', 'official_email' => 'Barua pepe rasmi', 'programme_role' => 'Jukumu la programu',
     'home_county' => 'Kaunti ya nyumbani', 'assigned_county_portfolio' => 'Jalada la kaunti lililopewa', 'current_user' => 'Mtumiaji wa sasa', 'deactivate' => 'Zima',
     'errors' => ['self_deactivation' => 'Huwezi kuzima akaunti yako mwenyewe.', 'bulk_users_missing' => 'Mtumiaji mmoja au zaidi aliyechaguliwa hayupo tena.', 'bulk_self_deactivation' => 'Akaunti yako mwenyewe haiwezi kujumuishwa katika uzimaji wa wingi.'], 'audit' => ['access_deactivated' => 'Ufikiaji wa programu umezimwa kwa :email.'], 'outcomes' => ['role_matrix_updated' => 'Matriksi ya ruhusa za majukumu imesasishwa.', 'direct_permissions_updated' => 'Vighairi vya ruhusa za moja kwa moja vimesasishwa.', 'access_granted' => 'Ufikiaji wa mtumiaji umetolewa na uwekaji wa nenosiri umeombwa.', 'access_deactivated' => 'Ufikiaji wa mtumiaji umezimwa.', 'bulk_deactivated' => '{1} Akaunti moja ya mtumiaji imezimwa.|[2,*] Akaunti :count za watumiaji zimezimwa.'],
+    'actions_for_user' => 'Vitendo vya :user',
 ];

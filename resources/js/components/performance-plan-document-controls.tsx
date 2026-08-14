@@ -16,6 +16,7 @@ import {
     SheetTrigger,
 } from '@/components/ui/sheet';
 import type { WorkspaceDocument } from '@/components/workspace-data-table';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { store } from '@/routes/departmental-performance/plans/documents';
 import { download, preview } from '@/routes/evidence';
 
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export default function PerformancePlanDocumentControls(props: Props) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.performanceDocuments;
     const [previewDocument, setPreviewDocument] =
         useState<WorkspaceDocument | null>(null);
@@ -138,7 +140,9 @@ export default function PerformancePlanDocumentControls(props: Props) {
                     </SheetHeader>
                     {previewDocument && (
                         <iframe
-                            title={`${copy.preview} ${previewDocument.title}`}
+                            title={interpolate(commonCopy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                             className="h-[75vh] w-full border-0 px-4 pb-4"
                         />
@@ -150,6 +154,7 @@ export default function PerformancePlanDocumentControls(props: Props) {
 }
 
 function UploadRecord(props: Props) {
+    const commonCopy = useCommonCopy();
     const copy = usePage().props.localization.performanceDocuments;
     const purpose =
         props.status === 'draft'
@@ -163,7 +168,9 @@ function UploadRecord(props: Props) {
 
     return (
         <FormSheet
-            title={`${copy.upload} ${purpose.name.toLocaleLowerCase()}`}
+            title={interpolate(commonCopy.upload_record, {
+                record: purpose.name.toLocaleLowerCase(),
+            })}
             triggerLabel={copy.upload_record}
             icon={Upload}
             description={copy.upload_record_description}

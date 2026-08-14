@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import {
     publish as publishCalendar,
     store as storeCalendar,
@@ -253,9 +254,14 @@ function DraftEditor({
 
     return (
         <FormSheet
-            title={`${copy.edit} ${workflow.name} ${copy.version} ${version.version}`}
+            title={interpolate(copy.edit_workflow_version, {
+                workflow: workflow.name,
+                version: version.version,
+            })}
             description={copy.edit_description}
-            triggerLabel={`${copy.edit_draft} ${copy.version_prefix}${version.version}`}
+            triggerLabel={interpolate(copy.edit_draft_version, {
+                version: version.version,
+            })}
             icon={GitBranch}
             size="xl"
         >
@@ -266,7 +272,9 @@ function DraftEditor({
                         setConfigurationJson(event.target.value)
                     }
                     className="min-h-96 font-mono text-xs"
-                    aria-label={`${copy.workflow} ${workflow.name} ${copy.configuration}`}
+                    aria-label={interpolate(copy.workflow_configuration_label, {
+                        workflow: workflow.name,
+                    })}
                 />
                 <SearchableSelect
                     id={`workflow-calendar-${version.id}`}
@@ -507,7 +515,13 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                aria-label={`Actions for ${calendar.code} version ${calendar.version}`}
+                                aria-label={interpolate(
+                                    copy.actions_for_calendar_version,
+                                    {
+                                        code: calendar.code,
+                                        version: calendar.version,
+                                    },
+                                )}
                             >
                                 <MoreHorizontal />
                             </Button>
@@ -674,7 +688,12 @@ function BusinessCalendarCard({ calendar }: { calendar: BusinessCalendar }) {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    aria-label={`Remove ${holiday.name}`}
+                                                    aria-label={interpolate(
+                                                        copy.remove_record,
+                                                        {
+                                                            record: holiday.name,
+                                                        },
+                                                    )}
                                                     onClick={() =>
                                                         router.delete(
                                                             destroyHoliday.url({

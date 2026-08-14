@@ -477,7 +477,7 @@ export default function Operations({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_operational_alerts}
-                            description="Warning and failure measurements will open a deduplicated alert here; passing measurements automatically retain recovery evidence."
+                            description={copy.no_alerts_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -518,7 +518,7 @@ export default function Operations({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_backup_evidence}
-                            description="Request the first backup or wait for the scheduled daily control."
+                            description={copy.no_backups_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -562,7 +562,7 @@ export default function Operations({
                         ) : (
                             <WorkspaceEmptyState
                                 title={copy.no_failed_queue_jobs}
-                                description="No database, notification, report, extraction or backup job is awaiting recovery."
+                                description={copy.no_failed_jobs_description}
                                 className="min-h-64 border-0"
                             />
                         )}
@@ -592,7 +592,7 @@ export default function Operations({
                         ) : (
                             <WorkspaceEmptyState
                                 title={copy.no_recovery_attempts}
-                                description="Recovery evidence appears after an authorized operator retries a retained failed job."
+                                description={copy.no_job_recoveries_description}
                                 className="min-h-64 border-0"
                             />
                         )}
@@ -634,7 +634,7 @@ export default function Operations({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_performance_evidence}
-                            description="Run the bounded operations performance probe in an approved environment to establish the first baseline."
+                            description={copy.no_performance_runs_description}
                             className="min-h-64 border-0"
                         />
                     )}
@@ -660,7 +660,7 @@ export default function Operations({
                         {releases.length === 0 && (
                             <WorkspaceEmptyState
                                 title={copy.no_release_evidence}
-                                description="Record a reproducible artifact deployment for independent validation."
+                                description={copy.no_releases_description}
                             />
                         )}
                     </div>
@@ -756,7 +756,9 @@ function OperationalAlertAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${humanize(alert.metric)} alert`}
+                        aria-label={interpolate(copy.actions_for_alert, {
+                            metric: humanize(alert.metric),
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -913,7 +915,10 @@ function PerformanceRunAction({ run }: { run: PerformanceRun }) {
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for performance run ${run.id}`}
+                        aria-label={interpolate(
+                            copy.actions_for_performance_run,
+                            { id: run.id },
+                        )}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1045,7 +1050,9 @@ function FailedJobAction({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for failed job ${job.uuid}`}
+                        aria-label={interpolate(copy.actions_for_failed_job, {
+                            id: job.uuid,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1116,8 +1123,8 @@ function BackupRequest() {
     return (
         <FormSheet
             title={copy.request_database_backup}
-            description="Queue a checksummed PostgreSQL custom-format backup on the configured private backup disk."
-            triggerLabel="Request backup"
+            description={copy.request_backup_description}
+            triggerLabel={copy.request_backup}
             icon={ArchiveRestore}
         >
             <Form action={requestBackup()} className="grid gap-4 pt-4">
@@ -1138,8 +1145,8 @@ function ReleaseForm() {
     return (
         <FormSheet
             title={copy.record_deployment}
-            description="Register the exact artifact and migration state for independent post-deployment validation."
-            triggerLabel="Record release"
+            description={copy.record_release_description}
+            triggerLabel={copy.record_release}
             icon={Plus}
             size="xl"
         >
@@ -1219,7 +1226,9 @@ function BackupAction({
                 variant="ghost"
                 size="icon"
                 onClick={() => setOpen(true)}
-                aria-label={`Open backup ${backup.reference}`}
+                aria-label={interpolate(copy.open_backup, {
+                    reference: backup.reference,
+                })}
             >
                 <MoreHorizontal />
             </Button>
@@ -1312,7 +1321,10 @@ function ReleaseCard({
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                aria-label={`Actions for release ${release.version}`}
+                                aria-label={interpolate(
+                                    copy.actions_for_release,
+                                    { version: release.version },
+                                )}
                             >
                                 <MoreHorizontal />
                             </Button>

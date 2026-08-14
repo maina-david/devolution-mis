@@ -18,6 +18,7 @@ import type {
     WorkspacePagination,
     WorkspaceRow,
 } from '@/components/workspace-data-table';
+import { interpolate } from '@/hooks/use-localization';
 import { index as usersIndex } from '@/routes/programme-users';
 
 type TableData = { rows: WorkspaceRow[]; pagination: WorkspacePagination };
@@ -154,7 +155,11 @@ export default function ProgrammeUserProfile(props: Props) {
 
     return (
         <>
-            <Head title={`${profile.name} · ${copy.user_record}`} />
+            <Head
+                title={interpolate(copy.user_record_title, {
+                    name: profile.name,
+                })}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 sm:p-6 lg:p-8">
                 <section className="authenticated-page-header">
                     <Button

@@ -5,6 +5,7 @@ import UniqueValueController from '@/actions/App/Http/Controllers/UniqueValueCon
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { cn } from '@/lib/utils';
 
 type UniqueResource = 'counties' | 'organizations' | 'sectors' | 'programmes';
@@ -31,6 +32,7 @@ export default function UniqueValueInput({
     defaultValue?: string;
     excludeId?: string;
 }) {
+    const copy = useCommonCopy();
     const [value, setValue] = useState(defaultValue);
     const [result, setResult] = useState<{
         available: boolean;
@@ -87,7 +89,9 @@ export default function UniqueValueInput({
                 />
                 {request.processing && (
                     <LoaderCircle
-                        aria-label={`Checking ${label.toLocaleLowerCase()}`}
+                        aria-label={interpolate(copy.checking_label, {
+                            label: label.toLocaleLowerCase(),
+                        })}
                         className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
                     />
                 )}

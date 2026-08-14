@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'search_placeholder' => 'Search reference data or programme coverage', 'coverage_status' => 'Coverage status',
     'name' => 'Name', 'type' => 'Type', 'description' => 'Description', 'parent_sector' => 'Parent sector', 'lead_organization' => 'Lead organization',
     'sector' => 'Sector', 'currency' => 'Currency', 'create_county' => 'Create county', 'select_all_counties_on_this_page' => 'Select all counties on this page',
     'county_code' => 'County code', 'county_name' => 'County name', 'official_website' => 'Official website', 'map_x' => 'Map X', 'map_y' => 'Map Y',
@@ -70,4 +71,5 @@ return [
     'value_constituency' => 'Constituency',
     'value_county_sub_county' => 'County sub-county',
     'value_national_sub_county' => 'National sub-county',
+    'create_organization_description' => 'Add an organization to the canonical registry. Publish a release before downstream exchange.', 'create_sector_description' => 'Add a governed thematic and reporting classification.', 'create_programme_description' => 'Add an authoritative programme portfolio record.', 'create_county_description' => 'Add a county reference. Official identity assets require separate provenance verification.', 'select_record' => 'Select :record', 'actions_for_record' => 'Actions for :record', 'add_coverage' => 'Add coverage', 'add_coverage_description' => 'Link one programme to a county for a non-overlapping effective period with accountable source evidence.', 'no_coverage_description' => 'Add the first effective-dated county assignment or adjust the active filters.', 'create_release' => 'Create release', 'create_release_description' => 'Capture the complete current county, organization, sector and programme catalogue for independent publication.', 'actions_for_release' => 'Actions for reference-data release version :version', 'no_releases_description' => 'No governed reference-data releases have been submitted.',
 ];

@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { download, preview } from '@/routes/evidence';
 
 type ContributionDocument = {
@@ -201,7 +202,12 @@ export default function PartnerContributionRegister({
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        aria-label={`Actions for ${item.partner}`}
+                                                        aria-label={interpolate(
+                                                            copy.actions_for_record,
+                                                            {
+                                                                record: item.partner,
+                                                            },
+                                                        )}
                                                     >
                                                         <MoreHorizontal />
                                                     </Button>
@@ -220,9 +226,15 @@ export default function PartnerContributionRegister({
                                                             asChild
                                                         >
                                                             <FormSheet
-                                                                title="Upload reconciliation evidence"
-                                                                triggerLabel="Upload evidence"
-                                                                description="Add a scanned or born-digital source record to the governed repository."
+                                                                title={
+                                                                    copy.upload_reconciliation_evidence
+                                                                }
+                                                                triggerLabel={
+                                                                    copy.upload_evidence
+                                                                }
+                                                                description={
+                                                                    copy.upload_reconciliation_evidence_description
+                                                                }
                                                             >
                                                                 <Form
                                                                     action={storePartnerContribution(
@@ -283,9 +295,15 @@ export default function PartnerContributionRegister({
                                                             asChild
                                                         >
                                                             <FormSheet
-                                                                title="Reconcile contribution"
-                                                                triggerLabel="Record decision"
-                                                                description="Independent maker-checker decision using the attached clean evidence."
+                                                                title={
+                                                                    copy.reconcile_contribution
+                                                                }
+                                                                triggerLabel={
+                                                                    copy.record_decision
+                                                                }
+                                                                description={
+                                                                    copy.reconcile_contribution_description
+                                                                }
                                                             >
                                                                 <Form
                                                                     action={reconcileContribution(
@@ -303,7 +321,9 @@ export default function PartnerContributionRegister({
                                                                         <SearchableSelect
                                                                             id="reconciliation-decision"
                                                                             name="decision"
-                                                                            label="Decision"
+                                                                            label={
+                                                                                copy.decision
+                                                                            }
                                                                             options={[
                                                                                 {
                                                                                     id: 'verified',
@@ -460,7 +480,10 @@ export default function PartnerContributionRegister({
                                                 onClick={() =>
                                                     setPreviewDocument(document)
                                                 }
-                                                aria-label={`Preview ${document.title}`}
+                                                aria-label={interpolate(
+                                                    copy.preview_document,
+                                                    { title: document.title },
+                                                )}
                                             >
                                                 <Eye />
                                             </Button>
@@ -473,7 +496,12 @@ export default function PartnerContributionRegister({
                                                     href={download.url({
                                                         document: document.id,
                                                     })}
-                                                    aria-label={`Download ${document.title}`}
+                                                    aria-label={interpolate(
+                                                        copy.download_document,
+                                                        {
+                                                            title: document.title,
+                                                        },
+                                                    )}
                                                 >
                                                     <Download />
                                                 </a>
@@ -531,7 +559,9 @@ export default function PartnerContributionRegister({
                     {previewDocument && (
                         <iframe
                             className="h-[calc(100vh-8rem)] w-full border-0"
-                            title={`Preview ${previewDocument.title}`}
+                            title={interpolate(copy.preview_document, {
+                                title: previewDocument.title,
+                            })}
                             src={preview.url({ document: previewDocument.id })}
                         />
                     )}

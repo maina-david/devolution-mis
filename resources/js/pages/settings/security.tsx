@@ -236,6 +236,10 @@ function PasswordField({
     );
 }
 
-Security.layout = {
-    breadcrumbs: [{ title: 'Security settings', href: edit() }],
-};
+function SecurityLayout() {
+    const copy = usePage().props.localization.settingsSecurity;
+
+    return { breadcrumbs: [{ title: copy.security_settings, href: edit() }] };
+}
+
+Security.layout = SecurityLayout;

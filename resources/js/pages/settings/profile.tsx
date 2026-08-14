@@ -338,6 +338,10 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
     );
 }
 
-Profile.layout = {
-    breadcrumbs: [{ title: 'Profile settings', href: edit() }],
-};
+function ProfileLayout() {
+    const copy = usePage().props.localization.settingsProfile;
+
+    return { breadcrumbs: [{ title: copy.title, href: edit() }] };
+}
+
+Profile.layout = ProfileLayout;

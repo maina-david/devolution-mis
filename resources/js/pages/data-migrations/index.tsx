@@ -49,6 +49,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { DEFAULT_LOCALE } from '@/lib/reference-catalog';
 import {
     apply,
@@ -571,7 +572,7 @@ export default function HistoricalDataMigrations({
                     selectFilters={[
                         {
                             key: 'type',
-                            label: 'Dataset type',
+                            label: copy.dataset_type,
                             options: [
                                 ...datasetOptions,
                                 ...referenceDatasetOptions,
@@ -580,7 +581,7 @@ export default function HistoricalDataMigrations({
                         },
                         {
                             key: 'status',
-                            label: 'Status',
+                            label: copy.status,
                             options: statusOptions,
                             value: filters.status,
                         },
@@ -729,7 +730,12 @@ export default function HistoricalDataMigrations({
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    aria-label={`Actions for ${batch.reference}`}
+                                                    aria-label={interpolate(
+                                                        copy.actions_for_record,
+                                                        {
+                                                            record: batch.reference,
+                                                        },
+                                                    )}
                                                 >
                                                     <MoreHorizontal />
                                                 </Button>

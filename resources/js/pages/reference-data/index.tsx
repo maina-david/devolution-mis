@@ -67,6 +67,7 @@ import type {
 } from '@/components/workspace-data-table';
 import WorkspaceDataTable from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { index as dataImportsIndex } from '@/routes/data-migrations';
 import { show as dataImportTemplate } from '@/routes/data-migrations/templates';
 import {
@@ -301,23 +302,23 @@ export default function ReferenceDataIndex({
                     initialFrom={filters.from}
                     initialTo={filters.to}
                     initialSearch={filters.search}
-                    searchPlaceholder="Search reference data or programme coverage"
+                    searchPlaceholder={copy.search_placeholder}
                     selectFilters={[
                         {
                             key: 'county_id',
-                            label: 'County',
+                            label: copy.county,
                             options: options.counties,
                             value: filters.county_id,
                         },
                         {
                             key: 'sector_id',
-                            label: 'Sector',
+                            label: copy.sector,
                             options: options.sectors,
                             value: filters.sector_id,
                         },
                         {
                             key: 'status',
-                            label: 'Coverage status',
+                            label: copy.coverage_status,
                             options: [
                                 'planned',
                                 'active',
@@ -346,8 +347,10 @@ export default function ReferenceDataIndex({
                         <CardContent>
                             <FormSheet
                                 title={copy.create_organization}
-                                description="Add an organization to the canonical registry. Publish a release before downstream exchange."
-                                triggerLabel="Create organization"
+                                description={
+                                    copy.create_organization_description
+                                }
+                                triggerLabel={copy.create_organization}
                                 icon={Building2}
                             >
                                 <Form
@@ -433,8 +436,8 @@ export default function ReferenceDataIndex({
                         <CardContent>
                             <FormSheet
                                 title={copy.create_sector}
-                                description="Add a governed thematic and reporting classification."
-                                triggerLabel="Create sector"
+                                description={copy.create_sector_description}
+                                triggerLabel={copy.create_sector}
                                 icon={Layers3}
                             >
                                 <Form
@@ -513,8 +516,8 @@ export default function ReferenceDataIndex({
                         <CardContent>
                             <FormSheet
                                 title={copy.create_programme}
-                                description="Add an authoritative programme portfolio record."
-                                triggerLabel="Create programme"
+                                description={copy.create_programme_description}
+                                triggerLabel={copy.create_programme}
                                 icon={Database}
                             >
                                 <Form
@@ -905,8 +908,8 @@ function CountyRegister({
                         </Button>
                         <FormSheet
                             title={copy.create_county}
-                            description="Add a county reference. Official identity assets require separate provenance verification."
-                            triggerLabel="Create county"
+                            description={copy.create_county_description}
+                            triggerLabel={copy.create_county}
                             icon={Map}
                         >
                             <CountyForm
@@ -971,7 +974,13 @@ function CountyRegister({
                                                 onCheckedChange={() =>
                                                     toggle(county.id)
                                                 }
-                                                aria-label={`Select ${county.identity.name}`}
+                                                aria-label={interpolate(
+                                                    copy.select_record,
+                                                    {
+                                                        record: county.identity
+                                                            .name,
+                                                    },
+                                                )}
                                             />
                                         </TableCell>
                                     )}
@@ -1013,7 +1022,14 @@ function CountyRegister({
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        aria-label={`Actions for ${county.identity.name}`}
+                                                        aria-label={interpolate(
+                                                            copy.actions_for_record,
+                                                            {
+                                                                record: county
+                                                                    .identity
+                                                                    .name,
+                                                            },
+                                                        )}
                                                     >
                                                         <MoreHorizontal />
                                                     </Button>
@@ -1292,8 +1308,8 @@ function ProgrammeCoverageRegister({
                 {canManage && (
                     <FormSheet
                         title={copy.add_programme_county_coverage}
-                        description="Link one programme to a county for a non-overlapping effective period with accountable source evidence."
-                        triggerLabel="Add coverage"
+                        description={copy.add_coverage_description}
+                        triggerLabel={copy.add_coverage}
                         icon={MapPinned}
                     >
                         <Form
@@ -1421,7 +1437,7 @@ function ProgrammeCoverageRegister({
                 ) : (
                     <WorkspaceEmptyState
                         title={copy.no_programme_county_coverage}
-                        description="Add the first effective-dated county assignment or adjust the active filters."
+                        description={copy.no_coverage_description}
                         className="min-h-64 border-0"
                     />
                 )}
@@ -1442,7 +1458,9 @@ function ProgrammeCoverageAction({ row }: { row: WorkspaceRow }) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${String(row.cells[0])}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: String(row.cells[0]),
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1518,8 +1536,8 @@ function ReleaseRegister({
                 {capabilities.manage && (
                     <FormSheet
                         title={copy.submit_catalogue_release}
-                        description="Capture the complete current county, organization, sector and programme catalogue for independent publication."
-                        triggerLabel="Create release"
+                        description={copy.create_release_description}
+                        triggerLabel={copy.create_release}
                         icon={ClipboardCheck}
                     >
                         <Form
@@ -1627,7 +1645,13 @@ function ReleaseRegister({
                                                             type="button"
                                                             variant="ghost"
                                                             size="icon"
-                                                            aria-label={`Actions for reference-data release version ${release.version}`}
+                                                            aria-label={interpolate(
+                                                                copy.actions_for_release,
+                                                                {
+                                                                    version:
+                                                                        release.version,
+                                                                },
+                                                            )}
                                                         >
                                                             <MoreHorizontal />
                                                         </Button>
@@ -1658,7 +1682,9 @@ function ReleaseRegister({
                                 <TableCell colSpan={7}>
                                     <TableEmptyState
                                         title={copy.no_catalogue_releases}
-                                        description="No governed reference-data releases have been submitted."
+                                        description={
+                                            copy.no_releases_description
+                                        }
                                     />
                                 </TableCell>
                             </TableRow>

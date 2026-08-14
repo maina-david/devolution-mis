@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'operational_status' => 'Operational status', 'county' => 'County',
     'no_integration_systems_registered' => 'No integration systems registered', 'exchange_register' => 'Exchange register', 'no_matching_exchanges' => 'No matching exchanges', 'no_reconciliation_exceptions' => 'No reconciliation exceptions',
     'owner' => 'Owner', 'owner_organization' => 'Owner organization', 'reference_catalogue' => 'Reference catalogue', 'classification' => 'Classification', 'authentication' => 'Authentication', 'health' => 'Health', 'endpoint' => 'Endpoint', 'credential_reference' => 'Credential reference',
     'source_owner_approval_reference' => 'Source-owner approval reference', 'data_sharing_agreement_reference' => 'Data-sharing agreement reference', 'effective_from' => 'Effective from', 'effective_until' => 'Effective until',
@@ -12,4 +13,5 @@ return [
     'source_event_time' => 'Source event time', 'contract_valid_json_payload' => 'Contract-valid JSON payload', 'source_owner_activation_reference' => 'Source-owner activation reference', 'approval_date_and_time' => 'Approval date and time',
     'contract' => 'Contract', 'payload_checksum' => 'Payload checksum', 'status' => 'Status', 'next_attempt' => 'Next attempt', 'accepted' => 'Accepted', 'no_retained_attempts' => 'No retained attempts',
     'description_label' => 'Description', 'references' => 'References', 'verified_resolution_and_evidence' => 'Verified resolution and evidence',
+    'no_systems_description' => 'Register the first source system and submit a versioned interface contract for independent approval.', 'exchange_record_count' => ':count payload-safe exchange records', 'no_exchanges_description' => 'Dispatch a schema-valid sandbox payload or adjust the filters.', 'no_discrepancies_description' => 'No discrepancies match the current scope and filters.', 'actions_for_record' => 'Actions for :record', 'publish_contract' => 'Publish :name v:version', 'publish_contract_description' => 'Independently approve the immutable schema contract. Production interfaces require source-owner and data-sharing references.', 'review_and_publish' => 'Review and publish', 'new_system_description' => 'Register endpoint metadata and a vault reference only. Never store credentials in this form.', 'new_system' => 'New system', 'new_contract_description' => 'Define the schema, mappings, idempotency and retry policy for independent publication.', 'new_contract' => 'New contract', 'actions_for_exchange' => 'Actions for exchange :id', 'legacy_exchange_description' => 'This exchange predates the immutable attempt ledger.', 'view_reconciliation_exception' => 'View reconciliation exception :id',
 ];

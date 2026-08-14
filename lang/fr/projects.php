@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'projects' => 'Projets', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v',
+    'projects' => 'Projets', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v', 'advance_lifecycle' => 'Faire avancer le cycle de vie', 'move_to_planning' => 'Passer à la planification', 'start_execution' => 'Démarrer l’exécution', 'submit_closure' => 'Soumettre à la clôture', 'approve_closure' => 'Approuver la clôture',
     'document_register' => 'Registre documentaire du projet',
     'document_register_description' => 'Dossiers de cycle de vie gouvernés avec stockage privé, quarantaine antimalware, sommes de contrôle, admissibilité OCR, versions immuables et récupération auditée.',
     'source_type' => 'Type de source', 'document' => 'Document', 'scan_label' => 'Analyse :', 'ocr_label' => 'OCR :',

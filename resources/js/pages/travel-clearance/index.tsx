@@ -46,6 +46,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import {
     download as downloadEvidence,
     preview as previewEvidence,
@@ -485,7 +486,9 @@ function AnalyticsTable({
                     />
                 ) : (
                     <WorkspaceEmptyState
-                        title={`${copy.no_data_prefix} ${title.toLowerCase()} ${copy.data}`}
+                        title={interpolate(copy.no_data_title, {
+                            title: title.toLowerCase(),
+                        })}
                         description={copy.analytics_empty_description}
                         className="min-h-48 border-0"
                     />
@@ -844,7 +847,9 @@ function TravelRequestActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`${copy.actions_for} ${request.reference}`}
+                        aria-label={interpolate(copy.actions_for_request, {
+                            reference: request.reference,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>

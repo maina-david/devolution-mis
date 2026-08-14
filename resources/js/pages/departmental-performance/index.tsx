@@ -42,6 +42,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { store as storeCycle } from '@/routes/departmental-performance/cycles';
 import {
     store as storePlan,
@@ -261,13 +262,13 @@ export default function DepartmentalPerformance({
                     selectFilters={[
                         {
                             key: 'cycle_id',
-                            label: 'Performance cycle',
+                            label: copy.performance_cycle,
                             options: options.cycles,
                             value: filters.cycle_id,
                         },
                         {
                             key: 'status',
-                            label: 'Plan status',
+                            label: copy.plan_status,
                             options: statuses,
                             value: filters.status,
                         },
@@ -294,7 +295,7 @@ export default function DepartmentalPerformance({
                 <section className="grid gap-4 xl:grid-cols-3">
                     <AnalyticsTable
                         title={copy.performance_trend}
-                        description="Finalized scores by appraisal cycle in your authorized scope."
+                        description={copy.cycle_scores_description}
                         columns={['Cycle', 'Completed', 'Average score']}
                         rows={analytics.trends.map((item) => ({
                             id: item.id,
@@ -307,7 +308,7 @@ export default function DepartmentalPerformance({
                     />
                     <AnalyticsTable
                         title={copy.department_rollup}
-                        description="Finalized appraisal outcomes grouped by department or organization."
+                        description={copy.department_outcomes_description}
                         columns={['Department', 'Completed', 'Average score']}
                         rows={analytics.organizations.map((item) => ({
                             id: item.id,
@@ -320,7 +321,7 @@ export default function DepartmentalPerformance({
                     />
                     <AnalyticsTable
                         title={copy.capacity_priorities}
-                        description="Recurring development needs from finalized supervisor reviews."
+                        description={copy.development_needs_description}
                         columns={['Capacity gap', 'Affected plans']}
                         rows={analytics.capacityGaps.map((item) => ({
                             id: item.id,
@@ -409,7 +410,7 @@ export default function DepartmentalPerformance({
                     ) : (
                         <WorkspaceEmptyState
                             title={copy.no_matching_performance_plans}
-                            description="Adjust the filters or create the first weighted plan for an open appraisal cycle."
+                            description={copy.no_plans_description}
                             className="min-h-72 border-0"
                         />
                     )}
@@ -445,6 +446,8 @@ function AnalyticsTable({
     columns: string[];
     rows: WorkspaceRow[];
 }) {
+    const copy = useDepartmentalPerformanceCopy();
+
     return (
         <Card className="overflow-hidden">
             <CardHeader>
@@ -465,8 +468,10 @@ function AnalyticsTable({
                     />
                 ) : (
                     <WorkspaceEmptyState
-                        title={`No ${title.toLowerCase()} data`}
-                        description="Finalized appraisals will populate this analysis."
+                        title={interpolate(copy.no_analysis_data, {
+                            title: title.toLowerCase(),
+                        })}
+                        description={copy.no_analysis_data_description}
                         className="min-h-48 border-0"
                     />
                 )}
@@ -481,8 +486,8 @@ function CycleForm() {
     return (
         <FormSheet
             title={copy.create_performance_cycle}
-            description="Configure the goal-setting and appraisal calendar."
-            triggerLabel="New cycle"
+            description={copy.new_cycle_description}
+            triggerLabel={copy.new_cycle}
             icon={Plus}
         >
             <Form action={storeCycle()} className="grid gap-4 pt-4">
@@ -561,8 +566,8 @@ function PlanForm({
     return (
         <FormSheet
             title={copy.new_performance_plan}
-            description="Define measurable goals whose weights total exactly 100%."
-            triggerLabel="New plan"
+            description={copy.new_plan_description}
+            triggerLabel={copy.new_plan}
             icon={Target}
             size="xl"
             triggerDisabled={!catalogue.available}
@@ -878,7 +883,9 @@ function PlanActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${plan.employee}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: plan.employee,
+                        })}
                     >
                         <MoreHorizontal />
                     </Button>
@@ -1057,7 +1064,10 @@ function TransitionForm({
                                         'submit_self_review' && (
                                         <Field
                                             name={`goals[${index}][actual_value]`}
-                                            label={`Actual (${goal.unit})`}
+                                            label={interpolate(
+                                                copy.actual_with_unit,
+                                                { unit: goal.unit },
+                                            )}
                                             type="number"
                                             optional
                                             error={

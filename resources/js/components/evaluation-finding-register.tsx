@@ -43,6 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import {
     download as downloadEvidence,
     preview as previewEvidence,
@@ -157,9 +158,9 @@ export default function EvaluationFindingRegister({
                 </div>
                 {canManage && approved.length > 0 && (
                     <FormSheet
-                        title="Issue evaluation finding"
-                        description="Bind a recommendation to an approved evaluation and assign a scoped accountable owner."
-                        triggerLabel="Issue finding"
+                        title={copy.issue_evaluation_finding}
+                        description={copy.issue_finding_description}
+                        triggerLabel={copy.issue_finding}
                         icon={ClipboardCheck}
                         size="lg"
                     >
@@ -173,7 +174,7 @@ export default function EvaluationFindingRegister({
                                     <SearchableSelect
                                         id="finding-evaluation"
                                         name="evaluation_selector"
-                                        label="Approved evaluation"
+                                        label={copy.approved_evaluation}
                                         options={approved}
                                         value={evaluationId}
                                         onValueChange={setEvaluationId}
@@ -181,7 +182,7 @@ export default function EvaluationFindingRegister({
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <Field
                                             id="finding-reference"
-                                            label="Reference"
+                                            label={copy.reference}
                                             error={errors.reference}
                                         >
                                             <Input
@@ -195,7 +196,7 @@ export default function EvaluationFindingRegister({
                                         </Field>
                                         <Field
                                             id="finding-title"
-                                            label="Title"
+                                            label={copy.title_label}
                                             error={errors.title}
                                         >
                                             <Input
@@ -209,7 +210,7 @@ export default function EvaluationFindingRegister({
                                         </Field>
                                         <Field
                                             id="finding-severity"
-                                            label="Severity"
+                                            label={copy.severity}
                                             error={errors.severity}
                                         >
                                             <StaticSearchableSelect
@@ -226,14 +227,14 @@ export default function EvaluationFindingRegister({
                                         <SearchableSelect
                                             id="finding-owner"
                                             name="accountable_owner_id"
-                                            label="Accountable owner"
+                                            label={copy.accountable_owner}
                                             options={owners}
                                             error={errors.accountable_owner_id}
                                         />
                                     </div>
                                     <Field
                                         id="finding-text"
-                                        label="Finding"
+                                        label={copy.finding}
                                         error={errors.finding}
                                     >
                                         <Textarea
@@ -248,7 +249,7 @@ export default function EvaluationFindingRegister({
                                     </Field>
                                     <Field
                                         id="finding-recommendation"
-                                        label="Recommendation"
+                                        label={copy.recommendation}
                                         error={errors.recommendation}
                                     >
                                         <Textarea
@@ -263,7 +264,7 @@ export default function EvaluationFindingRegister({
                                     </Field>
                                     <DatePickerField
                                         name="due_at"
-                                        label="Response due date"
+                                        label={copy.response_due_date}
                                         min={new Date()
                                             .toISOString()
                                             .slice(0, 10)}
@@ -286,8 +287,8 @@ export default function EvaluationFindingRegister({
             </div>
             {findings.length === 0 ? (
                 <WorkspaceEmptyState
-                    title="No evaluation findings"
-                    description="Approved evaluation findings and recommendation follow-up will appear here."
+                    title={copy.no_evaluation_findings}
+                    description={copy.no_findings_description}
                     className="min-h-56 border-0"
                 />
             ) : (
@@ -358,7 +359,13 @@ export default function EvaluationFindingRegister({
                                     <div className="flex min-w-32 flex-col gap-2">
                                         <Progress
                                             value={item.progress}
-                                            aria-label={`${item.reference} progress: ${item.progress}%`}
+                                            aria-label={interpolate(
+                                                copy.finding_progress_label,
+                                                {
+                                                    reference: item.reference,
+                                                    progress: item.progress,
+                                                },
+                                            )}
                                         />
                                         <span className="text-xs text-muted-foreground">
                                             {item.progress}
@@ -441,7 +448,9 @@ function FindingActions({
                     <Button
                         variant="ghost"
                         size="icon"
-                        aria-label={`Actions for ${item.reference}`}
+                        aria-label={interpolate(copy.actions_for_record, {
+                            record: item.reference,
+                        })}
                     >
                         <MoreHorizontal aria-hidden="true" />
                     </Button>
@@ -508,7 +517,10 @@ function FindingActions({
                                 className="flex flex-col gap-4"
                                 resetOnSuccess
                             >
-                                <Field id="evidence-title" label="Record title">
+                                <Field
+                                    id="evidence-title"
+                                    label={copy.record_title}
+                                >
                                     <Input
                                         id="evidence-title"
                                         name="title"
@@ -525,7 +537,7 @@ function FindingActions({
                                     name="source_type"
                                     values={['digital', 'scanned']}
                                 />
-                                <Field id="evidence-file" label="Document">
+                                <Field id="evidence-file" label={copy.document}>
                                     <Input
                                         id="evidence-file"
                                         name="document"
@@ -559,7 +571,7 @@ function FindingActions({
                                 <SearchableSelect
                                     id="response-evidence"
                                     name="assessment_document_id"
-                                    label="Retained evidence"
+                                    label={copy.retained_evidence}
                                     options={item.documents
                                         .filter(
                                             (document) =>
@@ -572,7 +584,7 @@ function FindingActions({
                                 />
                                 <Field
                                     id="response-progress"
-                                    label="Verified progress requested (%)"
+                                    label={copy.verified_progress_requested}
                                 >
                                     <Input
                                         id="response-progress"
@@ -586,7 +598,7 @@ function FindingActions({
                                 </Field>
                                 <Field
                                     id="response-narrative"
-                                    label="Implementation narrative"
+                                    label={copy.implementation_narrative}
                                 >
                                     <Textarea
                                         id="response-narrative"
@@ -611,7 +623,10 @@ function FindingActions({
                                     name="decision"
                                     values={['verified', 'rejected']}
                                 />
-                                <Field id="response-note" label="Decision note">
+                                <Field
+                                    id="response-note"
+                                    label={copy.decision_note}
+                                >
                                     <Textarea
                                         id="response-note"
                                         name="note"
@@ -632,7 +647,7 @@ function FindingActions({
                             >
                                 <Field
                                     id="closure-note"
-                                    label="Closure decision"
+                                    label={copy.closure_decision}
                                 >
                                     <Textarea
                                         id="closure-note"
@@ -704,7 +719,10 @@ function FindingActionPlan({
                 <Progress
                     value={totalWeight}
                     className="mt-3"
-                    aria-label={`${finding.reference} action weight: ${totalWeight}% of 100%`}
+                    aria-label={interpolate(copy.action_weight_label, {
+                        reference: finding.reference,
+                        weight: totalWeight,
+                    })}
                 />
                 {totalWeight !== 100 && (
                     <p className="mt-2 text-xs text-muted-foreground">
@@ -727,8 +745,8 @@ function FindingActionPlan({
             )}
             {finding.actions.length === 0 ? (
                 <WorkspaceEmptyState
-                    title="No recommendation actions"
-                    description="Add separately owned and weighted actions to create the implementation plan."
+                    title={copy.no_recommendation_actions}
+                    description={copy.no_actions_description}
                     className="min-h-40"
                 />
             ) : (
@@ -799,7 +817,14 @@ function FindingActionPlan({
                                                 <Progress
                                                     value={action.progress}
                                                     className="mt-2"
-                                                    aria-label={`${action.code} verified progress: ${action.progress}%`}
+                                                    aria-label={interpolate(
+                                                        copy.verified_progress_label,
+                                                        {
+                                                            code: action.code,
+                                                            progress:
+                                                                action.progress,
+                                                        },
+                                                    )}
                                                 />
                                                 <p className="mt-1 text-xs text-muted-foreground">
                                                     {action.progress}
@@ -813,7 +838,12 @@ function FindingActionPlan({
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        aria-label={`Actions for ${action.code}`}
+                                                        aria-label={interpolate(
+                                                            copy.actions_for_record,
+                                                            {
+                                                                record: action.code,
+                                                            },
+                                                        )}
                                                     >
                                                         <MoreHorizontal aria-hidden="true" />
                                                     </Button>
@@ -961,7 +991,7 @@ function FindingActionPlan({
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <Field
                                     id="action-code"
-                                    label="Action code"
+                                    label={copy.action_code}
                                     error={errors.code}
                                 >
                                     <Input
@@ -973,13 +1003,13 @@ function FindingActionPlan({
                                 <SearchableSelect
                                     id="action-owner"
                                     name="accountable_owner_id"
-                                    label="Accountable owner"
+                                    label={copy.accountable_owner}
                                     options={owners}
                                     error={errors.accountable_owner_id}
                                 />
                                 <Field
                                     id="action-title"
-                                    label="Title"
+                                    label={copy.title_label}
                                     error={errors.title}
                                 >
                                     <Input
@@ -990,7 +1020,7 @@ function FindingActionPlan({
                                 </Field>
                                 <Field
                                     id="action-weight"
-                                    label="Weight (%)"
+                                    label={copy.weight}
                                     error={errors.weight_percentage}
                                 >
                                     <Input
@@ -1005,14 +1035,14 @@ function FindingActionPlan({
                                 </Field>
                                 <DatePickerField
                                     name="due_at"
-                                    label="Deadline"
+                                    label={copy.deadline}
                                     required
                                     min={new Date().toISOString().slice(0, 10)}
                                     error={errors.due_at}
                                 />
                                 <Field
                                     id="action-indicator"
-                                    label="Success indicator"
+                                    label={copy.success_indicator}
                                     error={errors.success_indicator}
                                 >
                                     <Input
@@ -1024,7 +1054,7 @@ function FindingActionPlan({
                             </div>
                             <Field
                                 id="action-description"
-                                label="Action description"
+                                label={copy.action_description}
                                 error={errors.description}
                             >
                                 <Textarea
@@ -1035,7 +1065,7 @@ function FindingActionPlan({
                             </Field>
                             <Field
                                 id="action-target"
-                                label="Target"
+                                label={copy.target}
                                 error={errors.target}
                             >
                                 <Input
@@ -1060,7 +1090,7 @@ function FindingActionPlan({
                     <h3 className="font-semibold">
                         {copy.upload_evidence_for} {selected.code}
                     </h3>
-                    <Field id="action-evidence-title" label="Record title">
+                    <Field id="action-evidence-title" label={copy.record_title}>
                         <Input
                             id="action-evidence-title"
                             name="title"
@@ -1077,7 +1107,7 @@ function FindingActionPlan({
                         name="source_type"
                         values={['digital', 'scanned']}
                     />
-                    <Field id="action-evidence-file" label="Document">
+                    <Field id="action-evidence-file" label={copy.document}>
                         <Input
                             id="action-evidence-file"
                             name="document"
@@ -1101,7 +1131,7 @@ function FindingActionPlan({
                     <SearchableSelect
                         id="action-progress-evidence"
                         name="assessment_document_id"
-                        label="Clean action evidence"
+                        label={copy.clean_action_evidence}
                         options={selected.documents
                             .filter(
                                 (document) => document.scanStatus === 'clean',
@@ -1111,7 +1141,7 @@ function FindingActionPlan({
                                 name: document.title,
                             }))}
                     />
-                    <Field id="action-progress" label="Progress (%)">
+                    <Field id="action-progress" label={copy.progress}>
                         <Input
                             id="action-progress"
                             name="progress_percentage"
@@ -1124,7 +1154,7 @@ function FindingActionPlan({
                     </Field>
                     <Field
                         id="action-narrative"
-                        label="Implementation narrative"
+                        label={copy.implementation_narrative}
                     >
                         <Textarea
                             id="action-narrative"
@@ -1152,7 +1182,7 @@ function FindingActionPlan({
                         name="decision"
                         values={['verified', 'rejected']}
                     />
-                    <Field id="action-decision-note" label="Decision note">
+                    <Field id="action-decision-note" label={copy.decision_note}>
                         <Textarea
                             id="action-decision-note"
                             name="note"

@@ -4,6 +4,7 @@ import { LockKeyhole, ShieldCheck } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import KenyaFlag from '@/components/kenya-flag';
 import { LocaleMenu } from '@/components/locale-menu';
+import { interpolate, useCommonCopy } from '@/hooks/use-localization';
 import { faqs, help, home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
@@ -15,6 +16,7 @@ export default function AuthSimpleLayout({
     title,
     description,
 }: AuthLayoutProps) {
+    const commonCopy = useCommonCopy();
     const { localization } = usePage().props;
     const { copy } = localization;
     const resolvedTitle = name === 'login' ? copy.loginTitle : title;
@@ -44,7 +46,9 @@ export default function AuthSimpleLayout({
                     <Link
                         href={home()}
                         className="flex min-w-0 items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:outline-none"
-                        aria-label={`IDMIS ${copy.home}`}
+                        aria-label={interpolate(commonCopy.idmis_home, {
+                            home: copy.home,
+                        })}
                     >
                         <AppLogoIcon className="size-11 shrink-0" />
                         <span>

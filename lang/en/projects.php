@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'projects' => 'Projects', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v',
+    'projects' => 'Projects', 'separator' => '·', 'percent' => '%', 'full_stop' => '.', 'version_prefix' => 'v', 'advance_lifecycle' => 'Advance lifecycle', 'move_to_planning' => 'Move to planning', 'start_execution' => 'Start execution', 'submit_closure' => 'Submit closure', 'approve_closure' => 'Approve closure',
     'document_register' => 'Project document register',
     'document_register_description' => 'Governed lifecycle records with private storage, malware quarantine, checksums, OCR eligibility, immutable versions and audited retrieval.',
     'source_type' => 'Source type', 'document' => 'Document', 'scan_label' => 'Scan:', 'ocr_label' => 'OCR:',
