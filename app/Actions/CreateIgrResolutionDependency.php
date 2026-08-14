@@ -7,31 +7,36 @@ use App\Models\IgrResolution;
 use App\Models\IgrResolutionDependency;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\IgrResolutionAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CreateIgrResolutionDependency
 {
-    public function __construct(private AuditLogger $auditLogger) {}
+    public function __construct(
+        private AuditLogger $auditLogger,
+        private IgrResolutionAccess $resolutionAccess,
+    ) {}
 
     /** @param array<string, mixed> $attributes */
     public function handle(IgrResolution $dependent, IgrResolution $prerequisite, User $actor, array $attributes): IgrResolutionDependency
     {
-        abort_unless($actor->can(ProgrammePermission::ManageIgrResolutions->value), 403);
-        abort_if($dependent->is($prerequisite), 422, 'A resolution cannot depend on itself.');
-        abort_if(in_array($dependent->status, ['closure_review', 'closed'], true), 409, 'Dependencies cannot be added after closure review starts.');
+        abort_unless($actor->can(ProgrammePermission::ManageIgrResolutions->value), 403, __('igr.errors.dependency_create_unauthorized'));
+        abort_unless($this->resolutionAccess->allows($actor, $dependent) && $this->resolutionAccess->allows($actor, $prerequisite), 403, __('igr.errors.resolution_outside_scope'));
+        abort_if($dependent->is($prerequisite), 422, __('igr.errors.dependency_self_reference'));
+        abort_if(in_array($dependent->status, ['closure_review', 'closed'], true), 409, __('igr.errors.dependency_after_closure_review'));
 
         $dependency = DB::transaction(function () use ($dependent, $prerequisite, $actor, $attributes): IgrResolutionDependency {
             $locked = IgrResolution::query()->whereKey($dependent->id)->lockForUpdate()->firstOrFail();
-            abort_if($locked->dependencies()->where('prerequisite_resolution_id', $prerequisite->id)->exists(), 422, 'This dependency already exists.');
+            abort_if($locked->dependencies()->where('prerequisite_resolution_id', $prerequisite->id)->exists(), 422, __('igr.errors.dependency_exists'));
             if ($this->createsCycle($locked, $prerequisite)) {
-                throw ValidationException::withMessages(['prerequisite_resolution_id' => 'This dependency would create a circular resolution chain.']);
+                throw ValidationException::withMessages(['prerequisite_resolution_id' => __('igr.errors.dependency_cycle')]);
             }
 
             return $locked->dependencies()->create(['prerequisite_resolution_id' => $prerequisite->id, 'dependency_type' => $attributes['dependency_type'], 'rationale' => trim((string) $attributes['rationale']), 'created_by' => $actor->id]);
         }, attempts: 3);
 
-        $this->auditLogger->record($actor, $dependency, 'igr.resolution.dependency_created', "{$dependent->resolution_number} linked to prerequisite {$prerequisite->resolution_number}.", metadata: ['dependent_resolution_id' => $dependent->id, 'prerequisite_resolution_id' => $prerequisite->id, 'dependency_type' => $dependency->dependency_type]);
+        $this->auditLogger->record($actor, $dependency, 'igr.resolution.dependency_created', __('igr.audit.dependency_created', ['dependent' => $dependent->resolution_number, 'prerequisite' => $prerequisite->resolution_number]), metadata: ['dependent_resolution_id' => $dependent->id, 'prerequisite_resolution_id' => $prerequisite->id, 'dependency_type' => $dependency->dependency_type]);
 
         return $dependency;
     }

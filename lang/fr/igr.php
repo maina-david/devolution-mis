@@ -23,8 +23,19 @@ return ['ui' => [
     'meeting_recorded' => 'La réunion formelle IGR a été enregistrée.', 'gap_category_created' => 'La catégorie d’écart IGR a été créée.', 'forum_created' => 'Le forum IGR a été créé.', 'resolution_registered' => 'La résolution a été enregistrée et les responsables notifiés.', 'implementation_updated' => 'La mise à jour d’exécution a été enregistrée.', 'dependency_recorded' => 'La dépendance de la résolution a été enregistrée.', 'gap_recorded' => 'L’écart d’exécution a été enregistré et attribué.', 'gap_updated' => 'Le cycle de l’écart d’exécution a été mis à jour.', 'resolution_updated' => 'Le cycle de la résolution a été mis à jour.',
 ], 'errors' => [
     'workflow_unavailable' => 'Le flux de travail de la résolution est indisponible.', 'blocking_prerequisites_open' => 'Toutes les résolutions préalables bloquantes doivent être clôturées avant l’examen de clôture.', 'gaps_not_accepted' => 'Toutes les lacunes de mise en œuvre doivent être acceptées indépendamment avant l’examen de clôture.',
+    'resolution_create_unauthorized' => 'Vous n’êtes pas autorisé à enregistrer des résolutions IGR.', 'meeting_forum_mismatch' => 'La réunion sélectionnée doit appartenir au forum de la résolution.', 'meeting_quorum_required' => 'Une résolution ne peut être liée qu’à une réunion dont le quorum est confirmé.',
+    'county_outside_scope' => 'Le comté sélectionné est hors de votre périmètre autorisé.', 'single_lead_required' => 'Une seule affectation principale est requise.', 'dependency_create_unauthorized' => 'Vous n’êtes pas autorisé à gérer les dépendances des résolutions.',
+    'resolution_outside_scope' => 'Cette résolution est hors de votre périmètre autorisé.', 'dependency_self_reference' => 'Une résolution ne peut pas dépendre d’elle-même.', 'dependency_after_closure_review' => 'Les dépendances ne peuvent pas être ajoutées après le début de l’examen de clôture.',
+    'dependency_exists' => 'Cette dépendance existe déjà.', 'dependency_cycle' => 'Cette dépendance créerait une chaîne circulaire de résolutions.', 'gap_create_unauthorized' => 'Vous n’êtes pas autorisé à signaler des lacunes de mise en œuvre.',
+    'gap_implementation_inactive' => 'Les lacunes ne peuvent être signalées que pendant la mise en œuvre active.', 'gap_owner_responsible' => 'Le responsable de la lacune doit être une partie chargée de cette résolution.', 'gap_county_assignment' => 'Le comté affecté doit être attribué à cette résolution.',
+    'gap_outside_scope' => 'Cette lacune de mise en œuvre est hors de votre périmètre autorisé.', 'gap_transition_unavailable' => 'Cette transition de lacune n’est pas disponible depuis l’état actuel.', 'gap_independent_acceptance' => 'Une acceptation indépendante est requise.',
+    'gap_concurrent_change' => 'La lacune a changé pendant la prise de cette décision.',
 ], 'audit' => [
     'forum_created' => 'Forum IGR :code créé.', 'resolution_transitioned' => 'Résolution :number passée à l’état :state.',
+    'resolution_created' => 'Résolution IGR :number enregistrée.', 'dependency_created' => ':dependent liée au prérequis :prerequisite.', 'gap_reported' => 'Lacune de mise en œuvre signalée pour :number.', 'gap_transitioned' => 'Lacune IGR passée à l’état :status.',
 ], 'notifications' => [
     'assignment_title' => 'Nouvelle affectation de résolution IGR', 'assignment_message' => 'Vous êtes responsable de :number : :title.',
+    'gap_assigned_title' => 'Lacune de mise en œuvre IGR attribuée', 'gap_assigned_message' => 'Vous êtes responsable de :title pour :number.',
+], 'gap_statuses' => [
+    'open' => 'ouverte', 'mitigating' => 'en cours d’atténuation', 'resolved' => 'résolue', 'accepted' => 'acceptée',
 ]];

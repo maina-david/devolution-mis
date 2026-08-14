@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\IgrForumMeeting;
 use App\Models\IgrResolution;
@@ -23,23 +24,25 @@ class CreateIgrResolution
     /** @param array<string, mixed> $attributes */
     public function handle(User $actor, array $attributes): IgrResolution
     {
+        abort_unless($actor->can(ProgrammePermission::ManageIgrResolutions->value), 403, __('igr.errors.resolution_create_unauthorized'));
+
         if (! empty($attributes['igr_forum_meeting_id'])) {
             $meeting = IgrForumMeeting::query()->whereKey((string) $attributes['igr_forum_meeting_id'])->firstOrFail();
             if ($meeting->igr_forum_id !== $attributes['igr_forum_id']) {
-                throw ValidationException::withMessages(['igr_forum_meeting_id' => 'The selected meeting must belong to the resolution forum.']);
+                throw ValidationException::withMessages(['igr_forum_meeting_id' => __('igr.errors.meeting_forum_mismatch')]);
             }
             if (! $meeting->quorum_confirmed) {
-                throw ValidationException::withMessages(['igr_forum_meeting_id' => 'A resolution can only be linked to a quorum-confirmed meeting.']);
+                throw ValidationException::withMessages(['igr_forum_meeting_id' => __('igr.errors.meeting_quorum_required')]);
             }
         }
         $normalizedAssignments = $this->normalizeAssignments($attributes['assignments'] ?? []);
         $assignments = collect($normalizedAssignments);
         foreach ($assignments->pluck('county_id')->filter()->unique() as $countyId) {
             $county = County::query()->whereKey($countyId)->firstOrFail();
-            abort_unless($actor->canAccessCounty($county), 403);
+            abort_unless($actor->canAccessCounty($county), 403, __('igr.errors.county_outside_scope'));
         }
         if ($assignments->where('is_lead', true)->count() !== 1) {
-            throw ValidationException::withMessages(['assignments' => 'Exactly one lead assignment is required.']);
+            throw ValidationException::withMessages(['assignments' => __('igr.errors.single_lead_required')]);
         }
         [$countyIds, $organizationIds] = $this->referenceIds($normalizedAssignments);
 
@@ -57,7 +60,7 @@ class CreateIgrResolution
             $definition = WorkflowDefinition::query()->where('code', 'IGR-RESOLUTION-LIFECYCLE')->firstOrFail();
             $instance = $this->startWorkflow->handle($definition, $resolution, $actor, ['progress_percentage' => 0, 'closure_evidence_present' => false], $countyId);
             $resolution->update(['workflow_instance_id' => $instance->id, 'status' => $instance->current_state]);
-            $this->auditLogger->record($actor, $resolution, 'igr.resolution.created', "IGR resolution {$resolution->resolution_number} registered.", $countyId, [
+            $this->auditLogger->record($actor, $resolution, 'igr.resolution.created', __('igr.audit.resolution_created', ['number' => $resolution->resolution_number]), $countyId, [
                 'assignment_count' => $assignments->count(),
                 'due_on' => $resolution->due_on->toDateString(),
                 'reference_data_release_id' => $referenceDataRelease->id,

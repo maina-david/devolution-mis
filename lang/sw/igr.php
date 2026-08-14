@@ -23,8 +23,19 @@ return ['ui' => [
     'meeting_recorded' => 'Mkutano rasmi wa IGR umerekodiwa.', 'gap_category_created' => 'Aina ya pengo la IGR imeundwa.', 'forum_created' => 'Jukwaa la IGR limeundwa.', 'resolution_registered' => 'Azimio limesajiliwa na wahusika wamearifiwa.', 'implementation_updated' => 'Taarifa ya utekelezaji imerekodiwa.', 'dependency_recorded' => 'Utegemezi wa azimio umerekodiwa.', 'gap_recorded' => 'Pengo la utekelezaji limerekodiwa na kupewa mhusika.', 'gap_updated' => 'Mzunguko wa pengo la utekelezaji umesasishwa.', 'resolution_updated' => 'Mzunguko wa azimio umesasishwa.',
 ], 'errors' => [
     'workflow_unavailable' => 'Mtiririko wa kazi wa azimio haupatikani.', 'blocking_prerequisites_open' => 'Maazimio yote ya masharti ya awali yanayozuia lazima yafungwe kabla ya ukaguzi wa kufunga.', 'gaps_not_accepted' => 'Mapengo yote ya utekelezaji yanahitaji kukubaliwa kwa uhuru kabla ya ukaguzi wa kufunga.',
+    'resolution_create_unauthorized' => 'Hujaidhinishwa kusajili maazimio ya IGR.', 'meeting_forum_mismatch' => 'Mkutano uliochaguliwa lazima uwe wa jukwaa la azimio.', 'meeting_quorum_required' => 'Azimio linaweza kuunganishwa tu na mkutano uliothibitishwa kuwa na akidi.',
+    'county_outside_scope' => 'Kaunti iliyochaguliwa iko nje ya wigo wako ulioidhinishwa.', 'single_lead_required' => 'Jukumu moja tu la uongozi linahitajika.', 'dependency_create_unauthorized' => 'Hujaidhinishwa kusimamia utegemezi wa maazimio.',
+    'resolution_outside_scope' => 'Azimio hili liko nje ya wigo wako ulioidhinishwa.', 'dependency_self_reference' => 'Azimio haliwezi kujitegemea lenyewe.', 'dependency_after_closure_review' => 'Utegemezi hauwezi kuongezwa baada ya ukaguzi wa kufunga kuanza.',
+    'dependency_exists' => 'Utegemezi huu tayari upo.', 'dependency_cycle' => 'Utegemezi huu ungeunda mzunguko wa maazimio.', 'gap_create_unauthorized' => 'Hujaidhinishwa kuripoti mapengo ya utekelezaji.',
+    'gap_implementation_inactive' => 'Mapengo yanaweza kuripotiwa tu wakati utekelezaji unaendelea.', 'gap_owner_responsible' => 'Mmiliki wa pengo lazima awe mhusika mwenye wajibu kwa azimio hili.', 'gap_county_assignment' => 'Kaunti iliyoathirika lazima iwe imepewa azimio hili.',
+    'gap_outside_scope' => 'Pengo hili la utekelezaji liko nje ya wigo wako ulioidhinishwa.', 'gap_transition_unavailable' => 'Hatua hii ya pengo haipatikani kutoka hali ya sasa.', 'gap_independent_acceptance' => 'Kukubaliwa kwa uhuru kunahitajika.',
+    'gap_concurrent_change' => 'Pengo lilibadilika wakati uamuzi huu ulipokuwa ukifanywa.',
 ], 'audit' => [
     'forum_created' => 'Jukwaa la IGR :code limeundwa.', 'resolution_transitioned' => 'Azimio :number limehamishwa hadi :state.',
+    'resolution_created' => 'Azimio la IGR :number limesajiliwa.', 'dependency_created' => ':dependent limeunganishwa na sharti la awali :prerequisite.', 'gap_reported' => 'Pengo la utekelezaji limeripotiwa kwa :number.', 'gap_transitioned' => 'Pengo la IGR limehamishwa hadi :status.',
 ], 'notifications' => [
     'assignment_title' => 'Jukumu jipya la azimio la IGR', 'assignment_message' => 'Unawajibika kwa :number: :title.',
+    'gap_assigned_title' => 'Pengo la utekelezaji la IGR limepewa jukumu', 'gap_assigned_message' => 'Unamiliki :title kwa :number.',
+], 'gap_statuses' => [
+    'open' => 'wazi', 'mitigating' => 'linapunguzwa', 'resolved' => 'limetatuliwa', 'accepted' => 'limekubaliwa',
 ]];

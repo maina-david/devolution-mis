@@ -3,6 +3,10 @@
 namespace Tests\Feature;
 
 use App\Actions\CreateIgrResolution;
+use App\Actions\CreateIgrResolutionDependency;
+use App\Actions\CreateIgrResolutionGap;
+use App\Actions\TransitionIgrResolutionGap;
+use App\Enums\ProgrammePermission;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\DocumentLink;
@@ -14,6 +18,7 @@ use App\Models\IgrResolutionAssignment;
 use App\Models\IgrResolutionDependency;
 use App\Models\IgrResolutionGap;
 use App\Models\Organization;
+use App\Models\Permission;
 use App\Models\ReferenceDataRelease;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
@@ -58,6 +63,7 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->assertTrue($resolution->assignments()->where('user_id', $responsible->id)->where('is_lead', true)->exists());
         $this->assertDatabaseHas('audit_events', ['subject_id' => $resolution->id, 'action' => 'igr.resolution.created']);
         $event = AuditEvent::query()->where('subject_id', $resolution->id)->where('action', 'igr.resolution.created')->sole();
+        $this->assertSame('Résolution IGR IGR/2026/001 enregistrée.', $event->description);
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
         $this->actingAs($administrator)
@@ -159,6 +165,70 @@ class IgrResolutionWorkflowTest extends TestCase
         $this->assertIsArray($decodedExport);
         $this->assertIsArray($decodedExport['rows']);
         $this->assertTrue(collect($decodedExport['rows'])->contains(fn (array $row): bool => $row[7] === 'IGR/DEP/B (open)'));
+    }
+
+    public function test_direct_igr_actions_fail_closed_for_wrong_roles_and_cross_county_records_without_side_effects(): void
+    {
+        $homeCounty = County::factory()->create();
+        $outsideCounty = County::factory()->create();
+        $wrongRole = User::factory()->assessor()->create();
+        $countyManager = User::factory()->countyAdmin($homeCounty)->create();
+        $countyManager->givePermissionTo(Permission::findOrCreate(ProgrammePermission::ManageIgrResolutions->value, 'web'));
+        $outsideOwner = User::factory()->countyOfficial($outsideCounty)->create();
+        $homeResolution = IgrResolution::factory()->create(['resolution_number' => 'IGR/SCOPE/HOME']);
+        $outsideResolution = IgrResolution::factory()->create(['resolution_number' => 'IGR/SCOPE/OUTSIDE']);
+        IgrResolutionAssignment::factory()->for($homeResolution, 'resolution')->create([
+            'user_id' => $countyManager->id,
+            'county_id' => $homeCounty->id,
+        ]);
+        IgrResolutionAssignment::factory()->for($outsideResolution, 'resolution')->create([
+            'user_id' => $outsideOwner->id,
+            'county_id' => $outsideCounty->id,
+        ]);
+        $category = IgrGapCategory::factory()->create(['created_by' => $countyManager->id]);
+        $outsideGap = IgrResolutionGap::factory()
+            ->for($outsideResolution, 'resolution')
+            ->for($category, 'category')
+            ->create([
+                'county_id' => null,
+                'owner_user_id' => $outsideOwner->id,
+                'reported_by' => $outsideOwner->id,
+            ]);
+
+        app()->setLocale('sw');
+        $this->assertForbiddenAction(
+            fn () => app(CreateIgrResolution::class)->handle($wrongRole, []),
+            'Hujaidhinishwa kusajili maazimio ya IGR.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateIgrResolutionDependency::class)->handle($homeResolution, $outsideResolution, $countyManager, [
+                'dependency_type' => 'blocks',
+                'rationale' => 'A cross-county dependency must fail at the action boundary.',
+            ]),
+            'Azimio hili liko nje ya wigo wako ulioidhinishwa.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateIgrResolutionGap::class)->handle($outsideResolution, $countyManager, [
+                'igr_gap_category_id' => $category->id,
+                'county_id' => null,
+                'owner_user_id' => $outsideOwner->id,
+                'title' => 'Cross-county action attempt',
+                'description' => 'This direct action invocation must not create a record outside the actor scope.',
+                'impact' => 'Unauthorized mutation risk.',
+                'severity' => 'high',
+                'due_on' => today()->addWeek()->toDateString(),
+            ]),
+            'Azimio hili liko nje ya wigo wako ulioidhinishwa.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(TransitionIgrResolutionGap::class)->handle($outsideGap, $countyManager, 'start_mitigation', 'This direct transition must fail before mutation.'),
+            'Azimio hili liko nje ya wigo wako ulioidhinishwa.',
+        );
+
+        $this->assertDatabaseCount('igr_resolution_dependencies', 0);
+        $this->assertDatabaseCount('igr_resolution_gaps', 1);
+        $this->assertSame('open', $outsideGap->refresh()->status);
+        $this->assertDatabaseMissing('audit_events', ['subject_id' => $outsideGap->id]);
     }
 
     public function test_governed_gap_taxonomy_lifecycle_analytics_scope_and_exports(): void
@@ -506,5 +576,17 @@ class IgrResolutionWorkflowTest extends TestCase
             'effective_from' => now()->subMinute(),
             'published_at' => now(),
         ]);
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertForbiddenAction(callable $action, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The action did not enforce its authorization boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }
