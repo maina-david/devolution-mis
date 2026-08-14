@@ -17,6 +17,7 @@ return [
         'dashboard_published' => 'Le tableau de bord :code a été publié indépendamment avec une somme de contrôle de configuration.',
         'schedule_created' => 'Le rapport planifié :code a été créé comme brouillon.',
         'schedule_activated' => 'Le rapport planifié :code a été activé indépendamment.',
+        'assessment_exported' => 'L’analyse comparative des évaluations a été exportée au format :format.',
     ],
     'console' => ['queued' => ':count rapport(s) planifié(s) mis en file d’attente.'],
     'errors' => [
@@ -36,7 +37,12 @@ return [
         'draft_dashboard_required' => 'Seuls les tableaux de bord à l’état de brouillon peuvent être publiés.',
         'dashboard_author_separation' => 'Les auteurs du tableau de bord ne peuvent pas publier indépendamment leur propre configuration.',
         'governed_widget_required' => 'Au moins un widget gouverné est requis.',
+        'unsupported_metric' => 'Indicateur analytique gouverné non pris en charge.',
+        'export_file_failed' => 'Le fichier d’export analytique n’a pas pu être créé.',
     ],
+    'metrics' => ['counties_total' => 'Comtés dans le périmètre', 'projects_active' => 'Projets actifs', 'assessments_published' => 'Résultats d’évaluation publiés', 'citizen_cases_open' => 'Dossiers citoyens ouverts', 'indicators_verified' => 'Observations d’indicateurs vérifiées', 'target_attainment' => 'Atteinte moyenne vérifiée des objectifs', 'evaluation_findings_overdue' => 'Recommandations d’évaluation en retard', 'evaluation_findings_closed' => 'Recommandations d’évaluation clôturées'],
+    'metric_provenance' => ':metric · enregistrements PostgreSQL autorisés · périmètre du comté appliqué avant l’agrégation',
+    'assessment_export' => ['title' => 'Analyse comparative des évaluations', 'generated' => 'Généré le :date', 'county' => 'Comté', 'cycle' => 'Cycle', 'score' => 'Score', 'performance_band' => 'Niveau de performance', 'publication_checksum' => 'Somme de contrôle de publication', 'assessment_id' => 'Identifiant de l’évaluation'],
     'report_generator' => [
         'errors' => [
             'configuration_unavailable' => 'La configuration approuvée du rapport planifié n’est plus exécutable.', 'artifact_storage_failed' => 'L’artefact privé du rapport planifié n’a pas pu être stocké.',

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\LearningCourse;
 use App\Models\LearningQuestionBank;
@@ -26,9 +27,11 @@ class CreateLearningCourse
     /** @param array<string,mixed> $attributes */
     public function handle(User $actor, array $attributes): LearningCourse
     {
+        abort_unless($actor->can(ProgrammePermission::ManageLearning->value), 403, __('learning.course_creation.errors.create_unauthorized'));
+
         $countyId = is_string($attributes['county_id'] ?? null) ? $attributes['county_id'] : null;
         if ($countyId !== null) {
-            abort_unless($actor->canAccessCounty(County::query()->findOrFail($countyId)), 403);
+            abort_unless($actor->canAccessCounty(County::query()->findOrFail($countyId)), 403, __('learning.course_creation.errors.county_outside_scope'));
         }
 
         return DB::transaction(function () use ($actor, $attributes): LearningCourse {
@@ -56,7 +59,7 @@ class CreateLearningCourse
                 $bankAttributes = is_array($attributes['question_bank'] ?? null) ? $attributes['question_bank'] : [];
                 $selectionCount = min((int) ($bankAttributes['selection_count'] ?? count($bankQuestions)), count(array_unique(array_column($bankQuestions, 'variant_group'))));
                 $snapshot = ['course_id' => $course->id, 'version' => 1, 'selection_count' => $selectionCount, 'randomize_questions' => (bool) ($bankAttributes['randomize_questions'] ?? true), 'randomize_options' => (bool) ($bankAttributes['randomize_options'] ?? true), 'items' => collect($bankQuestions)->map(fn (array $item): array => ['question_id' => $item['question']->id, 'variant_group' => $item['variant_group'], 'difficulty' => $item['difficulty'], 'tags' => $item['tags']])->all()];
-                $bank = LearningQuestionBank::create(['learning_course_id' => $course->id, 'code' => 'PRIMARY', 'title' => $course->title.' assessment bank', 'description' => $bankAttributes['description'] ?? null, 'selection_count' => $selectionCount, 'randomize_questions' => $snapshot['randomize_questions'], 'randomize_options' => $snapshot['randomize_options'], 'version' => 1, 'status' => 'draft', 'checksum' => $this->canonicalJson->checksum($snapshot), 'created_by' => $actor->id, 'published_at' => now()]);
+                $bank = LearningQuestionBank::create(['learning_course_id' => $course->id, 'code' => 'PRIMARY', 'title' => __('learning.question_bank_default_title', ['course' => $course->title]), 'description' => $bankAttributes['description'] ?? null, 'selection_count' => $selectionCount, 'randomize_questions' => $snapshot['randomize_questions'], 'randomize_options' => $snapshot['randomize_options'], 'version' => 1, 'status' => 'draft', 'checksum' => $this->canonicalJson->checksum($snapshot), 'created_by' => $actor->id, 'published_at' => now()]);
                 foreach ($bankQuestions as $index => $item) {
                     $bank->items()->create(['learning_quiz_question_id' => $item['question']->id, 'variant_group' => $item['variant_group'], 'difficulty' => $item['difficulty'], 'tags' => $item['tags'], 'sequence' => $index + 1]);
                 }
@@ -67,7 +70,7 @@ class CreateLearningCourse
             $questionCount = $course->modules()->with('lessons.questions')->get()->sum(fn ($module) => $module->lessons->sum(fn ($lesson) => $lesson->questions->count()));
             $instance = $this->startWorkflow->handle($definition, $course, $actor, ['lesson_count' => $lessonCount, 'question_count' => $questionCount]);
             $course->update(['workflow_instance_id' => $instance->id]);
-            $this->auditLogger->record($actor, $course, 'learning.course.created', "Course {$course->code} created with {$lessonCount} lessons.", $course->county_id, [
+            $this->auditLogger->record($actor, $course, 'learning.course.created', trans_choice('learning.course_creation.audit.created', $lessonCount, ['code' => $course->code, 'count' => $lessonCount]), $course->county_id, [
                 'reference_data_release_id' => $referenceDataRelease->id,
                 'reference_data_release_version' => $referenceDataRelease->version,
                 'reference_data_release_checksum' => $referenceDataRelease->checksum,
@@ -81,12 +84,12 @@ class CreateLearningCourse
     private function records(mixed $value, string $field): array
     {
         if (! is_array($value)) {
-            throw new InvalidArgumentException("{$field} must be an array.");
+            throw new InvalidArgumentException(__('learning.course_creation.errors.records_array', ['field' => $field]));
         }
 
         return array_values(array_map(function (mixed $record) use ($field): array {
             if (! is_array($record)) {
-                throw new InvalidArgumentException("Every {$field} entry must be an object.");
+                throw new InvalidArgumentException(__('learning.course_creation.errors.record_object', ['field' => $field]));
             }
 
             return $record;

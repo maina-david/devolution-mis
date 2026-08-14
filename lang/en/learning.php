@@ -302,6 +302,15 @@ return [
         'classroom_scheduled' => 'Virtual classroom :title scheduled.',
         'attendance_recorded' => ':status attendance recorded.',
     ],
+    'assessment_engine' => [
+        'errors' => ['maximum_attempts' => 'Maximum assessment attempts reached.', 'outside_variant' => 'The response contains questions outside this governed attempt variant.', 'required_content_incomplete' => 'Complete all required learning content before the assessment.'],
+        'audit' => ['submitted' => 'Assessment attempt :attempt scored :score%.'],
+    ],
+    'course_creation' => [
+        'errors' => ['create_unauthorized' => 'You are not authorized to create governed learning courses.', 'county_outside_scope' => 'The selected course county is outside your authorized scope.', 'records_array' => ':field must be an array.', 'record_object' => 'Every :field entry must be an object.'],
+        'audit' => ['created' => '{1} Course :code created with :count lesson.|[2,*] Course :code created with :count lessons.'],
+    ],
+    'question_bank_default_title' => ':course assessment bank',
     'offline' => [
         'errors' => [
             'course_not_published' => 'Only a published course can be packaged for offline use.',

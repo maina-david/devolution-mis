@@ -17,6 +17,7 @@ return [
         'dashboard_published' => 'Dashibodi :code imechapishwa kwa uhuru pamoja na cheksamu ya usanidi.',
         'schedule_created' => 'Ripoti iliyoratibiwa :code imeundwa kama rasimu.',
         'schedule_activated' => 'Ripoti iliyoratibiwa :code imeanzishwa kwa uhuru.',
+        'assessment_exported' => 'Uchanganuzi linganishi wa tathmini umesafirishwa kama :format.',
     ],
     'console' => ['queued' => 'Ripoti :count zilizoratibiwa zimewekwa kwenye foleni.'],
     'errors' => [
@@ -36,7 +37,12 @@ return [
         'draft_dashboard_required' => 'Dashibodi za rasimu pekee ndizo zinaweza kuchapishwa.',
         'dashboard_author_separation' => 'Waandishi wa dashibodi hawawezi kuchapisha usanidi wao wenyewe kwa uhuru.',
         'governed_widget_required' => 'Angalau wijeti moja inayosimamiwa inahitajika.',
+        'unsupported_metric' => 'Kipimo cha uchanganuzi kinachodhibitiwa hakitumiki.',
+        'export_file_failed' => 'Faili ya kusafirisha uchanganuzi haikuweza kuundwa.',
     ],
+    'metrics' => ['counties_total' => 'Kaunti zilizo katika wigo', 'projects_active' => 'Miradi inayoendelea', 'assessments_published' => 'Matokeo ya tathmini yaliyochapishwa', 'citizen_cases_open' => 'Kesi wazi za wananchi', 'indicators_verified' => 'Vipimo vya viashiria vilivyohakikiwa', 'target_attainment' => 'Wastani wa ufikiaji wa lengo uliothibitishwa', 'evaluation_findings_overdue' => 'Mapendekezo ya tathmini yaliyochelewa', 'evaluation_findings_closed' => 'Mapendekezo ya tathmini yaliyofungwa'],
+    'metric_provenance' => ':metric · rekodi za PostgreSQL zilizoidhinishwa · wigo wa kaunti umetumika kabla ya ujumlishaji',
+    'assessment_export' => ['title' => 'Uchanganuzi linganishi wa tathmini', 'generated' => 'Imetengenezwa :date', 'county' => 'Kaunti', 'cycle' => 'Mzunguko', 'score' => 'Alama', 'performance_band' => 'Kundi la utendaji', 'publication_checksum' => 'Cheksamu ya uchapishaji', 'assessment_id' => 'Kitambulisho cha tathmini'],
     'report_generator' => [
         'errors' => [
             'configuration_unavailable' => 'Usanidi ulioidhinishwa wa ripoti iliyoratibiwa hauwezi kutekelezwa tena.', 'artifact_storage_failed' => 'Faili binafsi ya ripoti iliyoratibiwa haikuweza kuhifadhiwa.',

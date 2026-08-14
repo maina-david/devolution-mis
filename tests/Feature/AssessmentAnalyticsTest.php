@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Assessment;
 use App\Models\AssessmentCycle;
 use App\Models\AssessmentResultPublication;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -92,12 +93,13 @@ class AssessmentAnalyticsTest extends TestCase
         $this->publication($hiddenCounty, $cycle, 91, 'F01');
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
-            $response = $this->actingAs($admin)->get(route('assessments.analytics.export', ['format' => $format,
+            $response = $this->actingAs($admin)->withSession(['locale' => 'sw'])->get(route('assessments.analytics.export', ['format' => $format,
                 'cycle_id' => $cycle->id,
             ]));
             $response->assertOk()->assertDownload();
             if ($format === 'csv') {
                 $content = $response->streamedContent();
+                $this->assertStringContainsString('Kaunti', $content);
                 $this->assertStringContainsString($county->name, $content);
                 $this->assertStringNotContainsString($hiddenCounty->name, $content);
             }
@@ -105,6 +107,7 @@ class AssessmentAnalyticsTest extends TestCase
 
         $this->assertDatabaseCount('audit_events', 4);
         $this->assertDatabaseHas('audit_events', ['action' => 'assessment.analytics_exported', 'actor_id' => $admin->id]);
+        $this->assertSame(trans('analytics.audit.assessment_exported', ['format' => 'PDF'], 'sw'), AuditEvent::query()->where('action', 'assessment.analytics_exported')->where('metadata->format', 'pdf')->sole()->description);
     }
 
     public function test_assessment_detail_does_not_expose_out_of_scope_county_rankings(): void

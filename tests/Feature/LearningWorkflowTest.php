@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateLearningCourse;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\LearningCertificate;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class LearningWorkflowTest extends TestCase
@@ -27,6 +29,23 @@ class LearningWorkflowTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
+    }
+
+    public function test_course_creation_action_denies_unprivileged_roles_before_catalogue_or_payload_resolution(): void
+    {
+        $countyAdministrator = User::factory()->countyAdmin(County::factory()->create())->create();
+        app()->setLocale('fr');
+
+        try {
+            app(CreateLearningCourse::class)->handle($countyAdministrator, []);
+            $this->fail('An unprivileged role unexpectedly created a governed learning course.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame(trans('learning.course_creation.errors.create_unauthorized', locale: 'fr'), $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('learning_courses', 0);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     public function test_local_learning_seed_creates_required_governed_asset_before_publication(): void

@@ -21,18 +21,18 @@ class GradeLearningAssessment
         $course = $enrollment->course()->with('modules.lessons.questions')->firstOrFail();
         $attemptNumber = $enrollment->attempts()->count() + 1;
         if ($attemptNumber > $course->maximum_attempts) {
-            throw ValidationException::withMessages(['answers' => 'Maximum assessment attempts reached.']);
+            throw ValidationException::withMessages(['answers' => __('learning.assessment_engine.errors.maximum_attempts')]);
         }
         $bank = $course->questionBanks()->where('status', 'published')->with('items.question')->latest('version')->first();
         $questions = $bank === null ? $course->modules->flatMap->lessons->flatMap->questions : $this->questionSelector->select($bank, $enrollment->id, $attemptNumber);
         $unexpectedQuestionIds = array_diff(array_keys($answers), $questions->pluck('id')->all());
         if ($unexpectedQuestionIds !== []) {
-            throw ValidationException::withMessages(['answers' => 'The response contains questions outside this governed attempt variant.']);
+            throw ValidationException::withMessages(['answers' => __('learning.assessment_engine.errors.outside_variant')]);
         }
         $nonQuizRequired = $course->modules->flatMap->lessons->where('is_required', true)->where('content_type', '!=', 'quiz');
         $completed = $enrollment->progress()->where('status', 'completed')->whereIn('learning_lesson_id', $nonQuizRequired->pluck('id'))->count();
         if ($completed < $nonQuizRequired->count()) {
-            throw ValidationException::withMessages(['answers' => 'Complete all required learning content before the assessment.']);
+            throw ValidationException::withMessages(['answers' => __('learning.assessment_engine.errors.required_content_incomplete')]);
         }
 
         return DB::transaction(function () use ($enrollment, $actor, $answers, $questions, $attemptNumber, $course, $bank): LearningEnrollment {
@@ -60,7 +60,7 @@ class GradeLearningAssessment
             } else {
                 $enrollment->update(['best_score' => max($score, (float) ($enrollment->best_score ?? 0)), 'last_activity_at' => now()]);
             }
-            $this->auditLogger->record($actor, $enrollment, 'learning.assessment.submitted', "Assessment attempt {$attemptNumber} scored {$score}%.", $actor->county_id, ['passed' => $passed, 'question_bank_id' => $bank?->id, 'question_bank_checksum' => $bank?->checksum]);
+            $this->auditLogger->record($actor, $enrollment, 'learning.assessment.submitted', __('learning.assessment_engine.audit.submitted', ['attempt' => $attemptNumber, 'score' => $score]), $actor->county_id, ['passed' => $passed, 'question_bank_id' => $bank?->id, 'question_bank_checksum' => $bank?->checksum]);
 
             return $enrollment->refresh();
         });

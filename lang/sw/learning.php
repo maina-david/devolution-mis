@@ -302,6 +302,15 @@ return [
         'classroom_scheduled' => 'Darasa pepe :title limepangwa.',
         'attendance_recorded' => 'Mahudhurio ya hali :status yamerekodiwa.',
     ],
+    'assessment_engine' => [
+        'errors' => ['maximum_attempts' => 'Idadi ya juu ya majaribio ya tathmini imefikiwa.', 'outside_variant' => 'Jibu lina maswali yaliyo nje ya toleo hili la jaribio linalodhibitiwa.', 'required_content_incomplete' => 'Kamilisha maudhui yote ya lazima ya kujifunza kabla ya tathmini.'],
+        'audit' => ['submitted' => 'Jaribio la tathmini :attempt limepata alama :score%.'],
+    ],
+    'course_creation' => [
+        'errors' => ['create_unauthorized' => 'Huna ruhusa ya kuunda kozi za kujifunza zinazodhibitiwa.', 'county_outside_scope' => 'Kaunti iliyochaguliwa kwa kozi iko nje ya wigo wako ulioidhinishwa.', 'records_array' => ':field lazima iwe orodha.', 'record_object' => 'Kila ingizo la :field lazima liwe kipengee.'],
+        'audit' => ['created' => 'Kozi :code imeundwa ikiwa na somo :count.|Kozi :code imeundwa ikiwa na masomo :count.'],
+    ],
+    'question_bank_default_title' => 'Benki ya tathmini ya :course',
     'offline' => [
         'errors' => [
             'course_not_published' => 'Kozi iliyochapishwa pekee ndiyo inaweza kuandaliwa kwa matumizi nje ya mtandao.',

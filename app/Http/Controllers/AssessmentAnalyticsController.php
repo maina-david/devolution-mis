@@ -32,7 +32,7 @@ class AssessmentAnalyticsController extends Controller
         $user = $this->user($request);
         $filters = $this->filters($request);
         $rows = $this->analytics->exportRows($user, $filters);
-        $this->auditLogger->record($user, $user, 'assessment.analytics_exported', 'Assessment comparative analytics exported as '.mb_strtoupper($format).'.', $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
+        $this->auditLogger->record($user, $user, 'assessment.analytics_exported', __('analytics.audit.assessment_exported', ['format' => mb_strtoupper($format)]), $user->county_id, ['format' => $format, 'records' => count($rows), 'filters' => $filters]);
         $filename = 'assessment-comparison-'.now()->format('Ymd-His');
 
         return match ($format) {
@@ -51,7 +51,7 @@ class AssessmentAnalyticsController extends Controller
             if ($stream === false) {
                 return;
             }
-            fputcsv($stream, ['County', 'Cycle', 'Score', 'Performance band', 'Publication checksum', 'Assessment ID']);
+            fputcsv($stream, $this->headings());
             foreach ($rows as $row) {
                 fputcsv($stream, $this->rowValues($row));
             }
@@ -63,10 +63,10 @@ class AssessmentAnalyticsController extends Controller
     private function xlsx(array $rows, string $filename): BinaryFileResponse
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-assessment-analytics-');
-        abort_if($path === false, 500, 'Export file could not be created.');
+        abort_if($path === false, 500, __('analytics.errors.export_file_failed'));
         $writer = new Writer;
         $writer->openToFile($path);
-        $writer->addRow(Row::fromValues(['County', 'Cycle', 'Score', 'Performance band', 'Publication checksum', 'Assessment ID']));
+        $writer->addRow(Row::fromValues($this->headings()));
         foreach ($rows as $row) {
             $writer->addRow(Row::fromValues($this->rowValues($row)));
         }
@@ -92,7 +92,8 @@ class AssessmentAnalyticsController extends Controller
             return '<tr><td>'.$logo.e(is_array($county) ? $county['name'] : $county).'</td><td>'.e($row['cycle']).'</td><td>'.e($row['score']).'</td><td>'.e($row['performance_band']).'</td><td class="checksum">'.e($row['publication_checksum']).'</td></tr>';
         })->implode('');
         $dompdf = new Dompdf;
-        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left;vertical-align:middle}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}.checksum{font-family:monospace;font-size:8px}</style><h1>Assessment comparative analytics</h1><p>Generated '.e(now()->toDayDateTimeString()).'</p><table><thead><tr><th>County</th><th>Cycle</th><th>Score</th><th>Performance band</th><th>Publication checksum</th></tr></thead><tbody>'.$body.'</tbody></table>');
+        $headings = $this->headings();
+        $dompdf->loadHtml('<style>body{font-family:sans-serif;font-size:10px;color:#172b3a}h1{color:#12304a}table{width:100%;border-collapse:collapse}th,td{padding:7px;border:1px solid #ccd6d0;text-align:left;vertical-align:middle}th{background:#eef4f0}img{width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px}.checksum{font-family:monospace;font-size:8px}</style><h1>'.e(__('analytics.assessment_export.title')).'</h1><p>'.e(__('analytics.assessment_export.generated', ['date' => now()->toDayDateTimeString()])).'</p><table><thead><tr><th>'.e($headings[0]).'</th><th>'.e($headings[1]).'</th><th>'.e($headings[2]).'</th><th>'.e($headings[3]).'</th><th>'.e($headings[4]).'</th></tr></thead><tbody>'.$body.'</tbody></table>');
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
@@ -108,6 +109,19 @@ class AssessmentAnalyticsController extends Controller
         $county = $row['county'];
 
         return [is_array($county) ? (string) $county['name'] : (string) $county, (string) $row['cycle'], (float) $row['score'], (string) $row['performance_band'], (string) $row['publication_checksum'], (string) $row['assessment_id']];
+    }
+
+    /** @return list<string> */
+    private function headings(): array
+    {
+        return [
+            __('analytics.assessment_export.county'),
+            __('analytics.assessment_export.cycle'),
+            __('analytics.assessment_export.score'),
+            __('analytics.assessment_export.performance_band'),
+            __('analytics.assessment_export.publication_checksum'),
+            __('analytics.assessment_export.assessment_id'),
+        ];
     }
 
     /** @return array{from: string|null, to: string|null, cycle_id: string|null, county_id: string|null, function_page: int, ranking_page: int, per_page: int} */

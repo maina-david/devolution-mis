@@ -17,6 +17,7 @@ return [
         'dashboard_published' => 'Dashboard :code independently published with a configuration checksum.',
         'schedule_created' => 'Scheduled report :code created as a draft.',
         'schedule_activated' => 'Scheduled report :code independently activated.',
+        'assessment_exported' => 'Assessment comparative analytics exported as :format.',
     ],
     'console' => ['queued' => 'Queued :count scheduled report(s).'],
     'errors' => [
@@ -36,7 +37,12 @@ return [
         'draft_dashboard_required' => 'Only draft dashboards can be published.',
         'dashboard_author_separation' => 'Dashboard authors cannot independently publish their own configuration.',
         'governed_widget_required' => 'At least one governed widget is required.',
+        'unsupported_metric' => 'Unsupported governed analytics metric.',
+        'export_file_failed' => 'The analytics export file could not be created.',
     ],
+    'metrics' => ['counties_total' => 'Counties in scope', 'projects_active' => 'Active projects', 'assessments_published' => 'Published assessment results', 'citizen_cases_open' => 'Open citizen cases', 'indicators_verified' => 'Verified indicator observations', 'target_attainment' => 'Average verified target attainment', 'evaluation_findings_overdue' => 'Overdue evaluation recommendations', 'evaluation_findings_closed' => 'Closed evaluation recommendations'],
+    'metric_provenance' => ':metric · authorized PostgreSQL records · county scope applied before aggregation',
+    'assessment_export' => ['title' => 'Assessment comparative analytics', 'generated' => 'Generated :date', 'county' => 'County', 'cycle' => 'Cycle', 'score' => 'Score', 'performance_band' => 'Performance band', 'publication_checksum' => 'Publication checksum', 'assessment_id' => 'Assessment ID'],
     'report_generator' => [
         'errors' => [
             'configuration_unavailable' => 'The approved scheduled-report configuration is no longer executable.', 'artifact_storage_failed' => 'The private scheduled-report artifact could not be stored.',

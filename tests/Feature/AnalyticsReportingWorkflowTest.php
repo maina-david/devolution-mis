@@ -19,6 +19,7 @@ use App\Services\ScheduledReportGenerator;
 use App\Support\CanonicalJson;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
@@ -182,6 +183,10 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $this->assertSame(1, $catalogue->evaluate($countyViewer, 'evaluation-findings.closed')['value']);
         $this->assertArrayHasKey('indicators.target-attainment', $catalogue->options());
         $this->assertArrayHasKey('evaluation-findings.overdue', $catalogue->options());
+
+        App::setLocale('fr');
+        $this->assertSame(trans('analytics.metrics.target_attainment', locale: 'fr'), $catalogue->options()['indicators.target-attainment']);
+        $this->assertSame(trans('analytics.metric_provenance', ['metric' => trans('analytics.metrics.target_attainment', locale: 'fr')], 'fr'), $catalogue->evaluate($countyViewer, 'indicators.target-attainment')['provenance']);
     }
 
     public function test_metric_catalogue_produces_bounded_authorized_time_series(): void

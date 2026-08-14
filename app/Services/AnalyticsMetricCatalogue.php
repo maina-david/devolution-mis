@@ -26,14 +26,14 @@ class AnalyticsMetricCatalogue
     public function options(): array
     {
         return [
-            'counties.total' => 'Counties in scope',
-            'projects.active' => 'Active projects',
-            'assessments.published' => 'Published assessment results',
-            'citizen-cases.open' => 'Open citizen cases',
-            'indicators.verified' => 'Verified indicator observations',
-            'indicators.target-attainment' => 'Average verified target attainment',
-            'evaluation-findings.overdue' => 'Overdue evaluation recommendations',
-            'evaluation-findings.closed' => 'Closed evaluation recommendations',
+            'counties.total' => __('analytics.metrics.counties_total'),
+            'projects.active' => __('analytics.metrics.projects_active'),
+            'assessments.published' => __('analytics.metrics.assessments_published'),
+            'citizen-cases.open' => __('analytics.metrics.citizen_cases_open'),
+            'indicators.verified' => __('analytics.metrics.indicators_verified'),
+            'indicators.target-attainment' => __('analytics.metrics.target_attainment'),
+            'evaluation-findings.overdue' => __('analytics.metrics.evaluation_findings_overdue'),
+            'evaluation-findings.closed' => __('analytics.metrics.evaluation_findings_closed'),
         ];
     }
 
@@ -43,7 +43,7 @@ class AnalyticsMetricCatalogue
     public function evaluate(User $user, string $metricKey, array $filters = [], ?string $disaggregation = null): array
     {
         if (! array_key_exists($metricKey, $this->options())) {
-            throw new InvalidArgumentException('Unsupported governed analytics metric.');
+            throw new InvalidArgumentException(__('analytics.errors.unsupported_metric'));
         }
         $countyIds = $this->countyScope->query($user)->pluck('id')->map(fn (mixed $id): string => (string) $id)->values();
         $requestedCountyId = is_string($filters['county_id'] ?? null) ? $filters['county_id'] : null;
@@ -58,7 +58,7 @@ class AnalyticsMetricCatalogue
         $timeGrain = is_string($filters['time_grain'] ?? null) ? $filters['time_grain'] : null;
         $trend = $timeGrain === null ? [] : $this->trend($user, $metricKey, $authorizedCountyIds, $from, $to, $timeGrain);
 
-        return ['value' => $value, 'unit' => $this->unit($metricKey), 'provenance' => $this->options()[$metricKey].' · authorized PostgreSQL records · county scope applied before aggregation', 'measured_at' => now()->toIso8601String(), 'series' => $series, 'trend' => $trend];
+        return ['value' => $value, 'unit' => $this->unit($metricKey), 'provenance' => __('analytics.metric_provenance', ['metric' => $this->options()[$metricKey]]), 'measured_at' => now()->toIso8601String(), 'series' => $series, 'trend' => $trend];
     }
 
     /** @param list<string> $countyIds
@@ -136,7 +136,7 @@ class AnalyticsMetricCatalogue
             'indicators.verified' => IndicatorObservation::query()->whereIn('county_id', $countyIds)->where('verification_status', 'verified'),
             'evaluation-findings.overdue' => EvaluationFinding::query()->whereIn('county_id', $countyIds)->where('status', '!=', 'closed')->whereDate('due_at', '<', today()),
             'evaluation-findings.closed' => EvaluationFinding::query()->whereIn('county_id', $countyIds)->where('status', 'closed'),
-            default => throw new InvalidArgumentException('Unsupported governed analytics metric.'),
+            default => throw new InvalidArgumentException(__('analytics.errors.unsupported_metric')),
         };
         if ($metricKey !== 'counties.total') {
             $dateColumn = match ($metricKey) {

@@ -302,6 +302,15 @@ return [
         'classroom_scheduled' => 'La classe virtuelle :title a été programmée.',
         'attendance_recorded' => 'La présence :status a été enregistrée.',
     ],
+    'assessment_engine' => [
+        'errors' => ['maximum_attempts' => 'Le nombre maximal de tentatives d’évaluation a été atteint.', 'outside_variant' => 'La réponse contient des questions hors de cette variante de tentative gouvernée.', 'required_content_incomplete' => 'Terminez tout le contenu d’apprentissage obligatoire avant l’évaluation.'],
+        'audit' => ['submitted' => 'La tentative d’évaluation :attempt a obtenu :score %.'],
+    ],
+    'course_creation' => [
+        'errors' => ['create_unauthorized' => 'Vous n’êtes pas autorisé à créer des cours d’apprentissage gouvernés.', 'county_outside_scope' => 'Le comté sélectionné pour le cours est hors de votre périmètre autorisé.', 'records_array' => ':field doit être un tableau.', 'record_object' => 'Chaque entrée de :field doit être un objet.'],
+        'audit' => ['created' => 'Cours :code créé avec :count leçon.|Cours :code créé avec :count leçons.'],
+    ],
+    'question_bank_default_title' => 'Banque d’évaluation de :course',
     'offline' => [
         'errors' => [
             'course_not_published' => 'Seul un cours publié peut être préparé pour une utilisation hors ligne.',

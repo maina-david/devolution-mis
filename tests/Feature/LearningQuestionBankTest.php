@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\GradeLearningAssessment;
+use App\Models\AuditEvent;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
 use App\Models\LearningLesson;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Services\LearningQuestionSelector;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
@@ -40,20 +42,24 @@ class LearningQuestionBankTest extends TestCase
         [$bank, $enrollment] = $this->bankFixture();
         $selected = app(LearningQuestionSelector::class)->select($bank, $enrollment->id, 1);
         $hidden = $bank->items->first(fn (LearningQuestionBankItem $item): bool => ! $selected->contains('id', $item->learning_quiz_question_id))->question;
+        App::setLocale('fr');
 
         try {
             app(GradeLearningAssessment::class)->handle($enrollment, $enrollment->user, [$hidden->id => $hidden->correct_option]);
             $this->fail('An answer outside the selected bank variant was accepted.');
         } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('answers', $exception->errors());
+            $this->assertSame(trans('learning.assessment_engine.errors.outside_variant', locale: 'fr'), $exception->errors()['answers'][0]);
         }
 
         $answers = $selected->mapWithKeys(fn (LearningQuizQuestion $question): array => [$question->id => $question->correct_option])->all();
+        App::setLocale('sw');
         app(GradeLearningAssessment::class)->handle($enrollment, $enrollment->user, $answers);
         $snapshot = $enrollment->attempts()->sole()->result_snapshot;
         $this->assertSame($bank->id, $snapshot['question_bank_id']);
         $this->assertSame($bank->checksum, $snapshot['question_bank_checksum']);
         $this->assertCount(2, $snapshot['questions']);
+        $event = AuditEvent::query()->where('subject_id', $enrollment->id)->where('action', 'learning.assessment.submitted')->sole();
+        $this->assertSame(trans('learning.assessment_engine.audit.submitted', ['attempt' => 1, 'score' => 100], 'sw'), $event->description);
     }
 
     public function test_published_question_bank_and_items_are_database_immutable(): void
