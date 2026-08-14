@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\RetryFailedQueueJob;
 use App\Jobs\CreateOperationalBackupJob;
 use App\Jobs\VerifyOperationalBackupJob;
 use App\Models\OperationalAlert;
@@ -224,6 +225,7 @@ class OperationalReadinessTest extends TestCase
     public function test_failed_queue_jobs_are_minimized_requeued_and_retain_immutable_recovery_evidence(): void
     {
         $operator = User::factory()->platformAdmin()->create();
+        $operator->localePreference()->updateOrCreate([], ['locale' => 'fr']);
         $viewer = User::factory()->topManagement()->create();
         $failedJobUuid = (string) Str::uuid();
         $payload = json_encode(['uuid' => $failedJobUuid, 'displayName' => 'App\\Jobs\\GenerateScheduledReport', 'job' => 'Illuminate\\Queue\\CallQueuedHandler@call', 'attempts' => 3, 'data' => ['commandName' => 'App\\Jobs\\GenerateScheduledReport', 'command' => 'protected-serialized-command']], JSON_THROW_ON_ERROR);
@@ -238,7 +240,11 @@ class OperationalReadinessTest extends TestCase
             ->missing('failedJobs.data.0.payload')
             ->missing('failedJobs.data.0.exception'));
 
-        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$failedJobUuid]))->assertRedirect();
+        $this->actingAs($operator)
+            ->withSession(['locale' => 'fr'])
+            ->post(route('operations.failed-jobs.retry', [$failedJobUuid]))
+            ->assertRedirect()
+            ->assertSessionHas('success', 'La tâche échouée a été remise en file avec une preuve de récupération immuable.');
         $this->assertDatabaseMissing('failed_jobs', ['uuid' => $failedJobUuid]);
         $this->assertDatabaseHas('jobs', ['queue' => 'reports', 'attempts' => 0]);
         $attempt = QueueRecoveryAttempt::query()->sole();
@@ -247,7 +253,11 @@ class OperationalReadinessTest extends TestCase
         $this->assertSame(64, strlen($attempt->payload_checksum));
         $this->assertSame(64, strlen($attempt->exception_checksum));
         $this->assertSame(64, strlen($attempt->evidence_checksum));
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $attempt->id, 'action' => 'operations.queue.recovery_attempted']);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $attempt->id,
+            'action' => 'operations.queue.recovery_attempted',
+            'description' => "Résultat de la récupération de la tâche échouée {$failedJobUuid} : remise en file.",
+        ]);
 
         $this->expectException(QueryException::class);
         $attempt->update(['outcome' => 'retry_failed']);
@@ -265,6 +275,32 @@ class OperationalReadinessTest extends TestCase
         $this->assertDatabaseHas('failed_jobs', ['uuid' => $failedJobUuid]);
         $this->assertDatabaseCount('queue_recovery_attempts', 0);
         $this->assertDatabaseCount('jobs', 0);
+
+        $malformedJobUuid = (string) Str::uuid();
+        DB::table('failed_jobs')->insert(['uuid' => $malformedJobUuid, 'connection' => 'database', 'queue' => 'reports', 'payload' => '{not-json', 'exception' => 'RuntimeException: Malformed retained payload', 'failed_at' => now()]);
+        $this->actingAs($operator)->post(route('operations.failed-jobs.retry', [$malformedJobUuid]))->assertStatus(409);
+        $this->assertDatabaseHas('failed_jobs', ['uuid' => $malformedJobUuid]);
+        $this->assertDatabaseCount('queue_recovery_attempts', 0);
+        $this->assertDatabaseCount('jobs', 0);
+    }
+
+    public function test_queue_recovery_action_enforces_localized_permission_before_identifier_lookup(): void
+    {
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+
+        app()->setLocale('fr');
+        try {
+            app(RetryFailedQueueJob::class)->handle('not-a-uuid', $unauthorizedActor);
+            $this->fail('The queue recovery action did not enforce its permission boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame('Vous n’êtes pas autorisé à réessayer les tâches de file échouées.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('queue_recovery_attempts', 0);
+        $this->assertDatabaseCount('jobs', 0);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     /** @return array<string, mixed> */

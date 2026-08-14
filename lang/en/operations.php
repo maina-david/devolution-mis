@@ -29,7 +29,13 @@ return [
         'restore_verification_queued' => 'Isolated restore verification queued.', 'failed_job_requeued' => 'Failed job requeued with immutable recovery evidence.',
         'failed_job_rejected' => 'Queue provider rejected the recovery request; the failed job remains available.', 'alert_acknowledged' => 'Operational alert acknowledged with immutable response evidence.',
     ],
-    'audit' => ['release_recorded' => 'Release :version recorded for :environment.'],
+    'audit' => ['release_recorded' => 'Release :version recorded for :environment.', 'queue_recovery_attempted' => 'Failed queue job :uuid recovery outcome: :outcome.'],
+    'queue' => ['outcomes' => ['requeued' => 'requeued', 'retry_failed' => 'retry failed'], 'errors' => [
+        'retry_unauthorized' => 'You are not authorized to retry failed queue jobs.', 'failed_job_missing' => 'The failed queue job no longer exists.',
+        'provider_unsupported' => 'This recovery control supports only the configured transactional database queue. Configure an approved provider-specific recovery adapter for other connections.',
+        'provider_rejected_detail' => 'The queue provider rejected the recovery request. Review protected application logs using the evidence checksum.',
+        'invalid_json' => 'The retained queue payload is not valid JSON and cannot be retried safely.', 'invalid_payload' => 'The retained queue payload is invalid.',
+    ]],
     'performance' => [
         'errors' => ['base_url_required' => 'A configured base URL and route path are required.', 'request_count_range' => 'Request count is outside the configured safe range.', 'concurrency_range' => 'Concurrency is outside the configured safe range.', 'route_not_approved' => 'The requested route is not approved for performance probing.', 'target_not_approved' => 'The target must be an approved same-environment HTTPS host.'],
         'cli' => ['evidence' => 'Evidence', 'outcome' => 'Outcome', 'requests_per_second' => 'Requests/sec', 'p95_ms' => 'P95 ms', 'failures' => 'Failures', 'checksum' => 'Checksum', 'unavailable' => 'unavailable'],

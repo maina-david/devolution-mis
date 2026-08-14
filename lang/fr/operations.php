@@ -29,7 +29,13 @@ return [
         'restore_verification_queued' => 'La vérification de restauration isolée a été mise en file.', 'failed_job_requeued' => 'La tâche échouée a été remise en file avec une preuve de récupération immuable.',
         'failed_job_rejected' => 'Le fournisseur de file a rejeté la demande de récupération ; la tâche échouée reste disponible.', 'alert_acknowledged' => 'L’alerte opérationnelle a été acquittée avec une preuve de réponse immuable.',
     ],
-    'audit' => ['release_recorded' => 'Version :version enregistrée pour l’environnement :environment.'],
+    'audit' => ['release_recorded' => 'Version :version enregistrée pour l’environnement :environment.', 'queue_recovery_attempted' => 'Résultat de la récupération de la tâche échouée :uuid : :outcome.'],
+    'queue' => ['outcomes' => ['requeued' => 'remise en file', 'retry_failed' => 'échec de la relance'], 'errors' => [
+        'retry_unauthorized' => 'Vous n’êtes pas autorisé à réessayer les tâches de file échouées.', 'failed_job_missing' => 'La tâche de file échouée n’existe plus.',
+        'provider_unsupported' => 'Ce contrôle de récupération prend uniquement en charge la file de base de données transactionnelle configurée. Configurez un adaptateur approuvé propre au fournisseur pour les autres connexions.',
+        'provider_rejected_detail' => 'Le fournisseur de file a rejeté la demande de récupération. Consultez les journaux protégés de l’application à l’aide de la somme de contrôle de la preuve.',
+        'invalid_json' => 'La charge de file conservée n’est pas un JSON valide et ne peut pas être relancée en toute sécurité.', 'invalid_payload' => 'La charge de file conservée est invalide.',
+    ]],
     'performance' => [
         'errors' => ['base_url_required' => 'Une URL de base configurée et un chemin de route sont requis.', 'request_count_range' => 'Le nombre de requêtes est hors de la plage de sécurité configurée.', 'concurrency_range' => 'La concurrence est hors de la plage de sécurité configurée.', 'route_not_approved' => 'La route demandée n’est pas approuvée pour les sondes de performance.', 'target_not_approved' => 'La cible doit être un hôte HTTPS approuvé du même environnement.'],
         'cli' => ['evidence' => 'Preuve', 'outcome' => 'Résultat', 'requests_per_second' => 'Requêtes/s', 'p95_ms' => 'P95 ms', 'failures' => 'Échecs', 'checksum' => 'Somme de contrôle', 'unavailable' => 'indisponible'],

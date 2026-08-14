@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\QueueRecoveryAttempt;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -18,26 +19,30 @@ class RetryFailedQueueJob
 
     public function handle(string $failedJobUuid, User $actor): QueueRecoveryAttempt
     {
+        abort_unless($actor->can(ProgrammePermission::ManageOperations->value), 403, __('operations.queue.errors.retry_unauthorized'));
+        abort_unless(Str::isUuid($failedJobUuid), 404, __('operations.queue.errors.failed_job_missing'));
+
         return DB::transaction(function () use ($failedJobUuid, $actor): QueueRecoveryAttempt {
             $failedJob = DB::table('failed_jobs')->where('uuid', $failedJobUuid)->lockForUpdate()->first();
-            abort_if($failedJob === null, 404, 'Failed queue job no longer exists.');
+            abort_if($failedJob === null, 404, __('operations.queue.errors.failed_job_missing'));
 
             $payload = (string) $failedJob->payload;
             $exception = (string) $failedJob->exception;
             $connection = (string) $failedJob->connection;
-            abort_unless(config("queue.connections.{$connection}.driver") === 'database', 409, 'This recovery control supports only the transactional database queue. Configure an approved provider-specific recovery adapter for other connections.');
+            abort_unless(config("queue.connections.{$connection}.driver") === 'database', 409, __('operations.queue.errors.provider_unsupported'));
+            $retryPayload = $this->resetAttempts($payload);
             $attemptedAt = now();
             $outcome = 'requeued';
             $errorCategory = null;
             $errorDetail = null;
 
             try {
-                $this->queueManager->connection($connection)->pushRaw($this->resetAttempts($payload), (string) $failedJob->queue);
+                $this->queueManager->connection($connection)->pushRaw($retryPayload, (string) $failedJob->queue);
                 DB::table('failed_jobs')->where('uuid', $failedJobUuid)->delete();
             } catch (Throwable $exceptionThrown) {
                 $outcome = 'retry_failed';
                 $errorCategory = class_basename($exceptionThrown);
-                $errorDetail = 'The queue provider rejected the recovery request. Review protected application logs using the evidence checksum.';
+                $errorDetail = __('operations.queue.errors.provider_rejected_detail');
             }
 
             $evidence = [
@@ -60,7 +65,7 @@ class RetryFailedQueueJob
                 'attempted_at' => $attemptedAt,
                 'evidence_checksum' => hash('sha256', json_encode($evidence, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)),
             ]);
-            $this->auditLogger->record($actor, $attempt, 'operations.queue.recovery_attempted', "Failed queue job {$failedJobUuid} recovery outcome: {$outcome}.", null, ['failed_job_uuid' => $failedJobUuid, 'outcome' => $outcome, 'evidence_checksum' => $attempt->evidence_checksum]);
+            $this->auditLogger->record($actor, $attempt, 'operations.queue.recovery_attempted', __('operations.audit.queue_recovery_attempted', ['uuid' => $failedJobUuid, 'outcome' => __('operations.queue.outcomes.'.$outcome)]), null, ['failed_job_uuid' => $failedJobUuid, 'outcome' => $outcome, 'evidence_checksum' => $attempt->evidence_checksum]);
 
             return $attempt;
         });
@@ -71,9 +76,9 @@ class RetryFailedQueueJob
         try {
             $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            abort(409, 'The retained queue payload is not valid JSON and cannot be retried safely.');
+            abort(409, __('operations.queue.errors.invalid_json'));
         }
-        abort_unless(is_array($decoded), 409, 'The retained queue payload is invalid.');
+        abort_unless(is_array($decoded), 409, __('operations.queue.errors.invalid_payload'));
         if (array_key_exists('attempts', $decoded)) {
             $decoded['attempts'] = 0;
         }
@@ -86,10 +91,10 @@ class RetryFailedQueueJob
         try {
             $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return 'Unknown queued job';
+            return __('operations.labels.unknown_queued_job');
         }
         $name = is_array($decoded) ? ($decoded['displayName'] ?? $decoded['job'] ?? null) : null;
 
-        return is_string($name) ? Str::limit($name, 255, '') : 'Unknown queued job';
+        return is_string($name) ? Str::limit($name, 255, '') : __('operations.labels.unknown_queued_job');
     }
 }

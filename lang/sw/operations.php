@@ -29,7 +29,13 @@ return [
         'restore_verification_queued' => 'Uthibitishaji wa urejeshaji uliotengwa umewekwa kwenye foleni.', 'failed_job_requeued' => 'Kazi iliyoshindwa imerudishwa kwenye foleni pamoja na ushahidi wa urejeshaji usiobadilika.',
         'failed_job_rejected' => 'Mtoa huduma wa foleni amekataa ombi la urejeshaji; kazi iliyoshindwa bado inapatikana.', 'alert_acknowledged' => 'Tahadhari ya uendeshaji imethibitishwa pamoja na ushahidi wa jibu usiobadilika.',
     ],
-    'audit' => ['release_recorded' => 'Toleo :version limerekodiwa kwa mazingira ya :environment.'],
+    'audit' => ['release_recorded' => 'Toleo :version limerekodiwa kwa mazingira ya :environment.', 'queue_recovery_attempted' => 'Matokeo ya kurejesha kazi ya foleni iliyoshindwa :uuid: :outcome.'],
+    'queue' => ['outcomes' => ['requeued' => 'imerudishwa kwenye foleni', 'retry_failed' => 'jaribio la kurudisha limeshindwa'], 'errors' => [
+        'retry_unauthorized' => 'Hujaidhinishwa kujaribu tena kazi za foleni zilizoshindwa.', 'failed_job_missing' => 'Kazi ya foleni iliyoshindwa haipo tena.',
+        'provider_unsupported' => 'Kidhibiti hiki cha urejeshaji kinakubali tu foleni ya hifadhidata ya miamala iliyosanidiwa. Sanidi kiunganishi maalum cha mtoa huduma kilichoidhinishwa kwa miunganisho mingine.',
+        'provider_rejected_detail' => 'Mtoa huduma wa foleni amekataa ombi la urejeshaji. Kagua kumbukumbu zilizolindwa za programu kwa kutumia jumla hakiki ya ushahidi.',
+        'invalid_json' => 'Mzigo wa foleni uliohifadhiwa si JSON halali na hauwezi kujaribiwa tena kwa usalama.', 'invalid_payload' => 'Mzigo wa foleni uliohifadhiwa si halali.',
+    ]],
     'performance' => [
         'errors' => ['base_url_required' => 'URL msingi iliyosanidiwa na njia ya ruti zinahitajika.', 'request_count_range' => 'Idadi ya maombi iko nje ya kiwango salama kilichosanidiwa.', 'concurrency_range' => 'Idadi ya maombi ya wakati mmoja iko nje ya kiwango salama kilichosanidiwa.', 'route_not_approved' => 'Ruti iliyoombwa haijaidhinishwa kwa kipimo cha utendaji.', 'target_not_approved' => 'Lengo lazima liwe seva ya HTTPS iliyoidhinishwa katika mazingira haya haya.'],
         'cli' => ['evidence' => 'Ushahidi', 'outcome' => 'Matokeo', 'requests_per_second' => 'Maombi/sekunde', 'p95_ms' => 'P95 ms', 'failures' => 'Hitilafu', 'checksum' => 'Jumla hakiki', 'unavailable' => 'haipatikani'],
