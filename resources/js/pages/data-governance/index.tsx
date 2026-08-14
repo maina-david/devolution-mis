@@ -386,38 +386,38 @@ export default function DataGovernance({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <Metric
                         icon={DatabaseZap}
-                        label="Registered assets"
+                        label={governanceCopy.registered_assets}
                         value={assets.length}
                         detail={`${assets.filter((asset) => asset.containsPersonalData).length} contain personal data`}
                     />
                     <Metric
                         icon={Scale}
-                        label="Processing activities"
+                        label={governanceCopy.processing_activities}
                         value={activities.total}
                         detail={`${activities.data.filter((item) => item.status === 'approved').length} approved on this page`}
                     />
                     <Metric
                         icon={FileClock}
-                        label="Retention schedules"
+                        label={governanceCopy.retention_schedules}
                         value={retentionSchedules.length}
                         detail={`${targets.processingReviewMonths}-month processing review target`}
                     />
                     <Metric
                         icon={UserRoundSearch}
-                        label="Privacy requests"
+                        label={governanceCopy.privacy_requests}
                         value={dataSubjectRequests.total}
                         detail={`${targets.dataSubjectRequestDays}-day configurable service target`}
                     />
                     <Metric
                         icon={ShieldAlert}
-                        label="Breach incidents"
+                        label={governanceCopy.breach_incidents}
                         value={privacyIncidents.total}
                         detail={`${privacyIncidents.data.filter((incident) => incident.overdue).length} overdue on this page · ${targets.regulatorNotificationHours}h target`}
                     />
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
-                        title="Personal data breach register"
+                        title={governanceCopy.personal_data_breach_register}
                         description={`${privacyIncidents.total.toLocaleString()} controlled incident records`}
                         filters={filters}
                         workspace="privacy-incidents"
@@ -459,7 +459,7 @@ export default function DataGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No privacy incidents"
+                            title={governanceCopy.no_privacy_incidents}
                             description="No breach incidents match the current filters. Report suspected incidents immediately when they occur."
                             className="min-h-64 border-0"
                         />
@@ -482,7 +482,7 @@ export default function DataGovernance({
                         ))}
                         {assets.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No data assets registered"
+                                title={governanceCopy.no_data_assets_registered}
                                 description="Register the first authoritative dataset before approving personal-data processing."
                                 className="min-h-56 lg:col-span-2 xl:col-span-3"
                             />
@@ -491,7 +491,7 @@ export default function DataGovernance({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
-                        title="Processing activity register"
+                        title={governanceCopy.processing_activity_register}
                         description={`${activities.total.toLocaleString()} purpose-bound processing records`}
                         filters={filters}
                     />
@@ -531,7 +531,7 @@ export default function DataGovernance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No processing activities"
+                            title={governanceCopy.no_processing_activities}
                             description="Submit a purpose-bound processing record or adjust the current filters."
                             className="min-h-64 border-0"
                         />
@@ -579,7 +579,7 @@ export default function DataGovernance({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No privacy requests"
+                                title={governanceCopy.no_privacy_requests}
                                 description="No data-subject requests match the current filters."
                                 className="min-h-64 border-0"
                             />
@@ -856,14 +856,14 @@ function ActivityAction({
                                 <SearchableSelect
                                     id={`activity-decision-${activity.id}`}
                                     name="decision"
-                                    label="Decision"
+                                    label={copy.decision}
                                     options={['approved', 'rejected'].map(
                                         option,
                                     )}
                                 />
                                 <TextField
                                     name="review_note"
-                                    label="Independent review findings"
+                                    label={copy.independent_review_findings}
                                 />
                                 <Button type="submit">
                                     <ShieldCheck /> {copy.record_review}
@@ -1069,7 +1069,7 @@ function RequestTransitionForm({
             <SearchableSelect
                 id={`request-transition-${request.id}`}
                 name="transition"
-                label="Workflow transition"
+                label={copy.workflow_transition}
                 options={transitions.map(option)}
                 value={transition}
                 onValueChange={setTransition}
@@ -1077,20 +1077,23 @@ function RequestTransitionForm({
             {transition === 'verify_identity' && (
                 <Field
                     name="identity_evidence_reference"
-                    label="Identity-evidence reference"
+                    label={copy.identity_evidence_reference}
                 />
             )}
             {['complete', 'reject'].includes(transition) && (
                 <>
-                    <TextField name="decision" label="Decision or response" />
+                    <TextField
+                        name="decision"
+                        label={copy.decision_or_response}
+                    />
                     <TextField
                         name="decision_reason"
-                        label="Reason and legal assessment"
+                        label={copy.reason_and_legal_assessment}
                     />
                     {transition === 'complete' && (
                         <Field
                             name="response_evidence_reference"
-                            label="Response evidence reference"
+                            label={copy.response_evidence_reference}
                         />
                     )}
                 </>
@@ -1107,7 +1110,7 @@ function AssetForm({ users }: { users: Option[] }) {
 
     return (
         <FormSheet
-            title="Register data asset"
+            title={copy.register_data_asset}
             description="Record ownership, authoritative source, classification, residency and personal-data categories before use."
             triggerLabel="Data asset"
             icon={Plus}
@@ -1115,29 +1118,32 @@ function AssetForm({ users }: { users: Option[] }) {
         >
             <Form action={storeAsset()} className="grid gap-5 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Field name="code" label="Asset code" />
-                    <Field name="name" label="Asset name" />
+                    <Field name="code" label={copy.asset_code} />
+                    <Field name="name" label={copy.asset_name} />
                     <SearchableSelect
                         id="asset-owner"
                         name="data_owner_id"
-                        label="Accountable data owner"
+                        label={copy.accountable_data_owner}
                         options={users.map(toSearchOption)}
                     />
                     <SearchableSelect
                         id="asset-steward"
                         name="steward_id"
-                        label="Operational data steward"
+                        label={copy.operational_data_steward}
                         options={users.map(toSearchOption)}
                     />
-                    <Field name="module" label="ToR module or shared service" />
+                    <Field
+                        name="module"
+                        label={copy.tor_module_or_shared_service}
+                    />
                     <Field
                         name="authoritative_source"
-                        label="Authoritative source"
+                        label={copy.authoritative_source}
                     />
                     <SearchableSelect
                         id="asset-classification"
                         name="classification"
-                        label="Classification"
+                        label={copy.classification}
                         options={[
                             'public',
                             'official',
@@ -1149,39 +1155,39 @@ function AssetForm({ users }: { users: Option[] }) {
                     <ReferenceCatalogSelect
                         id="asset-residency-country"
                         name="residency_country"
-                        label="Residency country"
+                        label={copy.residency_country}
                         catalog="country-code"
                     />
                     <BooleanField
                         name="contains_personal_data"
-                        label="Contains personal data"
+                        label={copy.contains_personal_data}
                     />
                     <BooleanField
                         name="contains_sensitive_personal_data"
-                        label="Contains sensitive personal data"
+                        label={copy.contains_sensitive_personal_data}
                     />
                 </div>
                 <TextField
                     name="description"
-                    label="Dataset scope and intended use"
+                    label={copy.dataset_scope_and_intended_use}
                 />
                 <TextField
                     name="personal_data_categories"
-                    label="Personal-data categories (comma separated)"
+                    label={copy.personal_data_categories_comma_separated}
                     optional
                 />
                 <TextField
                     name="data_subject_categories"
-                    label="Data-subject categories (comma separated)"
+                    label={copy.data_subject_categories_comma_separated}
                     optional
                 />
                 <TextField
                     name="storage_locations"
-                    label="Approved storage locations (comma separated)"
+                    label={copy.approved_storage_locations_comma_separated}
                 />
                 <TextField
                     name="quality_standard"
-                    label="Quality and provenance standard"
+                    label={copy.quality_and_provenance_standard}
                     optional
                 />
                 <Button type="submit">{copy.register_data_asset}</Button>
@@ -1201,17 +1207,17 @@ function RetentionForm({ copy }: { copy: Record<string, string> }) {
         >
             <Form action={storeRetentionSchedule()} className="grid gap-4 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Field name="code" label="Schedule code" />
-                    <Field name="record_class" label="Record class" />
+                    <Field name="code" label={copy.schedule_code} />
+                    <Field name="record_class" label={copy.record_class} />
                     <Field
                         name="retention_months"
-                        label="Retention months"
+                        label={copy.retention_months}
                         type="number"
                     />
                     <SearchableSelect
                         id="retention-action"
                         name="disposition_action"
-                        label="Disposition action"
+                        label={copy.disposition_action}
                         options={[
                             'review_then_destroy',
                             'transfer_to_archive',
@@ -1221,21 +1227,21 @@ function RetentionForm({ copy }: { copy: Record<string, string> }) {
                     />
                     <DatePickerField
                         name="next_review_at"
-                        label="Next review date"
+                        label={copy.next_review_date}
                         required
                     />
                 </div>
                 <TextField
                     name="trigger_event"
-                    label="Retention trigger event"
+                    label={copy.retention_trigger_event}
                 />
                 <TextField
                     name="legal_authority"
-                    label="Legal or approved records authority"
+                    label={copy.legal_or_approved_records_authority}
                 />
                 <TextField
                     name="legal_hold_rule"
-                    label="Legal-hold suspension rule"
+                    label={copy.legal_hold_suspension_rule}
                 />
                 <Button type="submit">{copy.retention_submit_button}</Button>
             </Form>
@@ -1292,7 +1298,7 @@ function ActivityForm({
 
     return (
         <FormSheet
-            title="Submit processing activity"
+            title={copy.submit_processing_activity}
             description="Create a ROPA-style record for independent privacy review. Comma-separate multi-value entries."
             triggerLabel="Processing"
             icon={Scale}
@@ -1306,7 +1312,7 @@ function ActivityForm({
                     <SearchableSelect
                         id="processing-asset"
                         name="data_asset_id"
-                        label="Data asset"
+                        label={copy.data_asset}
                         options={assets.map((asset) => ({
                             id: asset.id,
                             name: `${asset.code} · ${asset.name}`,
@@ -1315,18 +1321,18 @@ function ActivityForm({
                     <SearchableSelect
                         id="processing-retention"
                         name="retention_schedule_id"
-                        label="Retention schedule"
+                        label={copy.retention_schedule}
                         options={schedules.map((schedule) => ({
                             id: schedule.id,
                             name: `${schedule.code} · ${schedule.recordClass}`,
                         }))}
                     />
-                    <Field name="reference" label="Processing reference" />
-                    <Field name="name" label="Activity name" />
+                    <Field name="reference" label={copy.processing_reference} />
+                    <Field name="name" label={copy.activity_name} />
                     <SearchableSelect
                         id="processing-basis"
                         name="lawful_basis"
-                        label="Lawful basis"
+                        label={copy.lawful_basis}
                         options={[
                             'consent',
                             'contract',
@@ -1338,13 +1344,13 @@ function ActivityForm({
                     />
                     <Field
                         name="controller_name"
-                        label="Controller"
+                        label={copy.controller}
                         defaultValue="State Department for Devolution"
                     />
                     <SearchableSelect
                         id="processing-dpia"
                         name="dpia_status"
-                        label="DPIA status"
+                        label={copy.dpia_status}
                         options={[
                             'not_required',
                             'required',
@@ -1355,56 +1361,62 @@ function ActivityForm({
                     />
                     <Field
                         name="dpia_reference"
-                        label="DPIA evidence reference"
+                        label={copy.dpia_evidence_reference}
                         optional
                     />
                     <BooleanField
                         name="automated_decision_making"
-                        label="Uses automated decision-making"
+                        label={copy.uses_automated_decision_making}
                     />
                     <BooleanField
                         name="cross_border_transfer"
-                        label="Includes cross-border transfer"
+                        label={copy.includes_cross_border_transfer}
                     />
                     <DatePickerField
                         name="next_review_at"
-                        label="Next review date"
+                        label={copy.next_review_date}
                         required
                     />
                 </div>
-                <TextField name="purpose" label="Specific processing purpose" />
+                <TextField
+                    name="purpose"
+                    label={copy.specific_processing_purpose}
+                />
                 <TextField
                     name="lawful_basis_reference"
-                    label="Lawful-basis authority and assessment"
+                    label={copy.lawful_basis_authority_and_assessment}
                 />
                 <TextField
                     name="processor_names"
-                    label="Processors (comma separated)"
+                    label={copy.processors_comma_separated}
                     optional
                 />
                 <TextField
                     name="recipient_categories"
-                    label="Recipient categories (comma separated)"
+                    label={copy.recipient_categories_comma_separated}
                     optional
                 />
                 <TextField
                     name="processing_operations"
-                    label="Processing operations (comma separated)"
+                    label={copy.processing_operations_comma_separated}
                 />
                 <TextField
                     name="transfer_countries"
-                    label="Transfer countries (comma separated)"
+                    label={copy.transfer_countries_comma_separated}
                     optional
                 />
                 <TextField
                     name="transfer_safeguards"
-                    label="Transfer safeguards"
+                    label={copy.transfer_safeguards}
                     optional
                 />
-                <TextField name="risk_summary" label="Privacy risk summary" />
+                <TextField
+                    name="risk_summary"
+                    label={copy.privacy_risk_summary}
+                />
                 <TextField
                     name="security_measures"
-                    label="Technical and organizational measures"
+                    label={copy.technical_and_organizational_measures}
                 />
                 <Button type="submit">{copy.submit_independent_review}</Button>
             </Form>
@@ -1417,7 +1429,7 @@ function DataRequestForm({ users }: { users: Option[] }) {
 
     return (
         <FormSheet
-            title="Record data-subject request"
+            title={copy.record_data_subject_request}
             description="Capture only the minimum contact information needed to verify and respond. Requester fields are encrypted at rest."
             triggerLabel="Privacy request"
             icon={UserRoundSearch}
@@ -1431,7 +1443,7 @@ function DataRequestForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="dsr-type"
                         name="request_type"
-                        label="Request type"
+                        label={copy.request_type}
                         options={[
                             'access',
                             'rectification',
@@ -1444,32 +1456,32 @@ function DataRequestForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="dsr-assignee"
                         name="assigned_to"
-                        label="Assigned privacy operator"
+                        label={copy.assigned_privacy_operator}
                         options={users.map(toSearchOption)}
                     />
-                    <Field name="requester_name" label="Requester name" />
+                    <Field name="requester_name" label={copy.requester_name} />
                     <Field
                         name="requester_contact"
-                        label="Controlled contact"
+                        label={copy.controlled_contact}
                     />
                     <SearchableSelect
                         id="dsr-channel"
                         name="contact_channel"
-                        label="Contact channel"
+                        label={copy.contact_channel}
                         options={['email', 'phone', 'letter', 'in_person'].map(
                             option,
                         )}
                     />
                     <DatePickerField
                         name="received_at"
-                        label="Received date and time"
+                        label={copy.received_date_and_time}
                         includeTime
                         required
                     />
                 </div>
                 <TextField
                     name="scope"
-                    label="Requested personal data and service scope"
+                    label={copy.requested_personal_data_and_service_scope}
                 />
                 <Button type="submit">{copy.record_privacy_request}</Button>
             </Form>
@@ -1490,7 +1502,7 @@ function PrivacyIncidentForm({
 
     return (
         <FormSheet
-            title="Report personal data breach"
+            title={copy.report_personal_data_breach}
             description="Record the minimum controlled facts needed to contain, independently assess and notify. Detailed narratives are encrypted at rest."
             triggerLabel="Report breach"
             icon={ShieldAlert}
@@ -1498,17 +1510,17 @@ function PrivacyIncidentForm({
         >
             <Form action={storePrivacyIncident()} className="grid gap-4 pt-4">
                 <div className="grid gap-4 md:grid-cols-2">
-                    <Field name="title" label="Incident title" />
+                    <Field name="title" label={copy.incident_title} />
                     <SearchableSelect
                         id="incident-lead"
                         name="incident_lead_id"
-                        label="Incident lead"
+                        label={copy.incident_lead}
                         options={users.map(toSearchOption)}
                     />
                     <SearchableSelect
                         id="incident-asset"
                         name="data_asset_id"
-                        label="Affected data asset"
+                        label={copy.affected_data_asset}
                         options={assets.map((asset) => ({
                             id: asset.id,
                             name: `${asset.code} · ${asset.name}`,
@@ -1518,20 +1530,20 @@ function PrivacyIncidentForm({
                     <SearchableSelect
                         id="incident-county"
                         name="county_id"
-                        label="Affected county"
+                        label={copy.affected_county}
                         options={counties.map(toSearchOption)}
                         optional
                     />
                     <SearchableSelect
                         id="incident-role"
                         name="controller_role"
-                        label="SDD role"
+                        label={copy.sdd_role}
                         options={['controller', 'processor'].map(option)}
                     />
                     <SearchableSelect
                         id="incident-type"
                         name="breach_type"
-                        label="Breach type"
+                        label={copy.breach_type}
                         options={[
                             'confidentiality',
                             'integrity',
@@ -1541,34 +1553,34 @@ function PrivacyIncidentForm({
                     />
                     <Field
                         name="estimated_data_subjects"
-                        label="Estimated affected people"
+                        label={copy.estimated_affected_people}
                         type="number"
                         optional
                     />
                     <BooleanField
                         name="contains_sensitive_data"
-                        label="Sensitive personal data may be involved"
+                        label={copy.sensitive_personal_data_may_be_involved}
                     />
                     <DatePickerField
                         name="occurred_at"
-                        label="Occurred date and time"
+                        label={copy.occurred_date_and_time}
                         includeTime
                         required={false}
                     />
                     <DatePickerField
                         name="discovered_at"
-                        label="Discovered date and time"
+                        label={copy.discovered_date_and_time}
                         includeTime
                         required
                     />
                 </div>
                 <TextField
                     name="personal_data_categories"
-                    label="Personal-data categories (comma separated)"
+                    label={copy.personal_data_categories_comma_separated}
                 />
                 <TextField
                     name="description"
-                    label="Controlled incident description"
+                    label={copy.controlled_incident_description}
                 />
                 <Button type="submit">
                     <ShieldAlert /> {copy.record_incident_deadlines}
@@ -1779,7 +1791,7 @@ function PrivacyIncidentTransitionForm({
             {transition === 'contain' && (
                 <TextField
                     name="containment_actions"
-                    label="Containment actions completed"
+                    label={copy.containment_actions_completed}
                 />
             )}
             {transition === 'assess' && (
@@ -1787,7 +1799,7 @@ function PrivacyIncidentTransitionForm({
                     <SearchableSelect
                         id={`incident-severity-${incident.id}`}
                         name="severity"
-                        label="Assessed severity"
+                        label={copy.assessed_severity}
                         options={['low', 'medium', 'high', 'critical'].map(
                             option,
                         )}
@@ -1795,12 +1807,14 @@ function PrivacyIncidentTransitionForm({
                     <SearchableSelect
                         id={`incident-risk-${incident.id}`}
                         name="real_risk_of_harm"
-                        label="Real risk of harm"
+                        label={copy.real_risk_of_harm}
                         options={['yes', 'no'].map(option)}
                     />
                     <TextField
                         name="risk_assessment"
-                        label="Independent risk assessment and legal reasoning"
+                        label={
+                            copy.independent_risk_assessment_and_legal_reasoning
+                        }
                     />
                 </>
             )}
@@ -1808,50 +1822,53 @@ function PrivacyIncidentTransitionForm({
                 <>
                     <DatePickerField
                         name="regulator_notified_at"
-                        label="ODPC notified date and time"
+                        label={copy.odpc_notified_date_and_time}
                         includeTime
                         required
                     />
                     <Field
                         name="regulator_notification_reference"
-                        label="ODPC notification reference"
+                        label={copy.odpc_notification_reference}
                     />
                     <TextField
                         name="regulator_delay_reason"
-                        label="Delay reason, when after 72 hours"
+                        label={copy.delay_reason_when_after_72_hours}
                         optional
                     />
                     <SearchableSelect
                         id={`incident-subject-notice-${incident.id}`}
                         name="subject_notification_decision"
-                        label="Affected-person communication"
+                        label={copy.affected_person_communication}
                         options={['notified', 'not_required', 'delayed'].map(
                             option,
                         )}
                     />
                     <DatePickerField
                         name="data_subjects_notified_at"
-                        label="Affected people notified date and time"
+                        label={copy.affected_people_notified_date_and_time}
                         includeTime
                         required={false}
                     />
                     <TextField
                         name="subject_notification_rationale"
-                        label="No-notice or delay rationale"
+                        label={copy.no_notice_or_delay_rationale}
                         optional
                     />
                 </>
             )}
             {transition === 'close' && (
                 <>
-                    <TextField name="root_cause" label="Verified root cause" />
+                    <TextField
+                        name="root_cause"
+                        label={copy.verified_root_cause}
+                    />
                     <TextField
                         name="remediation_actions"
-                        label="Completed corrective and preventive actions"
+                        label={copy.completed_corrective_and_preventive_actions}
                     />
                     <Field
                         name="closure_evidence_reference"
-                        label="Controlled closure evidence reference"
+                        label={copy.controlled_closure_evidence_reference}
                     />
                 </>
             )}

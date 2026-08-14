@@ -123,7 +123,7 @@ class HandleInertiaRequests extends Middleware
                 'navigation' => __('idmis.navigation'),
                 'citizen' => __('citizen'),
                 'dataRights' => __('data-rights'),
-                'dataGovernance' => __('data-governance'),
+                'dataGovernance' => array_merge(__('data-governance'), __('data-governance-forms')),
                 'privacyDocuments' => __('privacy-documents'),
                 'evidence' => __('evidence'),
                 'documentRepository' => __('document-repository'),
