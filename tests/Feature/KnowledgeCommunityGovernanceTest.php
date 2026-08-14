@@ -2,7 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateKnowledgeCommunityReport;
+use App\Actions\CreateKnowledgePost;
+use App\Actions\ModerateKnowledgePost;
+use App\Actions\TransitionKnowledgeCommunityReport;
+use App\Actions\UpdateKnowledgeDiscussionSubscription;
 use App\Models\County;
+use App\Models\KnowledgeCommunityReport;
 use App\Models\KnowledgeDiscussion;
 use App\Models\KnowledgeDiscussionSubscription;
 use App\Models\KnowledgeItem;
@@ -12,6 +18,7 @@ use App\Notifications\ProgrammeAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class KnowledgeCommunityGovernanceTest extends TestCase
@@ -68,7 +75,9 @@ class KnowledgeCommunityGovernanceTest extends TestCase
         $post = KnowledgePost::query()->sole();
         $this->assertSame('visible', $post->moderation_status);
         $this->assertFalse($post->is_moderated);
-        Notification::assertSentTo($subscriber, ProgrammeAlert::class, fn (ProgrammeAlert $notification): bool => $notification->category === 'knowledge' && str_contains($notification->message, $discussion->title));
+        Notification::assertSentTo($subscriber, ProgrammeAlert::class, fn (ProgrammeAlert $notification): bool => $notification->category === 'knowledge'
+            && $notification->messageTranslationKey === 'knowledge.notifications.new_contribution_message'
+            && $notification->messageTranslationParameters['title'] === $discussion->title);
         Notification::assertNotSentTo($author, ProgrammeAlert::class);
         Notification::assertNotSentTo($unsubscribedUser, ProgrammeAlert::class);
     }
@@ -104,5 +113,87 @@ class KnowledgeCommunityGovernanceTest extends TestCase
 
         $this->actingAs($curator)->patch($route, ['moderation_status' => 'visible', 'moderation_reason' => 'The supporting evidence was independently verified and the contribution may be restored.'])->assertRedirect();
         $this->assertSame('visible', $post->refresh()->moderation_status);
+    }
+
+    public function test_community_actions_enforce_localized_permissions_before_record_or_payload_processing(): void
+    {
+        $county = County::factory()->create();
+        $otherCounty = County::factory()->create();
+        $author = User::factory()->countyOfficial($county)->create();
+        $unauthorizedActor = User::factory()->create();
+        $unauthorizedActor->syncRoles([]);
+        $outOfScopeContributor = User::factory()->countyOfficial($otherCounty)->create();
+        $outOfScopeCurator = User::factory()->topManagement()->create();
+        $outOfScopeCurator->assignedCounties()->attach($otherCounty);
+        $discussion = KnowledgeDiscussion::factory()->create(['county_id' => $county->id, 'created_by' => $author->id]);
+        $post = KnowledgePost::factory()->create(['knowledge_discussion_id' => $discussion->id, 'author_id' => $author->id]);
+        $report = KnowledgeCommunityReport::factory()->create(['knowledge_post_id' => $post->id, 'county_id' => $county->id, 'reported_by' => $author->id, 'workflow_instance_id' => null]);
+
+        app()->setLocale('fr');
+        $this->assertForbiddenAction(
+            fn () => app(CreateKnowledgeCommunityReport::class)->handle($post, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à signaler des contributions de la communauté de connaissances.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateKnowledgePost::class)->handle($discussion, $unauthorizedActor, ''),
+            'Vous n’êtes pas autorisé à contribuer aux discussions de la communauté de connaissances.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(ModerateKnowledgePost::class)->handle($post, $unauthorizedActor, '', ''),
+            'Vous n’êtes pas autorisé à modérer les contributions de la communauté de connaissances.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(TransitionKnowledgeCommunityReport::class)->handle($report, $unauthorizedActor, '', '', null, null),
+            'Vous n’êtes pas autorisé à faire évoluer les signalements de la communauté de connaissances.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(UpdateKnowledgeDiscussionSubscription::class)->handle($discussion, $unauthorizedActor, true),
+            'Vous n’êtes pas autorisé à suivre les discussions de la communauté de connaissances.',
+        );
+        foreach ([
+            fn () => app(CreateKnowledgeCommunityReport::class)->handle($post, $outOfScopeContributor, []),
+            fn () => app(CreateKnowledgePost::class)->handle($discussion, $outOfScopeContributor, ''),
+            fn () => app(ModerateKnowledgePost::class)->handle($post, $outOfScopeCurator, '', ''),
+            fn () => app(TransitionKnowledgeCommunityReport::class)->handle($report, $outOfScopeCurator, '', '', null, null),
+            fn () => app(UpdateKnowledgeDiscussionSubscription::class)->handle($discussion, $outOfScopeContributor, true),
+        ] as $outOfScopeAction) {
+            $this->assertForbiddenAction(
+                $outOfScopeAction,
+                'Cet enregistrement de la communauté de connaissances est hors du périmètre de comté autorisé.',
+            );
+        }
+
+        $this->assertDatabaseCount('knowledge_posts', 1);
+        $this->assertDatabaseCount('knowledge_community_reports', 1);
+        $this->assertDatabaseCount('knowledge_discussion_subscriptions', 0);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_subscription_action_records_localized_governance_evidence(): void
+    {
+        $county = County::factory()->create();
+        $participant = User::factory()->countyOfficial($county)->create();
+        $discussion = KnowledgeDiscussion::factory()->create(['county_id' => $county->id, 'created_by' => $participant->id, 'title' => 'Jukwaa la mafunzo ya kaunti']);
+
+        app()->setLocale('sw');
+        app(UpdateKnowledgeDiscussionSubscription::class)->handle($discussion, $participant, true);
+
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $discussion->id,
+            'action' => 'knowledge.discussion.subscribed',
+            'description' => 'Umejisajili kufuatilia Jukwaa la mafunzo ya kaunti.',
+        ]);
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertForbiddenAction(callable $action, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The knowledge-community action did not enforce its permission boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\KnowledgeCommunityReport;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
@@ -14,9 +15,12 @@ class TransitionKnowledgeCommunityReport
 
     public function handle(KnowledgeCommunityReport $report, User $actor, string $transition, string $rationale, ?string $resolution, ?string $postAction): KnowledgeCommunityReport
     {
+        abort_unless($actor->canAny([ProgrammePermission::CurateKnowledge->value, ProgrammePermission::ManageKnowledge->value]), 403, __('knowledge.errors.community_report_transition_unauthorized'));
+
         return DB::transaction(function () use ($report, $actor, $transition, $rationale, $resolution, $postAction): KnowledgeCommunityReport {
-            $lockedReport = KnowledgeCommunityReport::query()->with(['workflowInstance', 'reporter', 'post'])->lockForUpdate()->findOrFail($report->id);
-            abort_if($lockedReport->post->author_id === $actor->id, 403, 'Contribution authors cannot adjudicate reports about their own content.');
+            $lockedReport = KnowledgeCommunityReport::query()->with(['workflowInstance', 'reporter', 'post', 'county'])->lockForUpdate()->findOrFail($report->id);
+            abort_unless($lockedReport->county_id === null || ($lockedReport->county !== null && $actor->canAccessCounty($lockedReport->county)), 403, __('knowledge.errors.community_county_outside_scope'));
+            abort_if($lockedReport->post->author_id === $actor->id, 403, __('knowledge.errors.community_report_author_adjudication'));
             $instance = $this->transitionWorkflow->handle($lockedReport->workflowInstance, $transition, $actor, ['resolution_present' => filled($resolution)], $rationale);
             $isDecision = in_array($transition, ['resolve', 'dismiss'], true);
             $lockedReport->update([
@@ -31,8 +35,8 @@ class TransitionKnowledgeCommunityReport
             if ($isDecision && is_string($postAction)) {
                 $lockedReport->post->forceFill(['is_moderated' => true, 'moderation_status' => $postAction === 'hide' ? 'hidden' : 'visible', 'moderated_by' => $actor->id, 'moderated_at' => now(), 'moderation_reason' => "{$lockedReport->reference}: {$resolution}"])->save();
             }
-            $this->auditLogger->record($actor, $lockedReport, 'knowledge.community_report.transitioned', "Community report {$lockedReport->reference} transitioned to {$instance->current_state}.", $lockedReport->county_id, ['transition' => $transition, 'rationale' => $rationale, 'post_action' => $postAction]);
-            $lockedReport->reporter->notify(new ProgrammeAlert('Community report updated', "{$lockedReport->reference} is now {$instance->current_state}.", 'knowledge', route('knowledge.index')));
+            $this->auditLogger->record($actor, $lockedReport, 'knowledge.community_report.transitioned', __('knowledge.audit.community_report_transitioned', ['reference' => $lockedReport->reference, 'state' => $instance->current_state]), $lockedReport->county_id, ['transition' => $transition, 'rationale' => $rationale, 'post_action' => $postAction]);
+            $lockedReport->reporter->notify(ProgrammeAlert::translated('knowledge.notifications.community_report_updated_title', 'knowledge.notifications.community_report_updated_message', 'knowledge', messageParameters: ['reference' => $lockedReport->reference, 'state' => $instance->current_state], url: route('knowledge.index')));
 
             return $lockedReport->refresh();
         });
