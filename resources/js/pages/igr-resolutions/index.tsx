@@ -57,6 +57,7 @@ import type {
     WorkspaceRow,
 } from '@/components/workspace-data-table';
 import WorkspaceEmptyState from '@/components/workspace-empty-state';
+import { interpolate } from '@/hooks/use-localization';
 import { exportMethod } from '@/routes/workspace';
 
 type Assignment = {
@@ -360,7 +361,7 @@ export default function IgrResolutionsIndex({
                         <div className="grid gap-3">
                             {dependencyAnalytics.criticalPaths.length === 0 ? (
                                 <WorkspaceEmptyState
-                                    title="No dependency paths in scope"
+                                    title={copy.no_dependency_paths_in_scope}
                                     description="Add a blocking or informative prerequisite to expose path analysis."
                                 />
                             ) : (
@@ -539,11 +540,11 @@ export default function IgrResolutionsIndex({
                     </CardHeader>
                     <CardContent className="grid gap-6 lg:grid-cols-3">
                         <AnalyticsRanking
-                            title="Categories"
+                            title={copy.categories}
                             rows={gapAnalytics.categories}
                         />
                         <AnalyticsRanking
-                            title="Severities"
+                            title={copy.severities}
                             rows={gapAnalytics.severities}
                         />
                         <div className="flex flex-col gap-3">
@@ -604,7 +605,7 @@ export default function IgrResolutionsIndex({
                     <CardContent className="flex flex-col gap-4">
                         {resolutions.length === 0 ? (
                             <WorkspaceEmptyState
-                                title="No resolutions available"
+                                title={copy.no_resolutions_available}
                                 description="Record an authorized intergovernmental forum and its first resolution to begin implementation tracking."
                                 className="min-h-56 border"
                             />
@@ -672,7 +673,7 @@ export default function IgrResolutionsIndex({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No matching implementation gaps"
+                                title={copy.no_matching_implementation_gaps}
                                 description="No governed gaps match the selected reporting filters."
                                 className="min-h-56 border-0"
                             />
@@ -730,7 +731,7 @@ export default function IgrResolutionsIndex({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No matching resolutions"
+                                title={copy.no_matching_resolutions}
                                 description="Adjust the search or reporting dates, or record a resolution from an authorized forum."
                                 className="min-h-72 border-0"
                             />
@@ -787,7 +788,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
     return (
         <div className="flex flex-wrap gap-3">
             <FormSheet
-                title="Establish IGR forum"
+                title={copy.establish_igr_forum}
                 triggerLabel="Establish forum"
                 description="Create the authoritative source forum."
             >
@@ -798,17 +799,17 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 >
                     {({ processing }) => (
                         <>
-                            <Field label="Forum code">
+                            <Field label={copy.forum_code}>
                                 <Input
                                     name="code"
                                     required
-                                    placeholder="IGR-CG-SUMMIT"
+                                    placeholder={copy.igr_cg_summit}
                                 />
                             </Field>
-                            <Field label="Forum name">
+                            <Field label={copy.forum_name}>
                                 <Input name="name" required />
                             </Field>
-                            <Field label="Forum type">
+                            <Field label={copy.forum_type}>
                                 <StaticSearchableSelect
                                     id="igr-forum-type"
                                     name="forum_type"
@@ -820,14 +821,14 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                     ]}
                                 />
                             </Field>
-                            <Field label="Mandate">
+                            <Field label={copy.mandate}>
                                 <textarea
                                     name="mandate"
                                     required
                                     className={textareaClass}
                                 />
                             </Field>
-                            <Field label="Secretariat">
+                            <Field label={copy.secretariat}>
                                 <Select
                                     name="secretariat_user_id"
                                     options={options.users}
@@ -842,7 +843,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 </Form>
             </FormSheet>
             <FormSheet
-                title="Record formal IGR meeting"
+                title={copy.record_formal_igr_meeting}
                 triggerLabel="Record meeting"
                 description="Capture quorum and minutes provenance before linking adopted resolutions."
             >
@@ -854,42 +855,42 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 >
                     {({ processing }) => (
                         <>
-                            <Field label="Forum">
+                            <Field label={copy.forum}>
                                 <Select
                                     name="igr_forum_id"
                                     options={options.forums}
                                 />
                             </Field>
-                            <Field label="Meeting reference">
+                            <Field label={copy.meeting_reference}>
                                 <Input
                                     name="reference"
                                     required
-                                    placeholder="IGR/SUMMIT/2026/04"
+                                    placeholder={copy.igr_summit_2026_04}
                                 />
                             </Field>
-                            <Field label="Meeting title">
+                            <Field label={copy.meeting_title}>
                                 <Input name="title" required />
                             </Field>
                             <DatePickerField
                                 name="held_on"
-                                label="Meeting date"
+                                label={copy.meeting_date}
                                 required
                             />
-                            <Field label="Venue">
+                            <Field label={copy.venue}>
                                 <Input name="venue" required />
                             </Field>
-                            <Field label="Chair">
+                            <Field label={copy.chair}>
                                 <Select
                                     name="chair_user_id"
                                     options={options.users}
                                     optional
                                 />
                             </Field>
-                            <Field label="Minutes reference">
+                            <Field label={copy.minutes_reference}>
                                 <Input
                                     name="minutes_reference"
                                     required
-                                    placeholder="DMS/IGR/MIN/2026/04"
+                                    placeholder={copy.dms_igr_min_2026_04}
                                 />
                             </Field>
                             <input
@@ -920,7 +921,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 </Form>
             </FormSheet>
             <FormSheet
-                title="Create implementation-gap category"
+                title={copy.create_implementation_gap_category}
                 triggerLabel="Create gap category"
                 description="Configure a reusable classification and its default risk severity."
             >
@@ -931,17 +932,17 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 >
                     {({ processing }) => (
                         <>
-                            <Field label="Category code">
+                            <Field label={copy.category_code}>
                                 <Input
                                     name="code"
                                     required
-                                    placeholder="DATA-QUALITY"
+                                    placeholder={copy.data_quality}
                                 />
                             </Field>
-                            <Field label="Category name">
+                            <Field label={copy.category_name}>
                                 <Input name="name" required />
                             </Field>
-                            <Field label="Description">
+                            <Field label={copy.description_label}>
                                 <textarea
                                     name="description"
                                     required
@@ -949,7 +950,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                     className={textareaClass}
                                 />
                             </Field>
-                            <Field label="Default severity">
+                            <Field label={copy.default_severity}>
                                 <StaticSearchableSelect
                                     id="igr-gap-default-severity"
                                     name="default_severity"
@@ -969,7 +970,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 </Form>
             </FormSheet>
             <FormSheet
-                title="Register adopted resolution"
+                title={copy.register_adopted_resolution}
                 triggerLabel="Register resolution"
                 size="xl"
                 description="Assign exactly one lead and any supporting responsible parties."
@@ -981,13 +982,17 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                 >
                     {({ processing }) => (
                         <>
-                            <Field label="Source forum">
+                            <Field label={copy.source_forum}>
                                 <Select
                                     name="igr_forum_id"
                                     options={options.forums}
                                 />
                             </Field>
-                            <Field label="Formal meeting (optional for historical records)">
+                            <Field
+                                label={
+                                    copy.formal_meeting_optional_for_historical_records
+                                }
+                            >
                                 <Select
                                     name="igr_forum_meeting_id"
                                     options={options.meetings}
@@ -995,35 +1000,35 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                 />
                             </Field>
                             <div className="grid gap-3 sm:grid-cols-2">
-                                <Field label="Resolution number">
+                                <Field label={copy.resolution_number}>
                                     <Input
                                         name="resolution_number"
                                         required
-                                        placeholder="IGR/2026/001"
+                                        placeholder={copy.igr_2026_001}
                                     />
                                 </Field>
-                                <Field label="Title">
+                                <Field label={copy.title_label}>
                                     <Input name="title" required />
                                 </Field>
                                 <DatePickerField
                                     name="resolved_on"
-                                    label="Resolution date"
+                                    label={copy.resolution_date}
                                     required
                                 />
                                 <DatePickerField
                                     name="due_on"
-                                    label="Implementation deadline"
+                                    label={copy.implementation_deadline}
                                     required
                                 />
                             </div>
-                            <Field label="Resolution text">
+                            <Field label={copy.resolution_text}>
                                 <textarea
                                     name="resolution_text"
                                     required
                                     className={textareaClass}
                                 />
                             </Field>
-                            <Field label="Priority">
+                            <Field label={copy.priority}>
                                 <StaticSearchableSelect
                                     id="igr-priority"
                                     name="priority"
@@ -1078,14 +1083,14 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                                     options={options.users}
                                                 />
                                             </Field>
-                                            <Field label="County">
+                                            <Field label={copy.county}>
                                                 <Select
                                                     name={`assignments[${index}][county_id]`}
                                                     options={options.counties}
                                                     optional
                                                 />
                                             </Field>
-                                            <Field label="Organization">
+                                            <Field label={copy.organization}>
                                                 <Select
                                                     name={`assignments[${index}][organization_id]`}
                                                     options={
@@ -1094,7 +1099,7 @@ function GovernanceForms({ options }: { options: Props['options'] }) {
                                                     optional
                                                 />
                                             </Field>
-                                            <Field label="Role">
+                                            <Field label={copy.role}>
                                                 <StaticSearchableSelect
                                                     id={`igr-role-${index}`}
                                                     name={`assignments[${index}][responsibility_role]`}
@@ -1250,11 +1255,11 @@ function ResolutionCard({
                 resolution.dependents.length > 0) && (
                 <div className="grid gap-3 rounded-lg border p-3 text-sm md:grid-cols-2">
                     <DependencyList
-                        title="Prerequisites"
+                        title={copy.prerequisites}
                         dependencies={resolution.dependencies}
                     />
                     <DependencyList
-                        title="Dependent resolutions"
+                        title={copy.dependent_resolutions}
                         dependencies={resolution.dependents}
                     />
                 </div>
@@ -1309,7 +1314,7 @@ function ResolutionCard({
             {(capabilities.update || capabilities.manage) &&
                 ['open', 'in_progress'].includes(resolution.status) && (
                     <FormSheet
-                        title="Report implementation gap"
+                        title={copy.report_implementation_gap}
                         triggerLabel="Report gap"
                         description={`Classify, assign and deadline a gap affecting ${resolution.number}.`}
                     >
@@ -1320,16 +1325,16 @@ function ResolutionCard({
                         >
                             {({ processing }) => (
                                 <>
-                                    <Field label="Gap category">
+                                    <Field label={copy.gap_category}>
                                         <Select
                                             name="igr_gap_category_id"
                                             options={gapCategories}
                                         />
                                     </Field>
-                                    <Field label="Gap title">
+                                    <Field label={copy.gap_title}>
                                         <Input name="title" required />
                                     </Field>
-                                    <Field label="Description">
+                                    <Field label={copy.description_label}>
                                         <textarea
                                             name="description"
                                             required
@@ -1337,7 +1342,7 @@ function ResolutionCard({
                                             className={textareaClass}
                                         />
                                     </Field>
-                                    <Field label="Implementation impact">
+                                    <Field label={copy.implementation_impact}>
                                         <textarea
                                             name="impact"
                                             required
@@ -1345,7 +1350,7 @@ function ResolutionCard({
                                             className={textareaClass}
                                         />
                                     </Field>
-                                    <Field label="Severity">
+                                    <Field label={copy.severity}>
                                         <StaticSearchableSelect
                                             id={`igr-gap-severity-${resolution.id}`}
                                             name="severity"
@@ -1357,13 +1362,13 @@ function ResolutionCard({
                                             ]}
                                         />
                                     </Field>
-                                    <Field label="Accountable owner">
+                                    <Field label={copy.accountable_owner}>
                                         <Select
                                             name="owner_user_id"
                                             options={responsibleUsers}
                                         />
                                     </Field>
-                                    <Field label="Affected county">
+                                    <Field label={copy.affected_county}>
                                         <Select
                                             name="county_id"
                                             options={countyOptions.filter(
@@ -1377,7 +1382,7 @@ function ResolutionCard({
                                     </Field>
                                     <DatePickerField
                                         name="due_on"
-                                        label="Mitigation due date"
+                                        label={copy.mitigation_due_date}
                                         required
                                     />
                                     <Button
@@ -1407,7 +1412,7 @@ function ResolutionCard({
             {capabilities.manage &&
                 !['closure_review', 'closed'].includes(resolution.status) && (
                     <FormSheet
-                        title="Add resolution dependency"
+                        title={copy.add_resolution_dependency}
                         triggerLabel="Add dependency"
                         description={`Record the prerequisite that governs ${resolution.number}. Circular and cross-scope links are rejected.`}
                     >
@@ -1420,7 +1425,7 @@ function ResolutionCard({
                         >
                             {({ processing }) => (
                                 <>
-                                    <Field label="Prerequisite resolution">
+                                    <Field label={copy.prerequisite_resolution}>
                                         <Select
                                             name="prerequisite_resolution_id"
                                             options={resolutionOptions.filter(
@@ -1429,14 +1434,14 @@ function ResolutionCard({
                                             )}
                                         />
                                     </Field>
-                                    <Field label="Dependency type">
+                                    <Field label={copy.dependency_type}>
                                         <StaticSearchableSelect
                                             id={`igr-dependency-type-${resolution.id}`}
                                             name="dependency_type"
                                             values={['blocks', 'informs']}
                                         />
                                     </Field>
-                                    <Field label="Dependency rationale">
+                                    <Field label={copy.dependency_rationale}>
                                         <textarea
                                             name="rationale"
                                             required
@@ -1455,7 +1460,7 @@ function ResolutionCard({
             {capabilities.update &&
                 ['open', 'in_progress'].includes(resolution.status) && (
                     <FormSheet
-                        title="Record implementation progress"
+                        title={copy.record_implementation_progress}
                         triggerLabel="Record progress"
                         description={`Update ${resolution.number} with evidence and any implementation gap.`}
                     >
@@ -1465,7 +1470,7 @@ function ResolutionCard({
                         >
                             {({ processing }) => (
                                 <>
-                                    <Field label="Progress percentage">
+                                    <Field label={copy.progress_percentage}>
                                         <Input
                                             name="progress_percentage"
                                             type="number"
@@ -1475,13 +1480,21 @@ function ResolutionCard({
                                             defaultValue={resolution.progress}
                                         />
                                     </Field>
-                                    <Field label="Evidence note or reference (optional)">
+                                    <Field
+                                        label={
+                                            copy.evidence_note_or_reference_optional
+                                        }
+                                    >
                                         <Input
                                             name="evidence_reference"
-                                            placeholder="Add context for the linked repository evidence"
+                                            placeholder={
+                                                copy.add_context_for_the_linked_repository_evidence
+                                            }
                                         />
                                     </Field>
-                                    <Field label="Implementation narrative">
+                                    <Field
+                                        label={copy.implementation_narrative}
+                                    >
                                         <textarea
                                             name="narrative"
                                             required
@@ -1501,7 +1514,7 @@ function ResolutionCard({
                     <Transition
                         resolutionId={resolution.id}
                         name="start"
-                        label="Start implementation"
+                        label={copy.start_implementation}
                     />
                 )}
                 {resolution.status === 'in_progress' &&
@@ -1510,7 +1523,7 @@ function ResolutionCard({
                         <Transition
                             resolutionId={resolution.id}
                             name="submit_closure"
-                            label="Submit for closure"
+                            label={copy.submit_for_closure}
                             disabled={
                                 !hasCleanImplementationEvidence ||
                                 hasUnacceptedGaps
@@ -1528,12 +1541,12 @@ function ResolutionCard({
                             <Transition
                                 resolutionId={resolution.id}
                                 name="approve_closure"
-                                label="Approve closure"
+                                label={copy.approve_closure}
                             />
                             <Transition
                                 resolutionId={resolution.id}
                                 name="reject_closure"
-                                label="Return for action"
+                                label={copy.return_for_action}
                                 variant="outline"
                             />
                         </>
@@ -1682,7 +1695,7 @@ function ResolutionGapCard({
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="start_mitigation"
-                            label="Start mitigation"
+                            label={copy.start_mitigation}
                         />
                     )}
                 {['open', 'mitigating'].includes(gap.status) &&
@@ -1691,7 +1704,7 @@ function ResolutionGapCard({
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="resolve"
-                            label="Submit resolution"
+                            label={copy.submit_resolution}
                         />
                     )}
                 {gap.status === 'resolved' && capabilities.close && (
@@ -1700,13 +1713,13 @@ function ResolutionGapCard({
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="accept"
-                            label="Accept resolution"
+                            label={copy.accept_resolution}
                         />
                         <GapTransition
                             resolutionId={resolutionId}
                             gapId={gap.id}
                             transition="reject"
-                            label="Return mitigation"
+                            label={copy.return_mitigation}
                         />
                     </>
                 )}
@@ -1726,11 +1739,13 @@ function GapTransition({
     transition: string;
     label: string;
 }) {
+    const copy = usePage().props.localization.igr.ui;
+
     return (
         <FormSheet
             title={label}
             triggerLabel={label}
-            description="Record the decision basis for the governed implementation-gap lifecycle."
+            description={copy.gap_transition_description}
         >
             <Form
                 action={transitionGap({ resolution: resolutionId, gap: gapId })}
@@ -1743,7 +1758,7 @@ function GapTransition({
                             name="transition"
                             value={transitionName}
                         />
-                        <Field label="Decision rationale">
+                        <Field label={copy.decision_rationale}>
                             <textarea
                                 name="rationale"
                                 required
@@ -1776,14 +1791,18 @@ function Transition({
     disabled?: boolean;
     disabledReason?: string;
 }) {
+    const copy = usePage().props.localization.igr.ui;
+
     return (
         <FormSheet
             title={label}
             triggerLabel={label}
             description={
                 disabled
-                    ? (disabledReason ?? 'This transition is not available.')
-                    : `Record the decision basis for ${label.toLowerCase()}.`
+                    ? (disabledReason ?? copy.transition_not_available)
+                    : interpolate(copy.transition_decision_basis, {
+                          transition: label.toLowerCase(),
+                      })
             }
             triggerDisabled={disabled}
             triggerTitle={disabledReason}
@@ -1795,7 +1814,7 @@ function Transition({
                 {({ processing, errors }) => (
                     <>
                         <input type="hidden" name="transition" value={name} />
-                        <Field label="Decision comment">
+                        <Field label={copy.decision_comment}>
                             <textarea
                                 name="comment"
                                 required

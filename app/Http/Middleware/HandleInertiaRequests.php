@@ -132,7 +132,9 @@ class HandleInertiaRequests extends Middleware
                 'knowledge' => __('knowledge'),
                 'supportDesk' => __('support-desk'),
                 'assessmentRecord' => __('assessment-record'),
-                'igr' => __('igr'),
+                'igr' => array_replace_recursive(__('igr'), [
+                    'ui' => array_merge(__('igr.ui'), __('igr-forms')),
+                ]),
                 'igrDocuments' => __('igr-documents'),
                 'operations' => __('operations'),
                 'notifications' => __('notifications'),
