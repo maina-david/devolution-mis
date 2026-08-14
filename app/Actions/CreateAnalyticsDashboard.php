@@ -24,7 +24,7 @@ class CreateAnalyticsDashboard
             $countyId = is_string($attributes['county_id'] ?? null) ? $attributes['county_id'] : null;
             $county = $countyId !== null ? County::query()->find($countyId) : null;
             if ($countyId !== null && (! $county instanceof County || ! $actor->canAccessCounty($county))) {
-                throw ValidationException::withMessages(['county_id' => 'The selected county is outside your authorized scope.']);
+                throw ValidationException::withMessages(['county_id' => __('analytics.errors.county_outside_scope')]);
             }
             $referenceDataRelease = $this->referenceDataReleaseResolver->forAnalyticsDashboard($countyId, now());
             $widgets = is_array($attributes['widgets']) ? $attributes['widgets'] : [];
@@ -35,7 +35,7 @@ class CreateAnalyticsDashboard
                     $dashboard->widgets()->create($widget);
                 }
             }
-            $this->auditLogger->record($actor, $dashboard, 'analytics.dashboard.created', "Analytics dashboard {$dashboard->code} created as a draft.", $dashboard->county_id, ['reference_data_release_id' => $referenceDataRelease->id, 'reference_data_release_version' => $referenceDataRelease->version, 'reference_data_release_checksum' => $referenceDataRelease->checksum]);
+            $this->auditLogger->record($actor, $dashboard, 'analytics.dashboard.created', __('analytics.audit.dashboard_created', ['code' => $dashboard->code]), $dashboard->county_id, ['reference_data_release_id' => $referenceDataRelease->id, 'reference_data_release_version' => $referenceDataRelease->version, 'reference_data_release_checksum' => $referenceDataRelease->checksum]);
 
             return $dashboard;
         });

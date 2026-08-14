@@ -26,7 +26,7 @@ class SaveAnalyticsFilterView
                 'is_default' => (bool) ($attributes['is_default'] ?? false),
             ]);
 
-            $this->auditLogger->record($actor, $view, 'analytics.filter_view.created', "Analytics filter view {$view->name} saved.", metadata: ['is_default' => $view->is_default, 'filter_keys' => array_keys($view->filters)]);
+            $this->auditLogger->record($actor, $view, 'analytics.filter_view.created', __('analytics.audit.filter_saved', ['name' => $view->name]), metadata: ['is_default' => $view->is_default, 'filter_keys' => array_keys($view->filters)]);
 
             return $view;
         });

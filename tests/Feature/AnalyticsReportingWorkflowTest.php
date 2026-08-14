@@ -18,6 +18,7 @@ use App\Services\AnalyticsMetricCatalogue;
 use App\Services\ScheduledReportGenerator;
 use App\Support\CanonicalJson;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
@@ -81,7 +82,9 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $schedule->update(['next_run_at' => now()->subMinute()]);
 
         $this->assertSame(0, Artisan::call('reports:run-scheduled'));
+        $this->assertStringContainsString(__('analytics.console.queued', ['count' => 1]), Artisan::output());
         $this->assertSame(0, Artisan::call('reports:run-scheduled'));
+        $this->assertStringContainsString(__('analytics.console.queued', ['count' => 0]), Artisan::output());
         $this->assertDatabaseCount('report_runs', 1);
         Queue::assertPushed(GenerateScheduledReport::class, 1);
         $this->assertTrue($schedule->refresh()->next_run_at->isFuture(), 'The due runner should advance the recurrence into the future.');
@@ -280,10 +283,8 @@ class AnalyticsReportingWorkflowTest extends TestCase
         $kiswahili = require lang_path('sw/analytics.php');
         $french = require lang_path('fr/analytics.php');
 
-        foreach (['errors', 'audit', 'notifications'] as $section) {
-            $this->assertSame(array_keys($english['report_generator'][$section]), array_keys($kiswahili['report_generator'][$section]));
-            $this->assertSame(array_keys($english['report_generator'][$section]), array_keys($french['report_generator'][$section]));
-        }
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($kiswahili)));
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($french)));
     }
 
     public function test_analytics_configuration_fails_closed_without_valid_catalogue_lineage(): void

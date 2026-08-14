@@ -50,7 +50,7 @@ class RunScheduledReports extends Command
                 }
             });
 
-        $this->components->info("Queued {$queued} scheduled report(s).");
+        $this->components->info(__('analytics.console.queued', ['count' => $queued]));
 
         return self::SUCCESS;
     }
