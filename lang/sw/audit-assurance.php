@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['occurrence_timestamp_missing' => 'Tukio la ukaguzi :event halina muhuri wa muda wa kutokea.'], 'outcomes' => ['pass' => 'imefaulu', 'warn' => 'onyo', 'fail' => 'imeshindwa'], 'audit' => ['completed' => 'Ukaguzi wa uhakikisho wa ukaguzi umekamilika kwa matokeo :outcome.'],
     'run_title' => 'Endesha uhakikisho wa uadilifu wa ukaguzi',
     'run_description' => 'Thibitisha mnyororo kamili wa watangulizi na kila alama-hundi ya tukio la v2 inayoweza kurudiwa, kisha hifadhi faili binafsi ya uthibitisho yenye alama-hundi.',
     'run_assurance' => 'Endesha uhakikisho',

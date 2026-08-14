@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attachments' => ['errors' => ['store_failed' => 'Hati ya usaidizi haikuweza kuhifadhiwa.']], 'triage' => ['errors' => ['received_required' => 'Kesi mpya zilizopokelewa pekee ndizo zinaweza kuchunguzwa.', 'county_scope' => 'Hujaidhinishwa kuchunguza kesi za kaunti hii.'], 'audit' => ['assigned' => 'Kesi :reference imechunguzwa na kupewa mhusika.']],
     'page_title' => 'Maoni ya wananchi na utatuzi wa malalamiko',
     'eyebrow' => 'Sauti yako katika ugatuzi',
     'hero_title' => 'Wasilisha maoni au malalamiko, kisha ufuatilie kila taarifa ya umma.',

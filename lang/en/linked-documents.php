@@ -1,7 +1,9 @@
 <?php
 
 return [
+    'initial_upload' => 'Initial linked upload', 'audit' => ['uploaded' => 'Supporting document uploaded: :title.'],
     'errors' => [
+        'store_failed' => 'The supporting document could not be stored.',
         'support_closed' => 'Support records are locked after requester acceptance and closure.',
         'support_purpose' => 'Unsupported support record purpose.',
         'support_resolution_stage' => 'Resolution evidence is accepted only during investigation or resolution review.',

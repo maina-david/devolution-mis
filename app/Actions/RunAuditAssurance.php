@@ -105,7 +105,7 @@ class RunAuditAssurance
             'completed_at' => $completedAt,
             'evidence_checksum' => $this->canonicalJson->checksum($evidence),
         ]);
-        $this->auditLogger->record($initiator, $run, 'audit.assurance.completed', "Audit assurance run completed with outcome {$outcome}.", metadata: ['covered_through_event_id' => $run->last_event_id, 'event_count' => $run->event_count, 'mismatch_count' => $run->mismatch_count, 'evidence_checksum' => $run->evidence_checksum]);
+        $this->auditLogger->record($initiator, $run, 'audit.assurance.completed', __('audit-assurance.audit.completed', ['outcome' => __('audit-assurance.outcomes.'.$outcome)]), metadata: ['covered_through_event_id' => $run->last_event_id, 'event_count' => $run->event_count, 'mismatch_count' => $run->mismatch_count, 'evidence_checksum' => $run->evidence_checksum]);
 
         return $run;
     }
@@ -173,7 +173,7 @@ class RunAuditAssurance
     private function eventHashPayload(AuditEvent $event): array
     {
         if ($event->occurred_at === null) {
-            throw new RuntimeException("Audit event {$event->id} has no occurrence timestamp.");
+            throw new RuntimeException(__('audit-assurance.errors.occurrence_timestamp_missing', ['event' => $event->id]));
         }
 
         return ['actor_id' => $event->actor_id, 'county_id' => $event->county_id, 'subject_type' => $event->subject_type, 'subject_id' => $event->subject_id, 'action' => $event->action, 'description' => $event->description, 'metadata' => $event->metadata ?? [], 'ip_address' => $event->ip_address, 'occurred_at' => $event->occurred_at->toISOString(), 'previous_hash' => $event->previous_hash, 'hash_version' => $event->hash_version];

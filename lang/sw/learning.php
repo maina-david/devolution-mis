@@ -311,6 +311,9 @@ return [
         'audit' => ['created' => 'Kozi :code imeundwa ikiwa na somo :count.|Kozi :code imeundwa ikiwa na masomo :count.'],
     ],
     'question_bank_default_title' => 'Benki ya tathmini ya :course',
+    'enrollment' => ['errors' => ['published_course_required' => 'Kozi zilizochapishwa pekee ndizo zinakubali usajili.'], 'audit' => ['created' => 'Amesajiliwa katika :course.']],
+    'progress' => ['errors' => ['quiz_engine_required' => 'Ukamilishaji wa jaribio hurekodiwa na injini ya tathmini.'], 'audit' => ['lesson_completed' => 'Somo :lesson limekamilishwa.']],
+    'course_transition' => ['errors' => ['accessible_assets_required' => 'Ukaguzi wa ubora unahitaji rasilimali safi ya hifadhi na mbadala unaofikika kwa kila somo la lazima la medianuwai, zana na mwongozo; sauti na video pia zinahitaji nakala ya maandishi.'], 'audit' => ['transitioned' => 'Kozi :course imehamishwa hadi :status.']],
     'offline' => [
         'errors' => [
             'course_not_published' => 'Kozi iliyochapishwa pekee ndiyo inaweza kuandaliwa kwa matumizi nje ya mtandao.',

@@ -16,12 +16,12 @@ class ValidateRelease
     {
         return DB::transaction(function () use ($release, $actor, $evidence): ReleaseRecord {
             $release = ReleaseRecord::query()->lockForUpdate()->findOrFail($release->id);
-            abort_unless($release->status === 'deployed', 409, 'Only a deployed release can be validated.');
+            abort_unless($release->status === 'deployed', 409, __('operations.release.errors.deployed_required'));
             if ($release->deployed_by === $actor->id) {
-                throw new AuthorizationException('Separation of duties prevents the deployer from validating the release.');
+                throw new AuthorizationException(__('operations.release.errors.independent_validator'));
             }
-            $release->update(['validated_by' => $actor->id, 'validated_at' => now(), 'status' => 'validated', 'notes' => trim(($release->notes ? $release->notes."\n" : '').'Validation evidence: '.$evidence)]);
-            $this->auditLogger->record($actor, $release, 'operations.release.validated', "Release {$release->version} independently validated.", null, ['evidence' => $evidence]);
+            $release->update(['validated_by' => $actor->id, 'validated_at' => now(), 'status' => 'validated', 'notes' => trim(($release->notes ? $release->notes."\n" : '').__('operations.release.validation_evidence', ['evidence' => $evidence]))]);
+            $this->auditLogger->record($actor, $release, 'operations.release.validated', __('operations.release.audit.validated', ['version' => $release->version]), null, ['evidence' => $evidence]);
 
             return $release->refresh();
         });

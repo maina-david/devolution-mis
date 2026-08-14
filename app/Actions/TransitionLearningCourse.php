@@ -25,14 +25,14 @@ class TransitionLearningCourse
 
                 return ! $hasCleanAsset || ! $hasAlternative || ! $hasTranscript;
             });
-            abort_if($missing->isNotEmpty(), 409, 'Quality review requires a clean repository asset and accessible alternative for every required multimedia, toolkit and manual lesson; audio and video also require a transcript.');
+            abort_if($missing->isNotEmpty(), 409, __('learning.course_transition.errors.accessible_assets_required'));
         }
 
         return DB::transaction(function () use ($course, $actor, $attributes): LearningCourse {
             $name = (string) $attributes['transition'];
             $instance = $this->transitionWorkflow->handle($course->workflowInstance()->firstOrFail(), $name, $actor, [], $attributes['rationale']);
             $course->update(['status' => $instance->current_state, 'published_at' => $name === 'publish' ? now() : $course->published_at, 'retired_at' => $name === 'retire' ? now() : $course->retired_at]);
-            $this->auditLogger->record($actor, $course, 'learning.course.transitioned', "Course {$course->code} transitioned to {$instance->current_state}.", null, ['transition' => $name]);
+            $this->auditLogger->record($actor, $course, 'learning.course.transitioned', __('learning.course_transition.audit.transitioned', ['course' => $course->code, 'status' => $instance->current_state]), null, ['transition' => $name]);
 
             return $course->refresh();
         });

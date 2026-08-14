@@ -22,12 +22,12 @@ class ReplaceDocumentVersion
     public function handle(AssessmentDocument $document, User $actor, UploadedFile $file, string $changeSummary): DocumentVersion
     {
         abort_unless($actor->canAccessCounty($document->county), 403);
-        abort_if($document->hasActiveLegalHold(), 409, 'Document content cannot be replaced while a legal hold is active.');
+        abort_if($document->hasActiveLegalHold(), 409, __('evidence.version_errors.legal_hold'));
 
         $inspection = $this->securityScanner->inspect($file);
         $path = $file->store("assessment-evidence/{$document->county_id}/{$document->assessment_id}/versions");
         if ($path === false) {
-            throw new RuntimeException('The replacement file could not be stored.');
+            throw new RuntimeException(__('evidence.version_errors.store_failed'));
         }
 
         try {
@@ -70,7 +70,7 @@ class ReplaceDocumentVersion
             throw $exception;
         }
 
-        $this->auditLogger->record($actor, $document, 'document.version_created', "Document version {$version->version_number} uploaded.", $document->county_id, ['checksum' => $inspection['checksum'], 'scan_status' => $inspection['status'], 'change_summary' => $changeSummary]);
+        $this->auditLogger->record($actor, $document, 'document.version_created', __('evidence.audit.version_created', ['version' => $version->version_number]), $document->county_id, ['checksum' => $inspection['checksum'], 'scan_status' => $inspection['status'], 'change_summary' => $changeSummary]);
         if ($inspection['status'] === 'clean' && $this->textExtractor->supports($version)) {
             ExtractDocumentText::dispatch($version->id, false, $actor->id, 'version_replacement');
         } elseif ($inspection['status'] === 'clean') {

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'release' => ['validation_evidence' => 'Ushahidi wa uthibitishaji: :evidence', 'errors' => ['deployed_required' => 'Toleo lililopelekwa pekee ndilo linaweza kuthibitishwa.', 'independent_validator' => 'Mgawanyo wa majukumu unamzuia mtekelezaji kuthibitisha toleo.'], 'audit' => ['validated' => 'Toleo :version limethibitishwa kwa uhuru.']],
     'ui' => [
         'eyebrow' => 'Uhakikisho na urejeshaji wa huduma', 'title' => 'Kituo cha utayari wa uendeshaji',
         'description' => 'Vipimo vya utegemezi, vipimo vya SLO, nakala rudufu zenye jumla hakiki, ushahidi wa urejeshaji uliotengwa, vidhibiti vilivyoratibiwa, na historia ya matoleo na urejeshaji iliyothibitishwa kwa uhuru.',

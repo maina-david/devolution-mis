@@ -14,10 +14,10 @@ class DeactivateProgrammeUser
     public function handle(User $target, User $actor): void
     {
         abort_unless($actor->can(ProgrammePermission::ManageCountyUsers->value) || $actor->can(ProgrammePermission::ManageUserAccess->value), 403);
-        abort_if($actor->is($target), 409, 'You cannot deactivate your own account.');
+        abort_if($actor->is($target), 409, __('access-control.errors.self_deactivation'));
         abort_unless($this->allows($actor, $target), 403);
 
-        $this->auditLogger->record($actor, $target, 'access.deactivated', "Programme access deactivated for {$target->email}.", $target->county_id, ['role' => $target->programmeRole()->value]);
+        $this->auditLogger->record($actor, $target, 'access.deactivated', __('access-control.audit.access_deactivated', ['email' => $target->email]), $target->county_id, ['role' => $target->programmeRole()->value]);
         $target->delete();
     }
 

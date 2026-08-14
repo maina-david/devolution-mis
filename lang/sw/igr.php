@@ -29,10 +29,10 @@ return ['ui' => [
     'dependency_exists' => 'Utegemezi huu tayari upo.', 'dependency_cycle' => 'Utegemezi huu ungeunda mzunguko wa maazimio.', 'gap_create_unauthorized' => 'Hujaidhinishwa kuripoti mapengo ya utekelezaji.',
     'gap_implementation_inactive' => 'Mapengo yanaweza kuripotiwa tu wakati utekelezaji unaendelea.', 'gap_owner_responsible' => 'Mmiliki wa pengo lazima awe mhusika mwenye wajibu kwa azimio hili.', 'gap_county_assignment' => 'Kaunti iliyoathirika lazima iwe imepewa azimio hili.',
     'gap_outside_scope' => 'Pengo hili la utekelezaji liko nje ya wigo wako ulioidhinishwa.', 'gap_transition_unavailable' => 'Hatua hii ya pengo haipatikani kutoka hali ya sasa.', 'gap_independent_acceptance' => 'Kukubaliwa kwa uhuru kunahitajika.',
-    'gap_concurrent_change' => 'Pengo lilibadilika wakati uamuzi huu ulipokuwa ukifanywa.',
+    'gap_concurrent_change' => 'Pengo lilibadilika wakati uamuzi huu ulipokuwa ukifanywa.', 'progress_active_required' => 'Masasisho yanakubaliwa tu wakati utekelezaji unaendelea.', 'progress_regression' => 'Maendeleo hayawezi kurudi nyuma.',
 ], 'audit' => [
     'forum_created' => 'Jukwaa la IGR :code limeundwa.', 'resolution_transitioned' => 'Azimio :number limehamishwa hadi :state.',
-    'resolution_created' => 'Azimio la IGR :number limesajiliwa.', 'dependency_created' => ':dependent limeunganishwa na sharti la awali :prerequisite.', 'gap_reported' => 'Pengo la utekelezaji limeripotiwa kwa :number.', 'gap_transitioned' => 'Pengo la IGR limehamishwa hadi :status.',
+    'resolution_created' => 'Azimio la IGR :number limesajiliwa.', 'dependency_created' => ':dependent limeunganishwa na sharti la awali :prerequisite.', 'gap_reported' => 'Pengo la utekelezaji limeripotiwa kwa :number.', 'gap_transitioned' => 'Pengo la IGR limehamishwa hadi :status.', 'progress_reported' => 'Maendeleo yameripotiwa kwa :number.',
 ], 'notifications' => [
     'assignment_title' => 'Jukumu jipya la azimio la IGR', 'assignment_message' => 'Unawajibika kwa :number: :title.',
     'gap_assigned_title' => 'Pengo la utekelezaji la IGR limepewa jukumu', 'gap_assigned_message' => 'Unamiliki :title kwa :number.',

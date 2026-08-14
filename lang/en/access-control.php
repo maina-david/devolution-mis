@@ -8,4 +8,5 @@ return [
     'grant_programme_access' => 'Grant programme access', 'grant_programme_access_description' => 'Create an administrator-approved identity and send password setup instructions.',
     'grant_access' => 'Grant access', 'name' => 'Name', 'official_email' => 'Official email', 'programme_role' => 'Programme role',
     'home_county' => 'Home county', 'assigned_county_portfolio' => 'Assigned county portfolio', 'current_user' => 'Current user', 'deactivate' => 'Deactivate',
+    'errors' => ['self_deactivation' => 'You cannot deactivate your own account.'], 'audit' => ['access_deactivated' => 'Programme access deactivated for :email.'],
 ];

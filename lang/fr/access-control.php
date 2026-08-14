@@ -8,4 +8,5 @@ return [
     'grant_programme_access' => 'Accorder l’accès au programme', 'grant_programme_access_description' => 'Créez une identité approuvée par un administrateur et envoyez les instructions de configuration du mot de passe.',
     'grant_access' => 'Accorder l’accès', 'name' => 'Nom', 'official_email' => 'Adresse e-mail officielle', 'programme_role' => 'Rôle du programme',
     'home_county' => 'Comté de rattachement', 'assigned_county_portfolio' => 'Portefeuille de comtés attribué', 'current_user' => 'Utilisateur actuel', 'deactivate' => 'Désactiver',
+    'errors' => ['self_deactivation' => 'Vous ne pouvez pas désactiver votre propre compte.'], 'audit' => ['access_deactivated' => 'Accès au programme désactivé pour :email.'],
 ];

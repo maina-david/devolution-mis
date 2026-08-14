@@ -29,10 +29,10 @@ return ['ui' => [
     'dependency_exists' => 'Cette dépendance existe déjà.', 'dependency_cycle' => 'Cette dépendance créerait une chaîne circulaire de résolutions.', 'gap_create_unauthorized' => 'Vous n’êtes pas autorisé à signaler des lacunes de mise en œuvre.',
     'gap_implementation_inactive' => 'Les lacunes ne peuvent être signalées que pendant la mise en œuvre active.', 'gap_owner_responsible' => 'Le responsable de la lacune doit être une partie chargée de cette résolution.', 'gap_county_assignment' => 'Le comté affecté doit être attribué à cette résolution.',
     'gap_outside_scope' => 'Cette lacune de mise en œuvre est hors de votre périmètre autorisé.', 'gap_transition_unavailable' => 'Cette transition de lacune n’est pas disponible depuis l’état actuel.', 'gap_independent_acceptance' => 'Une acceptation indépendante est requise.',
-    'gap_concurrent_change' => 'La lacune a changé pendant la prise de cette décision.',
+    'gap_concurrent_change' => 'La lacune a changé pendant la prise de cette décision.', 'progress_active_required' => 'Les mises à jour sont acceptées uniquement pendant la mise en œuvre active.', 'progress_regression' => 'La progression ne peut pas reculer.',
 ], 'audit' => [
     'forum_created' => 'Forum IGR :code créé.', 'resolution_transitioned' => 'Résolution :number passée à l’état :state.',
-    'resolution_created' => 'Résolution IGR :number enregistrée.', 'dependency_created' => ':dependent liée au prérequis :prerequisite.', 'gap_reported' => 'Lacune de mise en œuvre signalée pour :number.', 'gap_transitioned' => 'Lacune IGR passée à l’état :status.',
+    'resolution_created' => 'Résolution IGR :number enregistrée.', 'dependency_created' => ':dependent liée au prérequis :prerequisite.', 'gap_reported' => 'Lacune de mise en œuvre signalée pour :number.', 'gap_transitioned' => 'Lacune IGR passée à l’état :status.', 'progress_reported' => 'Progression consignée pour :number.',
 ], 'notifications' => [
     'assignment_title' => 'Nouvelle affectation de résolution IGR', 'assignment_message' => 'Vous êtes responsable de :number : :title.',
     'gap_assigned_title' => 'Lacune de mise en œuvre IGR attribuée', 'gap_assigned_message' => 'Vous êtes responsable de :title pour :number.',

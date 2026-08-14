@@ -17,7 +17,7 @@ class StoreCitizenCaseAttachment
     {
         $scan = $this->scanner->inspect($file);
         $path = $file->store("citizen-cases/{$case->id}");
-        abort_if($path === false, 500, 'The supporting document could not be stored.');
+        abort_if($path === false, 500, __('citizen.attachments.errors.store_failed'));
 
         return $case->attachments()->create(['citizen_case_message_id' => $message?->id, 'title' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 'original_name' => $file->getClientOriginalName(), 'path' => $path, 'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'size_bytes' => $file->getSize(), 'checksum_sha256' => $scan['checksum'], 'source_type' => $sourceType, 'scan_status' => $scan['status'] === 'clean' ? 'clean' : 'quarantined', 'scan_details' => $scan['details'], 'ocr_status' => $sourceType === 'scanned' && $scan['status'] === 'clean' ? 'pending' : 'not_required', 'uploaded_by' => $uploader?->id]);
     }

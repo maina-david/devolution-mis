@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'release' => ['validation_evidence' => 'Preuve de validation : :evidence', 'errors' => ['deployed_required' => 'Seule une version déployée peut être validée.', 'independent_validator' => 'La séparation des fonctions empêche l’auteur du déploiement de valider la version.'], 'audit' => ['validated' => 'Version :version validée de manière indépendante.']],
     'ui' => [
         'eyebrow' => 'Assurance et reprise des services', 'title' => 'Centre de préparation opérationnelle',
         'description' => 'Sondes de dépendance, mesures des SLO, sauvegardes avec sommes de contrôle, preuves de restauration isolée, contrôles planifiés et historique des versions et retours validé indépendamment.',

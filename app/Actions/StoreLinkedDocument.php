@@ -26,7 +26,7 @@ class StoreLinkedDocument
         $inspection = $this->securityScanner->inspect($file);
         $path = $file->store('linked-documents/'.str($subject->getMorphClass())->slug().'/'.$subject->getKey());
         if ($path === false) {
-            throw new RuntimeException('The supporting document could not be stored.');
+            throw new RuntimeException(__('linked-documents.errors.store_failed'));
         }
 
         try {
@@ -34,7 +34,7 @@ class StoreLinkedDocument
                 $ocrStatus = $inspection['status'] === 'clean' ? 'pending' : 'blocked';
                 $mimeType = $data['mime_type'] ?? (string) $file->getMimeType();
                 $document = AssessmentDocument::create(['assessment_id' => null, 'county_id' => $data['county_id'], 'title' => $data['title'], 'category' => $data['category'], 'source_type' => $data['source_type'], 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'mime_type' => $mimeType, 'size_bytes' => $file->getSize(), 'content_checksum' => $inspection['checksum'], 'scan_status' => $inspection['status'], 'ocr_status' => $ocrStatus, 'document_date' => today(), 'uploaded_by' => $uploader->id]);
-                $version = $document->versions()->create(['version_number' => 1, 'storage_disk' => config('filesystems.default'), 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'mime_type' => $mimeType, 'size_bytes' => (int) $file->getSize(), 'content_checksum' => $inspection['checksum'], 'scan_status' => $inspection['status'], 'scan_details' => $inspection['details'], 'scanned_at' => now(), 'ocr_status' => $ocrStatus, 'change_summary' => 'Initial linked upload', 'uploaded_by' => $uploader->id]);
+                $version = $document->versions()->create(['version_number' => 1, 'storage_disk' => config('filesystems.default'), 'path' => $path, 'original_name' => $file->getClientOriginalName(), 'mime_type' => $mimeType, 'size_bytes' => (int) $file->getSize(), 'content_checksum' => $inspection['checksum'], 'scan_status' => $inspection['status'], 'scan_details' => $inspection['details'], 'scanned_at' => now(), 'ocr_status' => $ocrStatus, 'change_summary' => __('linked-documents.initial_upload'), 'uploaded_by' => $uploader->id]);
                 $document->update(['current_version_id' => $version->id]);
                 DocumentLink::create(['assessment_document_id' => $document->id, 'subject_type' => $subject->getMorphClass(), 'subject_id' => (string) $subject->getKey(), 'purpose' => $data['purpose'], 'created_by' => $uploader->id]);
                 if ($inspection['status'] === 'clean' && $this->textExtractor->supports($version)) {
@@ -49,7 +49,7 @@ class StoreLinkedDocument
             Storage::delete($path);
             throw $exception;
         }
-        $this->auditLogger->record($uploader, $document, 'document.linked_uploaded', "Supporting document uploaded: {$document->title}.", $data['county_id'], ['subject_type' => $subject->getMorphClass(), 'subject_id' => $subject->getKey(), 'purpose' => $data['purpose'], 'checksum' => $inspection['checksum'], 'scan_status' => $inspection['status']]);
+        $this->auditLogger->record($uploader, $document, 'document.linked_uploaded', __('linked-documents.audit.uploaded', ['title' => $document->title]), $data['county_id'], ['subject_type' => $subject->getMorphClass(), 'subject_id' => $subject->getKey(), 'purpose' => $data['purpose'], 'checksum' => $inspection['checksum'], 'scan_status' => $inspection['status']]);
 
         return $document;
     }

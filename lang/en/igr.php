@@ -29,10 +29,10 @@ return ['ui' => [
     'dependency_exists' => 'This dependency already exists.', 'dependency_cycle' => 'This dependency would create a circular resolution chain.', 'gap_create_unauthorized' => 'You are not authorized to report implementation gaps.',
     'gap_implementation_inactive' => 'Gaps can be reported only while implementation is active.', 'gap_owner_responsible' => 'The gap owner must be a responsible party for this resolution.', 'gap_county_assignment' => 'The affected county must be assigned to this resolution.',
     'gap_outside_scope' => 'This implementation gap is outside your authorized scope.', 'gap_transition_unavailable' => 'This gap transition is not available from the current state.', 'gap_independent_acceptance' => 'Independent acceptance is required.',
-    'gap_concurrent_change' => 'The gap changed while this decision was being made.',
+    'gap_concurrent_change' => 'The gap changed while this decision was being made.', 'progress_active_required' => 'Updates are accepted only while implementation is active.', 'progress_regression' => 'Progress cannot move backwards.',
 ], 'audit' => [
     'forum_created' => 'IGR forum :code created.', 'resolution_transitioned' => 'Resolution :number transitioned to :state.',
-    'resolution_created' => 'IGR resolution :number registered.', 'dependency_created' => ':dependent linked to prerequisite :prerequisite.', 'gap_reported' => 'Implementation gap reported for :number.', 'gap_transitioned' => 'IGR gap transitioned to :status.',
+    'resolution_created' => 'IGR resolution :number registered.', 'dependency_created' => ':dependent linked to prerequisite :prerequisite.', 'gap_reported' => 'Implementation gap reported for :number.', 'gap_transitioned' => 'IGR gap transitioned to :status.', 'progress_reported' => 'Progress reported for :number.',
 ], 'notifications' => [
     'assignment_title' => 'New IGR resolution assignment', 'assignment_message' => 'You are responsible for :number: :title.',
     'gap_assigned_title' => 'IGR implementation gap assigned', 'gap_assigned_message' => 'You own :title for :number.',

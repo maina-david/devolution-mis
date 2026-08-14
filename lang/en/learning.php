@@ -311,6 +311,9 @@ return [
         'audit' => ['created' => '{1} Course :code created with :count lesson.|[2,*] Course :code created with :count lessons.'],
     ],
     'question_bank_default_title' => ':course assessment bank',
+    'enrollment' => ['errors' => ['published_course_required' => 'Only published courses accept enrolment.'], 'audit' => ['created' => 'Enrolled in :course.']],
+    'progress' => ['errors' => ['quiz_engine_required' => 'Quiz completion is recorded by the assessment engine.'], 'audit' => ['lesson_completed' => 'Completed lesson :lesson.']],
+    'course_transition' => ['errors' => ['accessible_assets_required' => 'Quality review requires a clean repository asset and accessible alternative for every required multimedia, toolkit and manual lesson; audio and video also require a transcript.'], 'audit' => ['transitioned' => 'Course :course transitioned to :status.']],
     'offline' => [
         'errors' => [
             'course_not_published' => 'Only a published course can be packaged for offline use.',

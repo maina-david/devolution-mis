@@ -1,7 +1,9 @@
 <?php
 
 return [
+    'initial_upload' => 'Téléversement lié initial', 'audit' => ['uploaded' => 'Document justificatif téléversé : :title.'],
     'errors' => [
+        'store_failed' => 'Le document justificatif n’a pas pu être enregistré.',
         'support_closed' => 'Les dossiers d’assistance sont verrouillés après acceptation du demandeur et clôture.',
         'support_purpose' => 'Cette finalité de dossier d’assistance n’est pas prise en charge.',
         'support_resolution_stage' => 'Les preuves de résolution ne sont acceptées que pendant l’enquête ou l’examen de la résolution.',

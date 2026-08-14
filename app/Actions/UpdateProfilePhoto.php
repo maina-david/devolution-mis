@@ -22,13 +22,13 @@ class UpdateProfilePhoto
         $path = "profile-photos/{$user->id}/".Str::uuid().'.webp';
 
         if (! Storage::disk('local')->put($path, $processed['content'])) {
-            throw new RuntimeException('The profile photo could not be stored.');
+            throw new RuntimeException(__('settings-profile.photo_errors.store_failed'));
         }
 
         $storedContent = Storage::disk('local')->get($path);
         if (! hash_equals($processed['checksum'], hash('sha256', $storedContent))) {
             Storage::disk('local')->delete($path);
-            throw new RuntimeException('The stored profile photo failed integrity verification.');
+            throw new RuntimeException(__('settings-profile.photo_errors.integrity_failed'));
         }
 
         $previousPath = $user->profile_photo_path;
@@ -46,7 +46,7 @@ class UpdateProfilePhoto
                     'profile_photo_updated_at' => now(),
                 ]);
 
-                $this->auditLogger->record($lockedUser, $lockedUser, 'profile.photo.updated', 'Profile photo updated.', $lockedUser->county_id, [
+                $this->auditLogger->record($lockedUser, $lockedUser, 'profile.photo.updated', __('settings-profile.audit.photo_updated'), $lockedUser->county_id, [
                     'previous_checksum' => $previousChecksum,
                     'checksum' => $processed['checksum'],
                     'size_bytes' => $processed['sizeBytes'],
@@ -80,7 +80,7 @@ class UpdateProfilePhoto
                 'profile_photo_updated_at' => null,
             ]);
 
-            $this->auditLogger->record($lockedUser, $lockedUser, 'profile.photo.removed', 'Profile photo removed.', $lockedUser->county_id, ['previous_checksum' => $previousChecksum]);
+            $this->auditLogger->record($lockedUser, $lockedUser, 'profile.photo.removed', __('settings-profile.audit.photo_removed'), $lockedUser->county_id, ['previous_checksum' => $previousChecksum]);
         });
 
         if (is_string($previousPath)) {

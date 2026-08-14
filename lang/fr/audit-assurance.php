@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['occurrence_timestamp_missing' => 'L’événement d’audit :event ne comporte aucun horodatage de survenue.'], 'outcomes' => ['pass' => 'réussite', 'warn' => 'avertissement', 'fail' => 'échec'], 'audit' => ['completed' => 'Exécution de l’assurance d’audit terminée avec le résultat :outcome.'],
     'run_title' => 'Exécuter l’assurance d’intégrité de l’audit',
     'run_description' => 'Vérifiez toute la chaîne des prédécesseurs et chaque empreinte d’événement v2 reproductible, puis conservez un artefact d’ancrage privé lié à une empreinte.',
     'run_assurance' => 'Exécuter l’assurance',

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attachments' => ['errors' => ['store_failed' => 'Le document justificatif n’a pas pu être enregistré.']], 'triage' => ['errors' => ['received_required' => 'Seuls les dossiers nouvellement reçus peuvent être triés.', 'county_scope' => 'Vous n’êtes pas autorisé à trier les dossiers de ce comté.'], 'audit' => ['assigned' => 'Dossier :reference trié et attribué.']],
     'page_title' => 'Avis des citoyens et règlement des griefs',
     'eyebrow' => 'Votre voix dans la dévolution',
     'hero_title' => 'Soumettez un avis ou un grief, puis suivez chaque mise à jour publique.',

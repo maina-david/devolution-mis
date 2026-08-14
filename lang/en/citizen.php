@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attachments' => ['errors' => ['store_failed' => 'The supporting document could not be stored.']], 'triage' => ['errors' => ['received_required' => 'Only newly received cases may be triaged.', 'county_scope' => 'You are not authorized to triage cases for this county.'], 'audit' => ['assigned' => 'Case :reference triaged and assigned.']],
     'page_title' => 'Citizen feedback and grievance redress',
     'eyebrow' => 'Your voice in devolution',
     'hero_title' => 'Submit feedback or a grievance, then follow every public update.',

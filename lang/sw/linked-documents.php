@@ -1,7 +1,9 @@
 <?php
 
 return [
+    'initial_upload' => 'Upakiaji wa kwanza uliounganishwa', 'audit' => ['uploaded' => 'Hati ya usaidizi imepakiwa: :title.'],
     'errors' => [
+        'store_failed' => 'Hati ya usaidizi haikuweza kuhifadhiwa.',
         'support_closed' => 'Rekodi za usaidizi zimefungwa baada ya mwombaji kukubali na kesi kufungwa.',
         'support_purpose' => 'Madhumuni ya rekodi ya usaidizi hayatumiki.',
         'support_resolution_stage' => 'Ushahidi wa utatuzi unakubaliwa tu wakati wa uchunguzi au mapitio ya utatuzi.',

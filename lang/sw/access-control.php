@@ -8,4 +8,5 @@ return [
     'grant_programme_access' => 'Toa ufikiaji wa programu', 'grant_programme_access_description' => 'Unda utambulisho ulioidhinishwa na msimamizi na utume maelekezo ya kuweka nenosiri.',
     'grant_access' => 'Toa ufikiaji', 'name' => 'Jina', 'official_email' => 'Barua pepe rasmi', 'programme_role' => 'Jukumu la programu',
     'home_county' => 'Kaunti ya nyumbani', 'assigned_county_portfolio' => 'Jalada la kaunti lililopewa', 'current_user' => 'Mtumiaji wa sasa', 'deactivate' => 'Zima',
+    'errors' => ['self_deactivation' => 'Huwezi kuzima akaunti yako mwenyewe.'], 'audit' => ['access_deactivated' => 'Ufikiaji wa programu umezimwa kwa :email.'],
 ];

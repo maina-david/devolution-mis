@@ -311,6 +311,9 @@ return [
         'audit' => ['created' => 'Cours :code créé avec :count leçon.|Cours :code créé avec :count leçons.'],
     ],
     'question_bank_default_title' => 'Banque d’évaluation de :course',
+    'enrollment' => ['errors' => ['published_course_required' => 'Seuls les cours publiés acceptent les inscriptions.'], 'audit' => ['created' => 'Inscription au cours :course.']],
+    'progress' => ['errors' => ['quiz_engine_required' => 'La réussite d’un quiz est consignée par le moteur d’évaluation.'], 'audit' => ['lesson_completed' => 'Leçon :lesson terminée.']],
+    'course_transition' => ['errors' => ['accessible_assets_required' => 'Le contrôle qualité exige un fichier propre dans le dépôt et une alternative accessible pour chaque leçon multimédia, boîte à outils ou manuel obligatoire ; l’audio et la vidéo exigent aussi une transcription.'], 'audit' => ['transitioned' => 'Cours :course passé à l’état :status.']],
     'offline' => [
         'errors' => [
             'course_not_published' => 'Seul un cours publié peut être préparé pour une utilisation hors ligne.',

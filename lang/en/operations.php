@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'release' => ['validation_evidence' => 'Validation evidence: :evidence', 'errors' => ['deployed_required' => 'Only a deployed release can be validated.', 'independent_validator' => 'Separation of duties prevents the deployer from validating the release.'], 'audit' => ['validated' => 'Release :version independently validated.']],
     'ui' => [
         'eyebrow' => 'Service assurance and recovery', 'title' => 'Operational readiness centre',
         'description' => 'Dependency probes, SLO measurements, checksummed backups, isolated restore evidence, scheduled controls, and independently validated release and rollback history.',

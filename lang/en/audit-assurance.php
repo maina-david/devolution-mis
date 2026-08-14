@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['occurrence_timestamp_missing' => 'Audit event :event has no occurrence timestamp.'], 'outcomes' => ['pass' => 'pass', 'warn' => 'warning', 'fail' => 'failure'], 'audit' => ['completed' => 'Audit assurance run completed with outcome :outcome.'],
     'run_title' => 'Run audit integrity assurance',
     'run_description' => 'Verify the complete predecessor chain and every reproducible v2 event hash, then retain a private checksum-bound anchor artifact.',
     'run_assurance' => 'Run assurance',
