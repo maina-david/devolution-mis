@@ -38,6 +38,7 @@ return [
         'implementation_lead_changed' => 'Une référence de responsable de mise en œuvre a changé après l’examen. Préparez à nouveau la source.',
     ],
     'ui' => [
+        'no_migration_batches' => 'Aucun lot de migration trouvé', 'no_migration_batches_description' => 'Ajustez les filtres ou préparez une source CSV historique autorisée.',
         'eyebrow' => 'Provenance et rapprochement contrôlés', 'title' => 'Imports de données en masse', 'description' => 'Validez, approuvez et appliquez de façon atomique les registres opérationnels gouvernés et les jeux de résultats historiques provenant de sources CSV ou XLSX dont l’empreinte est conservée.',
         'three_person_control' => 'Contrôle à trois personnes', 'three_person_control_description' => 'Le téléversement, l’examen indépendant et l’application finale doivent être effectués par trois utilisateurs autorisés distincts. Les enregistrements appliqués et leur provenance liée à une empreinte sont immuables.',
         'records_requiring_disposition' => 'Enregistrements nécessitant une décision', 'record_types' => 'Types d’enregistrements', 'apply' => 'Appliquer',

@@ -724,7 +724,7 @@ function DecisionForm({
                         <Input
                             name="code"
                             required
-                            placeholder="DSWG-DEC-001"
+                            placeholder={copy.decision_code_placeholder}
                         />
                         <Input
                             name="title"
@@ -797,7 +797,7 @@ function ActionForm({
                         <Input
                             name="code"
                             required
-                            placeholder="DSWG-ACT-001"
+                            placeholder={copy.action_code_placeholder}
                         />
                         <Input
                             name="title"

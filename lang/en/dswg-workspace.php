@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'decision_code_placeholder' => 'DSWG-DEC-001', 'action_code_placeholder' => 'DSWG-ACT-001',
     'head_title' => 'DSWG coordination', 'eyebrow' => 'Sector coordination and accountability', 'title' => 'Devolution Sector Working Groups', 'description' => 'Coordinate membership, invitations, quorum, agendas, approved minutes, decisions, accountable actions, deadlines, reminders and independent closure.',
     'series_title' => 'Recurring meeting series', 'series_description' => 'Rolling, idempotent schedules generated in the selected IANA timezone with a governed workflow for every occurrence.', 'no_series' => 'No recurring series', 'no_series_description' => 'Create a series to maintain future meeting occurrences automatically.', 'every' => 'Every', 'periods' => 'period(s)', 'occurrences_generated' => 'occurrence(s) generated', 'next_occurrence' => 'Next:', 'ends_on' => 'Ends:',
     'meeting_workspace' => 'Meeting workspace', 'meeting_workspace_description' => 'Tracked invitations, attendance, quorum, minutes, decisions and actions.', 'no_meetings' => 'No meetings available', 'no_meetings_description' => 'Adjust the reporting dates or schedule the first sector working group meeting.', 'no_actions' => 'No matching accountable actions', 'no_actions_description' => 'Adjust the filters or record actions from an approved sector working group meeting.',

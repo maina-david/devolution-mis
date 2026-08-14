@@ -38,6 +38,7 @@ return [
         'implementation_lead_changed' => 'Rejea ya kiongozi wa utekelezaji imebadilika baada ya ukaguzi. Andaa chanzo upya.',
     ],
     'ui' => [
+        'no_migration_batches' => 'Hakuna mafungu ya uhamishaji yaliyopatikana', 'no_migration_batches_description' => 'Rekebisha vichujio au andaa chanzo cha kihistoria cha CSV kilichoidhinishwa.',
         'eyebrow' => 'Asili na upatanisho unaodhibitiwa', 'title' => 'Uingizaji wa data kwa wingi', 'description' => 'Thibitisha, idhinisha na utekeleze kwa pamoja sajili za uendeshaji na seti za matokeo ya kihistoria kutoka vyanzo vya CSV au XLSX vyenye alama-hundi.',
         'three_person_control' => 'Udhibiti wa watu watatu', 'three_person_control_description' => 'Upakiaji, ukaguzi huru na utekelezaji wa mwisho lazima ufanywe na watumiaji watatu tofauti walioidhinishwa. Rekodi zilizotekelezwa na asili yake yenye alama-hundi hazibadiliki.',
         'records_requiring_disposition' => 'Rekodi zinazohitaji uamuzi', 'record_types' => 'Aina za rekodi', 'apply' => 'Tekeleza',

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'calendar_code_placeholder' => 'KENYA-GOVERNMENT',
     'errors' => ['released_version_archive' => 'Les versions de workflow publiées ou retirées ne peuvent pas être archivées.', 'draft_publish_required' => 'Seules les versions de workflow à l’état de brouillon peuvent être publiées.'],
     'head_title' => 'Registre des workflows', 'eyebrow' => 'Plan de contrôle partagé de la plateforme', 'title' => 'Registre des workflows et des règles', 'description' => 'Définissez, validez, signez et publiez des règles de cycle de vie réutilisables pour chaque module IDMIS.',
     'business_calendars' => 'Calendriers ouvrés', 'business_calendars_description' => 'Les horaires publiés et les exceptions officielles déterminent des échéances SLA reproductibles.', 'workflow_definitions' => 'Définitions des workflows', 'workflow_definitions_description' => 'Contrôles de cycle de vie versionnés et testables, partagés entre les modules IDMIS.',

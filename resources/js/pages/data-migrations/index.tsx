@@ -694,8 +694,10 @@ export default function HistoricalDataMigrations({
                     <CardContent>
                         {batches.total === 0 ? (
                             <WorkspaceEmptyState
-                                title="No migration batches found"
-                                description="Adjust the filters or stage an authorized historical CSV source."
+                                title={copy.no_migration_batches}
+                                description={
+                                    copy.no_migration_batches_description
+                                }
                             />
                         ) : (
                             <WorkspaceDataTable

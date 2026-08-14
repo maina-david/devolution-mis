@@ -612,8 +612,13 @@ function GovernanceActions({
                                     <Input
                                         name="response"
                                         minLength={20}
-                                        aria-label={`County response to ${finding.code}`}
-                                        placeholder="Evidence-backed county response"
+                                        aria-label={interpolate(
+                                            copy.county_response_to,
+                                            { code: finding.code },
+                                        )}
+                                        placeholder={
+                                            copy.evidence_backed_county_response
+                                        }
                                         required
                                     />
                                     <Button type="submit">
@@ -633,8 +638,13 @@ function GovernanceActions({
                                     <Input
                                         name="resolution"
                                         minLength={20}
-                                        aria-label={`Resolution for ${finding.code}`}
-                                        placeholder="Verification resolution"
+                                        aria-label={interpolate(
+                                            copy.resolution_for,
+                                            { code: finding.code },
+                                        )}
+                                        placeholder={
+                                            copy.verification_resolution
+                                        }
                                         required
                                     />
                                     <Button type="submit" variant="outline">
@@ -694,8 +704,12 @@ function GovernanceActions({
                                         <Input
                                             name="decision"
                                             minLength={30}
-                                            aria-label="Appeal decision rationale"
-                                            placeholder="Documented adjudication rationale"
+                                            aria-label={
+                                                copy.appeal_decision_rationale
+                                            }
+                                            placeholder={
+                                                copy.documented_adjudication_rationale
+                                            }
                                             required
                                         />
                                         <Button type="submit">

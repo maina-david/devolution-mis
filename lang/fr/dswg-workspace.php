@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'decision_code_placeholder' => 'DSWG-DEC-001', 'action_code_placeholder' => 'DSWG-ACT-001',
     'head_title' => 'Coordination DSWG', 'eyebrow' => 'Coordination et responsabilité sectorielles', 'title' => 'Groupes de travail du secteur de la dévolution', 'description' => 'Coordonnez les membres, invitations, quorums, ordres du jour, procès-verbaux approuvés, décisions, actions responsables, échéances, rappels et clôtures indépendantes.',
     'series_title' => 'Séries de réunions récurrentes', 'series_description' => 'Calendriers continus et idempotents générés dans le fuseau IANA sélectionné, avec un flux gouverné pour chaque occurrence.', 'no_series' => 'Aucune série récurrente', 'no_series_description' => 'Créez une série pour maintenir automatiquement les futures réunions.', 'every' => 'Tous les', 'periods' => 'période(s)', 'occurrences_generated' => 'occurrence(s) générée(s)', 'next_occurrence' => 'Prochaine :', 'ends_on' => 'Fin :',
     'meeting_workspace' => 'Espace de réunion', 'meeting_workspace_description' => 'Invitations, présence, quorum, procès-verbaux, décisions et actions suivis.', 'no_meetings' => 'Aucune réunion disponible', 'no_meetings_description' => 'Modifiez les dates de rapport ou planifiez la première réunion du groupe sectoriel.', 'no_actions' => 'Aucune action responsable correspondante', 'no_actions_description' => 'Modifiez les filtres ou consignez des actions issues d’une réunion sectorielle approuvée.',

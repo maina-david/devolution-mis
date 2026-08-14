@@ -2,6 +2,10 @@
 
 return [
     'assessment_page_title' => 'Tathmini ya :county',
+    'county_response_to' => 'Jibu la kaunti kwa :code', 'evidence_backed_county_response' => 'Jibu la kaunti lenye ushahidi',
+    'resolution_for' => 'Utatuzi wa :code', 'verification_resolution' => 'Utatuzi wa uthibitishaji',
+    'appeal_decision_rationale' => 'Sababu za uamuzi wa rufaa', 'documented_adjudication_rationale' => 'Sababu zilizoandikwa za uamuzi',
+    'finding_source' => 'Hoja :code · :title', 'accepted_appeal_source' => 'Rufaa iliyokubaliwa · :grounds',
     'assessments' => 'Tathmini', 'governed_county_assessment' => 'Tathmini ya kaunti inayosimamiwa', 'separator' => '·', 'to' => 'hadi',
     'percent_complete' => '% imekamilika', 'computed_score' => 'Alama iliyokokotolewa', 'reference_data_lineage' => 'Asili ya data rejea',
     'created_by' => 'Imeundwa na', 'open_findings' => 'Matokeo wazi', 'appeals' => 'Rufaa', 'calculate_verified_result' => 'Kokotoa matokeo yaliyohakikiwa',

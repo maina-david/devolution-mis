@@ -2,6 +2,10 @@
 
 return [
     'assessment_page_title' => 'Évaluation de :county',
+    'county_response_to' => 'Réponse du comté à :code', 'evidence_backed_county_response' => 'Réponse du comté étayée par des preuves',
+    'resolution_for' => 'Résolution pour :code', 'verification_resolution' => 'Résolution de vérification',
+    'appeal_decision_rationale' => 'Motif de la décision d’appel', 'documented_adjudication_rationale' => 'Motif documenté de la décision',
+    'finding_source' => 'Constat :code · :title', 'accepted_appeal_source' => 'Appel accepté · :grounds',
     'assessments' => 'Évaluations', 'governed_county_assessment' => 'Évaluation gouvernée du comté', 'separator' => '·', 'to' => 'au',
     'percent_complete' => '% terminé', 'computed_score' => 'Score calculé', 'reference_data_lineage' => 'Traçabilité des données de référence',
     'created_by' => 'Créé par', 'open_findings' => 'Constats ouverts', 'appeals' => 'Recours', 'calculate_verified_result' => 'Calculer le résultat vérifié',

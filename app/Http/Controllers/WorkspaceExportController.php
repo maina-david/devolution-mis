@@ -120,8 +120,8 @@ class WorkspaceExportController extends Controller
         $performanceRows = $results['performance']['rows'];
 
         return [
-            'title' => 'Monitoring and evaluation target performance',
-            'columns' => ['Indicator', 'County', 'Programme', 'Dimension', 'Period end', 'Direction', 'Actual', 'Target', 'Variance', 'Variance (%)', 'Attainment (%)', 'Status'],
+            'title' => __('monitoring-results.export_title'),
+            'columns' => __('monitoring-results.export_columns'),
             'rows' => array_map(fn (array $row): array => ['id' => $row['id'], 'cells' => [
                 $row['indicator']['code'].' · '.$row['indicator']['name'], $row['county'], $row['programme'] ?? '—', $row['dimension'], $row['periodEnd'], $row['indicator']['direction'], $row['actual'], $row['target'], $row['variance'], $row['variancePercentage'], $row['attainment'], $row['status'],
             ]], $performanceRows),

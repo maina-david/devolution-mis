@@ -417,7 +417,7 @@ function CalendarForm() {
                                 <Input
                                     id="calendar-code"
                                     name="code"
-                                    placeholder="KENYA-GOVERNMENT"
+                                    placeholder={copy.calendar_code_placeholder}
                                     aria-invalid={!!errors.code}
                                     required
                                 />

@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'export_title' => 'Utendaji wa malengo ya ufuatiliaji na tathmini',
+    'export_columns' => ['Kiashiria', 'Kaunti', 'Programu', 'Kipengele', 'Mwisho wa kipindi', 'Mwelekeo', 'Halisi', 'Lengo', 'Tofauti', 'Tofauti (%)', 'Utimilifu (%)', 'Hali'],
     'results_dashboard' => 'Dashibodi ya matokeo',
     'results_dashboard_description' => 'Matokeo yaliyothibitishwa yanayofuata vichujio, uchanganuzi na michango ya miradi ndani ya wigo wa kaunti ulioidhinishwa.',
     'results_learning_control_plane' => 'Kituo cha udhibiti wa matokeo na mafunzo',

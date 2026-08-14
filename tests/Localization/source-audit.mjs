@@ -6,7 +6,7 @@ import { globSync } from 'node:fs';
 
 const limits = {
     frontendLiterals: 0,
-    authenticatedSemanticLiterals: 730,
+    authenticatedSemanticLiterals: 816,
     backendMessages: 0,
 };
 
@@ -40,6 +40,7 @@ const frontendMessages = eslintResults.flatMap((result) =>
         })),
 );
 const backendPatterns = [
+    /['"](?:title|label)['"]\s*=>\s*f?['"][A-Z]/gu,
     /ValidationException::withMessages\(\s*\[\s*['"][^'"]+['"]\s*=>\s*f?['"]/gu,
     /->withErrors\(\s*\[\s*['"][^'"]+['"]\s*=>\s*f?['"]/gu,
     /->with\(\s*['"](?:success|error|status|warning)['"]\s*,\s*f?['"]/gu,
@@ -71,9 +72,11 @@ const publicPagePatterns = [
 const semanticAttributePattern =
     /\b(?:aria-label|aria-description|label|placeholder|title)="([^"\n]*[A-Za-z][^"\n]*)"/gu;
 const semanticTextPattern = />\s*([A-Z][A-Za-z][^<{\n]*?)\s*</gu;
-const authenticatedSemanticMessages = globSync(
-    'resources/js/pages/**/*.tsx',
-).flatMap((file) => {
+const authenticatedSemanticMessages = [
+    ...globSync('resources/js/pages/**/*.tsx'),
+    ...globSync('resources/js/components/**/*.tsx'),
+    ...globSync('resources/js/layouts/**/*.tsx'),
+].flatMap((file) => {
     const normalized = file.replaceAll('\\', '/');
 
     if (publicPagePatterns.some((pattern) => normalized.includes(pattern))) {

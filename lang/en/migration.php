@@ -38,6 +38,7 @@ return [
         'implementation_lead_changed' => 'An implementation-lead reference changed after review. Restage the source.',
     ],
     'ui' => [
+        'no_migration_batches' => 'No migration batches found', 'no_migration_batches_description' => 'Adjust the filters or stage an authorized historical CSV source.',
         'eyebrow' => 'Controlled provenance and reconciliation', 'title' => 'Bulk data imports', 'description' => 'Validate, approve and atomically apply governed operational registers and historical result datasets from checksum-retained CSV or XLSX sources.',
         'three_person_control' => 'Three-person control', 'three_person_control_description' => 'Upload, independent review and final application must be performed by different authorized users. Applied records and their checksum-bound provenance are immutable.',
         'records_requiring_disposition' => 'Records requiring disposition', 'record_types' => 'Record types', 'apply' => 'Apply',

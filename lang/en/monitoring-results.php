@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'export_title' => 'Monitoring and evaluation target performance',
+    'export_columns' => ['Indicator', 'County', 'Programme', 'Dimension', 'Period end', 'Direction', 'Actual', 'Target', 'Variance', 'Variance (%)', 'Attainment (%)', 'Status'],
     'results_dashboard' => 'Results dashboard',
     'results_dashboard_description' => 'Filter-aware verified results, disaggregation and project contributions within your authorized county scope.',
     'results_learning_control_plane' => 'Results and learning control plane',

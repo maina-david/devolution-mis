@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'export_title' => 'Performance des cibles de suivi et d’évaluation',
+    'export_columns' => ['Indicateur', 'Comté', 'Programme', 'Dimension', 'Fin de période', 'Orientation', 'Réel', 'Cible', 'Écart', 'Écart (%)', 'Réalisation (%)', 'Statut'],
     'results_dashboard' => 'Tableau de bord des résultats',
     'results_dashboard_description' => 'Résultats vérifiés tenant compte des filtres, désagrégations et contributions des projets dans votre périmètre de comté autorisé.',
     'results_learning_control_plane' => 'Centre de contrôle des résultats et de l’apprentissage',

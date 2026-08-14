@@ -2,6 +2,10 @@
 
 return [
     'assessment_page_title' => ':county assessment',
+    'county_response_to' => 'County response to :code', 'evidence_backed_county_response' => 'Evidence-backed county response',
+    'resolution_for' => 'Resolution for :code', 'verification_resolution' => 'Verification resolution',
+    'appeal_decision_rationale' => 'Appeal decision rationale', 'documented_adjudication_rationale' => 'Documented adjudication rationale',
+    'finding_source' => 'Finding :code · :title', 'accepted_appeal_source' => 'Accepted appeal · :grounds',
     'assessments' => 'Assessments', 'governed_county_assessment' => 'Governed county assessment', 'separator' => '·', 'to' => 'to',
     'percent_complete' => '% complete', 'computed_score' => 'Computed score', 'reference_data_lineage' => 'Reference-data lineage',
     'created_by' => 'Created by', 'open_findings' => 'Open findings', 'appeals' => 'Appeals', 'calculate_verified_result' => 'Calculate verified result',

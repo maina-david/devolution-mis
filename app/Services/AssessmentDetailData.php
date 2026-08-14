@@ -84,7 +84,7 @@ class AssessmentDetailData
             }
             $plans[] = [
                 'id' => $plan->id, 'reference' => $plan->reference, 'title' => $plan->title, 'rootCause' => $plan->root_cause, 'expectedOutcome' => $plan->expected_outcome, 'status' => $plan->status, 'dueAt' => $plan->due_at->toDateString(), 'checksum' => $plan->checksum,
-                'source' => $plan->assessment_finding_id ? ['type' => 'finding', 'id' => $plan->assessment_finding_id, 'label' => "{$plan->finding->code} · {$plan->finding->title}"] : ['type' => 'appeal', 'id' => $plan->assessment_appeal_id, 'label' => "Accepted appeal · {$plan->appeal->grounds}"],
+                'source' => $plan->assessment_finding_id ? ['type' => 'finding', 'id' => $plan->assessment_finding_id, 'label' => "{$plan->finding->code} · {$plan->finding->title}"] : ['type' => 'appeal', 'id' => $plan->assessment_appeal_id, 'label' => __('assessment-record.accepted_appeal_source', ['grounds' => $plan->appeal->grounds])],
                 'submittedBy' => $plan->submitter->name, 'reviewedBy' => $plan->reviewed_by ? $plan->reviewer->name : null, 'reviewNote' => $plan->review_note, 'closedBy' => $plan->closed_by ? $plan->closer->name : null, 'closureDecision' => $plan->closure_decision, 'actions' => $actions,
             ];
         }
@@ -113,12 +113,12 @@ class AssessmentDetailData
         $sources = [];
         foreach ($assessment->findings as $finding) {
             if ($finding->status === 'resolved' && in_array($finding->severity, ['major', 'critical'], true) && ! $assessment->correctivePlans->contains('assessment_finding_id', $finding->id)) {
-                $sources[] = ['value' => "finding:{$finding->id}", 'label' => "Finding {$finding->code} · {$finding->title}"];
+                $sources[] = ['value' => "finding:{$finding->id}", 'label' => __('assessment-record.finding_source', ['code' => $finding->code, 'title' => $finding->title])];
             }
         }
         foreach ($assessment->appeals as $appeal) {
             if ($appeal->status === 'accepted' && ! $assessment->correctivePlans->contains('assessment_appeal_id', $appeal->id)) {
-                $sources[] = ['value' => "appeal:{$appeal->id}", 'label' => "Accepted appeal · {$appeal->grounds}"];
+                $sources[] = ['value' => "appeal:{$appeal->id}", 'label' => __('assessment-record.accepted_appeal_source', ['grounds' => $appeal->grounds])];
             }
         }
         $evidence = [];

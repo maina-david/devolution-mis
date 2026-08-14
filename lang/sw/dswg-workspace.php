@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'decision_code_placeholder' => 'DSWG-DEC-001', 'action_code_placeholder' => 'DSWG-ACT-001',
     'head_title' => 'Uratibu wa DSWG', 'eyebrow' => 'Uratibu na uwajibikaji wa sekta', 'title' => 'Vikundi Kazi vya Sekta ya Ugatuzi', 'description' => 'Ratibu uanachama, mialiko, akidi, ajenda, kumbukumbu zilizoidhinishwa, maamuzi, hatua za uwajibikaji, muda, vikumbusho na kufungwa kwa ukaguzi huru.',
     'series_title' => 'Mfululizo wa mikutano unaorudiwa', 'series_description' => 'Ratiba endelevu zisizorudia rekodi zinazozalishwa katika saa za IANA zilizochaguliwa, zikiwa na mtiririko unaodhibitiwa kwa kila tukio.', 'no_series' => 'Hakuna mfululizo unaorudiwa', 'no_series_description' => 'Unda mfululizo ili kudumisha matukio ya mikutano ya baadaye kiotomatiki.', 'every' => 'Kila', 'periods' => 'vipindi', 'occurrences_generated' => 'matukio yamezalishwa', 'next_occurrence' => 'Linalofuata:', 'ends_on' => 'Inaisha:',
     'meeting_workspace' => 'Eneo la mikutano', 'meeting_workspace_description' => 'Mialiko, mahudhurio, akidi, kumbukumbu, maamuzi na hatua zinazofuatiliwa.', 'no_meetings' => 'Hakuna mikutano', 'no_meetings_description' => 'Rekebisha tarehe za kuripoti au panga mkutano wa kwanza wa kikundi kazi.', 'no_actions' => 'Hakuna hatua za uwajibikaji zinazolingana', 'no_actions_description' => 'Rekebisha vichujio au rekodi hatua kutoka mkutano wa kikundi kazi ulioidhinishwa.',
