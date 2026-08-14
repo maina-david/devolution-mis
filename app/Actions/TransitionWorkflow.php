@@ -23,7 +23,7 @@ class TransitionWorkflow
     {
         return DB::transaction(function () use ($workflowInstance, $transitionName, $actor, $contextChanges, $comment): WorkflowInstance {
             $instance = WorkflowInstance::query()->with(['version', 'businessCalendar.holidays'])->lockForUpdate()->findOrFail($workflowInstance->id);
-            abort_unless($instance->status === 'active', 409, 'Only active workflow instances can transition.');
+            abort_unless($instance->status === 'active', 409, __('workflow-management.engine.errors.active_only'));
 
             $transition = $this->findTransition($instance, $transitionName);
             $this->authorize($instance, $transition, $actor);
@@ -31,7 +31,7 @@ class TransitionWorkflow
             $evaluation = $this->ruleEvaluator->evaluate($this->rules($instance, $transition), $context);
 
             if (! $evaluation['passed']) {
-                throw ValidationException::withMessages(['transition' => 'The workflow transition rules were not satisfied.']);
+                throw ValidationException::withMessages(['transition' => __('workflow-management.engine.errors.rules_failed')]);
             }
 
             $occurredAt = now();
@@ -65,7 +65,7 @@ class TransitionWorkflow
                 ->where('state_entered_at', $previousStateEnteredAt)
                 ->update(['status' => 'resolved', 'resolved_at' => $occurredAt]);
 
-            $this->auditLogger->record($actor, $instance, 'workflow.instance.transitioned', "Workflow transitioned from {$transition['from']} to {$toState}.", $instance->county_id, ['transition' => $transitionName, 'rule_evaluation' => $evaluation]);
+            $this->auditLogger->record($actor, $instance, 'workflow.instance.transitioned', __('workflow-management.engine.audit.transitioned', ['from' => $transition['from'], 'to' => $toState]), $instance->county_id, ['transition' => $transitionName, 'rule_evaluation' => $evaluation]);
 
             return $instance->refresh();
         }, attempts: 3);
@@ -82,7 +82,7 @@ class TransitionWorkflow
             }
         }
 
-        throw ValidationException::withMessages(['transition' => "Transition [{$name}] is not available from state [{$instance->current_state}]."]);
+        throw ValidationException::withMessages(['transition' => __('workflow-management.engine.errors.transition_unavailable', ['transition' => $name, 'state' => $instance->current_state])]);
     }
 
     /** @param array<string, mixed> $transition */
@@ -90,12 +90,12 @@ class TransitionWorkflow
     {
         $permission = $transition['permission'] ?? null;
         if (is_string($permission) && ! $actor->can($permission)) {
-            throw new AuthorizationException('You are not authorized to perform this workflow transition.');
+            throw new AuthorizationException(__('workflow-management.engine.errors.transition_unauthorized'));
         }
 
         $separationFrom = Arr::wrap($transition['separation_from'] ?? []);
         if ($separationFrom !== [] && $instance->transitions()->whereIn('transition_name', $separationFrom)->where('actor_id', $actor->id)->exists()) {
-            throw new AuthorizationException('Separation of duties prevents the same actor from performing this transition.');
+            throw new AuthorizationException(__('workflow-management.engine.errors.separation_failed'));
         }
     }
 

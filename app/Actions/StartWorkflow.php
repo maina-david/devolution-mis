@@ -30,12 +30,12 @@ class StartWorkflow
             $initialState = Arr::get($configuration, 'initial_state');
 
             if (! is_string($initialState) || $initialState === '') {
-                throw new RuntimeException('Published workflow has no valid initial state.');
+                throw new RuntimeException(__('workflow-management.engine.errors.initial_state_required'));
             }
 
             $permission = Arr::get($configuration, 'start_permission');
             if (is_string($permission) && ! $actor->can($permission)) {
-                throw new AuthorizationException('You are not authorized to start this workflow.');
+                throw new AuthorizationException(__('workflow-management.engine.errors.start_unauthorized'));
             }
 
             $startedAt = now();
@@ -66,7 +66,7 @@ class StartWorkflow
                 'occurred_at' => $startedAt,
             ]);
 
-            $this->auditLogger->record($actor, $instance, 'workflow.instance.started', "{$definition->name} workflow started.", $countyId, ['state' => $initialState, 'version' => $version->version]);
+            $this->auditLogger->record($actor, $instance, 'workflow.instance.started', __('workflow-management.engine.audit.started', ['workflow' => $definition->name]), $countyId, ['state' => $initialState, 'version' => $version->version]);
 
             return $instance->refresh();
         }, attempts: 3);
@@ -79,7 +79,7 @@ class StartWorkflow
             ->where(fn ($query) => $query->whereNull('effective_from')->orWhere('effective_from', '<=', now()))
             ->where(fn ($query) => $query->whereNull('effective_to')->orWhere('effective_to', '>', now()))
             ->latest('version')
-            ->firstOr(fn () => throw new RuntimeException("Workflow [{$definition->code}] has no effective published version."));
+            ->firstOr(fn () => throw new RuntimeException(__('workflow-management.engine.errors.effective_version_required', ['workflow' => $definition->code])));
     }
 
     /** @param array<string, mixed> $configuration */
@@ -102,6 +102,6 @@ class StartWorkflow
             return null;
         }
 
-        return BusinessCalendar::query()->with('holidays')->whereKey($calendarId)->where('status', 'published')->whereDate('effective_from', '<=', $startedAt)->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>', $startedAt))->firstOr(fn () => throw new RuntimeException('The configured business calendar is not published or effective.'));
+        return BusinessCalendar::query()->with('holidays')->whereKey($calendarId)->where('status', 'published')->whereDate('effective_from', '<=', $startedAt)->where(fn ($query) => $query->whereNull('effective_to')->orWhereDate('effective_to', '>', $startedAt))->firstOr(fn () => throw new RuntimeException(__('workflow-management.engine.errors.calendar_ineffective')));
     }
 }

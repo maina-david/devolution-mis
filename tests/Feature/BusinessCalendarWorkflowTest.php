@@ -96,6 +96,10 @@ class BusinessCalendarWorkflowTest extends TestCase
             $this->assertSame(array_keys($english['calendar'][$section]), array_keys($kiswahili['calendar'][$section]));
             $this->assertSame(array_keys($english['calendar'][$section]), array_keys($french['calendar'][$section]));
         }
+        foreach (['errors', 'simulation', 'audit'] as $section) {
+            $this->assertSame(array_keys($english['engine'][$section]), array_keys($kiswahili['engine'][$section]));
+            $this->assertSame(array_keys($english['engine'][$section]), array_keys($french['engine'][$section]));
+        }
     }
 
     public function test_workflow_registry_exposes_calendar_provenance_and_draft_holiday_soft_deletion(): void

@@ -32,11 +32,11 @@ class WorkflowSimulator
         $startAuthorized = ! is_string($startPermission) || $startPermission === '' || $starter->can($startPermission);
         $steps = [];
         $completed = in_array($initialState, Arr::wrap(data_get($configuration, 'terminal_states', [])), true);
-        $failure = $startAuthorized ? null : ['code' => 'start_permission_denied', 'message' => 'The selected starter does not hold the configured start permission.'];
+        $failure = $startAuthorized ? null : ['code' => 'start_permission_denied', 'message' => __('workflow-management.engine.simulation.start_permission_denied')];
 
         foreach ($scenario['steps'] as $index => $candidate) {
             if ($failure !== null || $completed) {
-                $steps[] = $this->failedStep($index, $candidate, $currentState, $completed ? 'terminal_state_reached' : 'scenario_stopped', $completed ? 'No transition may run after a terminal state.' : 'The scenario stopped after an earlier control failure.');
+                $steps[] = $this->failedStep($index, $candidate, $currentState, $completed ? 'terminal_state_reached' : 'scenario_stopped', $completed ? __('workflow-management.engine.simulation.terminal_state_reached') : __('workflow-management.engine.simulation.scenario_stopped'));
 
                 continue;
             }
@@ -46,7 +46,7 @@ class WorkflowSimulator
             $transition = $this->transition($configuration, $currentState, $candidate['transition_name']);
 
             if ($transition === null) {
-                $failure = ['code' => 'transition_unavailable', 'message' => "Transition [{$candidate['transition_name']}] is not available from state [{$currentState}]."];
+                $failure = ['code' => 'transition_unavailable', 'message' => __('workflow-management.engine.errors.transition_unavailable', ['transition' => $candidate['transition_name'], 'state' => $currentState])];
                 $steps[] = $this->failedStep($index, $candidate, $currentState, $failure['code'], $failure['message'], $actor);
 
                 continue;
@@ -61,12 +61,12 @@ class WorkflowSimulator
             $toState = (string) $transition['to'];
             $terminal = ($transition['terminal'] ?? false) === true || in_array($toState, Arr::wrap(data_get($configuration, 'terminal_states', [])), true);
             $stepFailure = ! $authorized
-                ? ['code' => 'permission_denied', 'message' => 'The selected actor does not hold the transition permission.']
+                ? ['code' => 'permission_denied', 'message' => __('workflow-management.engine.simulation.transition_permission_denied')]
                 : (! $separationPassed
-                    ? ['code' => 'separation_of_duties_failed', 'message' => 'The selected actor conflicts with the configured separation-of-duties rule.']
-                    : (! $evaluation['passed'] ? ['code' => 'rules_failed', 'message' => 'One or more workflow rules were not satisfied.'] : null));
+                    ? ['code' => 'separation_of_duties_failed', 'message' => __('workflow-management.engine.simulation.separation_failed')]
+                    : (! $evaluation['passed'] ? ['code' => 'rules_failed', 'message' => __('workflow-management.engine.simulation.rules_failed')] : null));
 
-            $steps[] = ['index' => $index + 1, 'transitionName' => $candidate['transition_name'], 'fromState' => $currentState, 'toState' => $stepFailure === null ? $toState : null, 'actor' => ['id' => $actor->id, 'name' => $actor->name], 'authorized' => $authorized, 'separationPassed' => $separationPassed, 'ruleEvaluation' => $evaluation, 'status' => $stepFailure === null ? 'passed' : 'failed', 'failureCode' => $stepFailure['code'] ?? null, 'message' => $stepFailure['message'] ?? 'All transition controls passed.', 'occurredAt' => $occurredAt->toIso8601String(), 'dueAt' => $stepFailure === null && ! $terminal ? $this->dueAt($configuration, $transition, $toState, $occurredAt, $calendar)?->toIso8601String() : null, 'terminal' => $stepFailure === null && $terminal];
+            $steps[] = ['index' => $index + 1, 'transitionName' => $candidate['transition_name'], 'fromState' => $currentState, 'toState' => $stepFailure === null ? $toState : null, 'actor' => ['id' => $actor->id, 'name' => $actor->name], 'authorized' => $authorized, 'separationPassed' => $separationPassed, 'ruleEvaluation' => $evaluation, 'status' => $stepFailure === null ? 'passed' : 'failed', 'failureCode' => $stepFailure['code'] ?? null, 'message' => $stepFailure['message'] ?? __('workflow-management.engine.simulation.controls_passed'), 'occurredAt' => $occurredAt->toIso8601String(), 'dueAt' => $stepFailure === null && ! $terminal ? $this->dueAt($configuration, $transition, $toState, $occurredAt, $calendar)?->toIso8601String() : null, 'terminal' => $stepFailure === null && $terminal];
 
             if ($stepFailure !== null) {
                 $failure = $stepFailure;
@@ -80,7 +80,7 @@ class WorkflowSimulator
             $completed = $terminal;
         }
 
-        return ['passed' => $failure === null, 'completed' => $completed && $failure === null, 'initialState' => $initialState, 'finalState' => $currentState, 'startedAt' => $startedAt->toIso8601String(), 'initialDueAt' => $this->dueAt($configuration, [], $initialState, $startedAt, $calendar)?->toIso8601String(), 'starter' => ['id' => $starter->id, 'name' => $starter->name, 'authorized' => $startAuthorized], 'failureCode' => $failure['code'] ?? null, 'message' => $failure['message'] ?? ($completed ? 'The scenario reached a terminal state.' : 'All supplied steps passed; the workflow remains active.'), 'steps' => $steps, 'version' => ['id' => $version->id, 'number' => $version->version, 'status' => $version->status, 'checksum' => $version->checksum ?? $this->canonicalJson->checksum($configuration)], 'calendar' => $calendar ? ['id' => $calendar->id, 'code' => $calendar->code, 'version' => $calendar->version, 'checksum' => $calendar->checksum] : null, 'scenarioChecksum' => $this->canonicalJson->checksum($scenario)];
+        return ['passed' => $failure === null, 'completed' => $completed && $failure === null, 'initialState' => $initialState, 'finalState' => $currentState, 'startedAt' => $startedAt->toIso8601String(), 'initialDueAt' => $this->dueAt($configuration, [], $initialState, $startedAt, $calendar)?->toIso8601String(), 'starter' => ['id' => $starter->id, 'name' => $starter->name, 'authorized' => $startAuthorized], 'failureCode' => $failure['code'] ?? null, 'message' => $failure['message'] ?? ($completed ? __('workflow-management.engine.simulation.completed') : __('workflow-management.engine.simulation.active')), 'steps' => $steps, 'version' => ['id' => $version->id, 'number' => $version->version, 'status' => $version->status, 'checksum' => $version->checksum ?? $this->canonicalJson->checksum($configuration)], 'calendar' => $calendar ? ['id' => $calendar->id, 'code' => $calendar->code, 'version' => $calendar->version, 'checksum' => $calendar->checksum] : null, 'scenarioChecksum' => $this->canonicalJson->checksum($scenario)];
     }
 
     /** @param array<string, mixed> $configuration */

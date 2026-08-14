@@ -19,6 +19,7 @@ use App\Services\WorkflowSlaMonitor;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -126,6 +127,28 @@ class WorkflowRuntimeTest extends TestCase
 
         $this->assertSame('draft', $instance->refresh()->current_state);
         $this->assertSame(1, $instance->transitions()->count());
+    }
+
+    public function test_runtime_failures_and_audit_descriptions_follow_the_active_locale(): void
+    {
+        [$definition, , $assessment] = $this->workflowFixture();
+        $submitter = User::factory()->countyAdmin($assessment->county)->create();
+        App::setLocale('sw');
+        $instance = app(StartWorkflow::class)->handle($definition, $assessment, $submitter, ['evidence_count' => 0], $assessment->county_id);
+
+        $started = AuditEvent::query()->where('subject_id', $instance->id)->where('action', 'workflow.instance.started')->sole();
+        $this->assertSame(trans('workflow-management.engine.audit.started', ['workflow' => $definition->name], 'sw'), $started->description);
+
+        try {
+            app(TransitionWorkflow::class)->handle($instance, 'submit', $submitter);
+            $this->fail('Expected the localized workflow rule failure.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(trans('workflow-management.engine.errors.rules_failed', locale: 'sw'), $exception->errors()['transition'][0]);
+        }
+
+        $instance = app(TransitionWorkflow::class)->handle($instance, 'submit', $submitter, ['evidence_count' => 1]);
+        $transitioned = AuditEvent::query()->where('subject_id', $instance->id)->where('action', 'workflow.instance.transitioned')->sole();
+        $this->assertSame(trans('workflow-management.engine.audit.transitioned', ['from' => 'draft', 'to' => 'submitted'], 'sw'), $transitioned->description);
     }
 
     public function test_separation_of_duties_blocks_submitter_from_approving(): void

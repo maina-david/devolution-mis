@@ -46,7 +46,7 @@ class WorkflowRuleEvaluator
             'not_in' => is_array($expected) && ! in_array($actual, $expected, true),
             'present' => $actual !== null && $actual !== '',
             'absent' => $actual === null || $actual === '',
-            default => throw new InvalidArgumentException("Unsupported workflow rule operator [{$operator}]."),
+            default => throw new InvalidArgumentException(__('workflow-management.engine.errors.unsupported_operator', ['operator' => $operator])),
         };
     }
 
@@ -56,7 +56,7 @@ class WorkflowRuleEvaluator
         $value = Arr::get($rule, $key);
 
         if (! is_string($value) || $value === '') {
-            throw new InvalidArgumentException("Workflow rule [{$key}] must be a non-empty string.");
+            throw new InvalidArgumentException(__('workflow-management.engine.errors.rule_string_required', ['key' => $key]));
         }
 
         return $value;
