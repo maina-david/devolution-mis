@@ -48,10 +48,10 @@ class BulkWorkspaceActionTest extends TestCase
                 'status' => AssessmentStatus::EvidenceCollection,
             ]);
 
-        $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
+        $this->actingAs($admin)->withSession(['locale' => 'sw'])->patch(route('assessments.bulk-transition'), [
             'ids' => $assessments->pluck('id')->all(),
             'transition' => 'submit',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertInertiaFlash('toast.message', 'Tathmini 2 zimehamishwa kwa pamoja hadi imewasilishwa.');
 
         $this->assertSame(2, Assessment::query()->whereKey($assessments->pluck('id'))->where('status', AssessmentStatus::Submitted)->count());
         $this->assertSame(2, AuditEvent::query()->where('action', 'assessment.submitted')->count());
@@ -67,10 +67,10 @@ class BulkWorkspaceActionTest extends TestCase
         $submitted = Assessment::factory()->create(['county_id' => $county->id, 'cycle' => '2026/27 ACPA', 'status' => AssessmentStatus::Submitted]);
         $outside = Assessment::factory()->create(['county_id' => $otherCounty->id, 'status' => AssessmentStatus::Draft]);
 
-        $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
+        $this->actingAs($admin)->withSession(['locale' => 'fr'])->patch(route('assessments.bulk-transition'), [
             'ids' => [$draft->id, $submitted->id],
             'transition' => 'submit',
-        ])->assertStatus(409);
+        ])->assertStatus(409)->assertSee('Chaque évaluation sélectionnée doit être dans un état valide pour cette action.');
         $this->assertSame(AssessmentStatus::Draft, $draft->fresh()->status);
 
         $this->actingAs($admin)->patch(route('assessments.bulk-transition'), [
@@ -134,10 +134,10 @@ class BulkWorkspaceActionTest extends TestCase
             'verification_status' => 'pending',
         ]);
 
-        $this->actingAs($assessor)->patch(route('evidence.bulk-verification'), [
+        $this->actingAs($assessor)->withSession(['locale' => 'sw'])->patch(route('evidence.bulk-verification'), [
             'ids' => $documents->pluck('id')->all(),
             'status' => 'verified',
-        ])->assertRedirect();
+        ])->assertRedirect()->assertInertiaFlash('toast.message', 'Rekodi 2 za ushahidi zimetiwa alama umehakikiwa kwa pamoja.');
 
         $this->assertSame(2, AssessmentDocument::query()->whereIn('id', $documents->pluck('id'))->where('verification_status', 'verified')->count());
         $this->assertSame(2, AuditEvent::query()->where('action', 'evidence.verified')->count());
@@ -163,10 +163,10 @@ class BulkWorkspaceActionTest extends TestCase
         $this->assertSame('pending', $allowed->fresh()->verification_status);
 
         $quarantined = AssessmentDocument::factory()->create(['assessment_id' => $allowedAssessment->id, 'county_id' => $county->id, 'scan_status' => 'quarantined', 'verification_status' => 'pending']);
-        $this->actingAs($assessor)->patch(route('evidence.bulk-verification'), [
+        $this->actingAs($assessor)->withSession(['locale' => 'fr'])->patch(route('evidence.bulk-verification'), [
             'ids' => [$allowed->id, $quarantined->id],
             'status' => 'verified',
-        ])->assertStatus(409);
+        ])->assertStatus(409)->assertSee('La vérification groupée contient des preuves mises en quarantaine.');
 
         $this->assertSame('pending', $allowed->fresh()->verification_status);
         $this->assertDatabaseMissing('audit_events', ['action' => 'evidence.verified']);

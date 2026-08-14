@@ -23,7 +23,7 @@ class BulkAssessmentTransitionController extends Controller
         [$permission, $from, $to] = match ($transitionName) {
             'submit' => [ProgrammePermission::SubmitAssessment, [AssessmentStatus::Draft, AssessmentStatus::EvidenceCollection], AssessmentStatus::Submitted],
             'review' => [ProgrammePermission::ReviewAssessment, [AssessmentStatus::Submitted], AssessmentStatus::UnderAssessment],
-            default => abort(422, 'Unsupported assessment transition.'),
+            default => abort(422, __('assessment-record.bulk.errors.transition_unsupported')),
         };
         Gate::authorize($permission->value);
 
@@ -35,10 +35,10 @@ class BulkAssessmentTransitionController extends Controller
                 ->lockForUpdate()
                 ->get();
 
-            abort_unless($assessments->count() === count($request->ids()), 422, 'One or more selected assessments are unavailable.');
+            abort_unless($assessments->count() === count($request->ids()), 422, __('assessment-record.bulk.errors.assessment_unavailable'));
             foreach ($assessments as $assessment) {
-                abort_unless($actor->canAccessCounty($assessment->county), 403);
-                abort_unless(in_array($assessment->status, $from, true), 409, 'Every selected assessment must be in a valid state for this action.');
+                abort_unless($actor->canAccessCounty($assessment->county), 403, __('assessment-record.bulk.errors.assessment_scope'));
+                abort_unless(in_array($assessment->status, $from, true), 409, __('assessment-record.bulk.errors.assessment_state'));
             }
 
             foreach ($assessments as $assessment) {
@@ -48,7 +48,7 @@ class BulkAssessmentTransitionController extends Controller
             return $assessments->count();
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "{$count} assessments moved to {$to->value}."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice('assessment-record.bulk.outcomes.transitioned', $count, ['count' => $count, 'status' => __('assessment-record.statuses.'.$to->value)])]);
 
         return back();
     }

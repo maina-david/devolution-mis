@@ -6,6 +6,7 @@ use App\Actions\VerifyAssessmentEvidence;
 use App\Http\Requests\BulkEvidenceVerificationRequest;
 use App\Models\AssessmentDocument;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -19,22 +20,29 @@ class BulkEvidenceVerificationController extends Controller
     {
         /** @var User $actor */
         $actor = $request->user();
-        $documents = AssessmentDocument::query()->with('county')->whereIn('id', $request->ids())->get();
-        abort_unless($documents->count() === count($request->ids()), 404, 'One or more selected documents no longer exist.');
-
-        foreach ($documents as $document) {
-            abort_unless($actor->canAccessCounty($document->county), 403);
-            abort_unless($document->scan_status === 'clean', 409, 'Bulk verification contains quarantined evidence.');
-        }
-
         $status = $request->string('status')->toString();
-        DB::transaction(function () use ($documents, $status, $actor, $verify): void {
+        $count = DB::transaction(function () use ($request, $status, $actor, $verify): int {
+            /** @var Collection<int, AssessmentDocument> $documents */
+            $documents = AssessmentDocument::query()
+                ->with('county')
+                ->whereIn('id', $request->ids())
+                ->lockForUpdate()
+                ->get();
+
+            abort_unless($documents->count() === count($request->ids()), 404, __('assessment-record.bulk.errors.evidence_unavailable'));
+            foreach ($documents as $document) {
+                abort_unless($actor->canAccessCounty($document->county), 403, __('assessment-record.bulk.errors.evidence_scope'));
+                abort_unless($document->scan_status === 'clean', 409, __('assessment-record.bulk.errors.evidence_quarantined'));
+            }
+
             foreach ($documents as $document) {
                 $verify->handle($document, $status, $actor);
             }
+
+            return $documents->count();
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $documents->count()." evidence records marked {$status}."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice('assessment-record.bulk.outcomes.evidence_reviewed', $count, ['count' => $count, 'status' => __('assessment-record.evidence_statuses.'.$status)])]);
 
         return back();
     }
