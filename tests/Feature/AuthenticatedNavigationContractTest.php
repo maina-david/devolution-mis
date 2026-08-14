@@ -56,7 +56,8 @@ class AuthenticatedNavigationContractTest extends TestCase
         $this->assertStringContainsString('pr-10', $navMain);
         $this->assertStringContainsString('[&>span:last-child]:line-clamp-2', $navMain);
         $sidebarPrimitive = $this->source('resources/js/components/ui/sidebar.tsx');
-        $this->assertStringContainsString('top-1/2 right-1 flex h-5 min-w-5 -translate-y-1/2 items-center', $sidebarPrimitive);
+        $this->assertStringContainsString('top-1/2 right-1 mt-px flex h-5 min-w-5 -translate-y-1/2 items-center', $sidebarPrimitive);
+        $this->assertStringContainsString('px-1 text-xs leading-none font-medium tabular-nums', $sidebarPrimitive);
         $this->assertStringContainsString('const SIDEBAR_WIDTH = "18rem"', $sidebarPrimitive);
         $this->assertStringContainsString('side="right"', $navMain);
         $this->assertStringContainsString('item.subItems?.map', $navMain);
