@@ -19,6 +19,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 | resources/js/components/{app-content,app-shell,input-error}.tsx,resources/js/layouts/auth/**,resources/js/pages/{welcome,help,faqs}.tsx,resources/js/pages/auth/**,tests/Feature/AccessibilityContractTest.php | .ai/rules/feature.md |
 | {resources/js/**,lang/**,app/Http/**,routes/**,tests/**} | .ai/rules/http.md |
 | app/{Actions,Models,Services,Http/Controllers,Http/Requests,Console/Commands}/**/*Audit*.php,database/migrations/*audit_assurance*,resources/js/**/*audit-assurance*,tests/Feature/{AuditTrailTest,AuditAssuranceTest}.php | .ai/rules/js-feature.md |
+| resources/js/pages/** | .ai/rules/js-pages.md |
 | routes/**,resources/js/** | .ai/rules/js.md |
 | app/{Actions,Models,Http/Controllers,Http/Requests}/**/*Learning*.php,database/migrations/*learning_offline_package*,resources/js/pages/learning/**,tests/Feature/LearningOfflinePackageTest.php | .ai/rules/learning-feature.md |
 | {bootstrap/app.php,resources/js/pages/error.tsx,resources/views/errors/**,resources/views/vendor/mail/**,lang/**,tests/Feature/BrandedErrorAndMailTemplateTest.php} | .ai/rules/mail-feature.md |

@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, setLayoutProps, usePage } from '@inertiajs/react';
 import {
     Download,
     Eye,
@@ -132,6 +132,9 @@ export default function CitizenCasesIndex({
 }: Props) {
     const lookup = new Map(cases.map((item) => [item.id, item]));
     const copy = usePage().props.localization.citizen;
+    setLayoutProps({
+        breadcrumbs: [{ title: copy.staff_page_title, href: index() }],
+    });
 
     return (
         <>
@@ -277,13 +280,7 @@ export default function CitizenCasesIndex({
     );
 }
 
-function CitizenCasesLayout() {
-    const copy = usePage().props.localization.citizen;
-
-    return { breadcrumbs: [{ title: copy.staff_page_title, href: index() }] };
-}
-
-CitizenCasesIndex.layout = CitizenCasesLayout;
+CitizenCasesIndex.layout = { breadcrumbs: [] };
 
 function Metric({ label, value }: { label: string; value: number | string }) {
     const locale = usePage().props.localization.current;

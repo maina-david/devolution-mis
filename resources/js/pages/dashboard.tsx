@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, setLayoutProps, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowRight,
@@ -132,6 +132,14 @@ export default function Dashboard({
 }: Props) {
     const page = usePage();
     const copy = page.props.localization.dashboard;
+    setLayoutProps({
+        breadcrumbs: [
+            {
+                title: page.props.localization.common.dashboard,
+                href: dashboard(),
+            },
+        ],
+    });
     const cycleChartConfig = {
         averageScore: { label: copy.average_score, color: 'var(--chart-1)' },
         completionPercent: {
@@ -1021,10 +1029,4 @@ function OperationalSignal({
     );
 }
 
-function DashboardLayout() {
-    const copy = usePage().props.localization.common;
-
-    return { breadcrumbs: [{ title: copy.dashboard, href: dashboard() }] };
-}
-
-Dashboard.layout = DashboardLayout;
+Dashboard.layout = { breadcrumbs: [] };

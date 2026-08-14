@@ -1,4 +1,11 @@
-import { Form, Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    Form,
+    Head,
+    Link,
+    router,
+    setLayoutProps,
+    usePage,
+} from '@inertiajs/react';
 import { Ellipsis, KeyRound, Pencil, ShieldCheck, Users } from 'lucide-react';
 import { useState } from 'react';
 import TableEmptyState from '@/components/table-empty-state';
@@ -85,6 +92,7 @@ export default function AccessControl({
     filters: { search: string; per_page: number };
 }) {
     const copy = useAccessControlCopy();
+    setLayoutProps({ breadcrumbs: [{ title: copy.title, href: index() }] });
     const [selectedRole, setSelectedRole] = useState<Role | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -512,10 +520,4 @@ function humanize(value: string): string {
         .replace(/\b\w/gu, (letter) => letter.toUpperCase());
 }
 
-function AccessControlLayout() {
-    const copy = useAccessControlCopy();
-
-    return { breadcrumbs: [{ title: copy.title, href: index() }] };
-}
-
-AccessControl.layout = AccessControlLayout;
+AccessControl.layout = { breadcrumbs: [] };

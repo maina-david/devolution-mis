@@ -1,4 +1,4 @@
-import { Form, Head, usePage } from '@inertiajs/react';
+import { Form, Head, setLayoutProps, usePage } from '@inertiajs/react';
 import { KeyRound, LockKeyhole, Pencil } from 'lucide-react';
 import { useRef } from 'react';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
@@ -38,6 +38,9 @@ type Props = { passwordRules: string } & ManagePasskeysProps &
 export default function Security(props: Props) {
     const { localization } = usePage().props;
     const copy = localization.settingsSecurity;
+    setLayoutProps({
+        breadcrumbs: [{ title: copy.security_settings, href: edit() }],
+    });
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -236,10 +239,4 @@ function PasswordField({
     );
 }
 
-function SecurityLayout() {
-    const copy = usePage().props.localization.settingsSecurity;
-
-    return { breadcrumbs: [{ title: copy.security_settings, href: edit() }] };
-}
-
-Security.layout = SecurityLayout;
+Security.layout = { breadcrumbs: [] };

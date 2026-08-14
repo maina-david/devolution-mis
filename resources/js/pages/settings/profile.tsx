@@ -1,4 +1,4 @@
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, setLayoutProps, usePage } from '@inertiajs/react';
 import { BadgeCheck, Pencil, ShieldCheck } from 'lucide-react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import CountyIdentity from '@/components/county-identity';
@@ -52,6 +52,7 @@ type Props = {
 export default function Profile({ mustVerifyEmail, status, profile }: Props) {
     const { auth, localization } = usePage<{ auth: Auth }>().props;
     const copy = localization.settingsProfile;
+    setLayoutProps({ breadcrumbs: [{ title: copy.title, href: edit() }] });
 
     return (
         <>
@@ -338,10 +339,4 @@ export default function Profile({ mustVerifyEmail, status, profile }: Props) {
     );
 }
 
-function ProfileLayout() {
-    const copy = usePage().props.localization.settingsProfile;
-
-    return { breadcrumbs: [{ title: copy.title, href: edit() }] };
-}
-
-Profile.layout = ProfileLayout;
+Profile.layout = { breadcrumbs: [] };

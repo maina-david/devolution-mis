@@ -23,7 +23,7 @@ export type Auth = {
 
 /* @chisel-passkeys */
 export type Passkey = {
-    id: number;
+    id: string;
     name: string;
     authenticator: string | null;
     created_at_diff: string;

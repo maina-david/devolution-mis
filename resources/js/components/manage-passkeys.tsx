@@ -34,7 +34,7 @@ export default function ManagePasskeys(props: Props) {
     const copy = usePage().props.localization.settingsSecurity;
     const passkeys = props.passkeys ?? [];
 
-    const handleDelete = (id: number, onError: () => void) => {
+    const handleDelete = (id: string, onError: () => void) => {
         router.delete(destroy.url(id), {
             preserveScroll: true,
             onError,
