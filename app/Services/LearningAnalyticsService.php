@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\County;
+use App\Models\LearningAssessmentAttempt;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
+use App\Models\LearningQuestionBankItem;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -46,6 +48,7 @@ class LearningAnalyticsService
         $completed = (int) $summary->getAttribute('completed');
         $perPage = (int) ($filters['per_page'] ?? 10);
         $summarySuppressed = $this->shouldSuppress($total);
+        $questionBank = $this->questionBankAnalysis($base, (int) ($filters['question_page'] ?? 1), $perPage);
 
         return [
             'privacy' => ['minimumCellSize' => $this->minimumCellSize()],
@@ -53,8 +56,122 @@ class LearningAnalyticsService
             'courses' => $this->paginate($courses, (int) ($filters['course_page'] ?? 1), $perPage, 'course_page'),
             'counties' => $this->paginate($counties, (int) ($filters['county_page'] ?? 1), $perPage, 'county_page'),
             'trend' => $trend,
+            'questionBank' => $questionBank,
             'options' => ['counties' => $authorizedCounties->map->identityCell()->values(), 'courses' => LearningCourse::query()->where('status', 'published')->when(! $user->programmeRole()->hasNationalScope(), fn (Builder $query) => $query->where(fn (Builder $scope) => $scope->whereNull('county_id')->orWhereIn('county_id', $countyIds)))->orderBy('code')->get(['id', 'code', 'title'])->map(fn (LearningCourse $course): array => ['id' => $course->id, 'name' => "{$course->code} · {$course->title}"])->values()],
         ];
+    }
+
+    /**
+     * @param  Builder<LearningEnrollment>  $enrollments
+     * @return array{hasData: bool, attempts: int|null, suppressed: bool, lineages: int, rows: list<array<string, mixed>>, pagination: array{currentPage: int, lastPage: int, perPage: int, total: int, pageName: string}}
+     */
+    private function questionBankAnalysis(Builder $enrollments, int $page, int $perPage): array
+    {
+        /** @var array<string, array{questionId: string, responseCount: int, correctCount: int, correctScoreTotal: float, incorrectCount: int, incorrectScoreTotal: float, lineages: array<string, true>}> $aggregates */
+        $aggregates = [];
+        $attemptCount = 0;
+        $lineages = [];
+        $attempts = LearningAssessmentAttempt::query()
+            ->whereIn('learning_enrollment_id', (clone $enrollments)->select('learning_enrollments.id'))
+            ->select(['id', 'score', 'result_snapshot'])
+            ->cursor();
+
+        foreach ($attempts as $attempt) {
+            $snapshot = $attempt->result_snapshot;
+            $results = is_array($snapshot['questions'] ?? null) ? $snapshot['questions'] : $snapshot;
+            $validResults = array_values(array_filter(
+                $results,
+                fn (mixed $result): bool => is_array($result) && is_string($result['question_id'] ?? null) && $result['question_id'] !== '',
+            ));
+
+            if ($validResults === []) {
+                continue;
+            }
+
+            $attemptCount++;
+            $lineage = is_string($snapshot['question_bank_checksum'] ?? null) ? $snapshot['question_bank_checksum'] : 'legacy-unversioned';
+            $lineages[$lineage] = true;
+            foreach ($validResults as $result) {
+                $questionId = $result['question_id'];
+                $aggregates[$questionId] ??= ['questionId' => $questionId, 'responseCount' => 0, 'correctCount' => 0, 'correctScoreTotal' => 0.0, 'incorrectCount' => 0, 'incorrectScoreTotal' => 0.0, 'lineages' => []];
+                $aggregates[$questionId]['responseCount']++;
+                $aggregates[$questionId]['lineages'][$lineage] = true;
+                if (($result['correct'] ?? false) === true) {
+                    $aggregates[$questionId]['correctCount']++;
+                    $aggregates[$questionId]['correctScoreTotal'] += (float) $attempt->score;
+                } else {
+                    $aggregates[$questionId]['incorrectCount']++;
+                    $aggregates[$questionId]['incorrectScoreTotal'] += (float) $attempt->score;
+                }
+            }
+        }
+
+        $items = LearningQuestionBankItem::query()
+            ->with(['question:id,question', 'bank:id,version,checksum'])
+            ->whereIn('learning_quiz_question_id', array_keys($aggregates))
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy('learning_quiz_question_id');
+        $rows = collect($aggregates)->map(function (array $aggregate) use ($items): array {
+            $lineageChecksums = array_keys($aggregate['lineages']);
+            $singleLineageChecksum = count($lineageChecksums) === 1 ? $lineageChecksums[0] : null;
+            $questionItems = $items->get($aggregate['questionId'], collect());
+            $item = $questionItems->first(
+                fn (LearningQuestionBankItem $candidate): bool => $singleLineageChecksum !== null && $candidate->bank->checksum === $singleLineageChecksum,
+            ) ?? $questionItems->first();
+            $suppressed = $this->shouldSuppress($aggregate['responseCount']);
+            $discrimination = null;
+            if (! $suppressed && $aggregate['correctCount'] > 0 && $aggregate['incorrectCount'] > 0) {
+                $discrimination = round(($aggregate['correctScoreTotal'] / $aggregate['correctCount']) - ($aggregate['incorrectScoreTotal'] / $aggregate['incorrectCount']), 2);
+            }
+            $question = $item instanceof LearningQuestionBankItem && $item->question !== null ? $item->question->question : (string) __('learning-analytics.removed_question');
+            $variantGroup = $item instanceof LearningQuestionBankItem ? $item->variant_group : (string) __('learning-analytics.legacy_group');
+            $difficulty = $item instanceof LearningQuestionBankItem ? $item->difficulty : (string) __('learning-analytics.unclassified');
+            $tags = $item instanceof LearningQuestionBankItem ? array_values(array_filter($item->tags, is_string(...))) : [];
+            $hasMatchedVersion = $singleLineageChecksum !== null
+                && $singleLineageChecksum !== 'legacy-unversioned'
+                && $item instanceof LearningQuestionBankItem
+                && $item->bank->checksum === $singleLineageChecksum;
+
+            return [
+                'id' => $aggregate['questionId'],
+                'question' => $question,
+                'variantGroup' => $variantGroup,
+                'difficulty' => $difficulty,
+                'tags' => $tags,
+                'bankVersion' => $hasMatchedVersion ? $item->bank->version : null,
+                'bankChecksum' => $hasMatchedVersion ? $singleLineageChecksum : null,
+                'lineageCount' => count($lineageChecksums),
+                'suppressed' => $suppressed,
+                'responseCount' => $suppressed ? null : $aggregate['responseCount'],
+                'correctRate' => $suppressed ? null : $this->percentage($aggregate['correctCount'], $aggregate['responseCount']),
+                'discrimination' => $discrimination,
+            ];
+        })->sort(function (array $left, array $right): int {
+            if ($left['suppressed'] !== $right['suppressed']) {
+                return $left['suppressed'] <=> $right['suppressed'];
+            }
+
+            return ($left['correctRate'] ?? PHP_FLOAT_MAX) <=> ($right['correctRate'] ?? PHP_FLOAT_MAX)
+                ?: strcmp($left['question'], $right['question']);
+        })->values();
+        $suppressed = $this->shouldSuppress($attemptCount);
+        $pagination = $this->paginateQuestionRows(array_values($rows->all()), $page, $perPage);
+
+        return ['hasData' => $attemptCount > 0, 'attempts' => $suppressed ? null : $attemptCount, 'suppressed' => $suppressed, 'lineages' => count($lineages), ...$pagination];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{rows: list<array<string, mixed>>, pagination: array{currentPage: int, lastPage: int, perPage: int, total: int, pageName: string}}
+     */
+    private function paginateQuestionRows(array $rows, int $page, int $perPage): array
+    {
+        $total = count($rows);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $currentPage = min(max(1, $page), $lastPage);
+
+        return ['rows' => array_slice($rows, ($currentPage - 1) * $perPage, $perPage), 'pagination' => ['currentPage' => $currentPage, 'lastPage' => $lastPage, 'perPage' => $perPage, 'total' => $total, 'pageName' => 'question_page']];
     }
 
     /**

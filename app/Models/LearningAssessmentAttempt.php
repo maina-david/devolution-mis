@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property array<string, mixed>|list<array<string, mixed>> $result_snapshot
+ */
 #[Fillable(['learning_enrollment_id', 'attempt_number', 'answers', 'result_snapshot', 'score', 'passed', 'submitted_at'])]
 class LearningAssessmentAttempt extends Model
 {

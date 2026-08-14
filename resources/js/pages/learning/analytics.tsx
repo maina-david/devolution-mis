@@ -1,5 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Download, GraduationCap, TrendingUp } from 'lucide-react';
+import {
+    ArrowLeft,
+    Download,
+    Fingerprint,
+    GraduationCap,
+    TrendingUp,
+} from 'lucide-react';
 import type { CountyIdentityValue } from '@/components/county-identity';
 import DateRangeFilter from '@/components/date-range-filter';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -17,6 +23,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Marker, MarkerContent, MarkerIcon } from '@/components/ui/marker';
 import type {
     WorkspacePagination,
     WorkspaceRow,
@@ -57,6 +64,20 @@ type CountyMetric = {
     averageProgress: number | null;
     averageScore: number | null;
 };
+type QuestionMetric = {
+    id: string;
+    question: string;
+    variantGroup: string;
+    difficulty: string;
+    tags: string[];
+    bankVersion: number | null;
+    bankChecksum: string | null;
+    lineageCount: number;
+    suppressed: boolean;
+    responseCount: number | null;
+    correctRate: number | null;
+    discrimination: number | null;
+};
 type Report = {
     privacy: { minimumCellSize: number };
     summary: {
@@ -78,6 +99,14 @@ type Report = {
         enrollments: number | null;
         completed: number | null;
     }>;
+    questionBank: {
+        hasData: boolean;
+        attempts: number | null;
+        suppressed: boolean;
+        lineages: number;
+        rows: QuestionMetric[];
+        pagination: WorkspacePagination;
+    };
     options: {
         counties: CountyIdentityValue[];
         courses: Array<{ id: string; name: string }>;
@@ -197,6 +226,59 @@ export default function LearningAnalytics({
             page.url,
         ),
     }));
+    const questionRows: WorkspaceRow[] = report.questionBank.rows.map(
+        (item) => ({
+            id: item.id,
+            cells: [
+                item.question,
+                item.variantGroup,
+                item.difficulty,
+                item.tags.join(', ') || '—',
+                metric(
+                    item.responseCount,
+                    item.suppressed,
+                    report.privacy.minimumCellSize,
+                    localization.current,
+                    copy,
+                ),
+                metric(
+                    item.correctRate,
+                    item.suppressed,
+                    report.privacy.minimumCellSize,
+                    localization.current,
+                    copy,
+                    true,
+                ),
+                item.suppressed
+                    ? copy.suppressed.replace(
+                          ':count',
+                          report.privacy.minimumCellSize.toLocaleString(
+                              localization.current,
+                          ),
+                      )
+                    : item.discrimination === null
+                      ? '—'
+                      : copy.percentage_points.replace(
+                            ':value',
+                            item.discrimination.toLocaleString(
+                                localization.current,
+                                { maximumFractionDigits: 2 },
+                            ),
+                        ),
+                item.lineageCount > 1
+                    ? copy.multiple_retained_lineages
+                    : item.bankVersion === null
+                      ? copy.legacy_unversioned
+                      : copy.bank_version.replace(
+                            ':version',
+                            item.bankVersion.toLocaleString(
+                                localization.current,
+                            ),
+                        ),
+                item.lineageCount,
+            ],
+        }),
+    );
 
     return (
         <>
@@ -374,6 +456,74 @@ export default function LearningAnalytics({
                                         </div>
                                     </div>
                                 ))}
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>
+                                    {copy.question_bank_title}
+                                </CardTitle>
+                                <CardDescription>
+                                    {copy.question_bank_description}
+                                </CardDescription>
+                                <Marker variant="border">
+                                    <MarkerIcon>
+                                        <Fingerprint />
+                                    </MarkerIcon>
+                                    <MarkerContent>
+                                        {copy.question_bank_lineage
+                                            .replace(
+                                                ':attempts',
+                                                report.questionBank.suppressed
+                                                    ? copy.suppressed.replace(
+                                                          ':count',
+                                                          report.privacy.minimumCellSize.toLocaleString(
+                                                              localization.current,
+                                                          ),
+                                                      )
+                                                    : Number(
+                                                          report.questionBank
+                                                              .attempts,
+                                                      ).toLocaleString(
+                                                          localization.current,
+                                                      ),
+                                            )
+                                            .replace(
+                                                ':lineages',
+                                                report.questionBank.lineages.toLocaleString(
+                                                    localization.current,
+                                                ),
+                                            )}
+                                    </MarkerContent>
+                                </Marker>
+                            </CardHeader>
+                            <CardContent>
+                                {report.questionBank.hasData ? (
+                                    <WorkspaceDataTable
+                                        columns={[
+                                            copy.question,
+                                            copy.variant_group,
+                                            copy.difficulty,
+                                            copy.tags,
+                                            copy.responses,
+                                            copy.correct_rate,
+                                            copy.discrimination,
+                                            copy.bank_lineage,
+                                            copy.lineage_count,
+                                        ]}
+                                        rows={questionRows}
+                                        pagination={
+                                            report.questionBank.pagination
+                                        }
+                                    />
+                                ) : (
+                                    <WorkspaceEmptyState
+                                        title={copy.question_bank_empty_title}
+                                        description={
+                                            copy.question_bank_empty_description
+                                        }
+                                    />
+                                )}
                             </CardContent>
                         </Card>
                         <Card>

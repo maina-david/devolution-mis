@@ -4,9 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\County;
 use App\Models\KnowledgeItem;
+use App\Models\LearningAssessmentAttempt;
 use App\Models\LearningCertificate;
 use App\Models\LearningCourse;
 use App\Models\LearningEnrollment;
+use App\Models\LearningLesson;
+use App\Models\LearningModule;
+use App\Models\LearningQuestionBank;
+use App\Models\LearningQuestionBankItem;
+use App\Models\LearningQuizQuestion;
 use App\Models\User;
 use App\Services\LearningAnalyticsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -149,7 +155,9 @@ class LearningAnalyticsTest extends TestCase
 
         $pdf = $this->actingAs($admin)->get(route('learning.analytics.export', ['pdf']));
         $pdf->assertOk()->assertDownload();
-        $this->assertStringNotContainsString('97.25', $pdf->getContent());
+        $pdfContent = $pdf->getContent();
+        $this->assertIsString($pdfContent);
+        $this->assertStringNotContainsString('97.25', $pdfContent);
     }
 
     public function test_learning_analytics_interface_and_tabular_exports_follow_the_active_locale(): void
@@ -201,6 +209,89 @@ class LearningAnalyticsTest extends TestCase
                 ->where('courses.data.0.knowledgeRecommendations.0.title', 'County planning field guide')
                 ->has('courses.data.0.knowledgeRecommendations', 1)
             );
+    }
+
+    public function test_question_bank_item_analysis_is_scoped_privacy_protected_and_lineage_bound(): void
+    {
+        $county = County::factory()->create();
+        $outsideCounty = County::factory()->create();
+        $course = LearningCourse::factory()->create(['status' => 'published']);
+        $module = LearningModule::factory()->create(['learning_course_id' => $course->id]);
+        $lesson = LearningLesson::factory()->create(['learning_module_id' => $module->id, 'content_type' => 'quiz']);
+        $frequentlyMissed = LearningQuizQuestion::factory()->create(['learning_lesson_id' => $lesson->id, 'question' => 'Which control prevents self-approval?', 'sequence' => 1]);
+        $sparseQuestion = LearningQuizQuestion::factory()->create(['learning_lesson_id' => $lesson->id, 'question' => 'Which checksum protects the bank?', 'sequence' => 2]);
+        $bank = LearningQuestionBank::factory()->create(['learning_course_id' => $course->id, 'created_by' => $course->owner_id, 'version' => 3, 'checksum' => str_repeat('a', 64), 'status' => 'draft']);
+        LearningQuestionBankItem::factory()->create(['learning_question_bank_id' => $bank->id, 'learning_quiz_question_id' => $frequentlyMissed->id, 'variant_group' => 'separation-of-duties', 'difficulty' => 'advanced', 'tags' => ['governance'], 'sequence' => 1]);
+        LearningQuestionBankItem::factory()->create(['learning_question_bank_id' => $bank->id, 'learning_quiz_question_id' => $sparseQuestion->id, 'variant_group' => 'integrity', 'difficulty' => 'standard', 'tags' => ['checksum'], 'sequence' => 2]);
+        $bank->update(['status' => 'published']);
+        $admin = User::factory()->countyAdmin($county)->create();
+        $scores = [90.0, 40.0, 50.0];
+        foreach ($scores as $index => $score) {
+            $enrollment = $this->enrollment($course, $county, 'completed', 100, $score);
+            $questions = [[
+                'question_id' => $frequentlyMissed->id,
+                'answer' => $index === 0 ? 'a' : 'b',
+                'correct' => $index === 0,
+                'points' => 1.0,
+            ]];
+            if ($index === 0) {
+                $questions[] = ['question_id' => $sparseQuestion->id, 'answer' => 'a', 'correct' => true, 'points' => 1.0];
+            }
+            LearningAssessmentAttempt::factory()->create([
+                'learning_enrollment_id' => $enrollment->id,
+                'attempt_number' => 1,
+                'score' => $score,
+                'result_snapshot' => ['question_bank_id' => $bank->id, 'question_bank_checksum' => $bank->checksum, 'questions' => $questions],
+            ]);
+        }
+        $outsideEnrollment = $this->enrollment($course, $outsideCounty, 'completed', 100, 100);
+        LearningAssessmentAttempt::factory()->create([
+            'learning_enrollment_id' => $outsideEnrollment->id,
+            'result_snapshot' => ['question_bank_id' => $bank->id, 'question_bank_checksum' => $bank->checksum, 'questions' => [['question_id' => $frequentlyMissed->id, 'correct' => true, 'points' => 1.0]]],
+        ]);
+        $newerBank = LearningQuestionBank::factory()->create(['learning_course_id' => $course->id, 'created_by' => $course->owner_id, 'version' => 4, 'checksum' => str_repeat('b', 64), 'status' => 'draft']);
+        LearningQuestionBankItem::factory()->create(['learning_question_bank_id' => $newerBank->id, 'learning_quiz_question_id' => $frequentlyMissed->id, 'variant_group' => 'updated-control', 'difficulty' => 'advanced', 'tags' => ['updated'], 'sequence' => 1]);
+        $emptyEnrollment = $this->enrollment($course, $county, 'completed', 100, 0);
+        LearningAssessmentAttempt::factory()->create([
+            'learning_enrollment_id' => $emptyEnrollment->id,
+            'score' => 0,
+            'result_snapshot' => ['question_bank_id' => $newerBank->id, 'question_bank_checksum' => $newerBank->checksum, 'questions' => []],
+        ]);
+
+        $this->actingAs($admin)->get(route('learning.analytics.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('report.questionBank.hasData', true)
+                ->where('report.questionBank.attempts', 3)
+                ->where('report.questionBank.lineages', 1)
+                ->where('report.questionBank.rows.0.question', 'Which control prevents self-approval?')
+                ->where('report.questionBank.rows.0.responseCount', 3)
+                ->where('report.questionBank.rows.0.correctRate', 33.33)
+                ->where('report.questionBank.rows.0.discrimination', 45)
+                ->where('report.questionBank.rows.0.variantGroup', 'separation-of-duties')
+                ->where('report.questionBank.rows.0.bankVersion', 3)
+                ->where('report.questionBank.rows.0.bankChecksum', str_repeat('a', 64))
+                ->where('report.questionBank.rows.1.question', 'Which checksum protects the bank?')
+                ->where('report.questionBank.rows.1.suppressed', true)
+                ->where('report.questionBank.rows.1.responseCount', null)
+                ->where('report.questionBank.pagination.pageName', 'question_page')
+                ->has('report.questionBank.rows', 2));
+
+        $newerEnrollment = $this->enrollment($course, $county, 'completed', 100, 75);
+        LearningAssessmentAttempt::factory()->create([
+            'learning_enrollment_id' => $newerEnrollment->id,
+            'score' => 75,
+            'result_snapshot' => ['question_bank_id' => $newerBank->id, 'question_bank_checksum' => $newerBank->checksum, 'questions' => [['question_id' => $frequentlyMissed->id, 'correct' => false, 'points' => 1.0]]],
+        ]);
+
+        $this->actingAs($admin)->get(route('learning.analytics.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('report.questionBank.attempts', 4)
+                ->where('report.questionBank.lineages', 2)
+                ->where('report.questionBank.rows.0.lineageCount', 2)
+                ->where('report.questionBank.rows.0.bankVersion', null)
+                ->where('report.questionBank.rows.0.bankChecksum', null));
     }
 
     private function enrollment(LearningCourse $course, County $county, string $status, float $progress, ?float $score, string $date = '2026-08-01'): LearningEnrollment

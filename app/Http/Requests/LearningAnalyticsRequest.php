@@ -32,6 +32,7 @@ class LearningAnalyticsRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:120'],
             'course_page' => ['nullable', 'integer', 'min:1'],
             'county_page' => ['nullable', 'integer', 'min:1'],
+            'question_page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'in:10,25,50'],
         ];
     }

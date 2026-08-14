@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $variant_group
+ * @property string $difficulty
+ * @property list<string> $tags
+ */
 #[Fillable(['learning_question_bank_id', 'learning_quiz_question_id', 'variant_group', 'difficulty', 'tags', 'sequence'])]
 class LearningQuestionBankItem extends Model
 {

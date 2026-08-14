@@ -158,7 +158,7 @@ class LearningAnalyticsController extends Controller
     /** @return array<string, mixed> */
     private function filters(LearningAnalyticsRequest $request): array
     {
-        return [...$request->safe()->only(['from', 'to', 'county_id', 'course_id', 'status', 'search']), 'course_page' => $request->integer('course_page', 1), 'county_page' => $request->integer('county_page', 1), 'per_page' => $request->integer('per_page', 10)];
+        return [...$request->safe()->only(['from', 'to', 'county_id', 'course_id', 'status', 'search']), 'course_page' => $request->integer('course_page', 1), 'county_page' => $request->integer('county_page', 1), 'question_page' => $request->integer('question_page', 1), 'per_page' => $request->integer('per_page', 10)];
     }
 
     private function user(LearningAnalyticsRequest $request): User
