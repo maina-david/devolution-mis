@@ -294,7 +294,7 @@ export default function IntegrationManagement({
                     ))}
                     {systems.length === 0 && (
                         <WorkspaceEmptyState
-                            title="No integration systems registered"
+                            title={copy.no_integration_systems_registered}
                             description="Register the first source system and submit a versioned interface contract for independent approval."
                             className="min-h-56 lg:col-span-2 xl:col-span-3"
                         />
@@ -302,7 +302,7 @@ export default function IntegrationManagement({
                 </section>
                 <section className="overflow-hidden rounded-xl border bg-card">
                     <RegisterHeader
-                        title="Exchange register"
+                        title={copy.exchange_register}
                         description={`${exchanges.total.toLocaleString()} payload-safe exchange records`}
                         filters={filters}
                     />
@@ -340,7 +340,7 @@ export default function IntegrationManagement({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching exchanges"
+                            title={copy.no_matching_exchanges}
                             description="Dispatch a schema-valid sandbox payload or adjust the filters."
                             className="min-h-64 border-0"
                         />
@@ -391,7 +391,7 @@ export default function IntegrationManagement({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No reconciliation exceptions"
+                            title={copy.no_reconciliation_exceptions}
                             description="No discrepancies match the current scope and filters."
                             className="min-h-56 border-0"
                         />
@@ -532,13 +532,13 @@ function SystemDetails({
     return (
         <>
             <div className="grid gap-3 rounded-xl border p-4 text-sm md:grid-cols-2">
-                <Detail label="Owner" value={system.owner} />
+                <Detail label={copy.owner} value={system.owner} />
                 <Detail
-                    label="Owner organization"
+                    label={copy.owner_organization}
                     value={system.organization ?? 'Not assigned'}
                 />
                 <Detail
-                    label="Reference catalogue"
+                    label={copy.reference_catalogue}
                     value={
                         system.referenceData
                             ? `v${system.referenceData.version} · ${system.referenceData.checksum}`
@@ -546,20 +546,20 @@ function SystemDetails({
                     }
                 />
                 <Detail
-                    label="Classification"
+                    label={copy.classification}
                     value={humanize(system.classification)}
                 />
                 <Detail
-                    label="Authentication"
+                    label={copy.authentication}
                     value={humanize(system.authScheme)}
                 />
-                <Detail label="Health" value={humanize(system.health)} />
+                <Detail label={copy.health} value={humanize(system.health)} />
                 <Detail
-                    label="Endpoint"
+                    label={copy.endpoint}
                     value={system.baseUrl ?? 'Not configured'}
                 />
                 <Detail
-                    label="Credential reference"
+                    label={copy.credential_reference}
                     value={system.credentialReference ?? 'Not configured'}
                 />
             </div>
@@ -631,23 +631,23 @@ function PublishContractForm({
             >
                 <Field
                     name="source_owner_approval_reference"
-                    label="Source-owner approval reference"
+                    label={copy.source_owner_approval_reference}
                     optional={system.environment !== 'production'}
                 />
                 <Field
                     name="data_sharing_agreement_reference"
-                    label="Data-sharing agreement reference"
+                    label={copy.data_sharing_agreement_reference}
                     optional={system.environment !== 'production'}
                 />
                 <DatePickerField
                     name="effective_from"
-                    label="Effective from"
+                    label={copy.effective_from}
                     includeTime
                     required
                 />
                 <DatePickerField
                     name="effective_to"
-                    label="Effective until"
+                    label={copy.effective_until}
                     includeTime
                 />
                 <Button type="submit">
@@ -669,7 +669,7 @@ function SystemForm({
 
     return (
         <FormSheet
-            title="Register integration system"
+            title={copy.register_integration_system}
             description="Register endpoint metadata and a vault reference only. Never store credentials in this form."
             triggerLabel="New system"
             icon={Plus}
@@ -685,23 +685,23 @@ function SystemForm({
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Field name="code" label="System code" />
-                            <Field name="name" label="System name" />
+                            <Field name="code" label={copy.system_code} />
+                            <Field name="name" label={copy.system_name} />
                             <Field
                                 name="system_owner"
-                                label="Authoritative system owner"
+                                label={copy.authoritative_system_owner}
                             />
                             <SearchableSelect
                                 id="integration-organization"
                                 name="owner_organization_id"
-                                label="Owner organization"
+                                label={copy.owner_organization}
                                 options={organizations}
                                 optional
                             />
                             <SearchableSelect
                                 id="integration-environment"
                                 name="environment"
-                                label="Environment"
+                                label={copy.environment}
                                 options={['sandbox', 'test', 'production'].map(
                                     option,
                                 )}
@@ -710,7 +710,7 @@ function SystemForm({
                             <SearchableSelect
                                 id="integration-transport"
                                 name="transport"
-                                label="Transport"
+                                label={copy.transport}
                                 options={['fixture', 'https_json', 'sftp'].map(
                                     option,
                                 )}
@@ -719,7 +719,7 @@ function SystemForm({
                             <SearchableSelect
                                 id="integration-auth"
                                 name="auth_scheme"
-                                label="Authentication"
+                                label={copy.authentication}
                                 options={[
                                     'none',
                                     'oauth2_client_credentials',
@@ -732,7 +732,7 @@ function SystemForm({
                             <SearchableSelect
                                 id="integration-direction"
                                 name="direction"
-                                label="Direction"
+                                label={copy.direction}
                                 options={[
                                     'inbound',
                                     'outbound',
@@ -743,7 +743,7 @@ function SystemForm({
                             <SearchableSelect
                                 id="integration-classification"
                                 name="data_classification"
-                                label="Data classification"
+                                label={copy.data_classification}
                                 options={[
                                     'public',
                                     'official',
@@ -755,7 +755,7 @@ function SystemForm({
                             <SearchableSelect
                                 id="integration-status"
                                 name="status"
-                                label="Lifecycle status"
+                                label={copy.lifecycle_status}
                                 options={[
                                     'design',
                                     'contract_review',
@@ -765,16 +765,20 @@ function SystemForm({
                                 ].map(option)}
                                 defaultValue="design"
                             />
-                            <Field name="base_url" label="Base URL" optional />
+                            <Field
+                                name="base_url"
+                                label={copy.base_url}
+                                optional
+                            />
                             <Field
                                 name="credential_reference"
-                                label="Credential-vault reference"
+                                label={copy.credential_vault_reference}
                                 optional
                             />
                         </div>
                         <TextField
                             name="purpose"
-                            label="Purpose and authorized data use"
+                            label={copy.purpose_and_authorized_data_use}
                         />
                         <Button type="submit" disabled={processing}>
                             {copy.register_system}
@@ -824,7 +828,7 @@ function ContractForm({ systems }: { systems: System[] }) {
 
     return (
         <FormSheet
-            title="Submit interface contract"
+            title={copy.submit_interface_contract}
             description="Define the schema, mappings, idempotency and retry policy for independent publication."
             triggerLabel="New contract"
             icon={FileJson}
@@ -837,21 +841,21 @@ function ContractForm({ systems }: { systems: System[] }) {
                             <SearchableSelect
                                 id="contract-system"
                                 name="integration_system_id"
-                                label="Integration system"
+                                label={copy.integration_system}
                                 options={systems.map((system) => ({
                                     id: system.id,
                                     name: `${system.code} · ${system.name}`,
                                 }))}
                             />
-                            <Field name="name" label="Contract name" />
+                            <Field name="name" label={copy.contract_name} />
                             <Field
                                 name="resource_name"
-                                label="Canonical resource"
+                                label={copy.canonical_resource}
                             />
                             <SearchableSelect
                                 id="contract-method"
                                 name="http_method"
-                                label="HTTP method"
+                                label={copy.http_method}
                                 options={['GET', 'POST', 'PUT', 'PATCH'].map(
                                     (id) => ({ id, name: id }),
                                 )}
@@ -859,50 +863,50 @@ function ContractForm({ systems }: { systems: System[] }) {
                             />
                             <Field
                                 name="path"
-                                label="Resource path"
+                                label={copy.resource_path}
                                 defaultValue="/v1/resource"
                             />
                             <Field
                                 name="idempotency_field"
-                                label="Idempotency field"
+                                label={copy.idempotency_field}
                                 optional
                             />
                             <Field
                                 name="rate_limit_per_minute"
-                                label="Rate limit per minute"
+                                label={copy.rate_limit_per_minute}
                                 type="number"
                                 defaultValue="60"
                             />
                         </div>
                         <JsonField
                             name="request_schema"
-                            label="Request JSON Schema"
+                            label={copy.request_json_schema}
                             defaultValue={
                                 '{"type":"object","required":["reference"],"properties":{"reference":{"type":"string"}}}'
                             }
                         />
                         <JsonField
                             name="response_schema"
-                            label="Response JSON Schema"
+                            label={copy.response_json_schema}
                             defaultValue={
                                 '{"type":"object","required":["accepted"],"properties":{"accepted":{"type":"boolean"}}}'
                             }
                         />
                         <JsonField
                             name="field_mappings"
-                            label="Canonical field mappings"
+                            label={copy.canonical_field_mappings}
                             defaultValue="{}"
                         />
                         <JsonField
                             name="required_headers"
-                            label="Required headers"
+                            label={copy.required_headers}
                             defaultValue={
                                 '["X-Correlation-ID","Idempotency-Key"]'
                             }
                         />
                         <JsonField
                             name="retry_policy"
-                            label="Retry policy"
+                            label={copy.retry_policy}
                             defaultValue={
                                 '{"max_attempts":3,"backoff_seconds":[60,300,1800]}'
                             }
@@ -934,27 +938,27 @@ function DispatchForm({
             <p className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
                 {copy.production_delivery_gate}
             </p>
-            <Field name="idempotency_key" label="Idempotency key" />
+            <Field name="idempotency_key" label={copy.idempotency_key} />
             <Field
                 name="external_reference"
-                label="External reference"
+                label={copy.external_reference}
                 optional
             />
             <SearchableSelect
                 id="exchange-county"
                 name="county_id"
-                label="County scope"
+                label={copy.county_scope}
                 options={counties}
                 optional
             />
             <DatePickerField
                 name="source_occurred_at"
-                label="Source event time"
+                label={copy.source_event_time}
                 includeTime
             />
             <JsonField
                 name="payload"
-                label="Contract-valid JSON payload"
+                label={copy.contract_valid_json_payload}
                 defaultValue="{}"
             />
             <Button type="submit">
@@ -974,11 +978,11 @@ function ActivationForm({ system }: { system: System }) {
             </p>
             <Field
                 name="production_approval_reference"
-                label="Source-owner activation reference"
+                label={copy.source_owner_activation_reference}
             />
             <DatePickerField
                 name="production_approved_at"
-                label="Approval date and time"
+                label={copy.approval_date_and_time}
                 includeTime
                 required
             />
@@ -1033,21 +1037,24 @@ function ExchangeAction({
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
-                        <Detail label="Contract" value={exchange.contract} />
                         <Detail
-                            label="Idempotency key"
+                            label={copy.contract}
+                            value={exchange.contract}
+                        />
+                        <Detail
+                            label={copy.idempotency_key}
                             value={exchange.idempotencyKey}
                         />
                         <Detail
-                            label="Payload checksum"
+                            label={copy.payload_checksum}
                             value={exchange.checksum}
                         />
                         <Detail
-                            label="Status"
+                            label={copy.status}
                             value={humanize(exchange.status)}
                         />
                         <Detail
-                            label="Next attempt"
+                            label={copy.next_attempt}
                             value={
                                 exchange.nextAttemptAt
                                     ? new Date(
@@ -1057,7 +1064,7 @@ function ExchangeAction({
                             }
                         />
                         <Detail
-                            label="Accepted"
+                            label={copy.accepted}
                             value={new Date(exchange.acceptedAt).toLocaleString(
                                 DEFAULT_LOCALE,
                             )}
@@ -1141,7 +1148,7 @@ function ExchangeAction({
                             </div>
                         ) : (
                             <WorkspaceEmptyState
-                                title="No retained attempts"
+                                title={copy.no_retained_attempts}
                                 description="This exchange predates the immutable attempt ledger."
                                 className="min-h-40"
                             />
@@ -1193,11 +1200,11 @@ function ExceptionAction({
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
                         <Detail
-                            label="Description"
+                            label={copy.description_label}
                             value={exception.description}
                         />
                         <Detail
-                            label="References"
+                            label={copy.references}
                             value={`${exception.externalReference ?? '—'} / ${exception.localReference ?? '—'}`}
                         />
                         {canResolve && exception.status === 'open' && (
@@ -1207,7 +1214,9 @@ function ExceptionAction({
                             >
                                 <TextField
                                     name="resolution"
-                                    label="Verified resolution and evidence"
+                                    label={
+                                        copy.verified_resolution_and_evidence
+                                    }
                                 />
                                 <Button type="submit">
                                     <RefreshCcw /> {copy.resolve_exception}
