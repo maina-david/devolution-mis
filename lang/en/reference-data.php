@@ -19,6 +19,11 @@ return [
     'save_county_coverage' => 'Save county coverage', 'review_archive' => 'Review archive', 'archive_programme_coverage' => 'Archive programme coverage',
     'archive_coverage_description' => 'Archive this effective assignment. Published catalogue snapshots retain their immutable copy.',
     'archive_coverage' => 'Archive coverage', 'canonical_releases' => 'Canonical releases',
+    'coverage' => [
+        'errors' => ['unauthorized' => 'You are not authorized to manage programme county coverage.', 'programme_unavailable' => 'The selected programme is no longer available.', 'county_unavailable' => 'The selected county is no longer available.', 'implementation_lead_unavailable' => 'The selected implementation lead is no longer active or available.', 'before_programme_start' => 'County coverage cannot begin before the programme starts.', 'after_programme_end' => 'County coverage must end on or before the programme end date.', 'overlap' => 'This programme already has overlapping coverage for the selected county.'],
+        'outcomes' => ['created' => 'Programme county coverage created.', 'archived' => 'Programme county coverage archived.'],
+        'audit' => ['created' => 'Programme county coverage created.', 'archived' => 'Programme county coverage archived.'],
+    ],
     'canonical_releases_description' => 'Immutable, checksummed catalogue snapshots for controlled module and integration consumption.',
     'submit_snapshot' => 'Submit snapshot', 'version' => 'Version', 'status' => 'Status', 'contents' => 'Contents', 'submitted_by' => 'Submitted by',
     'effective' => 'Effective', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Review and publish',

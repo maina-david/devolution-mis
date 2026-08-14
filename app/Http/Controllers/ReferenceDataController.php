@@ -282,7 +282,7 @@ class ReferenceDataController extends Controller
         $attributes = $request->validated();
         $create->handle($user, $attributes);
 
-        return $this->success('Programme county coverage created.');
+        return $this->success(__('reference-data.coverage.outcomes.created'));
     }
 
     public function destroyProgrammeCountyCoverage(Request $request, ProgrammeCountyCoverage $programmeCountyCoverage, AuditLogger $auditLogger): RedirectResponse
@@ -290,14 +290,14 @@ class ReferenceDataController extends Controller
         Gate::authorize(ProgrammePermission::ManageReferenceData->value);
         /** @var User $user */
         $user = $request->user();
-        $auditLogger->record($user, $programmeCountyCoverage, 'reference.programme-coverage.archived', 'Programme county coverage archived.', $programmeCountyCoverage->county_id, [
+        $auditLogger->record($user, $programmeCountyCoverage, 'reference.programme-coverage.archived', __('reference-data.coverage.audit.archived'), $programmeCountyCoverage->county_id, [
             'programme_id' => $programmeCountyCoverage->programme_id,
             'county_id' => $programmeCountyCoverage->county_id,
             'source_reference' => $programmeCountyCoverage->source_reference,
         ]);
         $programmeCountyCoverage->delete();
 
-        return $this->success('Programme county coverage archived.');
+        return $this->success(__('reference-data.coverage.outcomes.archived'));
     }
 
     private function audit(Request $request, AuditLogger $auditLogger, Organization|Sector|Programme $subject, string $action): void

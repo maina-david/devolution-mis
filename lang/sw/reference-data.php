@@ -19,6 +19,11 @@ return [
     'save_county_coverage' => 'Hifadhi ufikaji wa kaunti', 'review_archive' => 'Kagua uhifadhi', 'archive_programme_coverage' => 'Hifadhi ufikaji wa programu',
     'archive_coverage_description' => 'Hifadhi mgawo huu wa kipindi. Picha za katalogi zilizochapishwa hubaki bila kubadilika.',
     'archive_coverage' => 'Hifadhi ufikaji', 'canonical_releases' => 'Matoleo rasmi',
+    'coverage' => [
+        'errors' => ['unauthorized' => 'Hujaruhusiwa kusimamia ufikaji wa programu kwa kaunti.', 'programme_unavailable' => 'Programu iliyochaguliwa haipatikani tena.', 'county_unavailable' => 'Kaunti iliyochaguliwa haipatikani tena.', 'implementation_lead_unavailable' => 'Kiongozi wa utekelezaji aliyechaguliwa hayuko hai au hapatikani tena.', 'before_programme_start' => 'Ufikaji wa kaunti hauwezi kuanza kabla ya programu kuanza.', 'after_programme_end' => 'Ufikaji wa kaunti lazima ukamilike kabla au siku ya mwisho ya programu.', 'overlap' => 'Programu hii tayari ina ufikaji unaoingiliana kwa kaunti iliyochaguliwa.'],
+        'outcomes' => ['created' => 'Ufikaji wa programu kwa kaunti umeundwa.', 'archived' => 'Ufikaji wa programu kwa kaunti umehifadhiwa.'],
+        'audit' => ['created' => 'Ufikaji wa programu kwa kaunti umeundwa.', 'archived' => 'Ufikaji wa programu kwa kaunti umehifadhiwa.'],
+    ],
     'canonical_releases_description' => 'Picha za katalogi zisizobadilika zenye checksum kwa matumizi yanayodhibitiwa.',
     'submit_snapshot' => 'Wasilisha picha', 'version' => 'Toleo', 'status' => 'Hali', 'contents' => 'Yaliyomo', 'submitted_by' => 'Aliyewasilisha',
     'effective' => 'Kuanza kutumika', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Kagua na uchapishe',

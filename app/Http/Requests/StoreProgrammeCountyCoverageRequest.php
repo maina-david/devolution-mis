@@ -54,11 +54,11 @@ class StoreProgrammeCountyCoverageRequest extends FormRequest
             $endsOn = $this->filled('ends_on') ? $this->date('ends_on') : null;
 
             if ($programme?->starts_on && $startsOn?->isBefore($programme->starts_on)) {
-                $validator->errors()->add('starts_on', 'County coverage cannot begin before the programme starts.');
+                $validator->errors()->add('starts_on', __('reference-data.coverage.errors.before_programme_start'));
             }
 
             if ($programme?->ends_on && ($endsOn === null || $endsOn->isAfter($programme->ends_on))) {
-                $validator->errors()->add('ends_on', 'County coverage must end on or before the programme end date.');
+                $validator->errors()->add('ends_on', __('reference-data.coverage.errors.after_programme_end'));
             }
         }];
     }

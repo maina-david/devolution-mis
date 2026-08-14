@@ -142,6 +142,70 @@ class ProgrammeCountyCoverageTest extends TestCase
         $this->assertDatabaseCount('programme_county_coverages', 0);
     }
 
+    public function test_action_boundary_denies_unprivileged_roles_before_reference_resolution(): void
+    {
+        $actors = [
+            User::factory()->countyOfficial()->create(),
+            User::factory()->countyAdmin()->create(),
+            User::factory()->assessor()->create(),
+            User::factory()->developmentPartner()->create(),
+            User::factory()->topManagement()->create(),
+        ];
+
+        foreach ($actors as $actor) {
+            try {
+                app(CreateProgrammeCountyCoverage::class)->handle($actor, [
+                    'programme_id' => (string) Str::uuid(),
+                    'county_id' => (string) Str::uuid(),
+                    'implementation_lead_id' => (string) Str::uuid(),
+                    'starts_on' => '2026-01-01',
+                    'ends_on' => '2026-12-31',
+                    'status' => 'planned',
+                    'funding_allocation' => null,
+                    'currency' => 'KES',
+                    'source_reference' => 'FUZZ-DENIED',
+                    'notes' => null,
+                ]);
+                $this->fail('An unprivileged role must not create programme county coverage.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+            }
+        }
+
+        $this->assertDatabaseCount('programme_county_coverages', 0);
+        $this->assertDatabaseMissing('audit_events', ['action' => 'reference.programme-coverage.created']);
+    }
+
+    public function test_action_boundary_localizes_and_rejects_missing_or_inactive_references(): void
+    {
+        app()->setLocale('fr');
+        $manager = User::factory()->platformAdmin()->create();
+        $programme = Programme::factory()->create(['starts_on' => '2025-01-01', 'ends_on' => '2027-12-31']);
+        $county = County::factory()->create();
+        $inactiveLead = Organization::factory()->create(['status' => 'inactive']);
+
+        try {
+            app(CreateProgrammeCountyCoverage::class)->handle($manager, [
+                ...$this->payload($programme, $county, $inactiveLead),
+                'county_id' => (string) Str::uuid(),
+            ]);
+            $this->fail('A missing county must be rejected.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('Le comté sélectionné n’est plus disponible.', $exception->getMessage());
+        }
+
+        try {
+            app(CreateProgrammeCountyCoverage::class)->handle($manager, $this->payload($programme, $county, $inactiveLead));
+            $this->fail('An inactive implementation lead must be rejected.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame('Le responsable de mise en œuvre sélectionné n’est plus actif ou disponible.', $exception->getMessage());
+        }
+
+        $this->assertDatabaseCount('programme_county_coverages', 0);
+    }
+
     public function test_coverage_is_permission_protected_archivable_and_included_in_immutable_release_snapshot(): void
     {
         $manager = User::factory()->platformAdmin()->create();
@@ -208,8 +272,9 @@ class ProgrammeCountyCoverageTest extends TestCase
         $this->assertStringNotContainsString('type="date"', $source);
     }
 
-    /** @param array<string, mixed> $overrides
-     * @return array<string, mixed>
+    /**
+     * @param  array{programme_id?: string, county_id?: string, implementation_lead_id?: string|null, starts_on?: string, ends_on?: string|null, status?: string, funding_allocation?: int|float|string|null, currency?: string, source_reference?: string, notes?: string|null}  $overrides
+     * @return array{programme_id: string, county_id: string, implementation_lead_id: string|null, starts_on: string, ends_on: string|null, status: string, funding_allocation: int|float|string|null, currency: string, source_reference: string, notes: string|null}
      */
     private function payload(Programme $programme, County $county, Organization $lead, array $overrides = []): array
     {

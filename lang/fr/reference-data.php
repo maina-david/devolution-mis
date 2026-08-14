@@ -19,6 +19,11 @@ return [
     'save_county_coverage' => 'Enregistrer la couverture', 'review_archive' => 'Examiner l’archivage', 'archive_programme_coverage' => 'Archiver la couverture du programme',
     'archive_coverage_description' => 'Archivez cette affectation effective. Les instantanés publiés du catalogue conservent leur copie immuable.',
     'archive_coverage' => 'Archiver la couverture', 'canonical_releases' => 'Versions canoniques',
+    'coverage' => [
+        'errors' => ['unauthorized' => 'Vous n’êtes pas autorisé à gérer la couverture des programmes par comté.', 'programme_unavailable' => 'Le programme sélectionné n’est plus disponible.', 'county_unavailable' => 'Le comté sélectionné n’est plus disponible.', 'implementation_lead_unavailable' => 'Le responsable de mise en œuvre sélectionné n’est plus actif ou disponible.', 'before_programme_start' => 'La couverture du comté ne peut pas commencer avant le programme.', 'after_programme_end' => 'La couverture du comté doit se terminer au plus tard à la fin du programme.', 'overlap' => 'Ce programme possède déjà une couverture chevauchante pour le comté sélectionné.'],
+        'outcomes' => ['created' => 'La couverture du programme par comté a été créée.', 'archived' => 'La couverture du programme par comté a été archivée.'],
+        'audit' => ['created' => 'Couverture du programme par comté créée.', 'archived' => 'Couverture du programme par comté archivée.'],
+    ],
     'canonical_releases_description' => 'Instantanés immuables et contrôlés par somme pour une consommation maîtrisée par les modules et intégrations.',
     'submit_snapshot' => 'Soumettre l’instantané', 'version' => 'Version', 'status' => 'État', 'contents' => 'Contenu', 'submitted_by' => 'Soumis par',
     'effective' => 'Prise d’effet', 'version_prefix' => 'v', 'ellipsis' => '…', 'review_and_publish' => 'Examiner et publier',
