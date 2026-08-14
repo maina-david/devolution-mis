@@ -19,13 +19,13 @@ class ReconcilePartnerContributionExchangesCommand extends Command
     {
         $serviceEmail = (string) config('partners.reconciliation_service_user_email');
         if ($serviceEmail === '') {
-            $this->components->warn('Partner exchange reconciliation is inactive because no service identity is configured.');
+            $this->components->warn(__('partner-coordination.command.reconciliation_inactive'));
 
             return self::SUCCESS;
         }
         $actor = User::query()->where('email', $serviceEmail)->first();
         if (! $actor instanceof User || ! $actor->can(ProgrammePermission::ManageIntegrations->value)) {
-            $this->components->error('The configured partner reconciliation service identity is missing or unauthorized.');
+            $this->components->error(__('partner-coordination.command.service_identity_unauthorized'));
 
             return self::FAILURE;
         }
@@ -42,7 +42,7 @@ class ReconcilePartnerContributionExchangesCommand extends Command
                     $runs++;
                 }
             });
-        $this->components->info("Completed {$runs} partner contribution source reconciliation run(s).");
+        $this->components->info(trans_choice('partner-coordination.command.reconciliation_completed', $runs, ['count' => $runs]));
 
         return self::SUCCESS;
     }

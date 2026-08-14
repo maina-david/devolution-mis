@@ -19,6 +19,7 @@ use App\Services\EffectiveReferenceDataReleaseResolver;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -150,6 +151,7 @@ class IntegrationManagementTest extends TestCase
 
     public function test_partner_contribution_source_matching_is_idempotent_immutable_scoped_and_does_not_bypass_human_reconciliation(): void
     {
+        App::setLocale('fr');
         $county = County::factory()->create(['name' => 'Partner Source County']);
         $otherCounty = County::factory()->create(['name' => 'Outside Source County']);
         $sourceOperator = User::factory()->devolutionAdmin()->create();
@@ -184,10 +186,12 @@ class IntegrationManagementTest extends TestCase
         config()->set('partners.contribution_exchange_lookback_days', 7);
         config()->set('partners.reconciliation_service_user_email', $countyViewer->email);
         $this->assertSame(1, Artisan::call('partners:reconcile-contribution-exchanges'));
+        $this->assertStringContainsString('L’identité de service de rapprochement partenaire configurée est absente ou non autorisée.', Artisan::output());
         $this->assertDatabaseCount('reconciliation_runs', 0);
 
         config()->set('partners.reconciliation_service_user_email', $serviceIdentity->email);
         $this->assertSame(0, Artisan::call('partners:reconcile-contribution-exchanges'));
+        $this->assertStringContainsString('Un traitement de rapprochement d’une source de contribution partenaire a été effectué.', Artisan::output());
 
         $run = ReconciliationRun::query()->sole();
         $this->assertSame(4, $run->source_count);
@@ -203,9 +207,17 @@ class IntegrationManagementTest extends TestCase
         $this->assertDatabaseHas('partner_contribution_source_matches', ['external_reference' => 'SRC-MISSING-001', 'outcome' => 'missing_target']);
         $this->assertDatabaseHas('partner_contribution_source_matches', ['partner_contribution_id' => $scopeMismatchContribution->id, 'outcome' => 'county_scope_mismatch']);
         $this->assertDatabaseCount('reconciliation_exceptions', 3);
+        $this->assertDatabaseHas('reconciliation_exceptions', [
+            'exception_type' => 'value_mismatch',
+            'description' => 'La comparaison de la source de contribution partenaire a produit value_mismatch ; un examen humain et des preuves DMS saines sont requis avant toute décision de rapprochement.',
+        ]);
         $this->assertDatabaseCount('partner_contribution_reconciliations', 0);
         $this->assertSame('3000000.00', $mismatchedContribution->refresh()->disbursed_amount);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $run->id, 'action' => 'partner.contribution.exchange_reconciled']);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $run->id,
+            'action' => 'partner.contribution.exchange_reconciled',
+            'description' => "Le traitement de source de contribution partenaire {$run->reference} s’est terminé avec 3 exceptions.",
+        ]);
 
         $this->assertSame(0, Artisan::call('partners:reconcile-contribution-exchanges'));
         $this->assertDatabaseCount('reconciliation_runs', 1);
@@ -226,7 +238,10 @@ class IntegrationManagementTest extends TestCase
         $retainedMatch->update(['outcome' => 'value_mismatch']);
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
     private function systemPayload(array $overrides = []): array
     {
         return [...['code' => 'IPPD-SANDBOX', 'name' => 'IPPD sandbox', 'purpose' => 'Test the governed employee-reference exchange and reconciliation contract without production connectivity.', 'system_owner' => 'State Department for Public Service', 'environment' => 'sandbox', 'transport' => 'fixture', 'auth_scheme' => 'none', 'direction' => 'inbound', 'data_classification' => 'confidential', 'status' => 'contract_review'], ...$overrides];

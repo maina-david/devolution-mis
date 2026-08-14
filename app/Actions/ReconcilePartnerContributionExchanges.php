@@ -35,10 +35,10 @@ class ReconcilePartnerContributionExchanges
     public function handle(IntegrationContract $contract, User $actor, CarbonInterface $periodFrom, CarbonInterface $periodTo): ?ReconciliationRun
     {
         abort_unless($actor->can(ProgrammePermission::ManageIntegrations->value), 403);
-        abort_if($periodTo->isBefore($periodFrom), 422, 'The reconciliation period is invalid.');
+        abort_if($periodTo->isBefore($periodFrom), 422, __('partner-coordination.errors.reconciliation_period_invalid'));
         $contract->loadMissing('system');
-        abort_unless($contract->resource_name === self::ResourceName && $contract->status === 'published', 409, 'A published partner-contribution interface contract is required.');
-        abort_if($contract->effective_from?->isAfter(now()) || $contract->effective_to?->isBefore(now()), 409, 'The partner-contribution interface contract is not currently effective.');
+        abort_unless($contract->resource_name === self::ResourceName && $contract->status === 'published', 409, __('partner-coordination.errors.published_contribution_contract_required'));
+        abort_if($contract->effective_from?->isAfter(now()) || $contract->effective_to?->isBefore(now()), 409, __('partner-coordination.errors.contribution_contract_not_effective'));
 
         $exchangeIds = $this->unprocessedExchanges($contract, $periodFrom, $periodTo)->pluck('id');
         if ($exchangeIds->isEmpty()) {
@@ -128,7 +128,7 @@ class ReconcilePartnerContributionExchanges
         }, attempts: 3);
 
         if ($run instanceof ReconciliationRun) {
-            $this->auditLogger->record($actor, $run, 'partner.contribution.exchange_reconciled', "Partner contribution source run {$run->reference} completed with {$run->exception_count} exception(s).", metadata: ['contract_id' => $contract->id, 'result_checksum' => $run->result_checksum, 'source_count' => $run->source_count, 'matched_count' => $run->matched_count]);
+            $this->auditLogger->record($actor, $run, 'partner.contribution.exchange_reconciled', trans_choice('partner-coordination.audit.exchange_reconciled', $run->exception_count, ['reference' => $run->reference, 'count' => $run->exception_count]), metadata: ['contract_id' => $contract->id, 'result_checksum' => $run->result_checksum, 'source_count' => $run->source_count, 'matched_count' => $run->matched_count]);
         }
 
         return $run;
@@ -231,7 +231,7 @@ class ReconcilePartnerContributionExchanges
             'severity' => in_array($match->outcome, ['control_conflict', 'county_scope_mismatch'], true) ? 'critical' : 'high',
             'expected_value' => $this->canonicalJson->encode($comparison['snapshot']['local'] ?? null),
             'actual_value' => $this->canonicalJson->encode($comparison['snapshot']['source'] ?? $comparison['snapshot']['context']),
-            'description' => "Partner contribution source comparison produced {$match->outcome}; human review and clean DMS evidence are required before a reconciliation decision.",
+            'description' => __('partner-coordination.source_match_exception', ['outcome' => $match->outcome]),
             'status' => 'open',
         ]);
     }
@@ -241,12 +241,12 @@ class ReconcilePartnerContributionExchanges
     {
         $raw = trim((string) $value);
         if (preg_match('/^\d+(?:\.\d{1,2})?$/', $raw) !== 1) {
-            throw ValidationException::withMessages(['payload.amounts' => 'Partner contribution amounts must be non-negative with no more than two decimal places.']);
+            throw ValidationException::withMessages(['payload.amounts' => __('partner-coordination.errors.contribution_amount_precision')]);
         }
         [$whole, $fraction] = array_pad(explode('.', $raw, 2), 2, '');
         $normalized = (ltrim($whole, '0') ?: '0').'.'.str_pad($fraction, 2, '0');
         if (! is_numeric($normalized)) {
-            throw ValidationException::withMessages(['payload.amounts' => 'Partner contribution amounts could not be normalized.']);
+            throw ValidationException::withMessages(['payload.amounts' => __('partner-coordination.errors.contribution_amount_normalization')]);
         }
 
         return $normalized;
