@@ -204,22 +204,22 @@ class MonitoringEvaluationController extends Controller
         $user = $this->user($request);
         $this->authorizeEvaluation($user, $evaluation);
         $instance = $evaluation->workflowInstance;
-        abort_unless($instance instanceof WorkflowInstance, 409, 'Evaluation workflow is unavailable.');
+        abort_unless($instance instanceof WorkflowInstance, 409, __('evaluation-findings.errors.evaluation_workflow_unavailable'));
         $transition = $request->validated('transition');
         $hasCleanTermsOfReference = $evaluation->documentLinks()->where('purpose', 'programme-evaluation-tor')->whereHas('document', fn (Builder $query) => $query->where('scan_status', 'clean')->where('record_status', 'active'))->exists();
         $hasCleanReport = $evaluation->documentLinks()->where('purpose', 'programme-evaluation-report')->whereHas('document', fn (Builder $query) => $query->where('scan_status', 'clean')->where('record_status', 'active'))->exists();
         $transitioned = $transitionWorkflow->handle($instance, $transition, $user, ['terms_of_reference_present' => $hasCleanTermsOfReference, 'evaluation_report_present' => $hasCleanReport], $request->validated('comment'));
         $evaluation->update(['status' => $transitioned->current_state, 'approved_by' => $transition === 'approve' ? $user->id : $evaluation->approved_by, 'approved_at' => $transition === 'approve' ? now() : $evaluation->approved_at]);
-        $auditLogger->record($user, $evaluation, 'programme.evaluation.transitioned', "Evaluation {$evaluation->code} transitioned to {$transitioned->current_state}.", $evaluation->county_id);
+        $auditLogger->record($user, $evaluation, 'programme.evaluation.transitioned', __('evaluation-findings.audit.evaluation_transitioned', ['code' => $evaluation->code, 'state' => $transitioned->current_state]), $evaluation->county_id);
 
-        return $this->success('Evaluation lifecycle updated.');
+        return $this->success(__('evaluation-findings.flash.evaluation_transitioned'));
     }
 
     public function storeFinding(StoreEvaluationFindingRequest $request, ProgrammeEvaluation $evaluation, CreateEvaluationFinding $create): RedirectResponse
     {
         $create->handle($evaluation, $this->user($request), $request->validated());
 
-        return $this->success('Evaluation finding and recommendation issued.');
+        return $this->success(__('evaluation-findings.flash.created'));
     }
 
     public function storeFindingUpdate(StoreEvaluationFindingUpdateRequest $request, EvaluationFinding $finding, RecordEvaluationFindingUpdate $record): RedirectResponse
@@ -227,14 +227,14 @@ class MonitoringEvaluationController extends Controller
         $document = AssessmentDocument::query()->whereKey($request->validated('assessment_document_id'))->firstOrFail();
         $record->handle($finding, $document, $this->user($request), (float) $request->validated('progress_percentage'), $request->validated('narrative'));
 
-        return $this->success('Recommendation response submitted for verification.');
+        return $this->success(__('evaluation-findings.flash.response_submitted'));
     }
 
     public function storeFindingAction(StoreEvaluationFindingActionRequest $request, EvaluationFinding $finding, CreateEvaluationFindingAction $create): RedirectResponse
     {
         $create->handle($finding, $this->user($request), $request->payload());
 
-        return $this->success('Recommendation action added.');
+        return $this->success(__('evaluation-findings.flash.action_created'));
     }
 
     public function storeFindingActionUpdate(StoreEvaluationFindingActionUpdateRequest $request, EvaluationFindingAction $action, RecordEvaluationFindingActionUpdate $record): RedirectResponse
@@ -242,28 +242,28 @@ class MonitoringEvaluationController extends Controller
         $document = AssessmentDocument::query()->whereKey($request->validated('assessment_document_id'))->firstOrFail();
         $record->handle($action, $document, $this->user($request), (float) $request->validated('progress_percentage'), $request->validated('narrative'));
 
-        return $this->success('Action progress submitted for verification.');
+        return $this->success(__('evaluation-findings.flash.action_progress_submitted'));
     }
 
     public function verifyFindingActionUpdate(VerifyEvaluationFindingActionUpdateRequest $request, EvaluationFindingActionUpdate $update, VerifyEvaluationFindingActionUpdate $verify): RedirectResponse
     {
         $verify->handle($update, $this->user($request), $request->validated('decision'), $request->validated('note'));
 
-        return $this->success('Action progress decision recorded.');
+        return $this->success(__('evaluation-findings.flash.action_progress_decided'));
     }
 
     public function verifyFindingUpdate(VerifyEvaluationFindingUpdateRequest $request, EvaluationFindingUpdate $update, VerifyEvaluationFindingUpdate $verify): RedirectResponse
     {
         $verify->handle($update, $this->user($request), $request->validated('decision'), $request->validated('note'));
 
-        return $this->success('Recommendation response decision recorded.');
+        return $this->success(__('evaluation-findings.flash.response_decided'));
     }
 
     public function closeFinding(CloseEvaluationFindingRequest $request, EvaluationFinding $finding, CloseEvaluationFinding $close): RedirectResponse
     {
         $close->handle($finding, $this->user($request), $request->validated('note'));
 
-        return $this->success('Evaluation finding closed.');
+        return $this->success(__('evaluation-findings.flash.closed'));
     }
 
     private function authorizeEvaluation(User $user, ProgrammeEvaluation $evaluation): void

@@ -16,10 +16,10 @@ class VerifyEvaluationFindingUpdate
     {
         $finding = $update->finding;
         abort_unless($actor->programmeRole()->hasNationalScope() || ($finding->county_id !== null && $actor->canAccessCounty($finding->county)), 403);
-        abort_if(in_array($actor->id, [$finding->created_by, $update->submitted_by], true), 409, 'Response verification must be independent of finding issuance and response submission.');
+        abort_if(in_array($actor->id, [$finding->created_by, $update->submitted_by], true), 409, __('evaluation-findings.errors.response_verification_separation'));
         $update = DB::transaction(function () use ($update, $actor, $decision, $note): EvaluationFindingUpdate {
             $locked = EvaluationFindingUpdate::query()->lockForUpdate()->findOrFail($update->id);
-            abort_unless($locked->status === 'pending_verification', 409, 'This response has already been decided.');
+            abort_unless($locked->status === 'pending_verification', 409, __('evaluation-findings.errors.response_already_decided'));
             $locked->update(['status' => $decision, 'verified_by' => $actor->id, 'verified_at' => now(), 'decision_note' => $note]);
             if ($decision === 'verified') {
                 EvaluationFinding::query()->whereKey($locked->evaluation_finding_id)->update(['progress_percentage' => $locked->progress_percentage]);
@@ -27,7 +27,7 @@ class VerifyEvaluationFindingUpdate
 
             return $locked->refresh();
         });
-        $this->auditLogger->record($actor, $update, "evaluation.finding.response_{$decision}", "Finding response {$decision}.", $finding->county_id, ['decision_note' => $note]);
+        $this->auditLogger->record($actor, $update, "evaluation.finding.response_{$decision}", __('evaluation-findings.audit.response_decided', ['decision' => __('evaluation-findings.statuses.'.$decision)]), $finding->county_id, ['decision_note' => $note]);
 
         return $update;
     }

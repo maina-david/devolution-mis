@@ -18,11 +18,11 @@ class VerifyEvaluationFindingActionUpdate
         $action = $update->action;
         $finding = $action->finding;
         abort_unless($actor->programmeRole()->hasNationalScope() || ($finding->county_id !== null && $actor->canAccessCounty($finding->county)), 403);
-        abort_if(in_array($actor->id, [$finding->created_by, $action->created_by, $update->submitted_by], true), 409, 'Action progress verification must be independent of issuance, action creation and submission.');
+        abort_if(in_array($actor->id, [$finding->created_by, $action->created_by, $update->submitted_by], true), 409, __('evaluation-findings.errors.action_verification_separation'));
 
         $update = DB::transaction(function () use ($update, $actor, $decision, $note, $finding): EvaluationFindingActionUpdate {
             $locked = EvaluationFindingActionUpdate::query()->lockForUpdate()->findOrFail($update->id);
-            abort_unless($locked->status === 'pending_verification', 409, 'This action update has already been decided.');
+            abort_unless($locked->status === 'pending_verification', 409, __('evaluation-findings.errors.action_update_already_decided'));
             $locked->update(['status' => $decision, 'verified_by' => $actor->id, 'verified_at' => now(), 'decision_note' => $note]);
             if ($decision === 'verified') {
                 $action = EvaluationFindingAction::query()->lockForUpdate()->findOrFail($locked->evaluation_finding_action_id);
@@ -33,7 +33,7 @@ class VerifyEvaluationFindingActionUpdate
 
             return $locked->refresh();
         });
-        $this->auditLogger->record($actor, $update, "evaluation.finding_action.progress_{$decision}", "Action progress {$decision}.", $finding->county_id, ['decision_note' => $note]);
+        $this->auditLogger->record($actor, $update, "evaluation.finding_action.progress_{$decision}", __('evaluation-findings.audit.action_progress_decided', ['decision' => __('evaluation-findings.statuses.'.$decision)]), $finding->county_id, ['decision_note' => $note]);
 
         return $update;
     }

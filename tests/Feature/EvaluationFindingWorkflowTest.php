@@ -15,6 +15,7 @@ use App\Models\ProgrammeEvaluation;
 use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
@@ -25,6 +26,27 @@ use Tests\TestCase;
 class EvaluationFindingWorkflowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_finding_failures_and_catalogues_follow_the_active_locale(): void
+    {
+        $english = require lang_path('en/evaluation-findings.php');
+        $kiswahili = require lang_path('sw/evaluation-findings.php');
+        $french = require lang_path('fr/evaluation-findings.php');
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($kiswahili)));
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($french)));
+
+        $evaluation = ProgrammeEvaluation::factory()->create(['status' => 'draft']);
+        $actor = User::factory()->devolutionAdmin()->create();
+        app()->setLocale('fr');
+
+        try {
+            app(CreateEvaluationFinding::class)->handle($evaluation, $actor, []);
+            $this->fail('A draft evaluation must not issue a governed finding.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+            $this->assertSame(__('evaluation-findings.errors.approved_evaluation_required'), $exception->getMessage());
+        }
+    }
 
     public function test_approved_evaluation_has_independent_evidence_backed_follow_up_and_closure(): void
     {
@@ -107,7 +129,7 @@ class EvaluationFindingWorkflowTest extends TestCase
         ]);
 
         $this->assertSame(0, Artisan::call('monitoring-evaluation:send-finding-reminders'));
-        $this->assertStringContainsString('Processed 2 evaluation recommendation alert(s).', Artisan::output());
+        $this->assertStringContainsString(__('evaluation-findings.console.processed', ['count' => 2]), Artisan::output());
 
         $this->assertNotNull($upcoming->refresh()->reminder_sent_at);
         $this->assertNull($upcoming->escalated_at);
@@ -115,6 +137,12 @@ class EvaluationFindingWorkflowTest extends TestCase
         $this->assertNotNull($overdue->escalated_at);
         $this->assertNull($future->refresh()->reminder_sent_at);
         Notification::assertSentToTimes($upcomingOwner, ProgrammeAlert::class, 1);
+        Notification::assertSentTo(
+            $upcomingOwner,
+            ProgrammeAlert::class,
+            fn (ProgrammeAlert $notification): bool => $notification->titleTranslationKey === 'evaluation-findings.notifications.due_soon_title'
+                && $notification->messageTranslationKey === 'evaluation-findings.notifications.deadline',
+        );
         Notification::assertSentToTimes($overdueOwner, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($issuer, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($manager, ProgrammeAlert::class, 1);
@@ -124,7 +152,7 @@ class EvaluationFindingWorkflowTest extends TestCase
 
         $this->travel(3)->days();
         $this->assertSame(0, Artisan::call('monitoring-evaluation:send-finding-reminders'));
-        $this->assertStringContainsString('Processed 1 evaluation recommendation alert(s).', Artisan::output());
+        $this->assertStringContainsString(__('evaluation-findings.console.processed', ['count' => 1]), Artisan::output());
         $this->assertNotNull($upcoming->refresh()->escalated_at);
         Notification::assertSentToTimes($upcomingOwner, ProgrammeAlert::class, 2);
         Notification::assertSentToTimes($overdueOwner, ProgrammeAlert::class, 1);
@@ -132,7 +160,7 @@ class EvaluationFindingWorkflowTest extends TestCase
         Notification::assertSentToTimes($manager, ProgrammeAlert::class, 2);
 
         $this->assertSame(0, Artisan::call('monitoring-evaluation:send-finding-reminders'));
-        $this->assertStringContainsString('Processed 0 evaluation recommendation alert(s).', Artisan::output());
+        $this->assertStringContainsString(__('evaluation-findings.console.processed', ['count' => 0]), Artisan::output());
         Notification::assertSentToTimes($upcomingOwner, ProgrammeAlert::class, 2);
         Notification::assertSentToTimes($overdueOwner, ProgrammeAlert::class, 1);
         Notification::assertSentToTimes($issuer, ProgrammeAlert::class, 2);

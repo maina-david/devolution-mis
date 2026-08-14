@@ -80,16 +80,17 @@ class SendEvaluationFindingReminders extends Command
                         $recipients = $recipients->push($finding->issuer)->merge($managers);
                     }
 
-                    $recipients->filter()->unique('id')->each(fn (User $recipient) => $recipient->notify(new ProgrammeAlert(
-                        $isEscalation ? 'Evaluation recommendation overdue' : 'Evaluation recommendation due soon',
-                        "{$finding->reference}: {$finding->title} is due {$finding->due_at->diffForHumans()}.",
+                    $recipients->filter()->unique('id')->each(fn (User $recipient) => $recipient->notify(ProgrammeAlert::translated(
+                        $isEscalation ? 'evaluation-findings.notifications.overdue_title' : 'evaluation-findings.notifications.due_soon_title',
+                        'evaluation-findings.notifications.deadline',
                         'monitoring-evaluation',
+                        messageParameters: ['reference' => $finding->reference, 'title' => $finding->title, 'date' => $finding->due_at->toDateString()],
                     )));
                     $auditLogger->record(
                         null,
                         $finding,
                         $isEscalation ? 'evaluation.finding.escalated' : 'evaluation.finding.reminded',
-                        $isEscalation ? 'Overdue evaluation recommendation escalated.' : 'Upcoming evaluation recommendation deadline reminder sent.',
+                        __($isEscalation ? 'evaluation-findings.audit.escalated' : 'evaluation-findings.audit.reminded'),
                         $finding->county_id,
                         ['due_at' => $finding->due_at->toDateString(), 'recipient_count' => $recipients->filter()->unique('id')->count()],
                     );
@@ -97,7 +98,7 @@ class SendEvaluationFindingReminders extends Command
                 }
             });
 
-        $this->components->info("Processed {$processed} evaluation recommendation alert(s).");
+        $this->components->info(__('evaluation-findings.console.processed', ['count' => $processed]));
 
         return self::SUCCESS;
     }
