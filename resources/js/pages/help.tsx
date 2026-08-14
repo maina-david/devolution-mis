@@ -1,8 +1,12 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     ExternalLink,
+    FileCheck2,
+    FolderSearch,
     KeyRound,
     Mail,
+    Map,
     MapPin,
     Phone,
     ShieldCheck,
@@ -20,6 +24,11 @@ const complaintsEmail = 'complaints@devolution.go.ke';
 
 export default function Help() {
     const copy = usePage().props.localization.help;
+    const commonTasks = copy.common_tasks as unknown as Array<{
+        title: string;
+        description: string;
+    }>;
+    const taskIcons = [FileCheck2, BarChart3, Map, FolderSearch];
 
     return (
         <>
@@ -40,6 +49,52 @@ export default function Help() {
                             <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
                                 {copy.description}
                             </p>
+                        </div>
+                    </section>
+
+                    <section
+                        className="border-b bg-muted/30"
+                        aria-labelledby="common-tasks-heading"
+                    >
+                        <div className="mx-auto max-w-360 px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
+                            <div className="max-w-3xl">
+                                <h2
+                                    id="common-tasks-heading"
+                                    className="text-2xl font-semibold tracking-tight text-foreground"
+                                >
+                                    {copy.common_tasks_title}
+                                </h2>
+                                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                    {copy.common_tasks_description}
+                                </p>
+                            </div>
+
+                            <ul className="mt-8 grid gap-x-10 gap-y-8 md:grid-cols-2">
+                                {commonTasks.map((task, index) => {
+                                    const TaskIcon =
+                                        taskIcons[index % taskIcons.length];
+
+                                    return (
+                                        <li
+                                            key={task.title}
+                                            className="grid grid-cols-[2.75rem_1fr] gap-4 border-t pt-5"
+                                        >
+                                            <TaskIcon
+                                                className="size-6 text-primary"
+                                                aria-hidden="true"
+                                            />
+                                            <div>
+                                                <h3 className="font-semibold text-foreground">
+                                                    {task.title}
+                                                </h3>
+                                                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                                                    {task.description}
+                                                </p>
+                                            </div>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
                         </div>
                     </section>
 
@@ -99,6 +154,15 @@ export default function Help() {
                             >
                                 {copy.browse_faqs}
                             </Link>
+
+                            <div className="mt-10 border-t pt-7">
+                                <h2 className="text-lg font-semibold text-foreground">
+                                    {copy.support_request_title}
+                                </h2>
+                                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                                    {copy.support_request_description}
+                                </p>
+                            </div>
                         </div>
 
                         <aside
