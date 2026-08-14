@@ -8,5 +8,5 @@ return [
     'grant_programme_access' => 'Grant programme access', 'grant_programme_access_description' => 'Create an administrator-approved identity and send password setup instructions.',
     'grant_access' => 'Grant access', 'name' => 'Name', 'official_email' => 'Official email', 'programme_role' => 'Programme role',
     'home_county' => 'Home county', 'assigned_county_portfolio' => 'Assigned county portfolio', 'current_user' => 'Current user', 'deactivate' => 'Deactivate',
-    'errors' => ['self_deactivation' => 'You cannot deactivate your own account.'], 'audit' => ['access_deactivated' => 'Programme access deactivated for :email.'],
+    'errors' => ['self_deactivation' => 'You cannot deactivate your own account.', 'bulk_users_missing' => 'One or more selected users no longer exist.', 'bulk_self_deactivation' => 'Your own account cannot be included in a bulk deactivation.'], 'audit' => ['access_deactivated' => 'Programme access deactivated for :email.'], 'outcomes' => ['role_matrix_updated' => 'Role permission matrix updated.', 'direct_permissions_updated' => 'Direct permission exceptions updated.', 'access_granted' => 'User access granted and password setup requested.', 'access_deactivated' => 'User access deactivated.', 'bulk_deactivated' => '{1} One user account deactivated.|[2,*] :count user accounts deactivated.'],
 ];

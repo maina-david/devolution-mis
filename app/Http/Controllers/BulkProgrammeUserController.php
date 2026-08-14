@@ -19,10 +19,10 @@ class BulkProgrammeUserController extends Controller
         /** @var User $actor */
         $actor = $request->user();
         $targets = User::query()->with('roles')->whereIn('id', $request->ids())->get();
-        abort_unless($targets->count() === count($request->ids()), 404, 'One or more selected users no longer exist.');
+        abort_unless($targets->count() === count($request->ids()), 404, __('access-control.errors.bulk_users_missing'));
 
         foreach ($targets as $target) {
-            abort_if($actor->is($target), 409, 'Your own account cannot be included in a bulk deactivation.');
+            abort_if($actor->is($target), 409, __('access-control.errors.bulk_self_deactivation'));
             abort_unless($deactivate->allows($actor, $target), 403);
         }
 
@@ -32,7 +32,7 @@ class BulkProgrammeUserController extends Controller
             }
         });
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => $targets->count().' user accounts deactivated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => trans_choice('access-control.outcomes.bulk_deactivated', $targets->count(), ['count' => $targets->count()])]);
 
         return back();
     }

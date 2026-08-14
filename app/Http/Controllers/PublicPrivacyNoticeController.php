@@ -11,7 +11,7 @@ class PublicPrivacyNoticeController extends Controller
     public function __invoke(): Response
     {
         $copy = Lang::get('privacy-notice');
-        abort_unless(is_array($copy), 500, 'The privacy notice catalogue is unavailable.');
+        abort_unless(is_array($copy), 500, __('privacy-notice.catalogue_unavailable'));
 
         return Inertia::render('privacy-notice', [
             'notice' => [

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'errors' => ['occurrence_timestamp_missing' => 'Tukio la ukaguzi :event halina muhuri wa muda wa kutokea.'], 'outcomes' => ['pass' => 'imefaulu', 'warn' => 'onyo', 'fail' => 'imeshindwa'], 'audit' => ['completed' => 'Ukaguzi wa uhakikisho wa ukaguzi umekamilika kwa matokeo :outcome.'],
+    'errors' => ['occurrence_timestamp_missing' => 'Tukio la ukaguzi :event halina muhuri wa muda wa kutokea.', 'artifact_unavailable' => 'Faili ya ushahidi wa uhakikisho wa ukaguzi haipatikani.', 'artifact_integrity_failed' => 'Faili ya ushahidi wa uhakikisho wa ukaguzi imeshindwa uthibitishaji wa uadilifu.', 'signing_key_unavailable' => 'Ufunguo wa kutia saini uliohifadhiwa haupatikani kwa uthibitishaji wa saini.', 'signature_verification_failed' => 'Uthibitishaji wa saini ya uhakikisho wa ukaguzi umeshindwa.'], 'outcomes' => ['pass' => 'imefaulu', 'warn' => 'onyo', 'fail' => 'imeshindwa'], 'audit' => ['completed' => 'Ukaguzi wa uhakikisho wa ukaguzi umekamilika kwa matokeo :outcome.', 'downloaded' => 'Faili ya ushahidi wa uhakikisho wa ukaguzi imepakuliwa.'],
     'run_title' => 'Endesha uhakikisho wa uadilifu wa ukaguzi',
     'run_description' => 'Thibitisha mnyororo kamili wa watangulizi na kila alama-hundi ya tukio la v2 inayoweza kurudiwa, kisha hifadhi faili binafsi ya uthibitisho yenye alama-hundi.',
     'run_assurance' => 'Endesha uhakikisho',

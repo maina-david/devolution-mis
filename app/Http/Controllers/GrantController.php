@@ -15,7 +15,7 @@ class GrantController extends Controller
     {
         abort_unless($this->user($request)->canAccessCounty($grant->county), 403);
         $updateGrant->handle($grant, $request->grantData(), $this->user($request));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Grant record updated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('exchequer.grant_updated')]);
 
         return back();
     }

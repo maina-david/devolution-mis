@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'errors' => ['occurrence_timestamp_missing' => 'Audit event :event has no occurrence timestamp.'], 'outcomes' => ['pass' => 'pass', 'warn' => 'warning', 'fail' => 'failure'], 'audit' => ['completed' => 'Audit assurance run completed with outcome :outcome.'],
+    'errors' => ['occurrence_timestamp_missing' => 'Audit event :event has no occurrence timestamp.', 'artifact_unavailable' => 'Audit assurance artifact is unavailable.', 'artifact_integrity_failed' => 'Audit assurance artifact failed integrity verification.', 'signing_key_unavailable' => 'The retained signing key is unavailable for signature verification.', 'signature_verification_failed' => 'Audit assurance signature verification failed.'], 'outcomes' => ['pass' => 'pass', 'warn' => 'warning', 'fail' => 'failure'], 'audit' => ['completed' => 'Audit assurance run completed with outcome :outcome.', 'downloaded' => 'Audit assurance artifact downloaded.'],
     'run_title' => 'Run audit integrity assurance',
     'run_description' => 'Verify the complete predecessor chain and every reproducible v2 event hash, then retain a private checksum-bound anchor artifact.',
     'run_assurance' => 'Run assurance',

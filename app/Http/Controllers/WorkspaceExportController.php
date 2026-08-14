@@ -97,10 +97,10 @@ class WorkspaceExportController extends Controller
                 $rows,
                 fn (array $row): bool => isset($selectedIdLookup[$row['id']]),
             ));
-            abort_unless(count($rows) === count($selectedIds), 422, 'One or more selected records are unavailable in your authorized workspace.');
+            abort_unless(count($rows) === count($selectedIds), 422, __('programme-workspace.errors.selected_records_unavailable'));
         }
         $filename = str($workspace)->append('-', now()->format('Ymd-His'));
-        $auditLogger->record($user, $user, 'workspace.exported', "{$data['title']} exported as ".mb_strtoupper($format).'.', $user->county_id, ['workspace' => $workspace, 'format' => $format, 'records' => count($rows), 'selection' => $selectedIds !== [] ? 'selected' : 'filtered']);
+        $auditLogger->record($user, $user, 'workspace.exported', __('programme-workspace.audit.exported', ['title' => $data['title'], 'format' => mb_strtoupper($format)]), $user->county_id, ['workspace' => $workspace, 'format' => $format, 'records' => count($rows), 'selection' => $selectedIds !== [] ? 'selected' : 'filtered']);
 
         return match ($format) {
             'csv' => $this->csv($columns, $rows, "{$filename}.csv"),
@@ -154,7 +154,7 @@ class WorkspaceExportController extends Controller
     private function xlsx(array $columns, array $rows, string $filename): BinaryFileResponse
     {
         $path = tempnam(sys_get_temp_dir(), 'idmis-export-');
-        abort_if($path === false, 500, 'Export file could not be created.');
+        abort_if($path === false, 500, __('programme-workspace.errors.export_file_create_failed'));
         $writer = new Writer;
         $writer->openToFile($path);
         $writer->addRow(Row::fromValues($columns));

@@ -107,7 +107,7 @@ class ProgrammeUserController extends Controller
     public function store(StoreProgrammeUserRequest $request, GrantProgrammeAccess $grantAccess): RedirectResponse
     {
         $grantAccess->handle($request->accessData(), $this->user($request));
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'User access granted and password setup requested.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('access-control.outcomes.access_granted')]);
 
         return back();
     }
@@ -116,7 +116,7 @@ class ProgrammeUserController extends Controller
     {
         $actor = $this->user($request);
         $deactivate->handle($programmeUser, $actor);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'User access deactivated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('access-control.outcomes.access_deactivated')]);
 
         return back();
     }

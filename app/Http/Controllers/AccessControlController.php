@@ -83,7 +83,7 @@ class AccessControlController extends Controller
         }, 3);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Role permission matrix updated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('access-control.outcomes.role_matrix_updated')]);
 
         return back();
     }
@@ -105,7 +105,7 @@ class AccessControlController extends Controller
         }, 3);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Direct permission exceptions updated.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('access-control.outcomes.direct_permissions_updated')]);
 
         return back();
     }

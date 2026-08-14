@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'grant_updated' => 'Rekodi ya ruzuku imesasishwa.',
     'page_title' => 'Ufuatiliaji wa hazina',
     'eyebrow' => 'Uhakikisho wa mtiririko wa fedha wa KDSP II',
     'title' => 'Kifuatiliaji cha muda wa hazina',

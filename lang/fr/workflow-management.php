@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['released_version_archive' => 'Les versions de workflow publiées ou retirées ne peuvent pas être archivées.', 'draft_publish_required' => 'Seules les versions de workflow à l’état de brouillon peuvent être publiées.'],
     'head_title' => 'Registre des workflows', 'eyebrow' => 'Plan de contrôle partagé de la plateforme', 'title' => 'Registre des workflows et des règles', 'description' => 'Définissez, validez, signez et publiez des règles de cycle de vie réutilisables pour chaque module IDMIS.',
     'business_calendars' => 'Calendriers ouvrés', 'business_calendars_description' => 'Les horaires publiés et les exceptions officielles déterminent des échéances SLA reproductibles.', 'workflow_definitions' => 'Définitions des workflows', 'workflow_definitions_description' => 'Contrôles de cycle de vie versionnés et testables, partagés entre les modules IDMIS.',
     'edit' => 'Modifier', 'version' => 'version', 'version_prefix' => 'v', 'workflow' => 'Workflow', 'configuration' => 'configuration', 'edit_description' => 'Mettez à jour les états, permissions, règles, contrôles de séparation et le calendrier SLA avant publication.', 'edit_draft' => 'Modifier le brouillon', 'published_sla_calendar' => 'Calendrier ouvré SLA publié', 'save_draft' => 'Enregistrer le brouillon', 'publish_version' => 'Publier la version',

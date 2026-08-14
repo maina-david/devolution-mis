@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attendance_register' => ['classroom_required' => 'Une classe est requise pour le registre de présence.'],
     'page_title' => 'Apprentissage en ligne',
     'eyebrow' => 'Développement professionnel continu',
     'heading' => 'Centre d’apprentissage de la dévolution',

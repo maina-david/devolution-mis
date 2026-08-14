@@ -17,8 +17,8 @@ class PlatformSettingController extends Controller
         $actor = $request->user();
         $previous = $setting->value;
         $setting->update(['value' => $request->validated('value'), 'updated_by' => $actor->id]);
-        $auditLogger->record($actor, $setting, 'platform-setting.updated', "Platform setting updated: {$setting->label}.", metadata: ['previous' => $previous, 'current' => $setting->value]);
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Platform setting updated.']);
+        $auditLogger->record($actor, $setting, 'platform-setting.updated', __('programme-workspace.audit.platform_setting_updated', ['setting' => $setting->label]), metadata: ['previous' => $previous, 'current' => $setting->value]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('programme-workspace.outcomes.platform_setting_updated')]);
 
         return back();
     }

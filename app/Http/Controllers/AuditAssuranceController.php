@@ -40,16 +40,16 @@ class AuditAssuranceController extends Controller
     public function download(Request $request, AuditAssuranceRun $auditAssuranceRun): StreamedResponse
     {
         $user = $this->authorizedNationalViewer($request);
-        abort_unless(is_string($auditAssuranceRun->path) && Storage::disk($auditAssuranceRun->disk)->exists($auditAssuranceRun->path), 404, 'Audit assurance artifact is unavailable.');
+        abort_unless(is_string($auditAssuranceRun->path) && Storage::disk($auditAssuranceRun->disk)->exists($auditAssuranceRun->path), 404, __('audit-assurance.errors.artifact_unavailable'));
         $contents = Storage::disk($auditAssuranceRun->disk)->get($auditAssuranceRun->path);
-        abort_unless(is_string($auditAssuranceRun->artifact_checksum) && hash_equals($auditAssuranceRun->artifact_checksum, hash('sha256', $contents)), 409, 'Audit assurance artifact failed integrity verification.');
+        abort_unless(is_string($auditAssuranceRun->artifact_checksum) && hash_equals($auditAssuranceRun->artifact_checksum, hash('sha256', $contents)), 409, __('audit-assurance.errors.artifact_integrity_failed'));
         if ($auditAssuranceRun->signature !== null && $auditAssuranceRun->signing_key_reference !== null) {
             $keys = config('audit.signing_keys', []);
             $key = is_array($keys) ? ($keys[$auditAssuranceRun->signing_key_reference] ?? null) : null;
-            abort_unless(is_string($key) && $key !== '', 409, 'The retained signing key is unavailable for signature verification.');
-            abort_unless(hash_equals($auditAssuranceRun->signature, hash_hmac('sha256', $auditAssuranceRun->artifact_checksum, $key)), 409, 'Audit assurance signature verification failed.');
+            abort_unless(is_string($key) && $key !== '', 409, __('audit-assurance.errors.signing_key_unavailable'));
+            abort_unless(hash_equals($auditAssuranceRun->signature, hash_hmac('sha256', $auditAssuranceRun->artifact_checksum, $key)), 409, __('audit-assurance.errors.signature_verification_failed'));
         }
-        $this->auditLogger->record($user, $auditAssuranceRun, 'audit.assurance.downloaded', 'Audit assurance artifact downloaded.', metadata: ['artifact_checksum' => $auditAssuranceRun->artifact_checksum, 'signing_key_reference' => $auditAssuranceRun->signing_key_reference]);
+        $this->auditLogger->record($user, $auditAssuranceRun, 'audit.assurance.downloaded', __('audit-assurance.audit.downloaded'), metadata: ['artifact_checksum' => $auditAssuranceRun->artifact_checksum, 'signing_key_reference' => $auditAssuranceRun->signing_key_reference]);
 
         return Storage::disk($auditAssuranceRun->disk)->download($auditAssuranceRun->path, "idmis-audit-assurance-{$auditAssuranceRun->id}.json", ['Content-Type' => $auditAssuranceRun->mime_type]);
     }

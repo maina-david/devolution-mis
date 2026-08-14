@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attendance_register' => ['classroom_required' => 'A classroom is required for the attendance register.'],
     'page_title' => 'E-Learning',
     'eyebrow' => 'Continuous professional development',
     'heading' => 'Devolution learning hub',

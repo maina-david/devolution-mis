@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['released_version_archive' => 'Matoleo ya mtiririko yaliyochapishwa au kustaafishwa hayawezi kuwekwa kwenye kumbukumbu.', 'draft_publish_required' => 'Matoleo ya mtiririko yaliyo rasimu pekee ndiyo yanaweza kuchapishwa.'],
     'head_title' => 'Rejista ya mtiririko wa kazi', 'eyebrow' => 'Kitovu cha pamoja cha udhibiti wa jukwaa', 'title' => 'Rejista ya mitiririko na kanuni', 'description' => 'Fafanua, thibitisha, weka alama-tambulishi na uchapishe kanuni za mzunguko wa maisha zinazotumika tena kwa kila moduli ya IDMIS.',
     'business_calendars' => 'Kalenda za kazi', 'business_calendars_description' => 'Saa za kazi zilizochapishwa na vighairi vilivyotangazwa huwezesha makataa ya SLA yanayoweza kuthibitishwa.', 'workflow_definitions' => 'Ufafanuzi wa mitiririko ya kazi', 'workflow_definitions_description' => 'Udhibiti wa mzunguko wa maisha wenye matoleo na majaribio unaoshirikiwa na moduli za IDMIS.',
     'edit' => 'Hariri', 'version' => 'toleo', 'version_prefix' => 't', 'workflow' => 'Mtiririko', 'configuration' => 'usanidi', 'edit_description' => 'Sasisha hali, ruhusa, kanuni, utenganishaji wa majukumu na kalenda ya SLA kabla ya uchapishaji.', 'edit_draft' => 'Hariri rasimu', 'published_sla_calendar' => 'Kalenda ya kazi ya SLA iliyochapishwa', 'save_draft' => 'Hifadhi rasimu', 'publish_version' => 'Chapisha toleo',

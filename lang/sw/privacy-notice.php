@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'catalogue_unavailable' => 'Katalogi ya ilani ya faragha haipatikani.',
     'page_title' => 'Ilani ya faragha ya IDMIS',
     'eyebrow' => 'Ilani ya taarifa kwa umma',
     'title' => 'Jinsi IDMIS inavyoshughulikia taarifa za kesi za wananchi',

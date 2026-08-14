@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'grant_updated' => 'Dossier de subvention mis à jour.',
     'page_title' => 'Suivi des décaissements',
     'eyebrow' => 'Assurance des flux financiers du KDSP II',
     'title' => 'Suivi des délais de décaissement',

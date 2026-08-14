@@ -20,7 +20,7 @@ class EnsureActiveAccess
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('login')->withErrors(['email' => 'This account is suspended. Contact an authorized IDMIS access administrator.']);
+            return redirect()->route('login')->withErrors(['email' => __('auth.access_suspended')]);
         }
 
         return $next($request);

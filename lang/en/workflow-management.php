@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'errors' => ['released_version_archive' => 'Published or retired workflow versions cannot be archived.', 'draft_publish_required' => 'Only draft workflow versions can be published.'],
     'head_title' => 'Workflow registry',
     'eyebrow' => 'Shared platform control plane',
     'title' => 'Workflow and rules registry',

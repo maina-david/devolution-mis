@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'catalogue_unavailable' => 'Le catalogue de l’avis de confidentialité est indisponible.',
     'page_title' => 'Avis de confidentialité IDMIS',
     'eyebrow' => 'Avis d’information au public',
     'title' => 'Comment IDMIS traite les informations des dossiers citoyens',

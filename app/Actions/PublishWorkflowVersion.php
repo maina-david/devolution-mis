@@ -18,7 +18,7 @@ class PublishWorkflowVersion
             $definition = WorkflowDefinition::query()->lockForUpdate()->findOrFail($workflowVersion->workflow_definition_id);
             $workflowVersion->refresh();
 
-            abort_unless($workflowVersion->status === 'draft', 409, 'Only draft workflow versions can be published.');
+            abort_unless($workflowVersion->status === 'draft', 409, __('workflow-management.errors.draft_publish_required'));
 
             $publishedAt = now();
             $definition->versions()->where('status', 'published')->update([

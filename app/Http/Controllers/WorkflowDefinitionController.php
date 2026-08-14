@@ -129,7 +129,7 @@ class WorkflowDefinitionController extends Controller
     {
         Gate::authorize(ProgrammePermission::ManageWorkflows->value);
         abort_unless($workflowVersion->workflow_definition_id === $workflowDefinition->id, 404);
-        abort_unless($workflowVersion->status === 'draft', 409, 'Published or retired workflow versions cannot be archived.');
+        abort_unless($workflowVersion->status === 'draft', 409, __('workflow-management.errors.released_version_archive'));
         $this->audit($request, $auditLogger, $workflowVersion, 'workflow.version.archived', "Workflow version {$workflowVersion->version} archived.");
         $workflowVersion->delete();
 

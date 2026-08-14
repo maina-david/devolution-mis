@@ -1036,7 +1036,7 @@ class ProgrammeWorkspaceData
     /** @return array<string, mixed> */
     public function learningAttendance(User $user, WorkspaceFilters $filters): array
     {
-        abort_unless($filters->classroomId !== null, 422, 'A classroom is required for the attendance register.');
+        abort_unless($filters->classroomId !== null, 422, __('learning.attendance_register.classroom_required'));
         $classroom = VirtualClassroom::query()->with('course.county')->findOrFail($filters->classroomId);
         abort_unless($this->classroomAccess->canManageAttendance($user, $classroom), 403);
 

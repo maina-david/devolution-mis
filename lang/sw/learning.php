@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'attendance_register' => ['classroom_required' => 'Darasa linahitajika kwa rejista ya mahudhurio.'],
     'page_title' => 'Mafunzo ya Mtandaoni',
     'eyebrow' => 'Maendeleo endelevu ya kitaaluma',
     'heading' => 'Kituo cha mafunzo ya ugatuzi',

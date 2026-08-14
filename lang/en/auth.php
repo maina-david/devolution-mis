@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'access_suspended' => 'This account is suspended. Contact an authorized IDMIS access administrator.',
 
     /*
     |--------------------------------------------------------------------------

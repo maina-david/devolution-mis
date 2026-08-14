@@ -16,7 +16,7 @@ class IdentityLifecycleController extends Controller
     public function store(StoreIdentityLifecycleRequest $request, CreateIdentityLifecycleRequest $action): RedirectResponse
     {
         $action->handle($this->user($request), $request->lifecycleData());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Identity lifecycle request staged for independent decision.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('security.outcomes.lifecycle_staged')]);
 
         return back();
     }
@@ -24,7 +24,7 @@ class IdentityLifecycleController extends Controller
     public function decide(DecideRequest $request, IdentityLifecycleRequest $identityLifecycleRequest, DecideIdentityLifecycleRequest $action): RedirectResponse
     {
         $action->handle($identityLifecycleRequest, $this->user($request), $request->decisionData());
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Identity lifecycle decision recorded and applicable access reconciled.']);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('security.outcomes.lifecycle_decided')]);
 
         return back();
     }

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'errors' => ['occurrence_timestamp_missing' => 'L’événement d’audit :event ne comporte aucun horodatage de survenue.'], 'outcomes' => ['pass' => 'réussite', 'warn' => 'avertissement', 'fail' => 'échec'], 'audit' => ['completed' => 'Exécution de l’assurance d’audit terminée avec le résultat :outcome.'],
+    'errors' => ['occurrence_timestamp_missing' => 'L’événement d’audit :event ne comporte aucun horodatage de survenue.', 'artifact_unavailable' => 'L’artefact d’assurance d’audit est indisponible.', 'artifact_integrity_failed' => 'L’artefact d’assurance d’audit a échoué au contrôle d’intégrité.', 'signing_key_unavailable' => 'La clé de signature conservée est indisponible pour la vérification.', 'signature_verification_failed' => 'La vérification de la signature d’assurance d’audit a échoué.'], 'outcomes' => ['pass' => 'réussite', 'warn' => 'avertissement', 'fail' => 'échec'], 'audit' => ['completed' => 'Exécution de l’assurance d’audit terminée avec le résultat :outcome.', 'downloaded' => 'Artefact d’assurance d’audit téléchargé.'],
     'run_title' => 'Exécuter l’assurance d’intégrité de l’audit',
     'run_description' => 'Vérifiez toute la chaîne des prédécesseurs et chaque empreinte d’événement v2 reproductible, puis conservez un artefact d’ancrage privé lié à une empreinte.',
     'run_assurance' => 'Exécuter l’assurance',

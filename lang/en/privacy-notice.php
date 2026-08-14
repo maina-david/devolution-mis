@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'catalogue_unavailable' => 'The privacy notice catalogue is unavailable.',
     'page_title' => 'IDMIS privacy notice',
     'eyebrow' => 'Public information notice',
     'title' => 'How IDMIS handles citizen case information',

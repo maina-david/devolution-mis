@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'grant_updated' => 'Grant record updated.',
     'page_title' => 'Exchequer tracking',
     'eyebrow' => 'KDSP II funds-flow assurance',
     'title' => 'Exchequer turnaround tracker',
