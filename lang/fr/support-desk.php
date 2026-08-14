@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'business_calendar' => 'Calendrier ouvré', 'effective_period' => 'Période d’effet', 'roster' => 'Tableau de service', 'publication_lineage' => 'Traçabilité de publication',
+    'draft_service_desk_policy' => 'Préparer la politique du centre de services', 'policy_code' => 'Code de la politique', 'policy_name' => 'Nom de la politique',
+    'published_business_calendar' => 'Calendrier ouvré publié', 'effective_from' => 'Prend effet le', 'effective_to_finite_calendar' => 'Prend fin le (requis pour un calendrier à durée déterminée)',
+    'response_hours' => 'Heures de réponse', 'resolution_hours' => 'Heures de résolution', 'reminder_lead' => 'Délai d’anticipation du rappel',
+    'tier_1_primary_responder' => 'Intervenant principal de niveau 1', 'tier_3_escalation_manager' => 'Responsable d’escalade de niveau 3',
+    'authority_status' => 'Statut de l’autorité', 'approval_reference' => 'Référence d’approbation', 'submit_support_request' => 'Soumettre une demande d’assistance',
+    'category' => 'Catégorie', 'triage_and_assignment' => 'Triage et affectation', 'support_resolver' => 'Agent chargé de la résolution',
+    'workflow_action' => 'Action du flux de travail', 'upload_support_record' => 'Téléverser un dossier d’assistance', 'resolution_sla_elapsed' => 'Délai SLA de résolution écoulé',
+    'first_response_due' => 'Échéance de la première réponse', 'first_response' => 'Première réponse', 'resolution_due' => 'Échéance de résolution', 'resolution' => 'Résolution',
+    'transition' => 'Transition', 'record_purpose' => 'Objet du dossier', 'document_source' => 'Source du document', 'document_upload_progress' => 'Progression du téléversement du document',
     'all_authorized_tickets' => 'Tous les tickets autorisés', 'authorized_scope_description' => 'Dans votre périmètre départemental ou national',
     'active_workload' => 'Charge de travail active', 'active_workload_description' => 'Pas encore résolus ni acceptés',
     'awaiting_triage' => 'En attente de triage', 'awaiting_triage_description' => 'Demandes ouvertes sans responsable',

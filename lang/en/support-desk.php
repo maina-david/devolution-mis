@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'business_calendar' => 'Business calendar', 'effective_period' => 'Effective period', 'roster' => 'Roster', 'publication_lineage' => 'Publication lineage',
+    'draft_service_desk_policy' => 'Draft service-desk policy', 'policy_code' => 'Policy code', 'policy_name' => 'Policy name',
+    'published_business_calendar' => 'Published business calendar', 'effective_from' => 'Effective from', 'effective_to_finite_calendar' => 'Effective to (required for a finite calendar)',
+    'response_hours' => 'Response hours', 'resolution_hours' => 'Resolution hours', 'reminder_lead' => 'Reminder lead',
+    'tier_1_primary_responder' => 'Tier 1 primary responder', 'tier_3_escalation_manager' => 'Tier 3 escalation manager',
+    'authority_status' => 'Authority status', 'approval_reference' => 'Approval reference', 'submit_support_request' => 'Submit support request',
+    'category' => 'Category', 'triage_and_assignment' => 'Triage and assignment', 'support_resolver' => 'Support resolver',
+    'workflow_action' => 'Workflow action', 'upload_support_record' => 'Upload support record', 'resolution_sla_elapsed' => 'Resolution SLA elapsed',
+    'first_response_due' => 'First response due', 'first_response' => 'First response', 'resolution_due' => 'Resolution due', 'resolution' => 'Resolution',
+    'transition' => 'Transition', 'record_purpose' => 'Record purpose', 'document_source' => 'Document source', 'document_upload_progress' => 'Document upload progress',
     'all_authorized_tickets' => 'All authorized tickets', 'authorized_scope_description' => 'Within your county or national scope',
     'active_workload' => 'Active workload', 'active_workload_description' => 'Not yet resolved or accepted',
     'awaiting_triage' => 'Awaiting triage', 'awaiting_triage_description' => 'Open requests without an owner',

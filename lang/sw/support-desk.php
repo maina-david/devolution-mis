@@ -1,6 +1,16 @@
 <?php
 
 return [
+    'business_calendar' => 'Kalenda ya kazi', 'effective_period' => 'Kipindi cha kutumika', 'roster' => 'Ratiba ya wahudumu', 'publication_lineage' => 'Historia ya uchapishaji',
+    'draft_service_desk_policy' => 'Andaa sera ya dawati la huduma', 'policy_code' => 'Msimbo wa sera', 'policy_name' => 'Jina la sera',
+    'published_business_calendar' => 'Kalenda ya kazi iliyochapishwa', 'effective_from' => 'Inaanza kutumika', 'effective_to_finite_calendar' => 'Inatumika hadi (inahitajika kwa kalenda yenye kikomo)',
+    'response_hours' => 'Saa za kuitikia', 'resolution_hours' => 'Saa za kutatua', 'reminder_lead' => 'Muda wa kutuma ukumbusho mapema',
+    'tier_1_primary_responder' => 'Mhudumu mkuu wa ngazi ya 1', 'tier_3_escalation_manager' => 'Meneja wa uhamishaji wa ngazi ya 3',
+    'authority_status' => 'Hali ya mamlaka', 'approval_reference' => 'Rejea ya idhini', 'submit_support_request' => 'Wasilisha ombi la usaidizi',
+    'category' => 'Kategoria', 'triage_and_assignment' => 'Uchambuzi wa awali na ugawaji', 'support_resolver' => 'Mtatua huduma za usaidizi',
+    'workflow_action' => 'Kitendo cha mtiririko wa kazi', 'upload_support_record' => 'Pakia rekodi ya usaidizi', 'resolution_sla_elapsed' => 'Muda wa SLA wa utatuzi uliopita',
+    'first_response_due' => 'Jibu la kwanza linatarajiwa', 'first_response' => 'Jibu la kwanza', 'resolution_due' => 'Utatuzi unatarajiwa', 'resolution' => 'Utatuzi',
+    'transition' => 'Hamisho la hali', 'record_purpose' => 'Madhumuni ya rekodi', 'document_source' => 'Chanzo cha hati', 'document_upload_progress' => 'Maendeleo ya upakiaji wa hati',
     'all_authorized_tickets' => 'Tiketi zote zilizoidhinishwa', 'authorized_scope_description' => 'Ndani ya wigo wa kaunti yako au wa kitaifa',
     'active_workload' => 'Mzigo wa kazi unaoendelea', 'active_workload_description' => 'Bado hazijatatuliwa wala kukubaliwa',
     'awaiting_triage' => 'Zinasubiri uchambuzi wa awali', 'awaiting_triage_description' => 'Maombi wazi yasiyo na mhusika',

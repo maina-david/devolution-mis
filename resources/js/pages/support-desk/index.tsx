@@ -483,19 +483,19 @@ function ServicePolicyRegister({
                         </div>
                         <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
                             <KeyValue
-                                label="Business calendar"
+                                label={copy.business_calendar}
                                 value={`${policy.calendar.code} v${policy.calendar.version} · ${policy.calendar.timezone}`}
                             />
                             <KeyValue
-                                label="Effective period"
+                                label={copy.effective_period}
                                 value={`${formatDateTime(policy.effectiveFrom)} – ${policy.effectiveTo ? formatDateTime(policy.effectiveTo) : 'Open ended'}`}
                             />
                             <KeyValue
-                                label="Roster"
+                                label={copy.roster}
                                 value={`${policy.roster.length} governed member${policy.roster.length === 1 ? '' : 's'}`}
                             />
                             <KeyValue
-                                label="Publication lineage"
+                                label={copy.publication_lineage}
                                 value={
                                     policy.checksum
                                         ? `${policy.publisher ?? 'Unknown'} · ${policy.checksum.slice(0, 12)}…`
@@ -579,7 +579,7 @@ function CreateServicePolicySheet({
 
     return (
         <FormSheet
-            title="Draft service-desk policy"
+            title={copy.draft_service_desk_policy}
             description="Create a new immutable candidate version. An independent publication decision is required before runtime use."
             triggerLabel="Configure policy"
             icon={Settings2}
@@ -600,14 +600,14 @@ function CreateServicePolicySheet({
                             <PolicyInput
                                 id="policy-code"
                                 name="code"
-                                label="Policy code"
+                                label={copy.policy_code}
                                 defaultValue="IDMIS-SUPPORT"
                                 error={errors.code}
                             />
                             <PolicyInput
                                 id="policy-name"
                                 name="name"
-                                label="Policy name"
+                                label={copy.policy_name}
                                 defaultValue="IDMIS operational support policy"
                                 error={errors.name}
                             />
@@ -630,13 +630,13 @@ function CreateServicePolicySheet({
                             <SearchableSelect
                                 id="policy-calendar"
                                 name="business_calendar_id"
-                                label="Published business calendar"
+                                label={copy.published_business_calendar}
                                 options={options.calendars}
                                 error={errors.business_calendar_id}
                             />
                             <DatePickerField
                                 name="effective_from"
-                                label="Effective from"
+                                label={copy.effective_from}
                                 required
                                 includeTime
                                 error={errors.effective_from}
@@ -646,7 +646,7 @@ function CreateServicePolicySheet({
                         </div>
                         <DatePickerField
                             name="effective_to"
-                            label="Effective to (required for a finite calendar)"
+                            label={copy.effective_to_finite_calendar}
                             includeTime
                             min={effectiveFrom.slice(0, 10)}
                             error={errors.effective_to}
@@ -698,21 +698,23 @@ function CreateServicePolicySheet({
                                             <div className="mt-3 grid gap-3 sm:grid-cols-3">
                                                 <PolicyNumberInput
                                                     name={`priority_targets[${priority}][first_response]`}
-                                                    label="Response hours"
+                                                    label={copy.response_hours}
                                                     defaultValue={
                                                         defaults.firstResponse
                                                     }
                                                 />
                                                 <PolicyNumberInput
                                                     name={`priority_targets[${priority}][resolution]`}
-                                                    label="Resolution hours"
+                                                    label={
+                                                        copy.resolution_hours
+                                                    }
                                                     defaultValue={
                                                         defaults.resolution
                                                     }
                                                 />
                                                 <PolicyNumberInput
                                                     name={`priority_targets[${priority}][reminder]`}
-                                                    label="Reminder lead"
+                                                    label={copy.reminder_lead}
                                                     defaultValue={
                                                         defaults.reminder
                                                     }
@@ -770,14 +772,14 @@ function CreateServicePolicySheet({
                                 <SearchableSelect
                                     id="policy-tier-one"
                                     name="roster[0][user_id]"
-                                    label="Tier 1 primary responder"
+                                    label={copy.tier_1_primary_responder}
                                     options={options.resolvers}
                                     error={errors['roster.0.user_id']}
                                 />
                                 <SearchableSelect
                                     id="policy-tier-three"
                                     name="roster[1][user_id]"
-                                    label="Tier 3 escalation manager"
+                                    label={copy.tier_3_escalation_manager}
                                     options={options.resolvers}
                                     error={errors['roster.1.user_id']}
                                 />
@@ -833,6 +835,7 @@ function CreateServicePolicySheet({
 }
 
 function PublishServicePolicySheet({ policy }: { policy: ServicePolicy }) {
+    const copy = usePage().props.localization.supportDesk;
     const [authorityStatus, setAuthorityStatus] = useState('provisional');
 
     return (
@@ -848,7 +851,7 @@ function PublishServicePolicySheet({ policy }: { policy: ServicePolicy }) {
                         <SearchableSelect
                             id={`policy-authority-${policy.id}`}
                             name="authority_status"
-                            label="Authority status"
+                            label={copy.authority_status}
                             options={[
                                 {
                                     id: 'provisional',
@@ -867,7 +870,7 @@ function PublishServicePolicySheet({ policy }: { policy: ServicePolicy }) {
                             <PolicyInput
                                 id={`policy-approval-${policy.id}`}
                                 name="approval_reference"
-                                label="Approval reference"
+                                label={copy.approval_reference}
                                 error={errors.approval_reference}
                             />
                         )}
@@ -959,7 +962,7 @@ function CreateTicketSheet({
 
     return (
         <FormSheet
-            title="Submit support request"
+            title={copy.submit_support_request}
             description="Create a governed service request. Personally sensitive narrative is encrypted at rest."
             triggerLabel="New support ticket"
             icon={Plus}
@@ -977,7 +980,7 @@ function CreateTicketSheet({
                             <SearchableSelect
                                 id="support-county"
                                 name="county_id"
-                                label="County"
+                                label={copy.county}
                                 options={counties}
                                 optional
                                 error={errors.county_id}
@@ -994,7 +997,7 @@ function CreateTicketSheet({
                             <SearchableSelect
                                 id="support-category"
                                 name="category"
-                                label="Category"
+                                label={copy.category}
                                 options={[
                                     {
                                         id: 'access',
@@ -1028,7 +1031,7 @@ function CreateTicketSheet({
                             <SearchableSelect
                                 id="support-priority"
                                 name="priority"
-                                label="Priority"
+                                label={copy.priority}
                                 options={[
                                     { id: 'low', name: 'Low' },
                                     { id: 'medium', name: 'Medium' },
@@ -1197,7 +1200,7 @@ function TicketSheet({
                     {capabilities.manage &&
                         ['open', 'triaged'].includes(ticket.status) && (
                             <ActionCard
-                                title="Triage and assignment"
+                                title={copy.triage_and_assignment}
                                 description="Assign an authorized resolver who is separate from the requester."
                             >
                                 <Form
@@ -1210,7 +1213,7 @@ function TicketSheet({
                                             <SearchableSelect
                                                 id={`support-assignee-${ticket.id}`}
                                                 name="assigned_to"
-                                                label="Support resolver"
+                                                label={copy.support_resolver}
                                                 options={assignees.filter(
                                                     (option) =>
                                                         option.id !==
@@ -1236,7 +1239,7 @@ function TicketSheet({
 
                     {transitionOptions.length > 0 && (
                         <ActionCard
-                            title="Workflow action"
+                            title={copy.workflow_action}
                             description="All status changes are scope checked and appended to the immutable activity ledger."
                         >
                             <TransitionForm
@@ -1248,7 +1251,7 @@ function TicketSheet({
 
                     {canUpload && (
                         <ActionCard
-                            title="Upload support record"
+                            title={copy.upload_support_record}
                             description="Scanned and born-digital records are privately stored, malware scanned, checksummed and sent for OCR when supported."
                         >
                             <DocumentUploadForm ticket={ticket} />
@@ -1418,15 +1421,15 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
             <CardContent className="flex flex-col gap-4">
                 <Progress
                     value={progress}
-                    aria-label="Resolution SLA elapsed"
+                    aria-label={copy.resolution_sla_elapsed}
                 />
                 <div className="grid gap-3 text-sm sm:grid-cols-2">
                     <KeyValue
-                        label="First response due"
+                        label={copy.first_response_due}
                         value={formatDateTime(ticket.firstResponseDueAt)}
                     />
                     <KeyValue
-                        label="First response"
+                        label={copy.first_response}
                         value={
                             ticket.firstRespondedAt
                                 ? formatDateTime(ticket.firstRespondedAt)
@@ -1434,11 +1437,11 @@ function SlaCard({ ticket }: { ticket: TicketDetail }) {
                         }
                     />
                     <KeyValue
-                        label="Resolution due"
+                        label={copy.resolution_due}
                         value={formatDateTime(ticket.resolutionDueAt)}
                     />
                     <KeyValue
-                        label="Resolution"
+                        label={copy.resolution}
                         value={
                             ticket.resolvedAt
                                 ? formatDateTime(ticket.resolvedAt)
@@ -1480,7 +1483,7 @@ function TransitionForm({
                     <SearchableSelect
                         id={`transition-${ticket.id}`}
                         name="transition"
-                        label="Transition"
+                        label={copy.transition}
                         options={options}
                         value={selectedTransition}
                         onValueChange={setSelectedTransition}
@@ -1546,7 +1549,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                         <SearchableSelect
                             id={`document-purpose-${ticket.id}`}
                             name="record_purpose"
-                            label="Record purpose"
+                            label={copy.record_purpose}
                             options={[
                                 { id: 'request', name: 'Request evidence' },
                                 {
@@ -1563,7 +1566,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                         <SearchableSelect
                             id={`document-source-${ticket.id}`}
                             name="source_type"
-                            label="Document source"
+                            label={copy.document_source}
                             options={[
                                 { id: 'scanned', name: 'Scanned original' },
                                 { id: 'digital', name: 'Born digital' },
@@ -1601,7 +1604,7 @@ function DocumentUploadForm({ ticket }: { ticket: TicketDetail }) {
                     {progress && (
                         <Progress
                             value={progress.percentage}
-                            aria-label="Document upload progress"
+                            aria-label={copy.document_upload_progress}
                         />
                     )}
                     <Button type="submit" disabled={processing}>
