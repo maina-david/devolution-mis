@@ -957,7 +957,7 @@ function IdentityLifecycleForm({
                         <SearchableSelect
                             id="identity-proposed-role"
                             name="proposed_role"
-                            label="Proposed role"
+                            label={copy.identity.columns[5]}
                             options={roles.map(toSearchOption)}
                         />
                     )}
@@ -1170,7 +1170,7 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="security-incident-type"
                         name="record_type"
-                        label="Record type"
+                        label={copy.incidents.columns[1]}
                         options={['live', 'exercise'].map(option)}
                         value={recordType}
                         onValueChange={setRecordType}
@@ -1204,7 +1204,7 @@ function SecurityIncidentForm({ users }: { users: Option[] }) {
                     <SearchableSelect
                         id="security-incident-exposure"
                         name="data_exposure"
-                        label="Data exposure"
+                        label={copy.incidents.columns[6]}
                         options={[
                             'none',
                             'suspected',
@@ -1362,7 +1362,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
         <>
             <dl className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
                 <EvidenceDetail
-                    label="Playbook"
+                    label={copy.incidents.columns[2]}
                     value={humanize(incident.playbook)}
                 />
                 <EvidenceDetail
@@ -1375,7 +1375,7 @@ function SecurityIncidentDetails({ incident }: { incident: SecurityIncident }) {
                     value={incident.affectedServices.join(', ')}
                 />
                 <EvidenceDetail
-                    label="Data exposure"
+                    label={copy.incidents.columns[6]}
                     value={humanize(incident.dataExposure)}
                 />
                 <EvidenceDetail
@@ -1669,11 +1669,11 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                         </div>
                         <dl className="grid gap-4 rounded-xl border p-4 sm:grid-cols-2">
                             <EvidenceDetail
-                                label="Environment"
+                                label={copy.supply_chain.columns[1]}
                                 value={scan.environment}
                             />
                             <EvidenceDetail
-                                label="Source"
+                                label={copy.identity.columns[0]}
                                 value={`${scan.sourceRevision ?? 'unversioned'} (${humanize(scan.sourceState)})`}
                             />
                             <EvidenceDetail
@@ -1685,7 +1685,7 @@ function SupplyChainScanAction({ scan }: { scan: SupplyChainScan }) {
                                 value={String(scan.javascriptComponentCount)}
                             />
                             <EvidenceDetail
-                                label="Composer advisories"
+                                label={copy.supply_chain.columns[6]}
                                 value={String(scan.composerAdvisoryCount)}
                             />
                             <EvidenceDetail
@@ -1960,7 +1960,7 @@ function DelegationAction({
                                 <SearchableSelect
                                     id={`delegation-decision-${delegation.id}`}
                                     name="decision"
-                                    label="Decision"
+                                    label={copy.ui.decision}
                                     options={['approve', 'reject'].map(option)}
                                 />
                                 <TextField
