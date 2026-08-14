@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -74,7 +75,7 @@ class DocumentTextExtractionTest extends TestCase
         $official = User::factory()->countyOfficial($county)->create();
         $assessment = Assessment::factory()->create(['county_id' => $county->id, 'status' => AssessmentStatus::EvidenceCollection]);
 
-        $this->actingAs($official)->post(route('evidence.store', [$assessment]), [
+        $this->actingAs($official)->withSession(['locale' => 'fr'])->post(route('evidence.store', [$assessment]), [
             'title' => 'Scanned participation register',
             'category' => 'Public participation',
             'source_type' => 'scanned',
@@ -86,6 +87,7 @@ class DocumentTextExtractionTest extends TestCase
         $this->assertSame('waiting_dependency', $document->ocr_status);
         $this->assertSame('waiting_dependency', $extraction->status);
         $this->assertSame('tesseract_unavailable', $extraction->error_code);
+        $this->assertSame('L’OCR d’une image numérisée nécessite le binaire Tesseract configuré.', $extraction->error_detail);
         $this->assertSame('tesseract_unavailable', DocumentExtractionAttempt::query()->sole()->error_code);
         $this->assertNull($extraction->extracted_text);
         $this->actingAs($official)->get(route('evidence.preview', [$document]))->assertOk();
@@ -225,7 +227,7 @@ class DocumentTextExtractionTest extends TestCase
         $completedVersion = DocumentVersion::factory()->create(['assessment_document_id' => $completed->id]);
         $completed->update(['current_version_id' => $completedVersion->id]);
 
-        $this->artisan('documents:recover-extractions')->assertSuccessful();
+        $this->assertSame(0, Artisan::call('documents:recover-extractions'));
 
         Queue::assertPushed(ExtractDocumentText::class, 1);
         Queue::assertPushed(fn (ExtractDocumentText $job): bool => $job->documentVersionId === $pendingVersion->id);

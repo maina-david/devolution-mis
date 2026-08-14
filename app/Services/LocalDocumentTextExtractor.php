@@ -30,20 +30,20 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
     public function extract(DocumentVersion $version): array
     {
         if (! $this->supports($version)) {
-            return $this->result('failed', 'unsupported', null, 'unsupported_mime_type', "Text extraction is not configured for {$version->mime_type}.");
+            return $this->result('failed', 'unsupported', null, 'unsupported_mime_type', (string) __('evidence.extraction_errors.unsupported_mime_type', ['mime_type' => $version->mime_type]));
         }
 
         if ($version->scan_status !== 'clean') {
-            return $this->result('failed', 'security-gate', null, 'document_not_clean', 'Only documents with a clean security scan can be extracted.');
+            return $this->result('failed', 'security-gate', null, 'document_not_clean', (string) __('evidence.extraction_errors.document_not_clean'));
         }
 
         if (! $this->integrityVerifier->matches($version->storage_disk, $version->path, $version->content_checksum)) {
-            return $this->result('failed', 'sha256-integrity-gate', null, 'integrity_mismatch', 'The stored object does not match the immutable document version checksum.');
+            return $this->result('failed', 'sha256-integrity-gate', null, 'integrity_mismatch', (string) __('evidence.extraction_errors.integrity_mismatch'));
         }
 
         $filesystem = Storage::disk($version->storage_disk);
         if (! $filesystem->exists($version->path)) {
-            return $this->result('failed', 'storage', null, 'file_missing', 'The stored document version could not be found.');
+            return $this->result('failed', 'storage', null, 'file_missing', (string) __('evidence.extraction_errors.file_missing'));
         }
 
         if (in_array($version->mime_type, self::TEXT_MIME_TYPES, true)) {
@@ -73,7 +73,7 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
         $binary = (string) config('repository.extraction.pdftotext_binary');
         $resolvedBinary = $this->resolveBinary($binary);
         if ($resolvedBinary === null) {
-            return $this->result('waiting_dependency', 'poppler-pdftotext', null, 'pdftotext_unavailable', 'The configured PDF extraction binary is unavailable.');
+            return $this->result('waiting_dependency', 'poppler-pdftotext', null, 'pdftotext_unavailable', (string) __('evidence.extraction_errors.pdftotext_unavailable'));
         }
 
         $process = Process::timeout((int) config('repository.extraction.timeout_seconds', 120))
@@ -95,17 +95,17 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
     {
         $renderer = $this->resolveBinary((string) config('repository.extraction.pdftoppm_binary'));
         if ($renderer === null) {
-            return $this->result('waiting_dependency', 'poppler-pdftoppm+tesseract', null, 'pdftoppm_unavailable', 'Scanned-PDF OCR requires the configured Poppler renderer.');
+            return $this->result('waiting_dependency', 'poppler-pdftoppm+tesseract', null, 'pdftoppm_unavailable', (string) __('evidence.extraction_errors.pdftoppm_unavailable'));
         }
 
         $tesseract = $this->resolveBinary((string) config('repository.extraction.tesseract_binary'));
         if ($tesseract === null) {
-            return $this->result('waiting_dependency', 'poppler-pdftoppm+tesseract', null, 'tesseract_unavailable', 'Scanned-PDF OCR requires the configured Tesseract binary.');
+            return $this->result('waiting_dependency', 'poppler-pdftoppm+tesseract', null, 'tesseract_unavailable', (string) __('evidence.extraction_errors.pdf_tesseract_unavailable'));
         }
 
         $temporaryDirectory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'idmis-pdf-ocr-'.Str::uuid();
         if (! mkdir($temporaryDirectory, 0700, true) && ! is_dir($temporaryDirectory)) {
-            throw new RuntimeException('A secure scanned-PDF OCR directory could not be created.');
+            throw new RuntimeException((string) __('evidence.extraction_errors.ocr_directory_failed'));
         }
 
         try {
@@ -120,7 +120,7 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
             $pages = glob($prefix.'-*.png') ?: [];
             sort($pages, SORT_NATURAL);
             if ($pages === []) {
-                return $this->result('failed', 'poppler-pdftoppm+tesseract', null, 'pdf_rasterization_empty', 'The PDF renderer did not produce any page images.');
+                return $this->result('failed', 'poppler-pdftoppm+tesseract', null, 'pdf_rasterization_empty', (string) __('evidence.extraction_errors.pdf_rasterization_empty'));
             }
 
             $language = (string) config('repository.extraction.language', ReferenceCatalogue::defaultOcrLanguage());
@@ -155,7 +155,7 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
         $binary = (string) config('repository.extraction.tesseract_binary');
         $resolvedBinary = $this->resolveBinary($binary);
         if ($resolvedBinary === null) {
-            return $this->result('waiting_dependency', 'tesseract', null, 'tesseract_unavailable', 'Scanned-image OCR requires the configured Tesseract binary.');
+            return $this->result('waiting_dependency', 'tesseract', null, 'tesseract_unavailable', (string) __('evidence.extraction_errors.image_tesseract_unavailable'));
         }
 
         $language = (string) config('repository.extraction.language', ReferenceCatalogue::defaultOcrLanguage());
@@ -177,20 +177,20 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
     {
         $source = $filesystem->readStream($version->path);
         if (! is_resource($source)) {
-            throw new RuntimeException('The stored document could not be opened for extraction.');
+            throw new RuntimeException((string) __('evidence.extraction_errors.source_open_failed'));
         }
 
         $temporaryPath = tempnam(sys_get_temp_dir(), 'idmis-extract-');
         if ($temporaryPath === false) {
             fclose($source);
-            throw new RuntimeException('A secure temporary extraction file could not be created.');
+            throw new RuntimeException((string) __('evidence.extraction_errors.temporary_file_failed'));
         }
 
         $target = fopen($temporaryPath, 'wb');
         if ($target === false) {
             fclose($source);
             unlink($temporaryPath);
-            throw new RuntimeException('The temporary extraction file could not be opened.');
+            throw new RuntimeException((string) __('evidence.extraction_errors.temporary_file_open_failed'));
         }
 
         try {
@@ -210,7 +210,7 @@ class LocalDocumentTextExtractor implements DocumentTextExtractor
         $language ??= ReferenceCatalogue::defaultOcrLanguage();
         $normalized = Str::of($text)->replace("\0", '')->trim()->toString();
         if ($normalized === '') {
-            return $this->result('no_text', $engine, null, 'no_text_detected', 'No machine-readable text was detected. Scanned PDFs may require the approved OCR worker.', $language);
+            return $this->result('no_text', $engine, null, 'no_text_detected', (string) __('evidence.extraction_errors.no_text_detected'), $language);
         }
 
         $maximumCharacters = (int) config('repository.extraction.maximum_characters', 2_000_000);
