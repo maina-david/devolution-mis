@@ -22,18 +22,18 @@ class CreatePartnerCollaborationAction
     public function handle(PartnerCollaborationPlan $plan, User $actor, array $attributes): PartnerCollaborationAction
     {
         $county = County::query()->where('id', $attributes['county_id'])->firstOrFail();
-        abort_unless($actor->canAccessCounty($county), 403, 'The selected county is outside your authorized scope.');
+        abort_unless($actor->canAccessCounty($county), 403, __('partner-coordination.lifecycle.errors.county_outside_scope'));
 
         return DB::transaction(function () use ($plan, $actor, $attributes, $county): PartnerCollaborationAction {
             $lockedPlan = PartnerCollaborationPlan::query()->with('partner.counties')->lockForUpdate()->findOrFail($plan->id);
-            abort_unless($lockedPlan->status === 'active', 409, 'Actions can be added only to an active plan.');
-            abort_unless($lockedPlan->partner->counties->contains('id', $county->id), 403, 'The selected county is outside this partner plan.');
+            abort_unless($lockedPlan->status === 'active', 409, __('partner-coordination.lifecycle.errors.active_plan_required'));
+            abort_unless($lockedPlan->partner->counties->contains('id', $county->id), 403, __('partner-coordination.lifecycle.errors.county_outside_plan'));
 
             $dueOn = CarbonImmutable::parse($attributes['due_on']);
-            abort_unless($dueOn->betweenIncluded($lockedPlan->starts_on, $lockedPlan->ends_on), 422, 'Action due date must fall within the plan period.');
+            abort_unless($dueOn->betweenIncluded($lockedPlan->starts_on, $lockedPlan->ends_on), 422, __('partner-coordination.lifecycle.errors.action_due_within_plan'));
 
             $owner = User::query()->where('id', $attributes['accountable_user_id'])->firstOrFail();
-            abort_unless($owner->canAccessCounty($county), 422, 'The accountable owner is outside the selected county scope.');
+            abort_unless($owner->canAccessCounty($county), 422, __('partner-coordination.lifecycle.errors.owner_outside_county'));
 
             $organizationId = is_string($attributes['accountable_organization_id'] ?? null) ? $attributes['accountable_organization_id'] : null;
             $referenceDataRelease = $this->referenceDataReleaseResolver->forPartnerCollaborationAction($county->id, $organizationId, now());
@@ -43,7 +43,7 @@ class CreatePartnerCollaborationAction
                 'created_by' => $actor->id,
                 'status' => 'open',
             ]);
-            $this->auditLogger->record($actor, $action, 'partner.collaboration_action.created', "Collaboration action {$action->code} assigned.", $county->id, [
+            $this->auditLogger->record($actor, $action, 'partner.collaboration_action.created', __('partner-coordination.lifecycle.audit.action_created', ['code' => $action->code]), $county->id, [
                 'accountable_user_id' => $owner->id,
                 'accountable_organization_id' => $organizationId,
                 'reference_data_release_id' => $referenceDataRelease->id,

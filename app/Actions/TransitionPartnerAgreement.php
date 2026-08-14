@@ -13,7 +13,7 @@ class TransitionPartnerAgreement
 
     public function handle(PartnerAgreement $agreement, User $actor, string $transition, ?string $comment = null): PartnerAgreement
     {
-        abort_unless($agreement->workflow !== null, 409, 'This agreement has no governed workflow.');
+        abort_unless($agreement->workflow !== null, 409, __('partner-coordination.lifecycle.errors.agreement_workflow_required'));
         $documentCount = $agreement->documentLinks()->whereHas('document', fn ($query) => $query->whereNull('deleted_at'))->count();
 
         return DB::transaction(function () use ($agreement, $actor, $transition, $comment, $documentCount): PartnerAgreement {
@@ -23,7 +23,7 @@ class TransitionPartnerAgreement
                 $attributes = [...$attributes, 'approved_by' => $actor->id, 'approved_at' => now()];
             }
             $agreement->update($attributes);
-            $this->auditLogger->record($actor, $agreement, "partner.agreement.{$transition}", "Partner agreement {$agreement->reference} transitioned to {$workflow->current_state}.", $workflow->county_id, ['comment' => $comment, 'document_count' => $documentCount]);
+            $this->auditLogger->record($actor, $agreement, "partner.agreement.{$transition}", __('partner-coordination.lifecycle.audit.agreement_transitioned', ['reference' => $agreement->reference, 'state' => $workflow->current_state]), $workflow->county_id, ['comment' => $comment, 'document_count' => $documentCount]);
 
             return $agreement->refresh();
         });

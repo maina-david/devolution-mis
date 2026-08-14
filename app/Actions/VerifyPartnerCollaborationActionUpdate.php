@@ -18,13 +18,13 @@ class VerifyPartnerCollaborationActionUpdate
     public function handle(PartnerCollaborationActionUpdate $update, User $verifier, array $attributes): PartnerCollaborationActionUpdateDecision
     {
         abort_unless($verifier->can(ProgrammePermission::ApprovePartnerAgreements->value), 403);
-        abort_if($update->submitted_by === $verifier->id, 403, 'Progress submitters cannot verify their own update.');
+        abort_if($update->submitted_by === $verifier->id, 403, __('partner-coordination.lifecycle.errors.progress_verifier_separation'));
         $decisionName = (string) $attributes['decision'];
         $note = (string) $attributes['verification_note'];
 
         $decision = DB::transaction(function () use ($update, $verifier, $decisionName, $note): PartnerCollaborationActionUpdateDecision {
             $locked = PartnerCollaborationActionUpdate::query()->with('action')->lockForUpdate()->findOrFail($update->id);
-            abort_if($locked->decision()->exists(), 409, 'This progress update already has an immutable decision.');
+            abort_if($locked->decision()->exists(), 409, __('partner-coordination.lifecycle.errors.progress_already_decided'));
             $verifiedAt = now();
             $snapshot = ['update_checksum' => $locked->update_checksum, 'decision' => $decisionName, 'verification_note' => $note, 'verified_by' => $verifier->id, 'verified_at' => $verifiedAt->toIso8601String()];
             $decision = $locked->decision()->create([...$snapshot, 'verified_at' => $verifiedAt, 'decision_checksum' => $this->canonicalJson->checksum($snapshot)]);
@@ -36,7 +36,7 @@ class VerifyPartnerCollaborationActionUpdate
             return $decision;
         }, attempts: 3);
 
-        $this->auditLogger->record($verifier, $update->action, 'partner.collaboration_action.update_decided', "Collaboration action progress {$decision->decision}.", $update->action->county_id, ['update_id' => $update->id, 'decision_id' => $decision->id, 'decision_checksum' => $decision->decision_checksum]);
+        $this->auditLogger->record($verifier, $update->action, 'partner.collaboration_action.update_decided', __('partner-coordination.lifecycle.audit.progress_decided', ['decision' => $decision->decision]), $update->action->county_id, ['update_id' => $update->id, 'decision_id' => $decision->id, 'decision_checksum' => $decision->decision_checksum]);
 
         return $decision;
     }

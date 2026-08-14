@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreatePartnerProfile;
 use App\Enums\ProgrammePermission;
 use App\Models\AuditEvent;
 use App\Models\County;
@@ -32,11 +33,13 @@ use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class PartnerCoordinationWorkflowTest extends TestCase
@@ -74,6 +77,7 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $this->assertSame($release->id, $partner->reference_data_release_id);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $partner->id, 'action' => 'partner.profile.created']);
         $event = AuditEvent::query()->where('subject_id', $partner->id)->where('action', 'partner.profile.created')->sole();
+        $this->assertSame("Profil du partenaire {$organization->name} créé.", $event->description);
         $this->assertSame($release->id, $event->metadata['reference_data_release_id']);
         $this->assertSame($release->checksum, $event->metadata['reference_data_release_checksum']);
 
@@ -135,6 +139,15 @@ class PartnerCoordinationWorkflowTest extends TestCase
         $countyAdministrator = User::factory()->countyAdmin($home)->create();
         $countyAdministrator->givePermissionTo(Permission::findOrCreate(ProgrammePermission::ManagePartners->value, 'web'));
         $this->publishedReferenceRelease([$home, $outside], [$sector], [$organization], $countyAdministrator);
+
+        App::setLocale('sw');
+        try {
+            app(CreatePartnerProfile::class)->handle($countyAdministrator, $this->partnerProfilePayload($organization, $outside, $sector));
+            $this->fail('County-scoped partner managers must not create profiles outside their portfolio.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame('Kaunti moja au zaidi zilizochaguliwa ziko nje ya wigo ulioidhinishwa.', $exception->getMessage());
+        }
 
         $this->actingAs($countyAdministrator)->post(
             route('partners.profiles.store'),

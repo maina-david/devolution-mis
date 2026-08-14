@@ -29,7 +29,7 @@ class CreatePartnerProfile
         $counties = County::query()->whereKey($countyIds)->get();
 
         if ($counties->count() !== count($countyIds) || $counties->contains(fn (County $county): bool => ! $actor->canAccessCounty($county))) {
-            abort(403, 'One or more selected counties are outside your authorized scope.');
+            abort(403, __('partner-coordination.lifecycle.errors.counties_outside_scope'));
         }
 
         return DB::transaction(function () use ($actor, $attributes, $countyIds, $sectorIds, $userIds): PartnerProfile {
@@ -48,7 +48,7 @@ class CreatePartnerProfile
             $partner->counties()->sync($countyIds);
             $partner->sectors()->sync($sectorIds);
             $partner->users()->syncWithPivotValues($userIds, ['relationship_role' => 'authorized_representative']);
-            $this->auditLogger->record($actor, $partner, 'partner.profile.created', "Partner profile {$partner->organization()->value('name')} created.", metadata: [
+            $this->auditLogger->record($actor, $partner, 'partner.profile.created', __('partner-coordination.lifecycle.audit.profile_created', ['name' => $partner->organization()->value('name')]), metadata: [
                 'county_ids' => $countyIds,
                 'sector_ids' => $sectorIds,
                 'reference_data_release_id' => $referenceDataRelease->id,

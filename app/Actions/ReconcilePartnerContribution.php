@@ -18,12 +18,12 @@ class ReconcilePartnerContribution
     public function handle(PartnerContribution $contribution, User $reviewer, array $attributes): PartnerContributionReconciliation
     {
         abort_unless($reviewer->can(ProgrammePermission::ManagePartners->value), 403);
-        abort_if($contribution->reported_by === $reviewer->id, 403, 'Contribution reporters cannot reconcile their own submission.');
+        abort_if($contribution->reported_by === $reviewer->id, 403, __('partner-coordination.lifecycle.errors.contribution_reviewer_separation'));
 
         $reconciliation = DB::transaction(function () use ($contribution, $reviewer, $attributes): PartnerContributionReconciliation {
             $locked = PartnerContribution::query()->lockForUpdate()->findOrFail($contribution->id);
             $documents = $locked->documentLinks()->where('purpose', 'partner-contribution-reconciliation-evidence')->whereHas('document', fn ($query) => $query->where('scan_status', 'clean')->where('record_status', 'active'))->with('document:id,content_checksum')->get();
-            abort_if($documents->isEmpty(), 422, 'At least one clean active reconciliation record is required.');
+            abort_if($documents->isEmpty(), 422, __('partner-coordination.lifecycle.errors.clean_reconciliation_evidence_required'));
             $latestVersion = $locked->reconciliations()->max('version');
             $predecessorChecksum = $locked->reconciliations()->value('decision_checksum');
             $version = (is_numeric($latestVersion) ? (int) $latestVersion : 0) + 1;
@@ -63,7 +63,7 @@ class ReconcilePartnerContribution
             ]);
         }, attempts: 3);
 
-        $this->auditLogger->record($reviewer, $contribution, 'partner.contribution.reconciled', "Partner contribution reconciliation version {$reconciliation->version} recorded as {$reconciliation->decision}.", $contribution->project->lead_county_id, ['reconciliation_id' => $reconciliation->id, 'decision_checksum' => $reconciliation->decision_checksum, 'evidence_checksum' => $reconciliation->evidence_checksum]);
+        $this->auditLogger->record($reviewer, $contribution, 'partner.contribution.reconciled', __('partner-coordination.lifecycle.audit.contribution_reconciled', ['version' => $reconciliation->version, 'decision' => $reconciliation->decision]), $contribution->project->lead_county_id, ['reconciliation_id' => $reconciliation->id, 'decision_checksum' => $reconciliation->decision_checksum, 'evidence_checksum' => $reconciliation->evidence_checksum]);
 
         return $reconciliation;
     }
@@ -71,7 +71,7 @@ class ReconcilePartnerContribution
     private function money(mixed $value): string
     {
         $raw = trim((string) $value);
-        abort_unless(preg_match('/^\d+(?:\.\d{1,2})?$/', $raw) === 1, 422, 'Monetary values must have no more than two decimal places.');
+        abort_unless(preg_match('/^\d+(?:\.\d{1,2})?$/', $raw) === 1, 422, __('partner-coordination.lifecycle.errors.money_precision'));
         [$whole, $fraction] = array_pad(explode('.', $raw, 2), 2, '');
         $whole = ltrim($whole, '0') ?: '0';
 

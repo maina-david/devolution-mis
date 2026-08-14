@@ -29,7 +29,7 @@ class CreatePartnerAgreement
             $countyId = $partner->counties()->orderBy('code')->value('counties.id');
             $workflow = $this->startWorkflow->handle($definition, $agreement, $actor, ['document_count' => 0], $countyId);
             $agreement->update(['workflow_instance_id' => $workflow->id]);
-            $this->auditLogger->record($actor, $agreement, 'partner.agreement.created', "Partner agreement {$agreement->reference} registered as draft.", $countyId);
+            $this->auditLogger->record($actor, $agreement, 'partner.agreement.created', __('partner-coordination.lifecycle.audit.agreement_created', ['reference' => $agreement->reference]), $countyId);
 
             return $agreement->refresh();
         });
