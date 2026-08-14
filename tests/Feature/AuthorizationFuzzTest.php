@@ -6,6 +6,7 @@ use App\Enums\ProgrammePermission;
 use App\Enums\UserRole;
 use App\Models\AuditEvent;
 use App\Models\County;
+use App\Models\DataMigrationBatch;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,6 +41,23 @@ class AuthorizationFuzzTest extends TestCase
         foreach ($routeNames as $routeName) {
             $this->actingAs($user)->get(route($routeName))->assertForbidden();
         }
+    }
+
+    #[DataProvider('unprivilegedRoleProvider')]
+    public function test_unprivileged_roles_cannot_stage_reference_or_user_imports(UserRole $role): void
+    {
+        $user = $this->userForRole($role);
+
+        foreach (['organizations', 'users'] as $datasetType) {
+            $this->actingAs($user)->post(route('data-migrations.reference-data.store'), [
+                'dataset_type' => $datasetType,
+                'source_name' => 'Hostile import attempt',
+                'source_reference' => 'AUTH-FUZZ-DENIED',
+            ])->assertForbidden();
+        }
+
+        $this->assertSame(0, DataMigrationBatch::query()->count());
+        $this->assertSame(0, AuditEvent::query()->where('action', 'data_import.staged')->count());
     }
 
     #[DataProvider('unprivilegedRoleProvider')]

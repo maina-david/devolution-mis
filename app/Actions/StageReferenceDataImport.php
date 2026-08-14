@@ -52,11 +52,11 @@ class StageReferenceDataImport
 
     public function handle(User $actor, UploadedFile $file, string $datasetType, string $sourceName, string $sourceReference): DataMigrationBatch
     {
-        abort_unless(array_key_exists($datasetType, self::HEADERS), 422, 'The selected bulk-import dataset is not supported.');
+        abort_unless(array_key_exists($datasetType, self::HEADERS), 422, __('migration.import.unsupported_dataset'));
         if ($datasetType === 'users') {
-            abort_unless($actor->can(ProgrammePermission::ManageUserAccess->value), 403, 'Only platform access administrators may stage user imports.');
+            abort_unless($actor->can(ProgrammePermission::ManageUserAccess->value), 403, __('migration.import.user_import_unauthorized'));
         } else {
-            abort_unless($actor->can(ProgrammePermission::ManageReferenceData->value), 403, 'Only reference-data managers may stage governed registry imports.');
+            abort_unless($actor->can(ProgrammePermission::ManageReferenceData->value), 403, __('migration.import.reference_import_unauthorized'));
         }
         $rows = $this->parse($file, $datasetType);
         $realPath = $file->getRealPath();
@@ -97,7 +97,7 @@ class StageReferenceDataImport
                     $batch->rows()->create($row);
                 }
 
-                $this->auditLogger->record($actor, $batch, 'data_import.staged', "Bulk {$datasetType} import staged with ".count($rows).' rows.', metadata: [
+                $this->auditLogger->record($actor, $batch, 'data_import.staged', trans_choice('migration.audit.bulk_staged', count($rows), ['dataset' => $datasetType, 'count' => count($rows)]), metadata: [
                     'file_checksum' => $checksum,
                     'valid_rows' => $batch->valid_rows,
                     'invalid_rows' => $batch->invalid_rows,
@@ -242,7 +242,7 @@ class StageReferenceDataImport
     {
         if ($datasetType === 'programme_county_coverages') {
             if ($coverageContext === null) {
-                throw new \LogicException('Programme coverage validation context is required.');
+                throw new \LogicException(__('migration.import.programme_coverage_context_required'));
             }
 
             return $this->validateProgrammeCoveragePayload($payload, $coverageContext);

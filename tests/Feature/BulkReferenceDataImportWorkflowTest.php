@@ -15,6 +15,7 @@ use App\Models\Sector;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -181,7 +182,11 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             ->get(route('data-migrations.index'))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('data-migrations/index')
-                ->where('batches.data', function ($batches) use ($programmeBatch, $releases): bool {
+                ->where('batches.data', function (mixed $batches) use ($programmeBatch, $releases): bool {
+                    if (! is_array($batches)) {
+                        return false;
+                    }
+
                     $programmeImport = collect($batches)->firstWhere('id', $programmeBatch->id);
 
                     return data_get($programmeImport, 'referenceDataRelease.version') === 3
@@ -331,6 +336,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
     {
         Storage::fake('local');
         $official = User::factory()->countyOfficial()->create();
+        App::setLocale('fr');
 
         try {
             app(StageReferenceDataImport::class)->handle(
@@ -345,6 +351,7 @@ class BulkReferenceDataImportWorkflowTest extends TestCase
             $this->fail('A county role must not cross the reference-data import action boundary.');
         } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame(trans('migration.import.reference_import_unauthorized', locale: 'fr'), $exception->getMessage());
         }
     }
 
