@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Actions\DecideDocumentDisposition;
+use App\Actions\ExecuteDocumentDisposition;
+use App\Actions\RequestDocumentDisposition;
 use App\Models\Assessment;
 use App\Models\AssessmentDocument;
 use App\Models\County;
@@ -11,9 +14,12 @@ use App\Models\DocumentVersion;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class DocumentDispositionWorkflowTest extends TestCase
@@ -104,6 +110,67 @@ class DocumentDispositionWorkflowTest extends TestCase
 
         $this->actingAs($countyAdmin)->post(route('evidence.dispositions.store', [$document]), $this->requestPayload())->assertForbidden();
         $this->actingAs($reviewer)->patch(route('evidence.dispositions.decide', [$otherDocument, $disposition]), ['decision' => 'approved', 'decision_reason' => 'Wrong document.'])->assertNotFound();
+    }
+
+    public function test_disposition_catalogues_remain_in_parity_and_actions_use_the_active_locale(): void
+    {
+        $englishKeys = array_keys(Arr::dot(require lang_path('en/evidence.php')));
+
+        foreach (['sw', 'fr'] as $locale) {
+            $localizedKeys = array_keys(Arr::dot(require lang_path("{$locale}/evidence.php")));
+            sort($englishKeys);
+            sort($localizedKeys);
+            $this->assertSame($englishKeys, $localizedKeys, "The {$locale} evidence catalogue must match English.");
+        }
+
+        Storage::fake('local');
+        $requester = User::factory()->devolutionAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $executor = User::factory()->devolutionAdmin()->create();
+        $county = County::factory()->create();
+        $assessment = Assessment::factory()->create([
+            'county_id' => $county->id,
+            'cycle' => 'Disposition missing retention fixture',
+        ]);
+        $documentWithoutRetention = AssessmentDocument::factory()->create([
+            'assessment_id' => $assessment->id,
+            'county_id' => $county->id,
+            'retention_until' => null,
+        ]);
+
+        App::setLocale('sw');
+
+        try {
+            resolve(RequestDocumentDisposition::class)->handle($documentWithoutRetention, $requester, $this->requestPayload());
+            $this->fail('A disposition request without a retention date should fail.');
+        } catch (HttpException $exception) {
+            $this->assertSame(__('evidence.disposition.errors.retention_due_required'), $exception->getMessage());
+            $this->assertSame('Tarehe ya mwisho ya uhifadhi inahitajika kabla ya kuomba uondoaji.', $exception->getMessage());
+        }
+
+        App::setLocale('fr');
+        $document = $this->documentWithVersions($county, $requester);
+        $disposition = resolve(RequestDocumentDisposition::class)->handle($document, $requester, $this->requestPayload());
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $disposition->id,
+            'action' => 'document.disposition_requested',
+            'description' => "Sort final contrôlé demandé pour {$document->title}.",
+        ]);
+
+        $disposition = resolve(DecideDocumentDisposition::class)->handle($disposition, $reviewer, 'approved', 'Conservation et autorité vérifiées indépendamment.');
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $disposition->id,
+            'action' => 'document.disposition_approved',
+            'description' => 'Sort final du document approuvé.',
+        ]);
+
+        $disposition = resolve(ExecuteDocumentDisposition::class)->handle($disposition, $executor);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $disposition->id,
+            'action' => 'document.disposition_executed',
+            'description' => "Sort final contrôlé exécuté pour {$document->title}.",
+        ]);
+        $this->assertSame('executed', $disposition->status);
     }
 
     private function documentWithVersions(County $county, User $uploader): AssessmentDocument

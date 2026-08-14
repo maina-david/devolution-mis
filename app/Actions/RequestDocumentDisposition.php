@@ -17,14 +17,14 @@ class RequestDocumentDisposition
     public function handle(AssessmentDocument $document, User $actor, array $attributes): DocumentDisposition
     {
         abort_unless($actor->canAccessCounty($document->county), 403);
-        abort_if($document->retention_until === null, 409, 'A retention due date is required before disposition can be requested.');
-        abort_if($document->hasActiveLegalHold(), 409, 'A document under legal hold cannot enter disposition.');
+        abort_if($document->retention_until === null, 409, __('evidence.disposition.errors.retention_due_required'));
+        abort_if($document->hasActiveLegalHold(), 409, __('evidence.disposition.errors.legal_hold_request'));
         $scheduledFor = CarbonImmutable::parse($attributes['scheduled_for'])->startOfDay();
-        abort_if($scheduledFor->lessThan($document->retention_until->startOfDay()), 409, 'Disposition cannot be scheduled before the retention period expires.');
+        abort_if($scheduledFor->lessThan($document->retention_until->startOfDay()), 409, __('evidence.disposition.errors.retention_not_expired_request'));
 
         $disposition = DB::transaction(function () use ($document, $actor, $attributes, $scheduledFor): DocumentDisposition {
             $lockedDocument = AssessmentDocument::query()->lockForUpdate()->findOrFail($document->id);
-            abort_if($lockedDocument->dispositions()->whereIn('status', ['pending', 'approved', 'executing', 'execution_failed'])->exists(), 409, 'This document already has an open disposition request.');
+            abort_if($lockedDocument->dispositions()->whereIn('status', ['pending', 'approved', 'executing', 'execution_failed'])->exists(), 409, __('evidence.disposition.errors.open_request_exists'));
 
             return $lockedDocument->dispositions()->create([
                 'requested_by' => $actor->id,
@@ -36,7 +36,7 @@ class RequestDocumentDisposition
                 'status' => 'pending',
             ]);
         });
-        $this->auditLogger->record($actor, $disposition, 'document.disposition_requested', "Controlled disposition requested for {$document->title}.", $document->county_id, ['authority_reference' => $disposition->authority_reference, 'scheduled_for' => $disposition->scheduled_for->toDateString()]);
+        $this->auditLogger->record($actor, $disposition, 'document.disposition_requested', __('evidence.disposition.audit.requested', ['title' => $document->title]), $document->county_id, ['authority_reference' => $disposition->authority_reference, 'scheduled_for' => $disposition->scheduled_for->toDateString()]);
 
         return $disposition;
     }

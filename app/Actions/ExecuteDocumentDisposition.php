@@ -19,13 +19,13 @@ class ExecuteDocumentDisposition
     public function handle(DocumentDisposition $disposition, User $actor): DocumentDisposition
     {
         abort_unless($actor->canAccessCounty($disposition->document->county), 403);
-        abort_if(in_array($actor->id, [$disposition->requested_by, $disposition->reviewed_by], true), 409, 'Disposition execution requires an officer independent of the requester and reviewer.');
-        abort_if($disposition->document->hasActiveLegalHold(), 409, 'A document under legal hold cannot be disposed.');
-        abort_if($disposition->scheduled_for->isFuture() || $disposition->retention_due_at->isFuture(), 409, 'The approved retention period has not expired.');
+        abort_if(in_array($actor->id, [$disposition->requested_by, $disposition->reviewed_by], true), 409, __('evidence.disposition.errors.execution_separation'));
+        abort_if($disposition->document->hasActiveLegalHold(), 409, __('evidence.disposition.errors.legal_hold_execute'));
+        abort_if($disposition->scheduled_for->isFuture() || $disposition->retention_due_at->isFuture(), 409, __('evidence.disposition.errors.retention_not_expired_execute'));
 
         DB::transaction(function () use ($disposition, $actor): void {
             $locked = DocumentDisposition::query()->lockForUpdate()->findOrFail($disposition->id);
-            abort_unless(in_array($locked->status, ['approved', 'execution_failed'], true), 409, 'Only an approved or failed disposition can be executed.');
+            abort_unless(in_array($locked->status, ['approved', 'execution_failed'], true), 409, __('evidence.disposition.errors.executable_status_required'));
             $locked->update(['status' => 'executing', 'executed_by' => $actor->id, 'execution_started_at' => now(), 'execution_error' => null]);
         });
 
@@ -35,19 +35,19 @@ class ExecuteDocumentDisposition
             $manifest = $this->manifest($document);
 
             foreach ($manifest as $object) {
-                abort_unless(Storage::disk($object['disk'])->exists($object['path']), 409, "A retained object is missing: {$object['path']}.");
-                abort_unless($this->integrityVerifier->matches($object['disk'], $object['path'], $object['checksum']), 409, "Integrity verification failed for retained object: {$object['path']}.");
+                abort_unless(Storage::disk($object['disk'])->exists($object['path']), 409, __('evidence.disposition.errors.retained_object_missing', ['path' => $object['path']]));
+                abort_unless($this->integrityVerifier->matches($object['disk'], $object['path'], $object['checksum']), 409, __('evidence.disposition.errors.retained_object_integrity', ['path' => $object['path']]));
             }
             foreach ($manifest as $object) {
                 if (! Storage::disk($object['disk'])->delete($object['path']) || Storage::disk($object['disk'])->exists($object['path'])) {
-                    throw new RuntimeException("Secure object deletion could not be confirmed: {$object['path']}.");
+                    throw new RuntimeException(__('evidence.disposition.errors.secure_deletion_unconfirmed', ['path' => $object['path']]));
                 }
             }
 
             $manifestJson = json_encode($manifest, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
             DB::transaction(function () use ($disposition, $document, $manifest, $manifestJson): void {
                 $locked = DocumentDisposition::query()->lockForUpdate()->findOrFail($disposition->id);
-                abort_unless($locked->status === 'executing', 409, 'Disposition execution state changed unexpectedly.');
+                abort_unless($locked->status === 'executing', 409, __('evidence.disposition.errors.execution_state_changed'));
                 $locked->update([
                     'status' => 'executed',
                     'executed_at' => now(),
@@ -60,7 +60,7 @@ class ExecuteDocumentDisposition
                 $document->delete();
             });
             $disposition->refresh();
-            $this->auditLogger->record($actor, $disposition, 'document.disposition_executed', "Controlled disposition executed for {$document->title}.", $document->county_id, ['manifest_checksum' => $disposition->manifest_checksum, 'object_count' => $disposition->object_count]);
+            $this->auditLogger->record($actor, $disposition, 'document.disposition_executed', __('evidence.disposition.audit.executed', ['title' => $document->title]), $document->county_id, ['manifest_checksum' => $disposition->manifest_checksum, 'object_count' => $disposition->object_count]);
 
             return $disposition;
         } catch (Throwable $exception) {
