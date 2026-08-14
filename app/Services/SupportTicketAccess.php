@@ -34,11 +34,11 @@ class SupportTicketAccess
     public function assertCounty(User $user, ?string $countyId): void
     {
         if ($countyId === null) {
-            abort_unless($user->programmeRole()->hasNationalScope(), 403, 'Only national support users may submit a national ticket.');
+            abort_unless($user->programmeRole()->hasNationalScope(), 403, __('support-desk.ticket.errors.national_scope_required'));
 
             return;
         }
 
-        abort_unless($this->countyScope->query($user)->whereKey($countyId)->exists(), 403, 'The selected county is outside your authorized scope.');
+        abort_unless($this->countyScope->query($user)->whereKey($countyId)->exists(), 403, __('support-desk.ticket.errors.county_outside_scope'));
     }
 }

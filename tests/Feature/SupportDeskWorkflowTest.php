@@ -14,10 +14,12 @@ use App\Models\User;
 use App\Notifications\ProgrammeAlert;
 use App\Services\BusinessTimeCalculator;
 use App\Services\EffectiveServiceDeskPolicyResolver;
+use App\Services\SupportTicketAccess;
 use App\Support\CanonicalJson;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -31,10 +33,15 @@ class SupportDeskWorkflowTest extends TestCase
 
     public function test_sla_monitor_rejects_invalid_or_unbounded_limits(): void
     {
+        app()->setLocale('en');
         $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 0]));
-        $this->assertStringContainsString('The alert limit must be an integer between 1 and 5000.', Artisan::output());
+        $this->assertStringContainsString(__('support-desk.console.invalid_limit'), Artisan::output());
         $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 5001]));
         $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 'unbounded']));
+
+        app()->setLocale('fr');
+        $this->assertSame(2, Artisan::call('support-desk:monitor-slas', ['--limit' => 0]));
+        $this->assertStringContainsString(__('support-desk.console.invalid_limit'), Artisan::output());
     }
 
     public function test_service_policy_failures_and_catalogues_follow_the_active_locale(): void
@@ -53,9 +60,22 @@ class SupportDeskWorkflowTest extends TestCase
         $kiswahili = require lang_path('sw/support-desk.php');
         $french = require lang_path('fr/support-desk.php');
 
-        foreach (['errors', 'audit'] as $section) {
-            $this->assertSame(array_keys($english['policy'][$section]), array_keys($kiswahili['policy'][$section]));
-            $this->assertSame(array_keys($english['policy'][$section]), array_keys($french['policy'][$section]));
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($kiswahili)));
+        $this->assertSame(array_keys(Arr::dot($english)), array_keys(Arr::dot($french)));
+    }
+
+    public function test_ticket_scope_failures_follow_the_active_locale(): void
+    {
+        $county = County::factory()->create();
+        $requester = User::factory()->countyOfficial($county)->create();
+        app()->setLocale('sw');
+
+        try {
+            app(SupportTicketAccess::class)->assertCounty($requester, null);
+            $this->fail('A county requester must not be able to create a national support ticket.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame(__('support-desk.ticket.errors.national_scope_required'), $exception->getMessage());
         }
     }
 
@@ -166,6 +186,12 @@ class SupportDeskWorkflowTest extends TestCase
             'action' => 'support.ticket.close',
         ]);
         Notification::assertSentTo($resolver, ProgrammeAlert::class);
+        Notification::assertSentTo(
+            $resolver,
+            ProgrammeAlert::class,
+            fn (ProgrammeAlert $notification): bool => $notification->titleTranslationKey === 'support-desk.ticket.notifications.assigned_title'
+                && $notification->messageTranslationKey === 'support-desk.ticket.notifications.reference_subject',
+        );
 
         $this->actingAs($manager)
             ->get(route('support-desk.index'))

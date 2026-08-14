@@ -101,7 +101,7 @@ class SupportDeskController extends Controller
                 ->values() : [],
             'policyOptions' => [
                 'calendars' => $user->can(ProgrammePermission::ConfigureSupportDesk->value)
-                    ? BusinessCalendar::query()->where('status', 'published')->orderBy('name')->get()->map(fn (BusinessCalendar $calendar): array => ['id' => $calendar->id, 'name' => "{$calendar->name} · v{$calendar->version} · ".($calendar->effective_to?->toDateString() ?? 'open ended')])->values()
+                    ? BusinessCalendar::query()->where('status', 'published')->orderBy('name')->get()->map(fn (BusinessCalendar $calendar): array => ['id' => $calendar->id, 'name' => "{$calendar->name} · v{$calendar->version} · ".($calendar->effective_to?->toDateString() ?? __('support-desk.open_ended'))])->values()
                     : [],
                 'resolvers' => $user->can(ProgrammePermission::ConfigureSupportDesk->value)
                     ? User::permission(ProgrammePermission::ResolveSupportTickets->value)->whereNull('access_revoked_at')->orderBy('name')->get(['id', 'name'])->map(fn (User $resolver): array => ['id' => $resolver->id, 'name' => $resolver->name])->values()
@@ -123,7 +123,7 @@ class SupportDeskController extends Controller
     {
         $ticket = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Support ticket {$ticket->reference} submitted.");
+        return back()->with('success', __('support-desk.ticket.flash.submitted', ['reference' => $ticket->reference]));
     }
 
     public function assign(AssignSupportTicketRequest $request, SupportTicket $supportTicket, AssignSupportTicket $action): RedirectResponse
@@ -131,21 +131,21 @@ class SupportDeskController extends Controller
         $assignee = User::query()->findOrFail($request->string('assigned_to')->toString());
         $action->handle($supportTicket, $this->user($request), $assignee, $request->string('narrative')->toString());
 
-        return back()->with('success', 'Support ticket assignment recorded.');
+        return back()->with('success', __('support-desk.ticket.flash.assigned'));
     }
 
     public function transition(TransitionSupportTicketRequest $request, SupportTicket $supportTicket, TransitionSupportTicket $action): RedirectResponse
     {
         $action->handle($supportTicket, $this->user($request), $request->validated());
 
-        return back()->with('success', 'Support ticket workflow updated.');
+        return back()->with('success', __('support-desk.ticket.flash.transitioned'));
     }
 
     public function storePolicy(StoreServiceDeskPolicyRequest $request, CreateServiceDeskPolicy $action): RedirectResponse
     {
         $policy = $action->handle($this->user($request), $request->validated());
 
-        return back()->with('success', "Service-desk policy {$policy->code} v{$policy->version} drafted.");
+        return back()->with('success', __('support-desk.policy.flash.created', ['code' => $policy->code, 'version' => $policy->version]));
     }
 
     public function publishPolicy(PublishServiceDeskPolicyRequest $request, ServiceDeskPolicy $serviceDeskPolicy, PublishServiceDeskPolicy $action): RedirectResponse
@@ -156,7 +156,7 @@ class SupportDeskController extends Controller
             'approval_reference' => is_string($validated['approval_reference'] ?? null) ? $validated['approval_reference'] : null,
         ]);
 
-        return back()->with('success', 'Service-desk policy independently published.');
+        return back()->with('success', __('support-desk.policy.flash.published'));
     }
 
     /** @return array<string, mixed> */

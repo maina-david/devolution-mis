@@ -30,13 +30,13 @@ class CreateServiceDeskPolicy
             ]);
 
             foreach ((array) $attributes['roster'] as $rosterAttributes) {
-                abort_unless(is_array($rosterAttributes), 422, 'Roster entries must be structured records.');
+                abort_unless(is_array($rosterAttributes), 422, __('support-desk.policy.errors.roster_record_required'));
                 $member = User::query()->findOrFail((string) $rosterAttributes['user_id']);
-                abort_unless($member->can(ProgrammePermission::ResolveSupportTickets->value), 422, "{$member->name} is not authorized to resolve service-desk tickets.");
+                abort_unless($member->can(ProgrammePermission::ResolveSupportTickets->value), 422, __('support-desk.policy.errors.roster_member_not_authorized', ['member' => $member->name]));
                 $policy->rosterMembers()->create([...$rosterAttributes, 'created_by' => $author->id]);
             }
 
-            $this->auditLogger->record($author, $policy, 'support.policy.created', "Service-desk policy {$code} v{$policy->version} drafted.", metadata: ['business_calendar_id' => $policy->business_calendar_id, 'roster_count' => count((array) $attributes['roster'])]);
+            $this->auditLogger->record($author, $policy, 'support.policy.created', __('support-desk.policy.audit.created', ['code' => $code, 'version' => $policy->version]), metadata: ['business_calendar_id' => $policy->business_calendar_id, 'roster_count' => count((array) $attributes['roster'])]);
 
             return $policy;
         }, attempts: 3);

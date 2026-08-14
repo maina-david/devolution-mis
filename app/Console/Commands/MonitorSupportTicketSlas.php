@@ -21,7 +21,7 @@ class MonitorSupportTicketSlas extends Command
     {
         $limit = $this->monitorLimit();
         if ($limit === null) {
-            $this->components->error('The alert limit must be an integer between 1 and 5000.');
+            $this->components->error(__('support-desk.console.invalid_limit'));
 
             return self::INVALID;
         }
@@ -87,11 +87,11 @@ class MonitorSupportTicketSlas extends Command
                         ->merge($legacyManagers)
                         ->filter()
                         ->unique('id');
-                    $title = $overdue ? 'Support SLA overdue' : 'Support SLA approaching';
-                    $recipients->each(fn (User $recipient) => $recipient->notify(new ProgrammeAlert($title, "{$ticket->reference}: {$ticket->subject}", 'support-desk')));
+                    $titleKey = $overdue ? 'support-desk.ticket.notifications.sla_overdue_title' : 'support-desk.ticket.notifications.sla_approaching_title';
+                    $recipients->each(fn (User $recipient) => $recipient->notify(ProgrammeAlert::translated($titleKey, 'support-desk.ticket.notifications.reference_subject', 'support-desk', messageParameters: ['reference' => $ticket->reference, 'subject' => $ticket->subject])));
                     $ticket->update(['reminder_sent_at' => now(), 'escalated_at' => $overdue ? ($ticket->escalated_at ?? now()) : $ticket->escalated_at]);
                     $activity = $overdue ? 'sla_escalated' : 'sla_reminded';
-                    $narrative = $overdue ? 'The active service target is overdue and was escalated to authorized support management.' : 'The active service target is approaching and reminders were issued.';
+                    $narrative = __($overdue ? 'support-desk.ticket.activity.sla_escalated' : 'support-desk.ticket.activity.sla_reminded');
                     $recordActivity->handle($ticket, null, $activity, $ticket->status, $ticket->status, $narrative, ['due_at' => $dueAt->toIso8601String(), 'recipients' => $recipients->count()]);
                     $auditLogger->record(null, $ticket, 'support.ticket.'.$activity, $narrative, $ticket->county_id, ['due_at' => $dueAt->toIso8601String(), 'recipients' => $recipients->count()]);
                     $processed++;
@@ -100,7 +100,7 @@ class MonitorSupportTicketSlas extends Command
                 return $processed >= $limit ? false : null;
             });
 
-        $this->components->info("Processed {$processed} service-desk SLA alert(s).");
+        $this->components->info(__('support-desk.console.processed', ['count' => $processed]));
 
         return self::SUCCESS;
     }
