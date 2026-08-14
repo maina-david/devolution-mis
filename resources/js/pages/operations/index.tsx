@@ -476,7 +476,7 @@ export default function Operations({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No operational alerts"
+                            title={copy.no_operational_alerts}
                             description="Warning and failure measurements will open a deduplicated alert here; passing measurements automatically retain recovery evidence."
                             className="min-h-64 border-0"
                         />
@@ -517,7 +517,7 @@ export default function Operations({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No backup evidence"
+                            title={copy.no_backup_evidence}
                             description="Request the first backup or wait for the scheduled daily control."
                             className="min-h-64 border-0"
                         />
@@ -561,7 +561,7 @@ export default function Operations({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No failed queue jobs"
+                                title={copy.no_failed_queue_jobs}
                                 description="No database, notification, report, extraction or backup job is awaiting recovery."
                                 className="min-h-64 border-0"
                             />
@@ -591,7 +591,7 @@ export default function Operations({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No recovery attempts"
+                                title={copy.no_recovery_attempts}
                                 description="Recovery evidence appears after an authorized operator retries a retained failed job."
                                 className="min-h-64 border-0"
                             />
@@ -633,7 +633,7 @@ export default function Operations({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No performance evidence"
+                            title={copy.no_performance_evidence}
                             description="Run the bounded operations performance probe in an approved environment to establish the first baseline."
                             className="min-h-64 border-0"
                         />
@@ -659,7 +659,7 @@ export default function Operations({
                         ))}
                         {releases.length === 0 && (
                             <WorkspaceEmptyState
-                                title="No release evidence"
+                                title={copy.no_release_evidence}
                                 description="Record a reproducible artifact deployment for independent validation."
                             />
                         )}
@@ -780,11 +780,11 @@ function OperationalAlertAction({
                     <div className="flex flex-col gap-5 px-4 pb-6">
                         <div className="grid gap-3 sm:grid-cols-2">
                             <EvidenceField
-                                label="Latest value"
+                                label={copy.latest_value}
                                 value={`${alert.latestValue} ${alert.unit}`}
                             />
                             <EvidenceField
-                                label="Provisional threshold"
+                                label={copy.provisional_threshold}
                                 value={
                                     alert.threshold
                                         ? `${alert.threshold} ${alert.unit}`
@@ -792,30 +792,30 @@ function OperationalAlertAction({
                                 }
                             />
                             <EvidenceField
-                                label="Occurrences"
+                                label={copy.occurrences}
                                 value={alert.occurrenceCount.toLocaleString()}
                             />
                             <EvidenceField
-                                label="Last detected"
+                                label={copy.last_detected}
                                 value={formatDate(alert.lastDetectedAt)}
                             />
                             <EvidenceField
-                                label="Acknowledged by"
+                                label={copy.acknowledged_by}
                                 value={alert.acknowledgedBy ?? 'Pending'}
                             />
                             <EvidenceField
-                                label="Recovered"
+                                label={copy.recovered}
                                 value={formatDate(alert.recoveredAt)}
                             />
                         </div>
                         {alert.acknowledgementNote && (
                             <EvidenceField
-                                label="Acknowledgement note"
+                                label={copy.acknowledgement_note}
                                 value={alert.acknowledgementNote}
                             />
                         )}
                         <EvidenceField
-                            label="Alert evidence checksum"
+                            label={copy.alert_evidence_checksum}
                             value={alert.evidenceChecksum}
                             mono
                         />
@@ -879,7 +879,9 @@ function OperationalAlertAction({
                                                 aria-invalid={Boolean(
                                                     errors.note,
                                                 )}
-                                                placeholder="Record the immediate response, owner and next control action."
+                                                placeholder={
+                                                    copy.record_the_immediate_response_owner_and_next_control_action
+                                                }
                                             />
                                             <InputError message={errors.note} />
                                         </div>
@@ -935,40 +937,40 @@ function PerformanceRunAction({ run }: { run: PerformanceRun }) {
                     <div className="grid gap-5 px-4 pb-6">
                         <div className="grid gap-3 sm:grid-cols-2">
                             <EvidenceField
-                                label="Outcome"
+                                label={copy.outcome}
                                 value={humanize(run.outcome)}
                             />
-                            <EvidenceField label="Tool" value={run.tool} />
+                            <EvidenceField label={copy.tool} value={run.tool} />
                             <EvidenceField
-                                label="Requests / concurrency"
+                                label={copy.requests_concurrency}
                                 value={`${run.requestCount} / ${run.concurrency}`}
                             />
                             <EvidenceField
-                                label="Successful / failed"
+                                label={copy.successful_failed}
                                 value={`${run.successfulRequests} / ${run.failedRequests}`}
                             />
                             <EvidenceField
-                                label="Requests per second"
+                                label={copy.requests_per_second}
                                 value={run.requestsPerSecond ?? 'Unavailable'}
                             />
                             <EvidenceField
-                                label="Mean latency"
+                                label={copy.mean_latency}
                                 value={formatMetric(run.meanLatencyMs, 'ms')}
                             />
                             <EvidenceField
-                                label="P50 / P95 / P99"
+                                label={copy.p50_p95_p99}
                                 value={`${formatMetric(run.p50LatencyMs, 'ms')} / ${formatMetric(run.p95LatencyMs, 'ms')} / ${formatMetric(run.p99LatencyMs, 'ms')}`}
                             />
                             <EvidenceField
-                                label="Wall-clock duration"
+                                label={copy.wall_clock_duration}
                                 value={`${run.durationMs.toLocaleString()} ms`}
                             />
                             <EvidenceField
-                                label="Initiated by"
+                                label={copy.initiated_by}
                                 value={run.initiatedBy}
                             />
                             <EvidenceField
-                                label="Target"
+                                label={copy.target}
                                 value={run.targetUrl}
                             />
                         </div>
@@ -981,18 +983,18 @@ function PerformanceRunAction({ run }: { run: PerformanceRun }) {
                             </pre>
                         </div>
                         <EvidenceField
-                            label="Output checksum"
+                            label={copy.output_checksum}
                             value={run.outputChecksum}
                             mono
                         />
                         <EvidenceField
-                            label="Evidence checksum"
+                            label={copy.evidence_checksum}
                             value={run.evidenceChecksum}
                             mono
                         />
                         {run.errorCategory && (
                             <EvidenceField
-                                label="Failure classification"
+                                label={copy.failure_classification}
                                 value={`${run.errorCategory}${run.errorDetail ? ` · ${run.errorDetail}` : ''}`}
                             />
                         )}
@@ -1065,17 +1067,17 @@ function FailedJobAction({
                         </SheetDescription>
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
-                        <Detail label="Failed job UUID" value={job.uuid} />
+                        <Detail label={copy.failed_job_uuid} value={job.uuid} />
                         <Detail
-                            label="Safe failure category"
+                            label={copy.safe_failure_category}
                             value={job.exceptionCategory}
                         />
                         <Detail
-                            label="Payload checksum"
+                            label={copy.payload_checksum}
                             value={job.payloadChecksum}
                         />
                         <Detail
-                            label="Exception checksum"
+                            label={copy.exception_checksum}
                             value={job.exceptionChecksum}
                         />
                         {canManage && (
@@ -1113,7 +1115,7 @@ function BackupRequest() {
 
     return (
         <FormSheet
-            title="Request database backup"
+            title={copy.request_database_backup}
             description="Queue a checksummed PostgreSQL custom-format backup on the configured private backup disk."
             triggerLabel="Request backup"
             icon={ArchiveRestore}
@@ -1135,7 +1137,7 @@ function ReleaseForm() {
 
     return (
         <FormSheet
-            title="Record deployment"
+            title={copy.record_deployment}
             description="Register the exact artifact and migration state for independent post-deployment validation."
             triggerLabel="Record release"
             icon={Plus}
@@ -1145,15 +1147,18 @@ function ReleaseForm() {
                 {({ processing }) => (
                     <>
                         <div className="grid gap-4 md:grid-cols-2">
-                            <Field name="version" label="Release version" />
+                            <Field
+                                name="version"
+                                label={copy.release_version}
+                            />
                             <Field
                                 name="git_sha"
-                                label="Git commit SHA (40 hex)"
+                                label={copy.git_commit_sha_40_hex}
                             />
                             <SearchableSelect
                                 id="release-environment"
                                 name="environment"
-                                label="Environment"
+                                label={copy.environment}
                                 options={[
                                     'test',
                                     'staging',
@@ -1164,28 +1169,28 @@ function ReleaseForm() {
                             />
                             <Field
                                 name="artifact_checksum"
-                                label="Artifact SHA-256"
+                                label={copy.artifact_sha256}
                             />
                             <Field
                                 name="change_reference"
-                                label="Approved change reference"
+                                label={copy.approved_change_reference}
                             />
                             <Field
                                 name="migration_batch"
-                                label="Migration batch"
+                                label={copy.migration_batch}
                                 type="number"
                                 optional
                             />
                         </div>
                         <DatePickerField
                             name="deployed_at"
-                            label="Deployment date and time"
+                            label={copy.deployment_date_and_time}
                             includeTime
                             required
                         />
                         <TextField
                             name="notes"
-                            label="Deployment evidence and observations"
+                            label={copy.deployment_evidence_and_observations}
                             optional
                         />
                         <Button type="submit" disabled={processing}>
@@ -1229,15 +1234,15 @@ function BackupAction({
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
                         <Detail
-                            label="Artifact checksum"
+                            label={copy.artifact_checksum}
                             value={backup.sha256 ?? 'Unavailable'}
                         />
                         <Detail
-                            label="Artifact size"
+                            label={copy.artifact_size}
                             value={formatBytes(backup.sizeBytes)}
                         />
                         <Detail
-                            label="Restore verification"
+                            label={copy.restore_verification}
                             value={
                                 backup.restoreVerifiedAt
                                     ? `${formatDate(backup.restoreVerifiedAt)} · ${backup.verifiedTableCount} tables · ${backup.restoreDurationMs} ms`
@@ -1246,7 +1251,7 @@ function BackupAction({
                         />
                         {backup.errorDetail && (
                             <Detail
-                                label="Failure"
+                                label={copy.failure}
                                 value={backup.errorDetail}
                             />
                         )}
@@ -1372,15 +1377,15 @@ function ReleaseCard({
                         {surface === 'details' ? (
                             <>
                                 <Detail
-                                    label="Artifact checksum"
+                                    label={copy.artifact_checksum}
                                     value={release.artifactChecksum}
                                 />
                                 <Detail
-                                    label="Deployed by"
+                                    label={copy.deployed_by}
                                     value={`${release.deployer ?? 'Unknown'} · ${formatDate(release.deployedAt)}`}
                                 />
                                 <Detail
-                                    label="Validated by"
+                                    label={copy.validated_by}
                                     value={
                                         release.validator
                                             ? `${release.validator} · ${formatDate(release.validatedAt)}`
@@ -1388,7 +1393,7 @@ function ReleaseCard({
                                     }
                                 />
                                 <Detail
-                                    label="Notes"
+                                    label={copy.notes}
                                     value={release.notes ?? '—'}
                                 />
                             </>
@@ -1399,7 +1404,9 @@ function ReleaseCard({
                             >
                                 <TextField
                                     name="evidence"
-                                    label="Post-deployment validation evidence"
+                                    label={
+                                        copy.post_deployment_validation_evidence
+                                    }
                                 />
                                 <Button type="submit">
                                     <ShieldCheck /> {copy.validate_release}
@@ -1413,7 +1420,7 @@ function ReleaseCard({
                                 <SearchableSelect
                                     id={`rollback-target-${release.id}`}
                                     name="rollback_to_version"
-                                    label="Validated rollback target"
+                                    label={copy.validated_rollback_target}
                                     options={rollbackTargets.map((target) => ({
                                         id: target.version,
                                         name: `${target.version} · ${target.changeReference}`,
@@ -1421,7 +1428,7 @@ function ReleaseCard({
                                 />
                                 <TextField
                                     name="reason"
-                                    label="Rollback trigger and evidence"
+                                    label={copy.rollback_trigger_and_evidence}
                                 />
                                 <Button type="submit" variant="destructive">
                                     <RotateCcw />{' '}
