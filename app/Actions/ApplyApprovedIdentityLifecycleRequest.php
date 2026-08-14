@@ -24,7 +24,7 @@ class ApplyApprovedIdentityLifecycleRequest
 
     public function handle(IdentityLifecycleRequest $request, User $actor, string $trigger): bool
     {
-        abort_unless($actor->access_revoked_at === null && $actor->can(ProgrammePermission::ManageSecurityGovernance->value), 403, 'The lifecycle application identity is not authorized.');
+        abort_unless($actor->access_revoked_at === null && $actor->can(ProgrammePermission::ManageSecurityGovernance->value), 403, __('security.identity_lifecycle.errors.application_unauthorized'));
 
         return DB::transaction(function () use ($request, $actor, $trigger): bool {
             $request = IdentityLifecycleRequest::query()->with(['user.roles', 'user.assignedCounties'])->lockForUpdate()->findOrFail($request->id);
@@ -54,8 +54,8 @@ class ApplyApprovedIdentityLifecycleRequest
             $revocations = $this->applyAccess($request, $user, $actor);
             $appliedEvidence = ['request_id' => $request->id, 'source_checksum' => $request->source_checksum, 'approval_checksum' => $request->evidence_checksum, 'applied_by' => $actor->id, 'trigger' => $trigger, 'attempt' => $attempts, ...$revocations];
             $request->update(['status' => 'applied', 'applied_at' => now(), 'applied_by' => $actor->id, 'application_attempts' => $attempts, 'last_application_attempt_at' => now(), 'application_error_code' => null, 'sessions_revoked' => $revocations['sessions_revoked'], 'evidence_checksum' => hash('sha256', json_encode($appliedEvidence, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))]);
-            $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.applied', "Identity lifecycle {$request->event_type} request applied by {$trigger}.", $user->county_id, ['source_event_id' => $request->source_event_id, 'target_user_id' => $user->id, ...$revocations, 'application_attempt' => $attempts]);
-            $user->notify(new ProgrammeAlert('IDMIS access reconciled', "Your IDMIS access was updated from approved {$request->event_type} event {$request->source_event_id}.", 'security-governance'));
+            $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.applied', __('security.identity_lifecycle.audit.applied', ['event' => __("security.identity_lifecycle.values.events.{$request->event_type}"), 'trigger' => __("security.identity_lifecycle.values.triggers.{$trigger}")]), $user->county_id, ['source_event_id' => $request->source_event_id, 'target_user_id' => $user->id, ...$revocations, 'application_attempt' => $attempts]);
+            $user->notify(ProgrammeAlert::translated('security.identity_lifecycle.notifications.access_reconciled_title', "security.identity_lifecycle.notifications.access_reconciled_message.{$request->event_type}", 'security-governance', messageParameters: ['reference' => $request->source_event_id]));
 
             return true;
         });
@@ -105,7 +105,7 @@ class ApplyApprovedIdentityLifecycleRequest
     private function recordException(IdentityLifecycleRequest $request, User $actor, int $attempts, string $code, string $trigger): void
     {
         $request->update(['status' => 'application_exception', 'application_attempts' => $attempts, 'last_application_attempt_at' => now(), 'application_error_code' => $code]);
-        $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.application-exception', "Identity lifecycle application stopped with controlled exception {$code}.", metadata: ['trigger' => $trigger, 'application_attempt' => $attempts]);
+        $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.application-exception', __('security.identity_lifecycle.audit.application_exception', ['exception' => __("security.identity_lifecycle.values.exceptions.{$code}")]), metadata: ['trigger' => $trigger, 'application_attempt' => $attempts]);
     }
 
     /** @return array{sessions_revoked:int, delegated_access_revoked:int} */
@@ -121,8 +121,8 @@ class ApplyApprovedIdentityLifecycleRequest
                 ->lockForUpdate()
                 ->get();
             foreach ($delegations as $delegation) {
-                $delegation->update(['status' => 'revoked', 'revoked_by' => $actor->id, 'revoked_at' => now(), 'revocation_reason' => "Identity lifecycle leaver event {$request->source_event_id} revoked all temporary access."]);
-                $this->auditLogger->record($actor, $delegation, 'security.delegation.revoked', "Temporary access {$delegation->reference} revoked by identity lifecycle.", metadata: ['identity_lifecycle_request_id' => $request->id, 'source_event_id' => $request->source_event_id]);
+                $delegation->update(['status' => 'revoked', 'revoked_by' => $actor->id, 'revoked_at' => now(), 'revocation_reason' => __('security.identity_lifecycle.revocation_reason', ['reference' => $request->source_event_id])]);
+                $this->auditLogger->record($actor, $delegation, 'security.delegation.revoked', __('security.identity_lifecycle.audit.delegation_revoked', ['reference' => $delegation->reference]), metadata: ['identity_lifecycle_request_id' => $request->id, 'source_event_id' => $request->source_event_id]);
             }
             $user->syncRoles([]);
             $user->assignedCounties()->detach();

@@ -22,14 +22,14 @@ class ApplyDueIdentityLifecycleRequests extends Command
     {
         $email = config('security-governance.identity_lifecycle_service_user_email');
         if (! is_string($email) || $email === '') {
-            $this->components->warn('Identity lifecycle scheduling is inactive because no service identity is configured.');
+            $this->components->warn(__('security.identity_lifecycle.console.inactive'));
 
             return self::SUCCESS;
         }
 
         $actor = User::query()->where('email', $email)->first();
         if (! $actor instanceof User || $actor->access_revoked_at !== null || ! $actor->can(ProgrammePermission::ManageSecurityGovernance->value)) {
-            $this->components->error('The configured identity lifecycle service identity is missing, suspended or unauthorized.');
+            $this->components->error(__('security.identity_lifecycle.console.service_identity_unauthorized'));
 
             return self::FAILURE;
         }
@@ -37,7 +37,7 @@ class ApplyDueIdentityLifecycleRequests extends Command
         $limit = max(1, min(1000, (int) $this->option('limit')));
         $lock = Cache::lock(self::RunnerLock, 300);
         if (! $lock->get()) {
-            $this->components->warn('Identity lifecycle reconciliation is already running; this invocation was skipped safely.');
+            $this->components->warn(__('security.identity_lifecycle.console.already_running'));
 
             return self::SUCCESS;
         }
@@ -67,7 +67,7 @@ class ApplyDueIdentityLifecycleRequests extends Command
             }
         });
 
-        $this->components->info("Applied {$applied} due identity lifecycle event(s); {$exceptions} controlled or runner exception(s).");
+        $this->components->info(__('security.identity_lifecycle.console.summary', ['applied' => $applied, 'exceptions' => $exceptions]));
 
         return $exceptions === 0 ? self::SUCCESS : self::FAILURE;
     }

@@ -61,10 +61,10 @@ class StoreIdentityLifecycleRequest extends FormRequest
 
             $role = UserRole::tryFrom($this->string('proposed_role')->toString());
             if (in_array($role, [UserRole::CountyOfficial, UserRole::CountyAdmin], true) && ! $this->filled('proposed_home_county_id')) {
-                $validator->errors()->add('proposed_home_county_id', 'County roles require a home county.');
+                $validator->errors()->add('proposed_home_county_id', __('security.identity_lifecycle.validation.home_county_required'));
             }
             if ($role?->hasAssignedCountyScope() && $this->array('proposed_assigned_county_ids') === []) {
-                $validator->errors()->add('proposed_assigned_county_ids', 'Portfolio roles require at least one assigned county.');
+                $validator->errors()->add('proposed_assigned_county_ids', __('security.identity_lifecycle.validation.assigned_county_required'));
             }
         }];
     }

@@ -10,10 +10,13 @@ use App\Models\AccessDelegation;
 use App\Models\County;
 use App\Models\IdentityLifecycleRequest;
 use App\Models\User;
+use App\Notifications\ProgrammeAlert;
 use App\Services\DelegatedAccessResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -22,6 +25,70 @@ use Tests\TestCase;
 class IdentityLifecycleWorkflowTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_unprivileged_roles_cannot_enumerate_or_mutate_identity_lifecycle_actions(): void
+    {
+        App::setLocale('fr');
+        $attackers = [
+            User::factory()->countyOfficial()->create(),
+            User::factory()->countyAdmin()->create(),
+            User::factory()->assessor()->create(),
+            User::factory()->developmentPartner()->create(),
+            User::factory()->topManagement()->create(),
+        ];
+        $nonexistentTargetId = Str::uuid()->toString();
+        $payload = [
+            'source_system' => 'HOSTILE-HRIS',
+            'source_event_id' => 'HOSTILE-'.Str::uuid(),
+            'source_evidence_reference' => 'HOSTILE-EVIDENCE',
+            'event_type' => 'leaver',
+            'user_id' => $nonexistentTargetId,
+            'effective_at' => now()->toIso8601String(),
+            'business_reason' => 'This hostile payload must be denied before resolving any target identity record.',
+        ];
+        $unresolvedRequest = new IdentityLifecycleRequest;
+        $unresolvedRequest->forceFill(['id' => Str::uuid()->toString()]);
+
+        foreach ($attackers as $attacker) {
+            try {
+                app(CreateIdentityLifecycleRequest::class)->handle($attacker, $payload);
+                $this->fail("{$attacker->programmeRole()->value} must not stage identity lifecycle changes.");
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+                $this->assertSame('Vous n’êtes pas autorisé à préparer des modifications du cycle de vie des identités.', $exception->getMessage());
+            }
+
+            try {
+                app(DecideIdentityLifecycleRequest::class)->handle($unresolvedRequest, $attacker, ['decision' => 'approve', 'rationale' => 'This hostile decision must be denied before resolving the supplied lifecycle request.']);
+                $this->fail("{$attacker->programmeRole()->value} must not decide identity lifecycle changes.");
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+                $this->assertSame('Vous n’êtes pas autorisé à décider des modifications du cycle de vie des identités.', $exception->getMessage());
+            }
+        }
+
+        $this->assertDatabaseCount('identity_lifecycle_requests', 0);
+        $this->assertDatabaseCount('audit_events', 0);
+    }
+
+    public function test_identity_lifecycle_audit_and_notification_evidence_use_the_active_locale(): void
+    {
+        Notification::fake();
+        App::setLocale('fr');
+        $requester = User::factory()->devolutionAdmin()->create();
+        $decider = User::factory()->platformAdmin()->create();
+        $target = User::factory()->assessor()->withTwoFactor()->create();
+        $request = app(CreateIdentityLifecycleRequest::class)->handle($requester, $this->payload($target, 'mover', 'assessor'));
+
+        app(DecideIdentityLifecycleRequest::class)->handle($request, $decider, ['decision' => 'approve', 'rationale' => 'La mobilité a été vérifiée indépendamment par rapport à l’instruction RH officielle.']);
+
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $request->id, 'action' => 'security.identity-lifecycle.requested', 'description' => 'Modification du cycle de vie mobilité demandée depuis IPPD-HRIS.']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $request->id, 'action' => 'security.identity-lifecycle.decided', 'description' => 'Demande de cycle de vie mobilité décidée comme approuvée.']);
+        $this->assertDatabaseHas('audit_events', ['subject_id' => $request->id, 'action' => 'security.identity-lifecycle.applied', 'description' => 'Demande de cycle de vie mobilité appliquée par approbation interactive.']);
+        Notification::assertSentTo($target, ProgrammeAlert::class, fn (ProgrammeAlert $notification): bool => $notification->titleTranslationKey === 'security.identity_lifecycle.notifications.access_reconciled_title'
+            && $notification->messageTranslationKey === 'security.identity_lifecycle.notifications.access_reconciled_message.mover'
+            && $notification->messageTranslationParameters['reference'] === $request->source_event_id);
+    }
 
     public function test_independent_decision_applies_a_source_referenced_mover_event(): void
     {

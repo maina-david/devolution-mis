@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Enums\UserRole;
 use App\Models\AccessDelegation;
 use App\Models\IdentityLifecycleRequest;
@@ -16,11 +17,13 @@ class CreateIdentityLifecycleRequest
     /** @param array{source_system:string, source_event_id:string, source_evidence_reference:string, event_type:string, user_id:string, effective_at:string, proposed_role?:string|null, proposed_home_county_id?:string|null, proposed_assigned_county_ids?:list<string>, business_reason:string} $attributes */
     public function handle(User $actor, array $attributes): IdentityLifecycleRequest
     {
+        abort_unless($actor->can(ProgrammePermission::ManageSecurityGovernance->value), 403, __('security.identity_lifecycle.errors.request_unauthorized'));
+
         return DB::transaction(function () use ($actor, $attributes): IdentityLifecycleRequest {
             $user = User::query()->with(['roles:id,name', 'assignedCounties:id'])->lockForUpdate()->findOrFail($attributes['user_id']);
             $eventType = $attributes['event_type'];
-            abort_if($eventType === 'joiner' && $user->access_revoked_at === null, 409, 'A joiner event can only restore a suspended pre-provisioned identity.');
-            abort_if(in_array($eventType, ['mover', 'leaver'], true) && $user->access_revoked_at !== null, 409, 'Mover and leaver events require an active identity.');
+            abort_if($eventType === 'joiner' && $user->access_revoked_at === null, 409, __('security.identity_lifecycle.errors.joiner_requires_suspended'));
+            abort_if(in_array($eventType, ['mover', 'leaver'], true) && $user->access_revoked_at !== null, 409, __('security.identity_lifecycle.errors.mover_leaver_require_active'));
 
             $proposedRole = $eventType === 'leaver' ? null : UserRole::from((string) ($attributes['proposed_role'] ?? null));
             $assignedCountyIds = $proposedRole?->hasAssignedCountyScope() ? ($attributes['proposed_assigned_county_ids'] ?? []) : [];
@@ -42,7 +45,7 @@ class CreateIdentityLifecycleRequest
             $sourcePayload = ['source_system' => $attributes['source_system'], 'source_event_id' => $attributes['source_event_id'], 'source_evidence_reference' => $attributes['source_evidence_reference'], 'event_type' => $eventType, 'user_id' => $user->id, 'effective_at' => $attributes['effective_at'], 'proposed_role' => $proposedRole?->value, 'proposed_home_county_id' => $homeCountyId, 'proposed_assigned_county_ids' => $assignedCountyIds];
 
             $request = IdentityLifecycleRequest::create([...$sourcePayload, 'source_checksum' => hash('sha256', json_encode($sourcePayload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)), 'current_access_snapshot' => $snapshot, 'business_reason' => $attributes['business_reason'], 'requested_by' => $actor->id]);
-            $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.requested', "{$eventType} identity lifecycle change requested from {$attributes['source_system']}.", $user->county_id, ['source_event_id' => $attributes['source_event_id'], 'target_user_id' => $user->id]);
+            $this->auditLogger->record($actor, $request, 'security.identity-lifecycle.requested', __('security.identity_lifecycle.audit.requested', ['event' => __("security.identity_lifecycle.values.events.{$eventType}"), 'source' => $attributes['source_system']]), $user->county_id, ['source_event_id' => $attributes['source_event_id'], 'target_user_id' => $user->id]);
 
             return $request;
         });
