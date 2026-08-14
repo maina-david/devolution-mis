@@ -345,7 +345,7 @@ export default function ReferenceDataIndex({
                         </CardHeader>
                         <CardContent>
                             <FormSheet
-                                title="Create organization"
+                                title={copy.create_organization}
                                 description="Add an organization to the canonical registry. Publish a release before downstream exchange."
                                 triggerLabel="Create organization"
                                 icon={Building2}
@@ -360,7 +360,7 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="organization-code"
                                                 name="code"
-                                                label="Code"
+                                                label={copy.code}
                                                 resource="organizations"
                                                 field="code"
                                                 serverError={errors.code}
@@ -369,7 +369,7 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="organization-name"
                                                 name="name"
-                                                label="Name"
+                                                label={copy.name}
                                                 resource="organizations"
                                                 field="name"
                                                 serverError={errors.name}
@@ -377,7 +377,7 @@ export default function ReferenceDataIndex({
                                             />
                                             <StaticSearchableSelect
                                                 id="organization-type"
-                                                label="Type"
+                                                label={copy.type}
                                                 name="type"
                                                 values={[
                                                     'national',
@@ -391,7 +391,7 @@ export default function ReferenceDataIndex({
                                             />
                                             <SearchableSelect
                                                 id="organization-county"
-                                                label="County"
+                                                label={copy.county}
                                                 name="county_id"
                                                 optional
                                                 options={options.counties.map(
@@ -432,7 +432,7 @@ export default function ReferenceDataIndex({
                         </CardHeader>
                         <CardContent>
                             <FormSheet
-                                title="Create sector"
+                                title={copy.create_sector}
                                 description="Add a governed thematic and reporting classification."
                                 triggerLabel="Create sector"
                                 icon={Layers3}
@@ -447,7 +447,7 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="sector-code"
                                                 name="code"
-                                                label="Code"
+                                                label={copy.code}
                                                 resource="sectors"
                                                 field="code"
                                                 serverError={errors.code}
@@ -456,14 +456,14 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="sector-name"
                                                 name="name"
-                                                label="Name"
+                                                label={copy.name}
                                                 resource="sectors"
                                                 field="name"
                                                 serverError={errors.name}
                                                 required
                                             />
                                             <Field
-                                                label="Description"
+                                                label={copy.description}
                                                 name="sector-description"
                                             >
                                                 <Input
@@ -477,7 +477,7 @@ export default function ReferenceDataIndex({
                                             <SearchableSelect
                                                 id="sector-parent"
                                                 name="parent_sector_id"
-                                                label="Parent sector"
+                                                label={copy.parent_sector}
                                                 options={options.sectors}
                                                 optional
                                                 error={errors.parent_sector_id}
@@ -512,7 +512,7 @@ export default function ReferenceDataIndex({
                         </CardHeader>
                         <CardContent>
                             <FormSheet
-                                title="Create programme"
+                                title={copy.create_programme}
                                 description="Add an authoritative programme portfolio record."
                                 triggerLabel="Create programme"
                                 icon={Database}
@@ -527,7 +527,7 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="programme-code"
                                                 name="code"
-                                                label="Code"
+                                                label={copy.code}
                                                 resource="programmes"
                                                 field="code"
                                                 serverError={errors.code}
@@ -536,7 +536,7 @@ export default function ReferenceDataIndex({
                                             <UniqueValueInput
                                                 id="programme-name"
                                                 name="name"
-                                                label="Name"
+                                                label={copy.name}
                                                 resource="programmes"
                                                 field="name"
                                                 serverError={errors.name}
@@ -544,7 +544,7 @@ export default function ReferenceDataIndex({
                                             />
                                             <SearchableSelect
                                                 id="programme-organization"
-                                                label="Lead organization"
+                                                label={copy.lead_organization}
                                                 name="lead_organization_id"
                                                 optional
                                                 options={options.organizations}
@@ -554,7 +554,7 @@ export default function ReferenceDataIndex({
                                             />
                                             <SearchableSelect
                                                 id="programme-sector"
-                                                label="Sector"
+                                                label={copy.sector}
                                                 name="sector_id"
                                                 optional
                                                 options={options.sectors}
@@ -568,7 +568,7 @@ export default function ReferenceDataIndex({
                                             <ReferenceCatalogSelect
                                                 id="programme-currency"
                                                 name="currency"
-                                                label="Currency"
+                                                label={copy.currency}
                                                 catalog="currency"
                                             />
                                             <Button
@@ -609,7 +609,7 @@ export default function ReferenceDataIndex({
                 />
 
                 <RegistryTable
-                    title="Organizations"
+                    title={copy.organizations}
                     headers={['Code', 'Name', 'Type', 'County', 'Status']}
                     pagination={organizations}
                     rows={organizations.data.map((item) => [
@@ -621,7 +621,7 @@ export default function ReferenceDataIndex({
                     ])}
                 />
                 <RegistryTable
-                    title="Sectors"
+                    title={copy.sectors}
                     headers={[
                         'Code',
                         'Name',
@@ -641,7 +641,7 @@ export default function ReferenceDataIndex({
                     ])}
                 />
                 <RegistryTable
-                    title="Programmes"
+                    title={copy.programmes}
                     headers={[
                         'Code',
                         'Programme',
@@ -904,7 +904,7 @@ function CountyRegister({
                             {copy.archive_selected}
                         </Button>
                         <FormSheet
-                            title="Create county"
+                            title={copy.create_county}
                             description="Add a county reference. Official identity assets require separate provenance verification."
                             triggerLabel="Create county"
                             icon={Map}
@@ -934,7 +934,9 @@ function CountyRegister({
                                                     : [],
                                             )
                                         }
-                                        aria-label="Select all counties on this page"
+                                        aria-label={
+                                            copy.select_all_counties_on_this_page
+                                        }
                                     />
                                 </TableHead>
                             )}
@@ -1174,6 +1176,8 @@ function CountyForm({
     submitLabel: string;
     onSuccess?: () => void;
 }) {
+    const copy = usePage().props.localization.referenceData;
+
     return (
         <Form
             {...form}
@@ -1186,7 +1190,7 @@ function CountyForm({
                     <UniqueValueInput
                         id="county-code"
                         name="code"
-                        label="County code"
+                        label={copy.county_code}
                         resource="counties"
                         field="code"
                         defaultValue={
@@ -1199,7 +1203,7 @@ function CountyForm({
                     <UniqueValueInput
                         id="county-name"
                         name="name"
-                        label="County name"
+                        label={copy.county_name}
                         resource="counties"
                         field="name"
                         defaultValue={county?.identity.name ?? ''}
@@ -1207,7 +1211,7 @@ function CountyForm({
                         serverError={errors.name}
                         required
                     />
-                    <Field label="Region" name="county-region">
+                    <Field label={copy.region} name="county-region">
                         <Input
                             id="county-region"
                             name="region"
@@ -1215,7 +1219,7 @@ function CountyForm({
                             aria-invalid={Boolean(errors.region)}
                         />
                     </Field>
-                    <Field label="Official website" name="county-website">
+                    <Field label={copy.official_website} name="county-website">
                         <Input
                             id="county-website"
                             name="official_website_url"
@@ -1227,7 +1231,7 @@ function CountyForm({
                         />
                     </Field>
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Map X" name="county-map-x">
+                        <Field label={copy.map_x} name="county-map-x">
                             <Input
                                 id="county-map-x"
                                 name="map_x"
@@ -1240,7 +1244,7 @@ function CountyForm({
                                 aria-invalid={Boolean(errors.map_x)}
                             />
                         </Field>
-                        <Field label="Map Y" name="county-map-y">
+                        <Field label={copy.map_y} name="county-map-y">
                             <Input
                                 id="county-map-y"
                                 name="map_y"
@@ -1287,7 +1291,7 @@ function ProgrammeCoverageRegister({
                 </div>
                 {canManage && (
                     <FormSheet
-                        title="Add programme county coverage"
+                        title={copy.add_programme_county_coverage}
                         description="Link one programme to a county for a non-overlapping effective period with accountable source evidence."
                         triggerLabel="Add coverage"
                         icon={MapPinned}
@@ -1302,21 +1306,21 @@ function ProgrammeCoverageRegister({
                                     <SearchableSelect
                                         id="coverage-programme"
                                         name="programme_id"
-                                        label="Programme"
+                                        label={copy.programme}
                                         options={options.programmes}
                                         error={errors.programme_id}
                                     />
                                     <SearchableSelect
                                         id="coverage-county"
                                         name="county_id"
-                                        label="County"
+                                        label={copy.county}
                                         options={options.counties}
                                         error={errors.county_id}
                                     />
                                     <SearchableSelect
                                         id="coverage-lead"
                                         name="implementation_lead_id"
-                                        label="Implementation lead"
+                                        label={copy.implementation_lead}
                                         options={options.organizations}
                                         optional
                                         error={errors.implementation_lead_id}
@@ -1324,20 +1328,20 @@ function ProgrammeCoverageRegister({
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <DatePickerField
                                             name="starts_on"
-                                            label="Starts on"
+                                            label={copy.starts_on}
                                             required
                                             error={errors.starts_on}
                                         />
                                         <DatePickerField
                                             name="ends_on"
-                                            label="Ends on"
+                                            label={copy.ends_on}
                                             error={errors.ends_on}
                                         />
                                     </div>
                                     <StaticSearchableSelect
                                         id="coverage-status"
                                         name="status"
-                                        label="Status"
+                                        label={copy.status}
                                         values={[
                                             'planned',
                                             'active',
@@ -1348,7 +1352,7 @@ function ProgrammeCoverageRegister({
                                         error={errors.status}
                                     />
                                     <Field
-                                        label="Funding allocation"
+                                        label={copy.funding_allocation}
                                         name="coverage-allocation"
                                     >
                                         <Input
@@ -1365,11 +1369,11 @@ function ProgrammeCoverageRegister({
                                     <ReferenceCatalogSelect
                                         id="coverage-currency"
                                         name="currency"
-                                        label="Currency"
+                                        label={copy.currency}
                                         catalog="currency"
                                     />
                                     <Field
-                                        label="Source reference"
+                                        label={copy.source_reference}
                                         name="coverage-source-reference"
                                     >
                                         <Input
@@ -1381,7 +1385,10 @@ function ProgrammeCoverageRegister({
                                             )}
                                         />
                                     </Field>
-                                    <Field label="Notes" name="coverage-notes">
+                                    <Field
+                                        label={copy.notes}
+                                        name="coverage-notes"
+                                    >
                                         <Textarea
                                             id="coverage-notes"
                                             name="notes"
@@ -1413,7 +1420,7 @@ function ProgrammeCoverageRegister({
                     />
                 ) : (
                     <WorkspaceEmptyState
-                        title="No programme county coverage"
+                        title={copy.no_programme_county_coverage}
                         description="Add the first effective-dated county assignment or adjust the active filters."
                         className="min-h-64 border-0"
                     />
@@ -1510,7 +1517,7 @@ function ReleaseRegister({
                 </div>
                 {capabilities.manage && (
                     <FormSheet
-                        title="Submit catalogue release"
+                        title={copy.submit_catalogue_release}
                         description="Capture the complete current county, organization, sector and programme catalogue for independent publication."
                         triggerLabel="Create release"
                         icon={ClipboardCheck}
@@ -1523,7 +1530,7 @@ function ReleaseRegister({
                             {({ errors, processing }) => (
                                 <>
                                     <Field
-                                        label="Change summary"
+                                        label={copy.change_summary}
                                         name="release-change-summary"
                                     >
                                         <Input
@@ -1650,7 +1657,7 @@ function ReleaseRegister({
                             <TableRow>
                                 <TableCell colSpan={7}>
                                     <TableEmptyState
-                                        title="No catalogue releases"
+                                        title={copy.no_catalogue_releases}
                                         description="No governed reference-data releases have been submitted."
                                     />
                                 </TableCell>
@@ -1688,7 +1695,7 @@ function ReleaseRegister({
                                         {selected.checksum}
                                     </p>
                                     <Field
-                                        label="Approval reference"
+                                        label={copy.approval_reference}
                                         name="release-approval-reference"
                                     >
                                         <Input
@@ -1702,7 +1709,7 @@ function ReleaseRegister({
                                     </Field>
                                     <DatePickerField
                                         name="effective_from"
-                                        label="Effective from"
+                                        label={copy.effective_from}
                                         required
                                         error={errors.effective_from}
                                     />

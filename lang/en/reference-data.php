@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'name' => 'Name', 'type' => 'Type', 'description' => 'Description', 'parent_sector' => 'Parent sector', 'lead_organization' => 'Lead organization',
+    'sector' => 'Sector', 'currency' => 'Currency', 'create_county' => 'Create county', 'select_all_counties_on_this_page' => 'Select all counties on this page',
+    'county_code' => 'County code', 'county_name' => 'County name', 'official_website' => 'Official website', 'map_x' => 'Map X', 'map_y' => 'Map Y',
+    'add_programme_county_coverage' => 'Add programme county coverage', 'programme' => 'Programme', 'implementation_lead' => 'Implementation lead',
+    'starts_on' => 'Starts on', 'ends_on' => 'Ends on', 'funding_allocation' => 'Funding allocation', 'source_reference' => 'Source reference', 'notes' => 'Notes',
+    'no_programme_county_coverage' => 'No programme county coverage', 'submit_catalogue_release' => 'Submit catalogue release',
+    'change_summary' => 'Change summary', 'no_catalogue_releases' => 'No catalogue releases', 'approval_reference' => 'Approval reference',
     'head_title' => 'Reference data', 'eyebrow' => 'Shared platform control plane', 'title' => 'Reference data registry',
     'description' => 'Govern the canonical organizations, sectors and programmes reused across all fourteen IDMIS modules.',
     'page' => 'Page', 'of' => 'of', 'separator' => '·', 'records' => 'records', 'previous' => 'Previous', 'next' => 'Next',

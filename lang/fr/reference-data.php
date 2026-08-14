@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'name' => 'Nom', 'type' => 'Type', 'description' => 'Description', 'parent_sector' => 'Secteur parent', 'lead_organization' => 'Organisation responsable',
+    'sector' => 'Secteur', 'currency' => 'Devise', 'create_county' => 'Créer un comté', 'select_all_counties_on_this_page' => 'Sélectionner tous les comtés de cette page',
+    'county_code' => 'Code du comté', 'county_name' => 'Nom du comté', 'official_website' => 'Site web officiel', 'map_x' => 'X de la carte', 'map_y' => 'Y de la carte',
+    'add_programme_county_coverage' => 'Ajouter la couverture départementale du programme', 'programme' => 'Programme', 'implementation_lead' => 'Responsable de la mise en œuvre',
+    'starts_on' => 'Commence le', 'ends_on' => 'Se termine le', 'funding_allocation' => 'Allocation financière', 'source_reference' => 'Référence de la source', 'notes' => 'Notes',
+    'no_programme_county_coverage' => 'Aucune couverture départementale du programme', 'submit_catalogue_release' => 'Soumettre la version du catalogue',
+    'change_summary' => 'Résumé des modifications', 'no_catalogue_releases' => 'Aucune version du catalogue', 'approval_reference' => 'Référence d’approbation',
     'head_title' => 'Données de référence', 'eyebrow' => 'Plan de contrôle partagé', 'title' => 'Registre des données de référence',
     'description' => 'Gérez les organisations, secteurs et programmes canoniques réutilisés dans les quatorze modules IDMIS.',
     'page' => 'Page', 'of' => 'sur', 'separator' => '·', 'records' => 'dossiers', 'previous' => 'Précédent', 'next' => 'Suivant',

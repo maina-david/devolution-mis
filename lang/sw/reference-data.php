@@ -1,6 +1,13 @@
 <?php
 
 return [
+    'name' => 'Jina', 'type' => 'Aina', 'description' => 'Maelezo', 'parent_sector' => 'Sekta kuu', 'lead_organization' => 'Shirika linaloongoza',
+    'sector' => 'Sekta', 'currency' => 'Sarafu', 'create_county' => 'Unda kaunti', 'select_all_counties_on_this_page' => 'Chagua kaunti zote kwenye ukurasa huu',
+    'county_code' => 'Msimbo wa kaunti', 'county_name' => 'Jina la kaunti', 'official_website' => 'Tovuti rasmi', 'map_x' => 'X ya ramani', 'map_y' => 'Y ya ramani',
+    'add_programme_county_coverage' => 'Ongeza wigo wa kaunti wa programu', 'programme' => 'Programu', 'implementation_lead' => 'Kiongozi wa utekelezaji',
+    'starts_on' => 'Inaanza tarehe', 'ends_on' => 'Inaisha tarehe', 'funding_allocation' => 'Mgao wa fedha', 'source_reference' => 'Rejea ya chanzo', 'notes' => 'Maelezo ya ziada',
+    'no_programme_county_coverage' => 'Hakuna wigo wa kaunti wa programu', 'submit_catalogue_release' => 'Wasilisha toleo la katalogi',
+    'change_summary' => 'Muhtasari wa mabadiliko', 'no_catalogue_releases' => 'Hakuna matoleo ya katalogi', 'approval_reference' => 'Rejea ya idhini',
     'head_title' => 'Data rejeleo', 'eyebrow' => 'Kituo cha udhibiti wa pamoja', 'title' => 'Rejesta ya data rejeleo',
     'description' => 'Dhibiti mashirika, sekta na programu rasmi zinazotumiwa katika moduli zote kumi na nne za IDMIS.',
     'page' => 'Ukurasa', 'of' => 'wa', 'separator' => '·', 'records' => 'rekodi', 'previous' => 'Iliyotangulia', 'next' => 'Inayofuata',
