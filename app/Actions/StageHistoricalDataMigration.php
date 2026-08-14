@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\HistoricalMetric;
@@ -33,6 +34,8 @@ class StageHistoricalDataMigration
 
     public function handle(User $actor, UploadedFile $file, string $datasetType, string $sourceName, string $sourceReference, string $periodFrom, string $periodTo): DataMigrationBatch
     {
+        abort_unless($actor->can(ProgrammePermission::ManageReferenceData->value), 403, __('migration.errors.stage_unauthorized'));
+
         $from = CarbonImmutable::parse($periodFrom)->startOfDay();
         $to = CarbonImmutable::parse($periodTo)->startOfDay();
         $parsedRows = $datasetType === 'acpa_reconstruction'

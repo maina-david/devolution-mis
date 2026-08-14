@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\DataMigrationBatch;
 use App\Models\User;
 use App\Services\AuditLogger;
@@ -13,12 +14,14 @@ class ReviewHistoricalDataMigration
 
     public function handle(DataMigrationBatch $batch, User $actor, string $decision, string $notes): DataMigrationBatch
     {
+        abort_unless($actor->can(ProgrammePermission::ApproveReferenceData->value), 403, __('migration.errors.review_unauthorized'));
+
         return DB::transaction(function () use ($batch, $actor, $decision, $notes): DataMigrationBatch {
             $locked = DataMigrationBatch::query()->lockForUpdate()->findOrFail($batch->id);
-            abort_unless(in_array($locked->status, ['validated', 'validation_failed'], true), 409, 'Only a validated migration batch can be reviewed.');
-            abort_if($locked->submitted_by === $actor->id, 403, 'The migration submitter cannot review the same batch.');
+            abort_unless(in_array($locked->status, ['validated', 'validation_failed'], true), 409, __('migration.review.validated_only'));
+            abort_if($locked->submitted_by === $actor->id, 403, __('migration.review.submitter_review'));
             if ($decision === 'approve') {
-                abort_unless($locked->status === 'validated' && $locked->invalid_rows === 0, 409, 'Resolve every validation exception before approval.');
+                abort_unless($locked->status === 'validated' && $locked->invalid_rows === 0, 409, __('migration.review.validation_exceptions'));
             }
 
             $locked->update([
@@ -27,7 +30,7 @@ class ReviewHistoricalDataMigration
                 'review_notes' => $notes,
                 'reviewed_at' => now(),
             ]);
-            $this->auditLogger->record($actor, $locked, 'data_migration.'.$locked->status, "Historical data migration {$locked->status}.", null, ['file_checksum' => $locked->file_checksum, 'valid_rows' => $locked->valid_rows, 'invalid_rows' => $locked->invalid_rows]);
+            $this->auditLogger->record($actor, $locked, 'data_migration.'.$locked->status, __('migration.review.audit', ['status' => __('migration.lineage_status.'.$locked->status)]), null, ['file_checksum' => $locked->file_checksum, 'valid_rows' => $locked->valid_rows, 'invalid_rows' => $locked->invalid_rows]);
 
             return $locked->refresh();
         });

@@ -220,6 +220,69 @@ class HistoricalDataMigrationWorkflowTest extends TestCase
         $this->assertDatabaseCount('historical_metrics', 1);
     }
 
+    public function test_direct_migration_actions_enforce_permissions_before_parsing_payloads_or_loading_state(): void
+    {
+        Storage::fake('local');
+        $submitter = User::factory()->platformAdmin()->create();
+        $unauthorizedActor = User::factory()->countyOfficial()->create();
+        $batch = DataMigrationBatch::factory()->create([
+            'submitted_by' => $submitter->id,
+            'status' => 'validated',
+            'invalid_rows' => 0,
+        ]);
+        app()->setLocale('fr');
+
+        $attempts = [
+            'Vous n’êtes pas autorisé à préparer les migrations historiques.' => fn () => app(StageHistoricalDataMigration::class)->handle(
+                $unauthorizedActor,
+                UploadedFile::fake()->createWithContent('hostile.exe', 'not tabular data'),
+                'hostile-dataset',
+                '',
+                '',
+                'not-a-date',
+                'not-a-date',
+            ),
+            'Vous n’êtes pas autorisé à examiner les migrations historiques.' => fn () => app(ReviewHistoricalDataMigration::class)->handle($batch, $unauthorizedActor, 'hostile-decision', ''),
+            'Vous n’êtes pas autorisé à appliquer les migrations historiques.' => fn () => app(ApplyHistoricalDataMigration::class)->handle($batch, $unauthorizedActor),
+        ];
+
+        foreach ($attempts as $expectedMessage => $attempt) {
+            try {
+                $attempt();
+                $this->fail('An unauthorized direct migration action must be denied.');
+            } catch (HttpException $exception) {
+                $this->assertSame(403, $exception->getStatusCode());
+                $this->assertSame($expectedMessage, $exception->getMessage());
+            }
+        }
+
+        $this->assertSame('validated', $batch->fresh()->status);
+        $this->assertDatabaseCount('data_migration_rows', 0);
+        $this->assertDatabaseCount('historical_metrics', 0);
+        app()->setLocale('en');
+    }
+
+    public function test_review_audit_uses_the_reviewers_active_locale(): void
+    {
+        $submitter = User::factory()->platformAdmin()->create();
+        $reviewer = User::factory()->platformAdmin()->create();
+        $batch = DataMigrationBatch::factory()->create([
+            'submitted_by' => $submitter->id,
+            'status' => 'validated',
+            'invalid_rows' => 0,
+        ]);
+        app()->setLocale('sw');
+
+        app(ReviewHistoricalDataMigration::class)->handle($batch, $reviewer, 'reject', 'Chanzo hakina idhini inayohitajika.');
+
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $batch->id,
+            'action' => 'data_migration.rejected',
+            'description' => 'Uhamishaji wa data ya kihistoria umekataliwa.',
+        ]);
+        app()->setLocale('en');
+    }
+
     public function test_source_download_rechecks_the_retained_checksum(): void
     {
         Storage::fake('local');

@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\County;
 use App\Models\DataMigrationBatch;
 use App\Models\DataMigrationRow;
@@ -32,6 +33,8 @@ class ApplyHistoricalDataMigration
 
     public function handle(DataMigrationBatch $batch, User $actor): DataMigrationBatch
     {
+        abort_unless($actor->can(ProgrammePermission::ManageOperations->value), 403, __('migration.errors.apply_unauthorized'));
+
         return DB::transaction(function () use ($batch, $actor): DataMigrationBatch {
             $locked = DataMigrationBatch::query()->lockForUpdate()->findOrFail($batch->id);
             abort_unless($locked->status === 'approved', 409, __('migration.apply.approved_only'));
