@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\DataMigrationBatch;
+use App\Models\ReferenceLineageDisposition;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -58,6 +59,44 @@ class AuthorizationFuzzTest extends TestCase
 
         $this->assertSame(0, DataMigrationBatch::query()->count());
         $this->assertSame(0, AuditEvent::query()->where('action', 'data_import.staged')->count());
+    }
+
+    #[DataProvider('unprivilegedRoleProvider')]
+    public function test_unprivileged_roles_cannot_cross_historical_migration_or_lineage_control_boundaries(UserRole $role): void
+    {
+        $user = $this->userForRole($role);
+        $administrator = User::factory()->platformAdmin()->create();
+        $batch = DataMigrationBatch::factory()->create([
+            'submitted_by' => $administrator->id,
+            'status' => 'validated',
+            'invalid_rows' => 0,
+        ]);
+        $disposition = ReferenceLineageDisposition::factory()->create([
+            'proposed_by' => $administrator->id,
+            'status' => 'proposed',
+        ]);
+        $auditCount = AuditEvent::query()->count();
+
+        $this->actingAs($user)->post(route('data-migrations.store'), [
+            'dataset_type' => 'hostile-dataset',
+            'period_from' => 'not-a-date',
+        ])->assertForbidden();
+        $this->actingAs($user)->patch(route('data-migrations.review', $batch), [
+            'decision' => 'hostile-decision',
+        ])->assertForbidden();
+        $this->actingAs($user)->post(route('data-migrations.apply', $batch))->assertForbidden();
+
+        $this->actingAs($user)->post(route('data-migrations.lineage-dispositions.store'), [
+            'record_type' => 'hostile-record-type',
+        ])->assertForbidden();
+        $this->actingAs($user)->patch(route('data-migrations.lineage-dispositions.review', $disposition), [
+            'decision' => 'hostile-decision',
+        ])->assertForbidden();
+        $this->actingAs($user)->post(route('data-migrations.lineage-dispositions.apply', $disposition))->assertForbidden();
+
+        $this->assertSame('validated', $batch->fresh()->status);
+        $this->assertSame('proposed', $disposition->fresh()->status);
+        $this->assertSame($auditCount, AuditEvent::query()->count());
     }
 
     #[DataProvider('unprivilegedRoleProvider')]
