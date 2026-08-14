@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\DevolutionInnovation;
 use App\Models\InnovationPanelReview;
 use App\Models\User;
@@ -21,6 +22,8 @@ class RecordInnovationPanelReview
     /** @param array<string, mixed> $attributes */
     public function handle(DevolutionInnovation $innovation, User $actor, array $attributes): InnovationPanelReview
     {
+        abort_unless($actor->can(ProgrammePermission::CurateKnowledge->value), 403, __('knowledge.errors.innovation_panel_unauthorized'));
+
         return DB::transaction(function () use ($innovation, $actor, $attributes): InnovationPanelReview {
             $innovation = DevolutionInnovation::query()->lockForUpdate()->findOrFail($innovation->id);
             abort_unless($actor->canAccessCounty($innovation->county), 403);
@@ -66,7 +69,7 @@ class RecordInnovationPanelReview
                 'reviewed_at' => $reviewedAt,
                 'evidence_checksum' => hash('sha256', json_encode($evidence, JSON_THROW_ON_ERROR)),
             ]);
-            $this->auditLogger->record($actor, $review, 'knowledge.innovation.panel-reviewed', "Panel review recorded for {$innovation->reference}.", $innovation->county_id, ['weighted_score' => $weightedScore, 'recommendation' => $attributes['recommendation'], 'rubric_checksum' => $rubricChecksum]);
+            $this->auditLogger->record($actor, $review, 'knowledge.innovation.panel-reviewed', __('knowledge.audit.innovation_panel_reviewed', ['reference' => $innovation->reference]), $innovation->county_id, ['weighted_score' => $weightedScore, 'recommendation' => $attributes['recommendation'], 'rubric_checksum' => $rubricChecksum]);
 
             return $review->refresh();
         });
@@ -75,13 +78,13 @@ class RecordInnovationPanelReview
     private function guard(DevolutionInnovation $innovation, User $actor): void
     {
         if ($innovation->status !== 'screening') {
-            throw ValidationException::withMessages(['innovation' => 'Panel reviews may only be recorded during screening.']);
+            throw ValidationException::withMessages(['innovation' => __('knowledge.errors.innovation_panel_screening_only')]);
         }
         if ($innovation->submitted_by === $actor->id) {
-            throw ValidationException::withMessages(['reviewer' => 'The innovation submitter cannot serve on its screening panel.']);
+            throw ValidationException::withMessages(['reviewer' => __('knowledge.errors.innovation_panel_submitter')]);
         }
         if ($innovation->panelReviews()->where('reviewer_id', $actor->id)->exists()) {
-            throw ValidationException::withMessages(['reviewer' => 'This reviewer has already submitted an immutable panel review.']);
+            throw ValidationException::withMessages(['reviewer' => __('knowledge.errors.innovation_panel_duplicate')]);
         }
     }
 }

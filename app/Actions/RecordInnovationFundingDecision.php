@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\ProgrammePermission;
 use App\Models\DevolutionInnovation;
 use App\Models\InnovationFundingDecision;
 use App\Models\User;
@@ -16,6 +17,8 @@ class RecordInnovationFundingDecision
     /** @param array<string, mixed> $attributes */
     public function handle(DevolutionInnovation $innovation, User $actor, array $attributes): InnovationFundingDecision
     {
+        abort_unless($actor->can(ProgrammePermission::ManageKnowledge->value), 403, __('knowledge.errors.innovation_funding_unauthorized'));
+
         return DB::transaction(function () use ($innovation, $actor, $attributes): InnovationFundingDecision {
             $innovation = DevolutionInnovation::query()->lockForUpdate()->findOrFail($innovation->id);
             abort_unless($actor->canAccessCounty($innovation->county), 403);
@@ -49,7 +52,7 @@ class RecordInnovationFundingDecision
                 'previous_checksum' => $previous?->evidence_checksum,
                 'evidence_checksum' => hash('sha256', json_encode($evidence, JSON_THROW_ON_ERROR)),
             ]);
-            $this->auditLogger->record($actor, $decision, 'knowledge.innovation.funding-decided', "Funding decision v{$decision->decision_version} recorded for {$innovation->reference}.", $innovation->county_id, ['decision' => $decision->decision, 'amount' => $decision->amount, 'previous_checksum' => $decision->previous_checksum]);
+            $this->auditLogger->record($actor, $decision, 'knowledge.innovation.funding-decided', __('knowledge.audit.innovation_funding_decided', ['version' => $decision->decision_version, 'reference' => $innovation->reference]), $innovation->county_id, ['decision' => $decision->decision, 'amount' => $decision->amount, 'previous_checksum' => $decision->previous_checksum]);
 
             return $decision->refresh();
         });
@@ -59,17 +62,17 @@ class RecordInnovationFundingDecision
     private function guard(DevolutionInnovation $innovation, User $actor, array $attributes): void
     {
         if ($innovation->status !== 'incubating') {
-            throw ValidationException::withMessages(['innovation' => 'Funding decisions may only be recorded during incubation.']);
+            throw ValidationException::withMessages(['innovation' => __('knowledge.errors.innovation_funding_incubation_only')]);
         }
         if ($innovation->submitted_by === $actor->id || $innovation->panelReviews()->where('reviewer_id', $actor->id)->exists()) {
-            throw ValidationException::withMessages(['decision' => 'The submitter and screening panel members cannot make the funding decision.']);
+            throw ValidationException::withMessages(['decision' => __('knowledge.errors.innovation_funding_independence')]);
         }
         $approved = $attributes['decision'] === 'approved';
         if ($approved && ((float) $attributes['amount'] <= 0 || $attributes['funding_type'] === 'not_applicable')) {
-            throw ValidationException::withMessages(['amount' => 'Approved funding requires a positive amount and applicable funding type.']);
+            throw ValidationException::withMessages(['amount' => __('knowledge.errors.innovation_funding_positive_amount')]);
         }
         if (! $approved && ((float) $attributes['amount'] !== 0.0 || $attributes['funding_type'] !== 'not_applicable')) {
-            throw ValidationException::withMessages(['amount' => 'Declined or unnecessary funding must use zero amount and not-applicable funding type.']);
+            throw ValidationException::withMessages(['amount' => __('knowledge.errors.innovation_funding_zero_amount')]);
         }
     }
 }

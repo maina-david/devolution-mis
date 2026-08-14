@@ -89,4 +89,23 @@ return [
         'milestone_updated' => 'Les preuves du jalon pilote ont été mises à jour.',
         'milestone_verified' => 'La vérification indépendante du jalon a été enregistrée.',
     ],
+    'errors' => [
+        'innovation_panel_unauthorized' => 'Vous n’êtes pas autorisé à enregistrer les évaluations du comité d’innovation.', 'innovation_panel_screening_only' => 'Les évaluations du comité ne peuvent être enregistrées que pendant la sélection.',
+        'innovation_panel_submitter' => 'Le porteur de l’innovation ne peut pas siéger à son comité de sélection.', 'innovation_panel_duplicate' => 'Cet évaluateur a déjà soumis une évaluation immuable du comité.',
+        'innovation_funding_unauthorized' => 'Vous n’êtes pas autorisé à enregistrer les décisions de financement des innovations.', 'innovation_funding_incubation_only' => 'Les décisions de financement ne peuvent être enregistrées que pendant l’incubation.',
+        'innovation_funding_independence' => 'Le porteur et les membres du comité de sélection ne peuvent pas prendre la décision de financement.', 'innovation_funding_positive_amount' => 'Un financement approuvé exige un montant positif et un type de financement applicable.',
+        'innovation_funding_zero_amount' => 'Un financement refusé ou inutile doit utiliser un montant nul et un type non applicable.', 'innovation_transition_unauthorized' => 'Vous n’êtes pas autorisé à effectuer cette transition de l’innovation.',
+        'innovation_incubation_panel_gate' => 'L’incubation exige deux recommandations indépendantes d’avancement et une moyenne du comité d’au moins 70.', 'innovation_pilot_gate' => 'Le lancement pilote exige une décision de financement actuelle approuvée/non requise et au moins un jalon d’expérimentation.',
+        'innovation_scale_gate' => 'Le passage à l’échelle exige que chaque jalon pilote soit achevé avec des preuves vérifiées indépendamment.', 'innovation_milestone_create_unauthorized' => 'Vous n’êtes pas autorisé à définir les jalons de l’innovation.',
+        'innovation_milestone_incubation_only' => 'Les jalons pilotes doivent être définis pendant l’incubation.', 'innovation_milestone_owner_scope' => 'Le responsable du jalon est hors du périmètre du comté de l’innovation.',
+        'innovation_milestone_update_unauthorized' => 'Vous n’êtes pas autorisé à mettre à jour les résultats du jalon d’innovation.', 'innovation_milestone_pilot_only' => 'Les résultats du jalon ne peuvent être enregistrés que pendant le pilote.',
+        'innovation_milestone_transition' => 'Le jalon ne peut pas passer de :from à :to. Sélectionnez l’état suivant du cycle.', 'innovation_milestone_evidence' => 'La preuve pilote doit être un document sain et actif du comté de l’innovation.',
+        'innovation_milestone_verify_unauthorized' => 'Vous n’êtes pas autorisé à vérifier les preuves du jalon d’innovation.', 'innovation_milestone_terminal_only' => 'Seules les preuves terminales en attente d’un jalon peuvent être vérifiées.',
+        'innovation_milestone_verifier_independence' => 'Le responsable, le déclarant du résultat et le porteur de l’innovation ne peuvent pas vérifier cette preuve.',
+    ],
+    'audit' => [
+        'innovation_panel_reviewed' => 'Évaluation du comité enregistrée pour :reference.', 'innovation_funding_decided' => 'Décision de financement v:version enregistrée pour :reference.',
+        'innovation_transitioned' => 'Innovation :reference passée à l’état :state.', 'innovation_milestone_created' => 'Jalon pilote :title défini pour :reference.',
+        'innovation_milestone_updated' => 'Jalon pilote :title passé à l’état :status.', 'innovation_milestone_verified' => 'La preuve du jalon pilote :title a été :decision.',
+    ],
 ];

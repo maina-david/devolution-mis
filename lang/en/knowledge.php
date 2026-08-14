@@ -89,4 +89,23 @@ return [
         'milestone_updated' => 'Pilot milestone evidence updated.',
         'milestone_verified' => 'Independent milestone verification recorded.',
     ],
+    'errors' => [
+        'innovation_panel_unauthorized' => 'You are not authorized to record innovation panel reviews.', 'innovation_panel_screening_only' => 'Panel reviews may only be recorded during screening.',
+        'innovation_panel_submitter' => 'The innovation submitter cannot serve on its screening panel.', 'innovation_panel_duplicate' => 'This reviewer has already submitted an immutable panel review.',
+        'innovation_funding_unauthorized' => 'You are not authorized to record innovation funding decisions.', 'innovation_funding_incubation_only' => 'Funding decisions may only be recorded during incubation.',
+        'innovation_funding_independence' => 'The submitter and screening panel members cannot make the funding decision.', 'innovation_funding_positive_amount' => 'Approved funding requires a positive amount and applicable funding type.',
+        'innovation_funding_zero_amount' => 'Declined or unnecessary funding must use zero amount and not-applicable funding type.', 'innovation_transition_unauthorized' => 'You are not authorized to perform this innovation transition.',
+        'innovation_incubation_panel_gate' => 'Incubation requires two independent advance recommendations and a panel average of at least 70.', 'innovation_pilot_gate' => 'Pilot launch requires a current approved/not-required funding decision and at least one experiment milestone.',
+        'innovation_scale_gate' => 'Scale-up requires every pilot milestone to be completed with independently verified evidence.', 'innovation_milestone_create_unauthorized' => 'You are not authorized to define innovation milestones.',
+        'innovation_milestone_incubation_only' => 'Pilot milestones must be defined during incubation.', 'innovation_milestone_owner_scope' => 'The milestone owner is outside the innovation county scope.',
+        'innovation_milestone_update_unauthorized' => 'You are not authorized to update innovation milestone results.', 'innovation_milestone_pilot_only' => 'Milestone results may only be recorded during the pilot.',
+        'innovation_milestone_transition' => 'Milestone cannot move from :from to :to. Select the next lifecycle state.', 'innovation_milestone_evidence' => 'Pilot evidence must be a clean, active document from the innovation county.',
+        'innovation_milestone_verify_unauthorized' => 'You are not authorized to verify innovation milestone evidence.', 'innovation_milestone_terminal_only' => 'Only pending terminal milestone evidence can be verified.',
+        'innovation_milestone_verifier_independence' => 'The owner, result submitter and innovation submitter cannot verify this evidence.',
+    ],
+    'audit' => [
+        'innovation_panel_reviewed' => 'Panel review recorded for :reference.', 'innovation_funding_decided' => 'Funding decision v:version recorded for :reference.',
+        'innovation_transitioned' => 'Innovation :reference transitioned to :state.', 'innovation_milestone_created' => 'Pilot milestone :title defined for :reference.',
+        'innovation_milestone_updated' => 'Pilot milestone :title moved to :status.', 'innovation_milestone_verified' => 'Pilot milestone :title evidence was :decision.',
+    ],
 ];

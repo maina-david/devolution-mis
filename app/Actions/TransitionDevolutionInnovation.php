@@ -16,17 +16,19 @@ class TransitionDevolutionInnovation
     /** @param array<string, mixed> $attributes */
     public function handle(DevolutionInnovation $innovation, User $actor, array $attributes): DevolutionInnovation
     {
+        $transition = (string) $attributes['transition'];
+        $requiredPermission = match ($transition) {
+            'submit' => ProgrammePermission::ContributeKnowledge,
+            'accept_incubation', 'reject', 'scale' => ProgrammePermission::CurateKnowledge,
+            'start_pilot' => ProgrammePermission::ManageKnowledge,
+            default => null,
+        };
+        abort_unless($requiredPermission !== null && $actor->can($requiredPermission->value), 403, __('knowledge.errors.innovation_transition_unauthorized'));
+
         return DB::transaction(function () use ($innovation, $actor, $attributes): DevolutionInnovation {
             $innovation = DevolutionInnovation::query()->lockForUpdate()->findOrFail($innovation->id);
             abort_unless($actor->canAccessCounty($innovation->county), 403);
             $transition = (string) $attributes['transition'];
-            $requiredPermission = match ($transition) {
-                'submit' => ProgrammePermission::ContributeKnowledge,
-                'accept_incubation', 'reject', 'scale' => ProgrammePermission::CurateKnowledge,
-                'start_pilot' => ProgrammePermission::ManageKnowledge,
-                default => null,
-            };
-            abort_unless($requiredPermission !== null && $actor->can($requiredPermission->value), 403);
             $governance = $this->governanceContext($innovation);
             $this->guardGovernanceGate($transition, $governance);
             $instance = $this->transitionWorkflow->handle($innovation->workflowInstance()->firstOrFail(), $transition, $actor, [
@@ -46,7 +48,7 @@ class TransitionDevolutionInnovation
                 'incubation_support' => $attributes['incubation_support'] ?? $innovation->incubation_support,
                 'evidence_reference' => $attributes['evidence_reference'] ?? $innovation->evidence_reference,
             ]);
-            $this->auditLogger->record($actor, $innovation, 'knowledge.innovation.transitioned', "Innovation {$innovation->reference} transitioned to {$instance->current_state}.", $innovation->county_id, ['transition' => $transition]);
+            $this->auditLogger->record($actor, $innovation, 'knowledge.innovation.transitioned', __('knowledge.audit.innovation_transitioned', ['reference' => $innovation->reference, 'state' => $instance->current_state]), $innovation->county_id, ['transition' => $transition]);
 
             return $innovation->refresh();
         });
@@ -73,13 +75,13 @@ class TransitionDevolutionInnovation
     private function guardGovernanceGate(string $transition, array $governance): void
     {
         if ($transition === 'accept_incubation' && ! $governance['panel_ready']) {
-            throw ValidationException::withMessages(['transition' => 'Incubation requires two independent advance recommendations and a panel average of at least 70.']);
+            throw ValidationException::withMessages(['transition' => __('knowledge.errors.innovation_incubation_panel_gate')]);
         }
         if ($transition === 'start_pilot' && (! $governance['funding_ready'] || ! $governance['milestones_defined'])) {
-            throw ValidationException::withMessages(['transition' => 'Pilot launch requires a current approved/not-required funding decision and at least one experiment milestone.']);
+            throw ValidationException::withMessages(['transition' => __('knowledge.errors.innovation_pilot_gate')]);
         }
         if ($transition === 'scale' && ! $governance['pilot_verified']) {
-            throw ValidationException::withMessages(['transition' => 'Scale-up requires every pilot milestone to be completed with independently verified evidence.']);
+            throw ValidationException::withMessages(['transition' => __('knowledge.errors.innovation_scale_gate')]);
         }
     }
 }

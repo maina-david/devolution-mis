@@ -89,4 +89,23 @@ return [
         'milestone_updated' => 'Ushahidi wa hatua muhimu ya majaribio umesasishwa.',
         'milestone_verified' => 'Uthibitishaji huru wa hatua muhimu umerekodiwa.',
     ],
+    'errors' => [
+        'innovation_panel_unauthorized' => 'Hujaidhinishwa kurekodi hakiki za jopo la ubunifu.', 'innovation_panel_screening_only' => 'Hakiki za jopo zinaweza kurekodiwa tu wakati wa uchunguzi.',
+        'innovation_panel_submitter' => 'Mwasilishaji wa ubunifu hawezi kuwa katika jopo lake la uchunguzi.', 'innovation_panel_duplicate' => 'Mhakiki huyu tayari amewasilisha hakiki ya jopo isiyobadilika.',
+        'innovation_funding_unauthorized' => 'Hujaidhinishwa kurekodi maamuzi ya ufadhili wa ubunifu.', 'innovation_funding_incubation_only' => 'Maamuzi ya ufadhili yanaweza kurekodiwa tu wakati wa uendelezaji.',
+        'innovation_funding_independence' => 'Mwasilishaji na wajumbe wa jopo la uchunguzi hawawezi kufanya uamuzi wa ufadhili.', 'innovation_funding_positive_amount' => 'Ufadhili ulioidhinishwa unahitaji kiasi chanya na aina ya ufadhili inayotumika.',
+        'innovation_funding_zero_amount' => 'Ufadhili uliokataliwa au usiohitajika lazima utumie kiasi sifuri na aina isiyotumika.', 'innovation_transition_unauthorized' => 'Hujaidhinishwa kufanya hatua hii ya ubunifu.',
+        'innovation_incubation_panel_gate' => 'Uendelezaji unahitaji mapendekezo mawili huru ya kuendeleza na wastani wa jopo wa angalau 70.', 'innovation_pilot_gate' => 'Kuanzisha majaribio kunahitaji uamuzi wa sasa wa ufadhili ulioidhinishwa/usiohitajika na angalau hatua moja ya jaribio.',
+        'innovation_scale_gate' => 'Upanuzi unahitaji kila hatua ya majaribio kukamilika kwa ushahidi uliothibitishwa kwa uhuru.', 'innovation_milestone_create_unauthorized' => 'Hujaidhinishwa kubainisha hatua za ubunifu.',
+        'innovation_milestone_incubation_only' => 'Hatua za majaribio lazima zibainishwe wakati wa uendelezaji.', 'innovation_milestone_owner_scope' => 'Mmiliki wa hatua yuko nje ya wigo wa kaunti ya ubunifu.',
+        'innovation_milestone_update_unauthorized' => 'Hujaidhinishwa kusasisha matokeo ya hatua ya ubunifu.', 'innovation_milestone_pilot_only' => 'Matokeo ya hatua yanaweza kurekodiwa tu wakati wa majaribio.',
+        'innovation_milestone_transition' => 'Hatua haiwezi kutoka :from hadi :to. Chagua hali inayofuata ya mzunguko.', 'innovation_milestone_evidence' => 'Ushahidi wa majaribio lazima uwe hati safi, hai kutoka kaunti ya ubunifu.',
+        'innovation_milestone_verify_unauthorized' => 'Hujaidhinishwa kuthibitisha ushahidi wa hatua ya ubunifu.', 'innovation_milestone_terminal_only' => 'Ni ushahidi wa hatua ya mwisho unaosubiri tu unaoweza kuthibitishwa.',
+        'innovation_milestone_verifier_independence' => 'Mmiliki, mwasilishaji wa matokeo na mwasilishaji wa ubunifu hawawezi kuthibitisha ushahidi huu.',
+    ],
+    'audit' => [
+        'innovation_panel_reviewed' => 'Hakiki ya jopo imerekodiwa kwa :reference.', 'innovation_funding_decided' => 'Uamuzi wa ufadhili toleo la :version umerekodiwa kwa :reference.',
+        'innovation_transitioned' => 'Ubunifu :reference umehamishwa hadi :state.', 'innovation_milestone_created' => 'Hatua ya jaribio :title imebainishwa kwa :reference.',
+        'innovation_milestone_updated' => 'Hatua ya jaribio :title imehamishwa hadi :status.', 'innovation_milestone_verified' => 'Ushahidi wa hatua ya jaribio :title ulikuwa :decision.',
+    ],
 ];

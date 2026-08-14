@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Actions\CreateInnovationExperimentMilestone;
+use App\Actions\RecordInnovationFundingDecision;
+use App\Actions\RecordInnovationPanelReview;
+use App\Actions\TransitionDevolutionInnovation;
+use App\Actions\VerifyInnovationExperimentMilestone;
 use App\Models\Assessment;
 use App\Models\AssessmentDocument;
+use App\Models\AuditEvent;
 use App\Models\County;
 use App\Models\DevolutionInnovation;
 use App\Models\InnovationExperimentMilestone;
@@ -15,6 +21,7 @@ use App\Support\CanonicalJson;
 use Database\Seeders\KnowledgeWorkflowSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class InnovationPortfolioGovernanceTest extends TestCase
@@ -26,7 +33,7 @@ class InnovationPortfolioGovernanceTest extends TestCase
         [$county, $innovation, $submitter, $firstReviewer, $secondReviewer] = $this->screeningInnovation();
 
         $this->actingAs($submitter)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertForbidden();
-        $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertRedirect();
+        $this->withSession(['locale' => 'sw'])->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertRedirect();
         $this->actingAs($firstReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload())->assertSessionHasErrors('reviewer');
         $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'A single opinion cannot authorize incubation.'])->assertSessionHasErrors('transition');
         $this->actingAs($secondReviewer)->post(route('knowledge.innovations.panel-reviews.store', [$innovation]), $this->reviewPayload(['strategic_fit_score' => 80, 'feasibility_score' => 76]))->assertRedirect();
@@ -42,6 +49,7 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $this->actingAs($firstReviewer)->patch(route('knowledge.innovations.transition', [$innovation]), ['transition' => 'accept_incubation', 'rationale' => 'Two independent panel opinions exceed the governed threshold.', 'incubation_support' => 'Controlled funding and pilot protocol.'])->assertRedirect();
         $this->assertSame('incubating', $innovation->refresh()->status);
         $this->assertDatabaseHas('audit_events', ['subject_id' => $reviews->first()->id, 'action' => 'knowledge.innovation.panel-reviewed', 'county_id' => $county->id]);
+        $this->assertSame("Hakiki ya jopo imerekodiwa kwa {$innovation->reference}.", AuditEvent::query()->where('subject_id', $reviews->first()->id)->sole()->description);
     }
 
     public function test_versioned_funding_and_defined_experiment_milestones_gate_pilot_launch(): void
@@ -50,7 +58,9 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $manager = User::factory()->devolutionAdmin()->create();
 
         $invalidFunding = $this->fundingPayload(['amount' => 0]);
-        $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $invalidFunding)->assertSessionHasErrors('amount');
+        $this->withSession(['locale' => 'fr'])->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $invalidFunding)->assertSessionHasErrors([
+            'amount' => 'Un financement approuvé exige un montant positif et un type de financement applicable.',
+        ]);
         $this->actingAs($firstReviewer)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload())->assertForbidden();
         $this->actingAs($manager)->post(route('knowledge.innovations.funding-decisions.store', [$innovation]), $this->fundingPayload())->assertRedirect();
         $firstDecision = InnovationFundingDecision::query()->sole();
@@ -119,6 +129,55 @@ class InnovationPortfolioGovernanceTest extends TestCase
         $otherCounty = County::factory()->create();
         $this->actingAs($reviewer)->get(route('workspace.export', ['knowledge-innovations', 'json', 'county_id' => $otherCounty->id]))->assertForbidden();
         $this->assertDatabaseHas('audit_events', ['subject_id' => $reviewer->id, 'action' => 'workspace.exported']);
+    }
+
+    public function test_innovation_actions_enforce_permissions_before_payload_processing_without_side_effects(): void
+    {
+        $county = County::factory()->create();
+        $unauthorizedActor = User::factory()->countyOfficial($county)->create();
+        $innovation = DevolutionInnovation::factory()->create([
+            'county_id' => $county->id,
+            'submitted_by' => $unauthorizedActor->id,
+            'status' => 'screening',
+        ]);
+        $milestone = InnovationExperimentMilestone::factory()->for($innovation, 'innovation')->create([
+            'owner_id' => $unauthorizedActor->id,
+            'title' => 'Authorization boundary milestone',
+            'hypothesis' => 'The action must reject unauthorized actors before evaluating milestone state.',
+            'success_metric' => 'Denied unauthorized action attempts',
+            'baseline_value' => '0',
+            'target_value' => '5',
+            'due_at' => today()->addMonth(),
+            'status' => 'planned',
+        ]);
+
+        app()->setLocale('fr');
+        $this->assertForbiddenAction(
+            fn () => app(RecordInnovationPanelReview::class)->handle($innovation, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à enregistrer les évaluations du comité d’innovation.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(RecordInnovationFundingDecision::class)->handle($innovation, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à enregistrer les décisions de financement des innovations.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(CreateInnovationExperimentMilestone::class)->handle($innovation, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à définir les jalons de l’innovation.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(VerifyInnovationExperimentMilestone::class)->handle($milestone, $unauthorizedActor, []),
+            'Vous n’êtes pas autorisé à vérifier les preuves du jalon d’innovation.',
+        );
+        $this->assertForbiddenAction(
+            fn () => app(TransitionDevolutionInnovation::class)->handle($innovation, $unauthorizedActor, ['transition' => 'accept_incubation']),
+            'Vous n’êtes pas autorisé à effectuer cette transition de l’innovation.',
+        );
+
+        $this->assertDatabaseCount('innovation_panel_reviews', 0);
+        $this->assertDatabaseCount('innovation_funding_decisions', 0);
+        $this->assertDatabaseCount('innovation_experiment_milestones', 1);
+        $this->assertSame('pending', $milestone->refresh()->verification_decision);
+        $this->assertDatabaseCount('audit_events', 0);
     }
 
     /** @return array{County, DevolutionInnovation, User, User, User} */
@@ -206,5 +265,17 @@ class InnovationPortfolioGovernanceTest extends TestCase
             'effective_from' => now()->subMinute(),
             'published_at' => now(),
         ]);
+    }
+
+    /** @param callable(): mixed $action */
+    private function assertForbiddenAction(callable $action, string $message): void
+    {
+        try {
+            $action();
+            $this->fail('The innovation action did not enforce its permission boundary.');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+            $this->assertSame($message, $exception->getMessage());
+        }
     }
 }
