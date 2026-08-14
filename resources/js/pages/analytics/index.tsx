@@ -369,7 +369,9 @@ export default function AnalyticsReporting({
                     ))}
                     {dashboards.length === 0 && (
                         <WorkspaceEmptyState
-                            title="No analytics dashboards in scope"
+                            title={
+                                analyticsCopy.no_analytics_dashboards_in_scope
+                            }
                             description="An authorized configurator can create a draft dashboard with governed metrics for independent publication."
                         />
                     )}
@@ -395,7 +397,7 @@ export default function AnalyticsReporting({
                             ))}
                             {schedules.length === 0 && (
                                 <WorkspaceEmptyState
-                                    title="No report schedules"
+                                    title={analyticsCopy.no_report_schedules}
                                     description="Create a delivery schedule against an independently published dashboard."
                                 />
                             )}
@@ -442,7 +444,7 @@ export default function AnalyticsReporting({
                             />
                         ) : (
                             <WorkspaceEmptyState
-                                title="No generated artifacts"
+                                title={analyticsCopy.no_generated_artifacts}
                                 description="Approved schedules will create private checksummed report files when due or manually queued."
                                 className="min-h-64 border-0"
                             />
@@ -473,7 +475,7 @@ function SavedFilterViews({
                     </p>
                 </div>
                 <FormSheet
-                    title="Save current filters"
+                    title={analyticsCopy.save_current_filters}
                     description="Name the current analytics context and optionally use it as your default view."
                     triggerLabel="Save view"
                     icon={Bookmark}
@@ -531,7 +533,7 @@ function SavedFilterViews({
                 {views.length ? (
                     <div
                         className="flex flex-wrap gap-2"
-                        aria-label="Saved analytics filter views"
+                        aria-label={analyticsCopy.saved_analytics_filter_views}
                     >
                         {views.map((view) => (
                             <div
@@ -571,7 +573,7 @@ function SavedFilterViews({
                     </div>
                 ) : (
                     <WorkspaceEmptyState
-                        title="No saved filter views"
+                        title={analyticsCopy.no_saved_filter_views}
                         description="Apply analytics filters, then save the context for quick reuse."
                         className="min-h-40 border-0"
                     />
@@ -898,7 +900,7 @@ function DashboardForm({
 
     return (
         <FormSheet
-            title="Create analytics dashboard"
+            title={analyticsCopy.create_analytics_dashboard}
             description="Start a governed draft with an allowlisted metric. A different actor must publish it."
             triggerLabel="New dashboard"
             icon={Plus}
@@ -916,32 +918,32 @@ function DashboardForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <Field
                                 name="code"
-                                label="Dashboard code"
+                                label={analyticsCopy.dashboard_code}
                                 error={errors.code}
                             />
                             <Field
                                 name="name"
-                                label="Dashboard name"
+                                label={analyticsCopy.dashboard_name}
                                 error={errors.name}
                             />
                             <SearchableSelect
                                 id="dashboard-county"
                                 name="county_id"
-                                label="County scope"
+                                label={analyticsCopy.county_scope}
                                 options={options.counties}
                                 optional
                                 error={errors.county_id}
                             />
                             <SearchableMultiSelect
                                 name="audience_roles[]"
-                                label="Authorized audience roles"
+                                label={analyticsCopy.authorized_audience_roles}
                                 options={options.roles}
                                 error={errors.audience_roles}
                             />
                         </div>
                         <TextField
                             name="description"
-                            label="Purpose and decision supported"
+                            label={analyticsCopy.purpose_and_decision_supported}
                             error={errors.description}
                         />
                         <div className="grid gap-4 rounded-xl border p-4">
@@ -951,18 +953,18 @@ function DashboardForm({
                             <div className="grid gap-4 md:grid-cols-2">
                                 <Field
                                     name="widgets[0][title]"
-                                    label="Widget title"
+                                    label={analyticsCopy.widget_title}
                                 />
                                 <SearchableSelect
                                     id="dashboard-metric"
                                     name="widgets[0][metric_key]"
-                                    label="Metric"
+                                    label={analyticsCopy.metric}
                                     options={options.metrics}
                                 />
                                 <SearchableSelect
                                     id="dashboard-visualization"
                                     name="widgets[0][visualization]"
-                                    label="Visualization"
+                                    label={analyticsCopy.visualization}
                                     options={[
                                         'metric',
                                         'bar',
@@ -976,7 +978,7 @@ function DashboardForm({
                                 <SearchableSelect
                                     id="dashboard-disaggregation"
                                     name="widgets[0][disaggregation]"
-                                    label="Disaggregation"
+                                    label={analyticsCopy.disaggregation}
                                     options={[{ id: 'county', name: 'County' }]}
                                     optional
                                 />
@@ -1033,22 +1035,22 @@ function WidgetForm({
                 action={storeWidget({ dashboard: dashboard.id })}
                 className="grid gap-4 pt-4"
             >
-                <Field name="title" label="Widget title" />
+                <Field name="title" label={analyticsCopy.widget_title} />
                 <TextField
                     name="description"
-                    label="Interpretation guidance"
+                    label={analyticsCopy.interpretation_guidance}
                     optional
                 />
                 <SearchableSelect
                     id={`metric-${dashboard.id}`}
                     name="metric_key"
-                    label="Metric"
+                    label={analyticsCopy.metric}
                     options={metrics}
                 />
                 <SearchableSelect
                     id={`visual-${dashboard.id}`}
                     name="visualization"
-                    label="Visualization"
+                    label={analyticsCopy.visualization}
                     options={[
                         'metric',
                         'bar',
@@ -1062,7 +1064,7 @@ function WidgetForm({
                 <SearchableSelect
                     id={`disaggregation-${dashboard.id}`}
                     name="disaggregation"
-                    label="Disaggregation"
+                    label={analyticsCopy.disaggregation}
                     options={[{ id: 'county', name: 'County' }]}
                     optional
                 />
@@ -1076,7 +1078,7 @@ function WidgetForm({
                 <SearchableSelect
                     id={`width-${dashboard.id}`}
                     name="width"
-                    label="Grid width"
+                    label={analyticsCopy.grid_width}
                     options={[
                         { id: '1', name: 'One column' },
                         { id: '2', name: 'Two columns' },
@@ -1102,7 +1104,7 @@ function ScheduleForm({
 
     return (
         <FormSheet
-            title="Create report schedule"
+            title={analyticsCopy.create_report_schedule}
             description="Configure delivery from a published dashboard. Activation requires an independent approver."
             triggerLabel="New schedule"
             icon={CalendarClock}
@@ -1129,31 +1131,31 @@ function ScheduleForm({
                         <div className="grid gap-4 md:grid-cols-2">
                             <Field
                                 name="code"
-                                label="Schedule code"
+                                label={analyticsCopy.schedule_code}
                                 error={errors.code}
                             />
                             <Field
                                 name="name"
-                                label="Schedule name"
+                                label={analyticsCopy.schedule_name}
                                 error={errors.name}
                             />
                             <SearchableSelect
                                 id="schedule-dashboard"
                                 name="filters[dashboard_id]"
-                                label="Published dashboard"
+                                label={analyticsCopy.published_dashboard}
                                 options={options.publishedDashboards}
                             />
                             <SearchableSelect
                                 id="schedule-county"
                                 name="county_id"
-                                label="County scope"
+                                label={analyticsCopy.county_scope}
                                 options={options.counties}
                                 optional
                             />
                             <SearchableSelect
                                 id="schedule-format"
                                 name="format"
-                                label="Artifact format"
+                                label={analyticsCopy.artifact_format}
                                 options={['csv', 'xlsx', 'json', 'pdf'].map(
                                     option,
                                 )}
@@ -1162,7 +1164,7 @@ function ScheduleForm({
                             <SearchableSelect
                                 id="schedule-frequency"
                                 name="frequency"
-                                label="Frequency"
+                                label={analyticsCopy.frequency}
                                 options={['daily', 'weekly', 'monthly'].map(
                                     option,
                                 )}
@@ -1170,21 +1172,21 @@ function ScheduleForm({
                             />
                             <DatePickerField
                                 name="filters[from]"
-                                label="Reporting period from"
+                                label={analyticsCopy.reporting_period_from}
                             />
                             <DatePickerField
                                 name="filters[to]"
-                                label="Reporting period to"
+                                label={analyticsCopy.reporting_period_to}
                             />
                             <DatePickerField
                                 name="next_run_at"
-                                label="First execution"
+                                label={analyticsCopy.first_execution}
                                 includeTime
                                 required
                             />
                             <SearchableMultiSelect
                                 name="recipient_user_ids[]"
-                                label="Authorized recipients"
+                                label={analyticsCopy.authorized_recipients}
                                 options={options.users}
                             />
                         </div>
@@ -1358,31 +1360,31 @@ function RunAction({ report }: { report: ReportRun }) {
                     </SheetHeader>
                     <div className="grid gap-4 px-4 pt-4 pb-8">
                         <Detail
-                            label="Artifact checksum"
+                            label={analyticsCopy.artifact_checksum}
                             value={report.sha256 ?? 'Pending'}
                         />
                         <Detail
-                            label="Record count"
+                            label={analyticsCopy.record_count}
                             value={
                                 report.recordCount?.toLocaleString() ??
                                 'Pending'
                             }
                         />
                         <Detail
-                            label="Artifact size"
+                            label={analyticsCopy.artifact_size}
                             value={formatBytes(report.sizeBytes)}
                         />
                         <Detail
-                            label="Started"
+                            label={analyticsCopy.started}
                             value={formatDate(report.startedAt)}
                         />
                         <Detail
-                            label="Completed"
+                            label={analyticsCopy.completed}
                             value={formatDate(report.completedAt)}
                         />
                         {report.errorDetail && (
                             <Detail
-                                label="Failure detail"
+                                label={analyticsCopy.failure_detail}
                                 value={report.errorDetail}
                             />
                         )}

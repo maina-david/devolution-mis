@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'finalized_appraisals' => 'Tathmini zilizokamilishwa', 'average_final_score' => 'Wastani wa alama ya mwisho', 'distinct_capacity_gaps' => 'Mapengo tofauti ya uwezo',
+    'performance_trend' => 'Mwenendo wa utendaji', 'department_rollup' => 'Muhtasari wa idara', 'capacity_priorities' => 'Vipaumbele vya kujenga uwezo',
+    'no_matching_performance_plans' => 'Hakuna mipango ya utendaji inayolingana', 'create_performance_cycle' => 'Unda mzunguko wa utendaji',
+    'cycle_code' => 'Msimbo wa mzunguko', 'cycle_name' => 'Jina la mzunguko', 'period_start' => 'Mwanzo wa kipindi', 'period_end' => 'Mwisho wa kipindi',
+    'goal_setting_deadline' => 'Tarehe ya mwisho ya kuweka malengo', 'midterm_review_deadline' => 'Tarehe ya mwisho ya mapitio ya katikati', 'final_review_deadline' => 'Tarehe ya mwisho ya mapitio ya mwisho',
+    'status' => 'Hali', 'new_performance_plan' => 'Mpango mpya wa utendaji', 'performance_cycle' => 'Mzunguko wa utendaji', 'supervisor' => 'Msimamizi',
+    'department_organization' => 'Idara / shirika', 'plan_type' => 'Aina ya mpango', 'hris_employee_reference' => 'Rejea ya mfanyakazi katika HRIS', 'job_title' => 'Cheo cha kazi',
+    'code' => 'Msimbo', 'goal_title' => 'Kichwa cha lengo', 'kpi' => 'KPI', 'unit_of_measure' => 'Kipimo', 'baseline' => 'Kiwango cha msingi', 'target' => 'Lengo',
+    'weight' => 'Uzito (%)', 'rating_0_100' => 'Ukadiriaji (0–100)', 'evidence_reference' => 'Rejea ya ushahidi', 'goal_code' => 'Msimbo wa lengo', 'decision' => 'Uamuzi',
     'eyebrow' => 'Matokeo na uwajibikaji wa SDD',
     'title' => 'Utendaji wa idara',
     'description' => 'Kubali malengo ya wafanyakazi yenye uzani, fanya mapitio yanayothibitishwa na ushahidi, tambua mapengo ya uwezo, na hifadhi historia ya tathmini inayoweza kukaguliwa.',

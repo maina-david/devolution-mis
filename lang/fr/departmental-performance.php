@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'finalized_appraisals' => 'Évaluations finalisées', 'average_final_score' => 'Note finale moyenne', 'distinct_capacity_gaps' => 'Lacunes de capacité distinctes',
+    'performance_trend' => 'Tendance de performance', 'department_rollup' => 'Synthèse par département', 'capacity_priorities' => 'Priorités de renforcement des capacités',
+    'no_matching_performance_plans' => 'Aucun plan de performance correspondant', 'create_performance_cycle' => 'Créer un cycle de performance',
+    'cycle_code' => 'Code du cycle', 'cycle_name' => 'Nom du cycle', 'period_start' => 'Début de la période', 'period_end' => 'Fin de la période',
+    'goal_setting_deadline' => 'Échéance de définition des objectifs', 'midterm_review_deadline' => 'Échéance de la revue à mi-parcours', 'final_review_deadline' => 'Échéance de la revue finale',
+    'status' => 'Statut', 'new_performance_plan' => 'Nouveau plan de performance', 'performance_cycle' => 'Cycle de performance', 'supervisor' => 'Superviseur',
+    'department_organization' => 'Département / organisation', 'plan_type' => 'Type de plan', 'hris_employee_reference' => 'Référence de l’employé dans le SIRH', 'job_title' => 'Intitulé du poste',
+    'code' => 'Code', 'goal_title' => 'Titre de l’objectif', 'kpi' => 'KPI', 'unit_of_measure' => 'Unité de mesure', 'baseline' => 'Valeur de référence', 'target' => 'Cible',
+    'weight' => 'Pondération (%)', 'rating_0_100' => 'Note (0–100)', 'evidence_reference' => 'Référence de la preuve', 'goal_code' => 'Code de l’objectif', 'decision' => 'Décision',
     'eyebrow' => 'Résultats et redevabilité de la SDD',
     'title' => 'Performance départementale',
     'description' => 'Convenez d’objectifs pondérés pour le personnel, menez des évaluations étayées par des preuves, identifiez les lacunes de capacité et conservez un historique d’évaluation vérifiable.',

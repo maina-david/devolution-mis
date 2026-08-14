@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'no_analytics_dashboards_in_scope' => 'Aucun tableau de bord analytique dans le périmètre', 'no_report_schedules' => 'Aucune planification de rapport', 'no_generated_artifacts' => 'Aucun artefact généré',
+    'save_current_filters' => 'Enregistrer les filtres actuels', 'saved_analytics_filter_views' => 'Vues de filtres analytiques enregistrées', 'no_saved_filter_views' => 'Aucune vue de filtre enregistrée',
+    'create_analytics_dashboard' => 'Créer un tableau de bord analytique', 'dashboard_code' => 'Code du tableau de bord', 'dashboard_name' => 'Nom du tableau de bord',
+    'authorized_audience_roles' => 'Rôles des audiences autorisées', 'purpose_and_decision_supported' => 'Objectif et décision pris en charge',
+    'widget_title' => 'Titre du widget', 'metric' => 'Indicateur', 'disaggregation' => 'Désagrégation', 'interpretation_guidance' => 'Guide d’interprétation', 'grid_width' => 'Largeur de la grille',
+    'create_report_schedule' => 'Créer une planification de rapport', 'schedule_code' => 'Code de la planification', 'schedule_name' => 'Nom de la planification', 'published_dashboard' => 'Tableau de bord publié',
+    'artifact_format' => 'Format de l’artefact', 'frequency' => 'Fréquence', 'reporting_period_from' => 'Période de rapport du', 'reporting_period_to' => 'Période de rapport au',
+    'first_execution' => 'Première exécution', 'authorized_recipients' => 'Destinataires autorisés', 'artifact_checksum' => 'Somme de contrôle de l’artefact',
+    'record_count' => 'Nombre d’enregistrements', 'artifact_size' => 'Taille de l’artefact', 'started' => 'Démarré', 'completed' => 'Terminé', 'failure_detail' => 'Détail de l’échec',
     'dashboards_in_scope' => 'Tableaux de bord dans le périmètre', 'independently_published' => 'publiés indépendamment',
     'governed_widgets' => 'Widgets gouvernés', 'governed_widgets_description' => 'Indicateurs autorisés avec traçabilité',
     'active_schedules' => 'Planifications actives', 'active_schedules_description' => 'Contrôles de livraison à double validation',

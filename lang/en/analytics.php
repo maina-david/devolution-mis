@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'no_analytics_dashboards_in_scope' => 'No analytics dashboards in scope', 'no_report_schedules' => 'No report schedules', 'no_generated_artifacts' => 'No generated artifacts',
+    'save_current_filters' => 'Save current filters', 'saved_analytics_filter_views' => 'Saved analytics filter views', 'no_saved_filter_views' => 'No saved filter views',
+    'create_analytics_dashboard' => 'Create analytics dashboard', 'dashboard_code' => 'Dashboard code', 'dashboard_name' => 'Dashboard name',
+    'authorized_audience_roles' => 'Authorized audience roles', 'purpose_and_decision_supported' => 'Purpose and decision supported',
+    'widget_title' => 'Widget title', 'metric' => 'Metric', 'disaggregation' => 'Disaggregation', 'interpretation_guidance' => 'Interpretation guidance', 'grid_width' => 'Grid width',
+    'create_report_schedule' => 'Create report schedule', 'schedule_code' => 'Schedule code', 'schedule_name' => 'Schedule name', 'published_dashboard' => 'Published dashboard',
+    'artifact_format' => 'Artifact format', 'frequency' => 'Frequency', 'reporting_period_from' => 'Reporting period from', 'reporting_period_to' => 'Reporting period to',
+    'first_execution' => 'First execution', 'authorized_recipients' => 'Authorized recipients', 'artifact_checksum' => 'Artifact checksum',
+    'record_count' => 'Record count', 'artifact_size' => 'Artifact size', 'started' => 'Started', 'completed' => 'Completed', 'failure_detail' => 'Failure detail',
     'dashboards_in_scope' => 'Dashboards in scope', 'independently_published' => 'independently published',
     'governed_widgets' => 'Governed widgets', 'governed_widgets_description' => 'Allowlisted metrics with provenance',
     'active_schedules' => 'Active schedules', 'active_schedules_description' => 'Maker-checker delivery controls',

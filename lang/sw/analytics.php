@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'no_analytics_dashboards_in_scope' => 'Hakuna dashibodi za uchanganuzi ndani ya wigo', 'no_report_schedules' => 'Hakuna ratiba za ripoti', 'no_generated_artifacts' => 'Hakuna nyaraka zilizozalishwa',
+    'save_current_filters' => 'Hifadhi vichujio vya sasa', 'saved_analytics_filter_views' => 'Mionekano ya vichujio vya uchanganuzi iliyohifadhiwa', 'no_saved_filter_views' => 'Hakuna mionekano ya vichujio iliyohifadhiwa',
+    'create_analytics_dashboard' => 'Unda dashibodi ya uchanganuzi', 'dashboard_code' => 'Msimbo wa dashibodi', 'dashboard_name' => 'Jina la dashibodi',
+    'authorized_audience_roles' => 'Majukumu ya hadhira yaliyoidhinishwa', 'purpose_and_decision_supported' => 'Madhumuni na uamuzi unaosaidiwa',
+    'widget_title' => 'Kichwa cha wijeti', 'metric' => 'Kipimo', 'disaggregation' => 'Uchanganuzi wa makundi', 'interpretation_guidance' => 'Mwongozo wa kufasiri', 'grid_width' => 'Upana wa gridi',
+    'create_report_schedule' => 'Unda ratiba ya ripoti', 'schedule_code' => 'Msimbo wa ratiba', 'schedule_name' => 'Jina la ratiba', 'published_dashboard' => 'Dashibodi iliyochapishwa',
+    'artifact_format' => 'Muundo wa zao', 'frequency' => 'Marudio', 'reporting_period_from' => 'Kipindi cha kuripoti kuanzia', 'reporting_period_to' => 'Kipindi cha kuripoti hadi',
+    'first_execution' => 'Utekelezaji wa kwanza', 'authorized_recipients' => 'Wapokeaji walioidhinishwa', 'artifact_checksum' => 'Jumla hakiki ya zao',
+    'record_count' => 'Idadi ya rekodi', 'artifact_size' => 'Ukubwa wa zao', 'started' => 'Imeanza', 'completed' => 'Imekamilika', 'failure_detail' => 'Maelezo ya hitilafu',
     'dashboards_in_scope' => 'Dashibodi ndani ya wigo', 'independently_published' => 'zimechapishwa kwa uhuru',
     'governed_widgets' => 'Wijeti zinazosimamiwa', 'governed_widgets_description' => 'Vipimo vilivyoidhinishwa vyenye asili inayofuatilika',
     'active_schedules' => 'Ratiba zinazotumika', 'active_schedules_description' => 'Vidhibiti vya utekelezaji vya mtayarishaji na mhakiki',

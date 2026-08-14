@@ -275,11 +275,11 @@ export default function DepartmentalPerformance({
                 />
                 <section className="grid gap-4 md:grid-cols-3">
                     <MetricCard
-                        label="Finalized appraisals"
+                        label={copy.finalized_appraisals}
                         value={analytics.summary.finalized.toLocaleString()}
                     />
                     <MetricCard
-                        label="Average final score"
+                        label={copy.average_final_score}
                         value={
                             analytics.summary.averageScore === null
                                 ? '—'
@@ -287,13 +287,13 @@ export default function DepartmentalPerformance({
                         }
                     />
                     <MetricCard
-                        label="Distinct capacity gaps"
+                        label={copy.distinct_capacity_gaps}
                         value={analytics.summary.capacityGaps.toLocaleString()}
                     />
                 </section>
                 <section className="grid gap-4 xl:grid-cols-3">
                     <AnalyticsTable
-                        title="Performance trend"
+                        title={copy.performance_trend}
                         description="Finalized scores by appraisal cycle in your authorized scope."
                         columns={['Cycle', 'Completed', 'Average score']}
                         rows={analytics.trends.map((item) => ({
@@ -306,7 +306,7 @@ export default function DepartmentalPerformance({
                         }))}
                     />
                     <AnalyticsTable
-                        title="Department rollup"
+                        title={copy.department_rollup}
                         description="Finalized appraisal outcomes grouped by department or organization."
                         columns={['Department', 'Completed', 'Average score']}
                         rows={analytics.organizations.map((item) => ({
@@ -319,7 +319,7 @@ export default function DepartmentalPerformance({
                         }))}
                     />
                     <AnalyticsTable
-                        title="Capacity priorities"
+                        title={copy.capacity_priorities}
                         description="Recurring development needs from finalized supervisor reviews."
                         columns={['Capacity gap', 'Affected plans']}
                         rows={analytics.capacityGaps.map((item) => ({
@@ -408,7 +408,7 @@ export default function DepartmentalPerformance({
                         />
                     ) : (
                         <WorkspaceEmptyState
-                            title="No matching performance plans"
+                            title={copy.no_matching_performance_plans}
                             description="Adjust the filters or create the first weighted plan for an open appraisal cycle."
                             className="min-h-72 border-0"
                         />
@@ -480,7 +480,7 @@ function CycleForm() {
 
     return (
         <FormSheet
-            title="Create performance cycle"
+            title={copy.create_performance_cycle}
             description="Configure the goal-setting and appraisal calendar."
             triggerLabel="New cycle"
             icon={Plus}
@@ -490,47 +490,47 @@ function CycleForm() {
                     <>
                         <Field
                             name="code"
-                            label="Cycle code"
+                            label={copy.cycle_code}
                             error={errors.code}
                         />
                         <Field
                             name="name"
-                            label="Cycle name"
+                            label={copy.cycle_name}
                             error={errors.name}
                         />
                         <DatePickerField
                             name="period_start"
-                            label="Period start"
+                            label={copy.period_start}
                             required
                             error={errors.period_start}
                         />
                         <DatePickerField
                             name="period_end"
-                            label="Period end"
+                            label={copy.period_end}
                             required
                             error={errors.period_end}
                         />
                         <DatePickerField
                             name="goal_setting_deadline"
-                            label="Goal-setting deadline"
+                            label={copy.goal_setting_deadline}
                             required
                             error={errors.goal_setting_deadline}
                         />
                         <DatePickerField
                             name="midterm_review_deadline"
-                            label="Midterm review deadline"
+                            label={copy.midterm_review_deadline}
                             error={errors.midterm_review_deadline}
                         />
                         <DatePickerField
                             name="final_review_deadline"
-                            label="Final review deadline"
+                            label={copy.final_review_deadline}
                             required
                             error={errors.final_review_deadline}
                         />
                         <SearchableSelect
                             id="cycle-status"
                             name="status"
-                            label="Status"
+                            label={copy.status}
                             options={['draft', 'open', 'closed'].map((id) => ({
                                 id,
                                 name: humanize(id),
@@ -560,7 +560,7 @@ function PlanForm({
 
     return (
         <FormSheet
-            title="New performance plan"
+            title={copy.new_performance_plan}
             description="Define measurable goals whose weights total exactly 100%."
             triggerLabel="New plan"
             icon={Target}
@@ -579,7 +579,7 @@ function PlanForm({
                             <SearchableSelect
                                 id="performance-cycle"
                                 name="performance_cycle_id"
-                                label="Performance cycle"
+                                label={copy.performance_cycle}
                                 options={options.cycles.filter(
                                     (item) => item.status === 'open',
                                 )}
@@ -588,14 +588,14 @@ function PlanForm({
                             <SearchableSelect
                                 id="performance-supervisor"
                                 name="supervisor_id"
-                                label="Supervisor"
+                                label={copy.supervisor}
                                 options={options.supervisors}
                                 error={errors.supervisor_id}
                             />
                             <SearchableSelect
                                 id="performance-organization"
                                 name="organization_id"
-                                label="Department / organization"
+                                label={copy.department_organization}
                                 options={options.organizations}
                                 optional
                                 error={errors.organization_id}
@@ -603,7 +603,7 @@ function PlanForm({
                             <SearchableSelect
                                 id="plan-type"
                                 name="plan_type"
-                                label="Plan type"
+                                label={copy.plan_type}
                                 options={[
                                     { id: 'individual', name: 'Individual' },
                                     {
@@ -615,13 +615,13 @@ function PlanForm({
                             />
                             <Field
                                 name="hris_employee_reference"
-                                label="HRIS employee reference"
+                                label={copy.hris_employee_reference}
                                 optional
                                 error={errors.hris_employee_reference}
                             />
                             <Field
                                 name="job_title"
-                                label="Job title"
+                                label={copy.job_title}
                                 optional
                                 error={errors.job_title}
                             />
@@ -689,26 +689,26 @@ function PlanForm({
                                     <CardContent className="grid gap-4 md:grid-cols-2">
                                         <Field
                                             name={`goals[${index}][code]`}
-                                            label="Code"
+                                            label={copy.code}
                                             error={
                                                 errors[`goals.${index}.code`]
                                             }
                                         />
                                         <Field
                                             name={`goals[${index}][title]`}
-                                            label="Goal title"
+                                            label={copy.goal_title}
                                             error={
                                                 errors[`goals.${index}.title`]
                                             }
                                         />
                                         <Field
                                             name={`goals[${index}][kpi]`}
-                                            label="KPI"
+                                            label={copy.kpi}
                                             error={errors[`goals.${index}.kpi`]}
                                         />
                                         <Field
                                             name={`goals[${index}][unit_of_measure]`}
-                                            label="Unit of measure"
+                                            label={copy.unit_of_measure}
                                             error={
                                                 errors[
                                                     `goals.${index}.unit_of_measure`
@@ -717,7 +717,7 @@ function PlanForm({
                                         />
                                         <Field
                                             name={`goals[${index}][baseline_value]`}
-                                            label="Baseline"
+                                            label={copy.baseline}
                                             type="number"
                                             optional
                                             error={
@@ -728,7 +728,7 @@ function PlanForm({
                                         />
                                         <Field
                                             name={`goals[${index}][target_value]`}
-                                            label="Target"
+                                            label={copy.target}
                                             type="number"
                                             error={
                                                 errors[
@@ -738,7 +738,7 @@ function PlanForm({
                                         />
                                         <Field
                                             name={`goals[${index}][weight]`}
-                                            label="Weight (%)"
+                                            label={copy.weight}
                                             type="number"
                                             error={
                                                 errors[`goals.${index}.weight`]
@@ -1069,7 +1069,7 @@ function TransitionForm({
                                     )}
                                     <Field
                                         name={`goals[${index}][rating]`}
-                                        label="Rating (0–100)"
+                                        label={copy.rating_0_100}
                                         type="number"
                                         error={errors[`goals.${index}.rating`]}
                                     />
@@ -1090,7 +1090,7 @@ function TransitionForm({
                                         'submit_self_review' && (
                                         <Field
                                             name={`goals[${index}][evidence_reference]`}
-                                            label="Evidence reference"
+                                            label={copy.evidence_reference}
                                             optional
                                             error={
                                                 errors[
@@ -1162,31 +1162,31 @@ function GoalAmendmentForm({
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field
                             name="code"
-                            label="Goal code"
+                            label={copy.goal_code}
                             defaultValue={goal.code}
                             error={errors.code}
                         />
                         <Field
                             name="title"
-                            label="Goal title"
+                            label={copy.goal_title}
                             defaultValue={goal.title}
                             error={errors.title}
                         />
                         <Field
                             name="kpi"
-                            label="KPI"
+                            label={copy.kpi}
                             defaultValue={goal.kpi}
                             error={errors.kpi}
                         />
                         <Field
                             name="unit_of_measure"
-                            label="Unit of measure"
+                            label={copy.unit_of_measure}
                             defaultValue={goal.unit}
                             error={errors.unit_of_measure}
                         />
                         <Field
                             name="baseline_value"
-                            label="Baseline"
+                            label={copy.baseline}
                             type="number"
                             optional
                             defaultValue={goal.baseline ?? ''}
@@ -1194,14 +1194,14 @@ function GoalAmendmentForm({
                         />
                         <Field
                             name="target_value"
-                            label="Target"
+                            label={copy.target}
                             type="number"
                             defaultValue={goal.target}
                             error={errors.target_value}
                         />
                         <Field
                             name="weight"
-                            label="Weight (%)"
+                            label={copy.weight}
                             type="number"
                             defaultValue={goal.weight}
                             error={errors.weight}
@@ -1306,7 +1306,7 @@ function GoalAmendmentDecisionForm({
                     <SearchableSelect
                         id={`amendment-decision-${amendment.id}`}
                         name="decision"
-                        label="Decision"
+                        label={copy.decision}
                         options={[
                             { id: 'approved', name: 'Approve' },
                             { id: 'rejected', name: 'Reject' },

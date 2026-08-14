@@ -1,6 +1,15 @@
 <?php
 
 return [
+    'finalized_appraisals' => 'Finalized appraisals', 'average_final_score' => 'Average final score', 'distinct_capacity_gaps' => 'Distinct capacity gaps',
+    'performance_trend' => 'Performance trend', 'department_rollup' => 'Department rollup', 'capacity_priorities' => 'Capacity priorities',
+    'no_matching_performance_plans' => 'No matching performance plans', 'create_performance_cycle' => 'Create performance cycle',
+    'cycle_code' => 'Cycle code', 'cycle_name' => 'Cycle name', 'period_start' => 'Period start', 'period_end' => 'Period end',
+    'goal_setting_deadline' => 'Goal-setting deadline', 'midterm_review_deadline' => 'Midterm review deadline', 'final_review_deadline' => 'Final review deadline',
+    'status' => 'Status', 'new_performance_plan' => 'New performance plan', 'performance_cycle' => 'Performance cycle', 'supervisor' => 'Supervisor',
+    'department_organization' => 'Department / organization', 'plan_type' => 'Plan type', 'hris_employee_reference' => 'HRIS employee reference', 'job_title' => 'Job title',
+    'code' => 'Code', 'goal_title' => 'Goal title', 'kpi' => 'KPI', 'unit_of_measure' => 'Unit of measure', 'baseline' => 'Baseline', 'target' => 'Target',
+    'weight' => 'Weight (%)', 'rating_0_100' => 'Rating (0–100)', 'evidence_reference' => 'Evidence reference', 'goal_code' => 'Goal code', 'decision' => 'Decision',
     'eyebrow' => 'SDD results and accountability',
     'title' => 'Departmental performance',
     'description' => 'Agree weighted staff goals, conduct evidence-backed reviews, identify capacity gaps, and preserve an auditable appraisal history.',
