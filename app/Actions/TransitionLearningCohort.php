@@ -29,17 +29,17 @@ class TransitionLearningCohort
                 'cancel' => in_array($lockedCohort->status, ['draft', 'open', 'active'], true) ? 'cancelled' : null,
                 default => null,
             };
-            abort_unless($nextStatus !== null, 409, 'That cohort lifecycle transition is not permitted from the current state.');
+            abort_unless($nextStatus !== null, 409, __('learning.cohort.errors.transition_not_permitted'));
             if ($nextStatus === 'active') {
-                abort_unless($lockedCohort->memberships()->exists(), 409, 'At least one learner is required before cohort delivery starts.');
-                abort_unless(now()->greaterThanOrEqualTo($lockedCohort->starts_at), 409, 'Cohort delivery cannot start before the scheduled start.');
+                abort_unless($lockedCohort->memberships()->exists(), 409, __('learning.cohort.errors.learner_required_to_start'));
+                abort_unless(now()->greaterThanOrEqualTo($lockedCohort->starts_at), 409, __('learning.cohort.errors.before_scheduled_start'));
             }
             if ($nextStatus === 'completed') {
-                abort_unless(now()->greaterThanOrEqualTo($lockedCohort->ends_at), 409, 'The cohort cannot complete before the scheduled end.');
+                abort_unless(now()->greaterThanOrEqualTo($lockedCohort->ends_at), 409, __('learning.cohort.errors.before_scheduled_end'));
             }
 
             $lockedCohort->update(['status' => $nextStatus, 'transitioned_by' => $actor->id, 'transitioned_at' => now()]);
-            $this->auditLogger->record($actor, $lockedCohort, 'learning.cohort.transitioned', "Learning cohort {$lockedCohort->code} transitioned to {$nextStatus}.", $lockedCohort->county_id, ['transition' => $attributes['transition'], 'rationale' => $attributes['rationale']]);
+            $this->auditLogger->record($actor, $lockedCohort, 'learning.cohort.transitioned', __('learning.cohort.audit.transitioned', ['cohort' => $lockedCohort->code, 'status' => __("learning.cohort.statuses.{$nextStatus}")]), $lockedCohort->county_id, ['transition' => $attributes['transition'], 'rationale' => $attributes['rationale']]);
 
             return $lockedCohort->refresh();
         });

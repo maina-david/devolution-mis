@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Tests\TestCase;
 
 class LearningCohortWorkflowTest extends TestCase
@@ -29,16 +30,25 @@ class LearningCohortWorkflowTest extends TestCase
         $course = LearningCourse::factory()->create(['status' => 'published']);
         $enrollment = LearningEnrollment::factory()->create(['learning_course_id' => $course->id, 'user_id' => $learner->id, 'county_id' => $county->id, 'enrolled_by' => $manager->id]);
 
+        $this->withSession(['locale' => 'fr']);
         $this->actingAs($manager)->post(route('learning.cohorts.store'), $this->payload($course, $instructor, $county))->assertRedirect()->assertSessionHasNoErrors();
         $cohort = LearningCohort::query()->sole();
         $this->assertTrue(Str::isUuid($cohort->id));
         $this->assertSame('draft', $cohort->status);
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $cohort->id, 'action' => 'learning.cohort.created']);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $cohort->id,
+            'action' => 'learning.cohort.created',
+            'description' => "Cohorte de formation {$cohort->code} créée pour {$course->code}.",
+        ]);
 
         $this->actingAs($manager)->post(route('learning.cohorts.members.store', [$cohort]), ['learning_enrollment_id' => $enrollment->id])->assertRedirect()->assertSessionHasNoErrors();
         $membership = LearningCohortMembership::query()->sole();
         $this->assertTrue(Str::isUuid($membership->id));
-        $this->assertDatabaseHas('audit_events', ['subject_id' => $membership->id, 'action' => 'learning.cohort.member-added']);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $membership->id,
+            'action' => 'learning.cohort.member-added',
+            'description' => "{$learner->name} ajouté à la cohorte de formation {$cohort->code}.",
+        ]);
 
         $this->transition($manager, $cohort, 'open')->assertRedirect();
         Carbon::setTestNow('2026-09-11 09:00:00');
@@ -47,6 +57,11 @@ class LearningCohortWorkflowTest extends TestCase
         Carbon::setTestNow('2026-10-02 09:00:00');
         $this->transition($manager, $cohort, 'complete')->assertRedirect();
         $this->assertSame('completed', $cohort->refresh()->status);
+        $this->assertDatabaseHas('audit_events', [
+            'subject_id' => $cohort->id,
+            'action' => 'learning.cohort.transitioned',
+            'description' => "Cohorte de formation {$cohort->code} passée au statut terminée.",
+        ]);
 
         foreach (['csv', 'xlsx', 'json', 'pdf'] as $format) {
             $this->actingAs($manager)->get(route('workspace.export', ['learning-cohorts', $format]))->assertOk()->assertDownload();
@@ -110,6 +125,7 @@ class LearningCohortWorkflowTest extends TestCase
         return ['learning_course_id' => $course->id, 'instructor_id' => $instructor->id, 'county_id' => $county->id, 'code' => 'LRN-COHORT-2026-01', 'name' => 'County devolution delivery practitioners', 'description' => 'A governed instructor-led cohort for county practitioners completing the published devolution curriculum.', 'capacity' => 30, 'enrollment_opens_on' => '2026-09-02', 'enrollment_closes_on' => '2026-09-09', 'starts_at' => '2026-09-10T09:00:00+03:00', 'ends_at' => '2026-10-01T17:00:00+03:00'];
     }
 
+    /** @return TestResponse<SymfonyResponse> */
     private function transition(User $actor, LearningCohort $cohort, string $transition): TestResponse
     {
         return $this->actingAs($actor)->patch(route('learning.cohorts.transition', [$cohort]), ['transition' => $transition, 'rationale' => 'The authorized cohort manager verified the schedule, roster and delivery evidence.']);
