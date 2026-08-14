@@ -153,7 +153,6 @@ function NavMainRow({
                             prefetch
                             onPointerEnter={openOnHover}
                             onPointerLeave={scheduleClose}
-                            onFocus={() => hasSubItems && setOpen(true)}
                         >
                             {item.icon && <item.icon />}
                             <span>{item.title}</span>

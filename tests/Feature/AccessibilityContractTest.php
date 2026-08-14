@@ -292,6 +292,17 @@ class AccessibilityContractTest extends TestCase
         $this->assertStringContainsString('preserveDrilldownFilters(', $assessmentAnalytics);
     }
 
+    public function test_sidebar_focus_and_shared_tab_panels_preserve_keyboard_navigation(): void
+    {
+        $navigation = $this->source('resources/js/components/nav-main.tsx');
+        $this->assertStringNotContainsString('onFocus={() => hasSubItems && setOpen(true)}', $navigation);
+        $this->assertStringContainsString('onPointerEnter={openOnHover}', $navigation);
+
+        $tabs = $this->source('resources/js/components/ui/tabs.tsx');
+        $this->assertStringContainsString('focus-visible:ring-[3px]', $tabs);
+        $this->assertStringContainsString('focus-visible:ring-ring/50', $tabs);
+    }
+
     private function source(string $path): string
     {
         $source = file_get_contents(base_path($path));
